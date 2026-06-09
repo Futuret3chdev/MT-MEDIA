@@ -938,11 +938,54 @@ export default function MTWalletApp() {
           <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8 shadow-xl">
             {!guestMode ? (
               <>
-                {/* PURE COMING SOON — sign-in, signup, local and guest mode all disabled */}
-                <div className="text-center py-6">
-                  <div className="font-semibold text-2xl mb-3 text-yellow-400">Coming Soon</div>
-                  <div className="text-sm opacity-80 mb-4">INFINITE WALLET is not yet available in this preview.<br />Sign-in, sign-up, local wallets, guest mode, and all features are disabled.</div>
-                  <div className="text-xs text-yellow-400/70">We are finalizing the public launch. Local creation, import, and all wallet actions are not enabled.</div>
+                {/* Email / Phone accounts */}
+                <div className="text-center mb-4">
+                  <div className="font-semibold text-xl">Email / Phone accounts</div>
+                  <div className="text-xs text-zinc-500">Cross-device sync & multiple wallets per account</div>
+                </div>
+
+                {/* COMING SOON for accounts */}
+                <div className="mb-6 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-5 text-center">
+                  <div className="text-yellow-400 font-semibold tracking-wider text-sm mb-1">COMING SOON</div>
+                  <div className="text-sm">Sign up, sign in, and encrypted cloud backups for your wallets are not yet open to the public.</div>
+                  <div className="text-[11px] mt-2 text-yellow-400/80">We are finalizing the public launch. Use the local (guest) wallet mode below for now — your keys never leave this browser.</div>
+                </div>
+
+                {/* Social sign-in (coming soon) */}
+                <div className="mb-6">
+                  <div className="text-[10px] uppercase tracking-[2px] text-zinc-500 text-center mb-3">Social sign-in (coming soon)</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { name: 'Facebook', emoji: '📘', color: '#1877F2' },
+                      { name: 'Instagram', emoji: '📷', color: '#E1306C' },
+                      { name: 'TikTok', emoji: '🎵', color: '#000000' },
+                    ].map((p) => (
+                      <button
+                        key={p.name}
+                        onClick={() => showComingSoonAuth()}
+                        className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl border border-zinc-800 cursor-not-allowed"
+                        style={{ background: p.color + '10' }}
+                        disabled
+                      >
+                        <span className="text-2xl">{p.emoji}</span>
+                        <span className="text-xs font-medium tracking-wide">{p.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setShowSocialDrawer(true)}
+                    className="mt-3 w-full text-xs py-2.5 rounded-2xl border border-zinc-800 hover:bg-zinc-900 text-emerald-400/80 hover:text-emerald-400 flex items-center justify-center gap-2"
+                  >
+                    Browse 30+ more social platforms <span>→</span>
+                  </button>
+                </div>
+
+                {/* Sign-in coming soon box */}
+                <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-5 text-center space-y-3">
+                  <div className="font-semibold text-yellow-400">Sign-in coming soon</div>
+                  <div className="text-sm">Creating real accounts and signing in with email or phone is not available in this preview.</div>
+                  <div className="text-xs text-zinc-500">Use local wallet (guest mode) instead →</div>
+                  <div className="text-xs text-zinc-500">You can still fully create, import, send, mint NFTs and use the wallet locally on this device.</div>
                 </div>
               </>
             ) : (
