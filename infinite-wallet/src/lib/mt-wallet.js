@@ -851,7 +851,7 @@ async function authFetch(path, options = {}) {
 
   // Handle vercel proxy base (relative /api/auth)
   if (authBase && authBase.startsWith('/')) {
-    const origin = (typeof window !== 'undefined' && window.location.origin) || 'https://wallet.futuret3ch.com.au';
+    const origin = (typeof window !== 'undefined' && window.location.origin) || 'https://mt.futuret3ch.com.au';
     authBase = origin + authBase;
   }
 
