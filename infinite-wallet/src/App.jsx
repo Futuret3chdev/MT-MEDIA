@@ -938,145 +938,25 @@ export default function MTWalletApp() {
           <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8 shadow-xl">
             {!guestMode ? (
               <>
-                {/* ACCOUNT MODE - COMING SOON in this preview copy */}
-                <div className="text-center mb-4">
-                  <div className="font-semibold text-xl">Email / Phone accounts</div>
-                  <div className="text-xs text-zinc-500">Cross-device sync &amp; multiple wallets per account</div>
-                </div>
-
-                <div className="mb-6 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-5 text-center">
-                  <div className="text-yellow-400 font-semibold tracking-wider text-sm mb-1">COMING SOON</div>
-                  <div className="text-sm">Sign up, sign in, and encrypted cloud backups for your wallets are not yet open to the public.</div>
-                  <div className="text-[11px] mt-2 text-yellow-400/80">We are finalizing the public launch. Use the local (guest) wallet mode below for now — your keys never leave this browser.</div>
-                </div>
-
-                {/* Social logins disabled in coming-soon preview */}
-                <div className="mb-6 opacity-60">
-                  <div className="text-[10px] uppercase tracking-[2px] text-zinc-500 text-center mb-3">Social sign-in (coming soon)</div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { name: 'Facebook', emoji: '📘', color: '#1877F2' },
-                      { name: 'Instagram', emoji: '📷', color: '#E1306C' },
-                      { name: 'TikTok', emoji: '🎵', color: '#000000' },
-                    ].map((p) => (
-                      <button
-                        key={p.name}
-                        onClick={() => showComingSoonAuth()}
-                        className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl border border-zinc-800 cursor-not-allowed"
-                        style={{ background: p.color + '10' }}
-                        disabled
-                      >
-                        <span className="text-2xl">{p.emoji}</span>
-                        <span className="text-xs font-medium tracking-wide">{p.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* LOGIN / SIGNUP forms disabled in this preview (coming soon) */}
-                {(authMode === 'login' || authMode === 'signup') && (
-                  <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-5 text-center space-y-3">
-                    <div className="font-semibold text-yellow-400">Sign-in coming soon</div>
-                    <div className="text-sm">Creating real accounts and signing in with email or phone is not available in this preview.</div>
-                    <button
-                      onClick={() => { setGuestMode(true); setAuthError(''); }}
-                      className="mt-2 w-full py-3 rounded-2xl bg-white text-black font-bold text-sm tracking-wider"
-                    >
-                      Use local wallet (guest mode) instead →
-                    </button>
-                    <div className="text-xs text-zinc-500">You can still fully create, import, send, mint NFTs and use the wallet locally on this device.</div>
-                  </div>
-                )}
-
-                {/* VERIFY (also disabled in preview) */}
-                {authMode === 'verify' && (
-                  <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-5 text-center">
-                    <div className="font-semibold text-yellow-400 mb-2">Account verification coming soon</div>
-                    <button onClick={() => { setGuestMode(true); setAuthMode('login'); setAuthError(''); }} className="w-full py-3 rounded-2xl bg-white text-black font-bold text-sm">Switch to local guest wallets</button>
-                  </div>
-                )}
-
-                <div className="mt-6 pt-4 border-t border-zinc-800 text-center">
-                  <button onClick={() => setGuestMode(true)} className="text-xs text-zinc-400 hover:text-white underline">
-                    Or continue as guest (local only, no account, no sync)
-                  </button>
+                {/* PURE COMING SOON — sign-in, signup, local and guest mode all disabled */}
+                <div className="text-center py-6">
+                  <div className="font-semibold text-2xl mb-3 text-yellow-400">Coming Soon</div>
+                  <div className="text-sm opacity-80 mb-4">INFINITE WALLET is not yet available in this preview.<br />Sign-in, sign-up, local wallets, guest mode, and all features are disabled.</div>
+                  <div className="text-xs text-yellow-400/70">We are finalizing the public launch. Local creation, import, and all wallet actions are not enabled.</div>
                 </div>
               </>
             ) : (
               <>
-                {/* GUEST / LOCAL ONLY MODE — fully working in this preview */}
-                <div className="text-center mb-4">
-                  <div className="font-semibold text-lg text-emerald-400">Local wallets (fully working)</div>
-                  <div className="text-xs text-zinc-500">Keys stay only on this device. Create, import, send, receive, mint NFTs — everything works.</div>
-                </div>
-
-                <div className="space-y-3">
-                  <button onClick={() => { setShowCreate(true); setShowImport(false); setAuthError(''); }} className="w-full py-3 rounded-2xl bg-emerald-500 text-black font-bold text-sm">Create new local wallet</button>
-                  <button onClick={() => { setShowImport(true); setShowCreate(false); setAuthError(''); }} className="w-full py-3 rounded-2xl border border-zinc-700 text-sm">Import recovery phrase</button>
-                </div>
-
-                {/* CREATE LOCAL */}
-                {showCreate && (
-                  <form onSubmit={handleCreateWallet} className="mt-4 space-y-4">
-                    <input type="password" autoComplete="new-password" required minLength={6} placeholder="Password to encrypt this wallet" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-black border border-zinc-800 focus:border-emerald-500 rounded-2xl px-4 py-3 text-sm font-mono" />
-                    <input type="password" autoComplete="new-password" required placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-black border border-zinc-800 focus:border-emerald-500 rounded-2xl px-4 py-3 text-sm font-mono" />
-                    {authError && <div className="text-red-400 text-xs">{authError}</div>}
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => setShowCreate(false)} className="flex-1 py-2 border border-zinc-700 rounded-xl text-sm">Cancel</button>
-                      <button type="submit" className="flex-1 py-2 bg-emerald-500 text-black font-bold rounded-xl text-sm">Create &amp; Encrypt</button>
-                    </div>
-                  </form>
-                )}
-
-                {/* IMPORT LOCAL */}
-                {showImport && (
-                  <form onSubmit={handleImportWallet} className="mt-4 space-y-4">
-                    <textarea value={importMnemonic} onChange={(e) => setImportMnemonic(e.target.value)} placeholder="12 or 24 word recovery phrase" className="w-full h-20 bg-black border border-zinc-800 focus:border-emerald-500 rounded-2xl px-4 py-2 text-sm font-mono" />
-                    <input type="password" autoComplete="new-password" required minLength={6} placeholder="New password for this wallet" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-black border border-zinc-800 focus:border-emerald-500 rounded-2xl px-4 py-3 text-sm font-mono" />
-                    <input type="password" autoComplete="new-password" required placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-black border border-zinc-800 focus:border-emerald-500 rounded-2xl px-4 py-3 text-sm font-mono" />
-                    {authError && <div className="text-red-400 text-xs">{authError}</div>}
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => setShowImport(false)} className="flex-1 py-2 border border-zinc-700 rounded-xl text-sm">Cancel</button>
-                      <button type="submit" className="flex-1 py-2 bg-emerald-500 text-black font-bold rounded-xl text-sm">Import</button>
-                    </div>
-                  </form>
-                )}
-
-                {/* If there are local vaults, offer unlock for guest mode */}
-                {getLocalWallets().length > 0 && !showCreate && !showImport && (
-                  <form onSubmit={async (e) => {
-                    e.preventDefault();
-                    setAuthError('');
-                    // For guest, we can unlock by setting a temp password and loading local wallets
-                    // Simple: just set isUnlocked and load from local
-                    if (password) {
-                      // Try to decrypt first wallet as test
-                      const locals = getLocalWallets();
-                      if (locals.length > 0) {
-                        try {
-                          await activateWalletEntry(locals[0], password);
-                          setIsUnlocked(true); // ensure
-                        } catch (err) {
-                          setAuthError('Wrong password for local wallet');
-                        }
-                      }
-                    }
-                  }} className="mt-4 space-y-3">
-                    <div className="text-xs text-center">Existing local wallets detected on this device</div>
-                    <input type="password" autoComplete="current-password" placeholder="Password for local wallets" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-black border border-zinc-800 focus:border-emerald-500 rounded-2xl px-4 py-3 text-sm font-mono" />
-                    {authError && <div className="text-red-400 text-xs text-center">{authError}</div>}
-                    <button type="submit" className="w-full py-2.5 bg-white text-black font-bold text-sm rounded-2xl">Unlock local wallets</button>
-                  </form>
-                )}
-
-                <div className="mt-4 text-center">
-                  <button onClick={() => { setGuestMode(false); setShowCreate(false); setShowImport(false); setAuthError(''); }} className="text-xs text-yellow-400/80 underline">Back to account sign-in (coming soon)</button>
+                {/* GUEST / LOCAL MODE ALSO DISABLED — no local or guest functionality in this preview */}
+                <div className="text-center py-6">
+                  <div className="font-semibold text-xl mb-3 text-yellow-400">Local / Guest Mode Disabled</div>
+                  <div className="text-sm opacity-80">Local wallet creation, import, and unlock are not available in this preview copy.<br />All features are coming soon.</div>
                 </div>
               </>
             )}
           </div>
 
-          <div className="text-center mt-6 text-[10px] text-zinc-500 font-mono tracking-widest">NO THIRD PARTIES • KEYS STAY LOCAL OR ENCRYPTED ON OUR SERVERS</div>
+          <div className="text-center mt-6 text-[10px] text-zinc-500 font-mono tracking-widest">COMING SOON — NO FUNCTIONALITY ENABLED IN THIS PREVIEW</div>
         </div>
 
         {/* SOCIAL SLIDE BAR / DRAWER - opens to many many social platforms. Full screen overlay, slides from right. */}
@@ -1147,7 +1027,7 @@ export default function MTWalletApp() {
       {/* COMING SOON BANNER - this entire copy is the preview for mt.futuret3ch.com.au */}
       <div className="w-full bg-yellow-500 text-black text-center py-2 text-sm font-semibold tracking-[1.5px] z-[70] flex items-center justify-center gap-2">
         <span>🚀</span>
-        <span>INFINITE WALLET PREVIEW — Email, phone &amp; cross-device sign-in coming soon. Local wallets on this device work fully today.</span>
+        <span>INFINITE WALLET — Coming soon. Sign-in, local/guest wallets, and all features are not yet available in this preview.</span>
         <span>🚀</span>
       </div>
 
@@ -1164,7 +1044,7 @@ export default function MTWalletApp() {
                 <div className="text-[10px] text-emerald-400/90 -mt-0.5 font-mono tracking-[1px]">MT-ECO SYSTEM</div>
               </div>
             </div>
-            <div className="ml-3 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-[10px] font-mono border border-yellow-500/40">PREVIEW • SIGN-IN COMING SOON</div>
+            <div className="ml-3 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-[10px] font-mono border border-yellow-500/40">PREVIEW — ALL FEATURES COMING SOON</div>
           </div>
 
           <div className="flex items-center gap-3 text-sm">
@@ -1192,8 +1072,18 @@ export default function MTWalletApp() {
           </div>
         </div>
 
-        {/* TAB BAR */}
-        <div className="border-t border-zinc-800">
+        {/* FULL PREVIEW LOCK — sign in, signup, local and guest all disabled */}
+        <div className="max-w-2xl mx-auto mt-6 px-6">
+          <div className="bg-zinc-950 border border-yellow-500/40 rounded-3xl p-8 text-center">
+            <div className="text-yellow-400 text-sm tracking-[2px] mb-2">PREVIEW MODE</div>
+            <div className="text-2xl font-semibold mb-3">INFINITE WALLET is coming soon</div>
+            <p className="opacity-80">Sign-in, sign-up, local wallets, guest mode, sending, NFTs, swaps and all other features are completely disabled in this preview.</p>
+            <p className="mt-4 text-sm text-yellow-400/70">This is a non-functional teaser. The full self-custodial wallet launches soon.</p>
+          </div>
+        </div>
+
+        {/* TAB BAR (visually present but non-functional) */}
+        <div className="border-t border-zinc-800 opacity-30 pointer-events-none">
           <div className="max-w-6xl mx-auto px-6 flex gap-1 overflow-x-auto py-2 text-sm">
             {TABS.map((t) => {
               const Icon = t.icon;
@@ -1897,7 +1787,7 @@ ${revealedMnemonic}
       )}
 
       {/* FOOTER BAR */}
-      <div className="border-t border-zinc-800 py-3 text-center text-[10px] text-zinc-500 font-mono tracking-widest">MT-ECO SYSTEM — Developed by Futuret3ch and MemeTorrent • EVERYTHING BUILT IN-HOUSE • 1 CENT FEES • YOUR ASSETS, YOUR RULES</div>
+      <div className="border-t border-zinc-800 py-3 text-center text-[10px] text-zinc-500 font-mono tracking-widest">MT-ECO SYSTEM — COMING SOON PREVIEW • NO FUNCTIONALITY ENABLED</div>
 
       {/* SEND MODAL */}
       <AnimatePresence>
