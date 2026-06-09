@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     nodePolyfills({
       // Explicitly polyfill these for browser compatibility
-      include: ['buffer', 'crypto', 'stream', 'process'],
+      include: ['buffer', 'crypto', 'stream', 'process', 'vm'],
       globals: {
         Buffer: true,
         global: true,
