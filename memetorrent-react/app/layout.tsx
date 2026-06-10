@@ -2,6 +2,7 @@ import './globals.css';
 import Navbar from '@/components/nav/Navbar';
 import Footer from '@/components/footer/Footer';
 import { WalletAdapterProvider } from '@/components/wallet/WalletAdapterProvider';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata = {
   title: 'MT-ECO SYSTEM | $MT • INFINITE WALLET • 1¢ Fees — by Futuret3ch and MemeTorrent',
@@ -30,6 +31,7 @@ export default function RootLayout({
           <main className="min-h-screen">{children}</main>
           <Footer />
         </WalletAdapterProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
