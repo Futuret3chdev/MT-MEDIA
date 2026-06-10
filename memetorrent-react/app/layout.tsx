@@ -1,6 +1,7 @@
 import './globals.css';
 import Navbar from '@/components/nav/Navbar';
 import Footer from '@/components/footer/Footer';
+import { WalletAdapterProvider } from '@/components/wallet/WalletAdapterProvider';
 
 export const metadata = {
   title: 'MT-ECO SYSTEM | $MT • INFINITE WALLET • 1¢ Fees — by Futuret3ch and MemeTorrent',
@@ -14,11 +15,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-black text-white">
-        <Navbar />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+    <html lang="en">
+      <head>
+        {/* Font Awesome for social icons in original brand colors */}
+        <link 
+          rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          crossOrigin="anonymous" 
+        />
+      </head>
+      <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+        <WalletAdapterProvider>
+          <Navbar />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+        </WalletAdapterProvider>
       </body>
     </html>
   );

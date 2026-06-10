@@ -95,10 +95,21 @@ export default function TokenStats() {
     return () => clearInterval(i);
   }, []);
 
-  if (!stats) return null;
+  // Always render the card; use fallbacks if live data fails (e.g. network/DNS issues)
+  const safeStats = stats || {
+    price: '0.000000012',
+    market_cap: '$0',
+    total_supply: '1,000,000,000,000',
+    name: 'MT',
+    symbol: '$MT',
+    total_buys: '0',
+    total_sells: '0',
+    total_buy_volume: '$0',
+    total_sell_volume: '$0',
+  };
 
-  const priceNum = parseFloat(stats.price || '0');
-  const marketCapNum = parseFloat((stats.market_cap || '$0').replace(/[$,]/g, ''));
+  const priceNum = parseFloat(safeStats.price || '0');
+  const marketCapNum = parseFloat((safeStats.market_cap || '$0').replace(/[$,]/g, ''));
 
   return (
     <section id="stats" className="py-12">
@@ -109,33 +120,44 @@ export default function TokenStats() {
         className="max-w-6xl mx-auto px-6"
       >
         <div
-          className="rounded-3xl p-8 border border-white/10 bg-white/[0.015]"
+          className="rounded-3xl p-5 sm:p-8 border border-white/10 bg-white/[0.015]"
           style={{
             background: 'var(--card)',
             border: '1px solid var(--border)',
           }}
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-y-3 mb-6">
             <div>
               <div className="text-emerald-400 text-xs tracking-[3px] mb-1">LIVE ON SOLANA • PUMP.FUN</div>
-              <div className="text-4xl font-semibold tracking-tight">MT Token Stats</div>
+              <div className="text-3xl sm:text-4xl font-semibold tracking-tight">MT Token Stats</div>
               <div className="text-xs opacity-60 mt-1">Live from DexScreener • Auto-refreshes every 15s</div>
+              {/* Contract Address - short display + copy for mobile friendliness */}
+              <div className="mt-3 p-3 rounded-xl border border-emerald-400/30 bg-emerald-400/5">
+                <div className="text-[10px] opacity-70 mb-0.5 tracking-widest">CONTRACT ADDRESS (COPY)</div>
+                <button 
+                  onClick={() => navigator.clipboard.writeText('ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump')} 
+                  className="font-mono text-sm sm:text-base text-emerald-400 hover:text-emerald-300 active:text-white font-semibold break-all text-left w-full"
+                  title="Click to copy full $MT contract"
+                >
+                  ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump
+                </button>
+              </div>
             </div>
-            <div className="text-right text-xs opacity-60">
-              {stats.name} ({stats.symbol})<br />
-              24h Buys/Sells: {stats.total_buys || 0}/{stats.total_sells || 0}
+            <div className="text-left sm:text-right text-xs opacity-60">
+              {safeStats.name} ({safeStats.symbol})<br />
+              24h Buys/Sells: {safeStats.total_buys || 0}/{safeStats.total_sells || 0}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <Stat label="Price" value={`$${stats.price}`} sub={`~${(priceNum * 1e9).toFixed(0)} per 1B`} />
-            <Stat label="Market Cap" value={stats.market_cap} sub={marketCapNum > 0 ? `FDV ~${stats.market_cap}` : ''} />
-            <Stat label="Total Supply" value={stats.total_supply} sub="1T max • Burnable" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <Stat label="Price" value={`$${safeStats.price}`} sub={`~${(priceNum * 1e9).toFixed(0)} per 1B`} />
+            <Stat label="Market Cap" value={safeStats.market_cap} sub={marketCapNum > 0 ? `FDV ~${safeStats.market_cap}` : ''} />
+            <Stat label="Total Supply" value={safeStats.total_supply} sub="1T max • Burnable" />
           </div>
 
-          <div className="mt-6 pt-6 border-t border-white/10 flex flex-wrap gap-4 text-xs opacity-70">
-            <div>24h Buy Vol: {stats.total_buy_volume}</div>
-            <div>24h Sell Vol: {stats.total_sell_volume}</div>
+          <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-white/10 flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-xs opacity-70">
+            <div>24h Buy Vol: {safeStats.total_buy_volume}</div>
+            <div>24h Sell Vol: {safeStats.total_sell_volume}</div>
           </div>
 
           {/* Pure icon logos marquee - only actual logos, no names. Very slow floating + gentle dancing bobs */}
@@ -171,9 +193,9 @@ export default function TokenStats() {
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 p-5 bg-black/30">
+    <div className="rounded-2xl border border-white/10 p-4 sm:p-5 bg-black/30">
       <div className="text-xs uppercase tracking-wide opacity-60 mb-1">{label}</div>
-      <div className="text-3xl font-semibold tabular-nums tracking-[-1px]">{value}</div>
+      <div className="text-2xl sm:text-3xl font-semibold tabular-nums tracking-[-1px]">{value}</div>
       {sub && <div className="text-xs opacity-50 mt-1">{sub}</div>}
     </div>
   );
