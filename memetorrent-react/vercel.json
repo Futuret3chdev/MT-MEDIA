@@ -6,10 +6,6 @@
   "devCommand": "next dev --port $PORT",
   "rewrites": [
     {
-      "destination": "/message_counts.txt",
-      "source": "/message_counts.php"
-    },
-    {
       "destination": "/auth.txt",
       "source": "/auth.php"
     },
@@ -48,6 +44,10 @@
     {
       "destination": "/store_discord_member.txt",
       "source": "/store_discord_member.php"
+    },
+    {
+      "source": "/message_counts.php",
+      "destination": "/message_counts.json"
     }
   ]
 }

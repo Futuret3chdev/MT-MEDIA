@@ -1,0 +1,48 @@
+{
+  "discord": {
+    "daily": [],
+    "monthly": [
+      {
+        "user_id": "789",
+        "username": "DiscordUser",
+        "total_message_count": 200
+      }
+    ],
+    "range": [
+      {
+        "user_id": "789",
+        "username": "DiscordUser",
+        "message_count": 55
+      }
+    ]
+  },
+  "telegram": {
+    "daily": [
+      {
+        "user_id": "123",
+        "username": "SampleUser1",
+        "message_count": 5
+      }
+    ],
+    "monthly": [
+      {
+        "user_id": "123",
+        "username": "SampleUser1",
+        "message_count": 120
+      }
+    ],
+    "range": [
+      {
+        "user_id": "123",
+        "username": "SampleUser1",
+        "message_count": 42
+      },
+      {
+        "user_id": "456",
+        "username": "SampleUser2",
+        "message_count": 31
+      }
+    ]
+  },
+  "timestamp": "2026-06-11 17:47:36 +10:00"
+}
