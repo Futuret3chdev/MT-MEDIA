@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FUTURET3CH | SUBMIT</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Press+Start+2P&family=Roboto:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary-cyan: #00FFCC;
+      --primary-pink: #FF007A;
+      --bg-dark: #1A1A1A;
+      --text-light: #E0E0E0;
+      --glow-blur: 8px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url("./images/bg3.png") center/cover fixed;
+      color: var(--text-light);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* HUD Border */
+    .hud-frame {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      border: 2px solid var(--primary-cyan);
+      box-shadow: 0 0 15px var(--primary-cyan);
+      pointer-events: none;
+      z-index: 1001;
+    }
+
+    /* Navigation */
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 255, 204, 0.3);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      color: var(--text-light);
+      text-decoration: none;
+      font-family: 'Orbitron', sans-serif;
+      padding: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary-cyan);
+      text-shadow: 0 0 5px var(--primary-cyan);
+    }
+
+    .social-icons a {
+      color: var(--text-light);
+      font-size: 1.5rem;
+      margin-left: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .social-icons a:hover {
+      color: var(--primary-pink);
+    }
+
+    /* Sound Toggle */
+    .sound-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      background: var(--primary-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1002;
+      box-shadow: 0 0 10px var(--primary-cyan);
+      transition: background 0.3s ease;
+    }
+
+    .sound-toggle.muted {
+      background: var(--primary-pink);
+    }
+
+    .sound-toggle i {
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    /* Modal (Popup) */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1003;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid var(--primary-cyan);
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 15px var(--primary-cyan);
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: var(--primary-pink);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .close-btn:hover {
+      color: var(--primary-cyan);
+    }
+
+    .animate-charcter {
+      font-family: 'Press Start 2P', cursive;
+      text-transform: uppercase;
+      font-size: 2rem;
+      color: #FFFFFF;
+      text-shadow: 0 0 10px var(--primary-cyan), 0 0 20px var(--primary-pink);
+      animation: glitch 1s linear infinite;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    @keyframes glitch {
+      2%, 64% { transform: translate(2px, 0) skew(0deg); }
+      4%, 60% { transform: translate(-2px, 0) skew(0deg); }
+      62% { transform: translate(0, 0) skew(5deg); }
+    }
+
+    .submit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .submit-form label {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--text-light);
+      font-size: 1.1rem;
+    }
+
+    .submit-form input, .submit-form textarea, .submit-form select {
+      padding: 0.8rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--primary-cyan);
+      border-radius: 5px;
+      color: var(--text-light);
+      font-family: 'Roboto', sans-serif;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .submit-form input:focus, .submit-form textarea:focus, .submit-form select:focus {
+      outline: none;
+      border-color: var(--primary-pink);
+      box-shadow: 0 0 10px var(--primary-pink);
+    }
+
+    .submit-form textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .submit-btn {
+      padding: 0.8rem;
+      background: #111;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Orbitron', sans-serif;
+      text-transform: uppercase;
+      color: var(--text-light);
+      position: relative;
+      z-index: 1;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .submit-btn:before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      width: calc(100% + 4px);
+      height: calc(100% + 4px);
+      background: linear-gradient(45deg, var(--primary-cyan), var(--primary-pink), var(--primary-cyan));
+      background-size: 400%;
+      filter: blur(var(--glow-blur));
+      z-index: -1;
+      animation: glowing 20s linear infinite;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 10px;
+    }
+
+    .submit-btn:hover:before {
+      opacity: 1;
+    }
+
+    .submit-btn:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #111;
+      z-index: -1;
+      border-radius: 10px;
+    }
+
+    @keyframes glowing {
+      0% { background-position: 0 0; }
+      50% { background-position: 400% 0; }
+      100% { background-position: 0 0; }
+    }
+
+    /* Footer */
+    footer {
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.9);
+      text-align: center;
+      box-shadow: 0 -2px 10px rgba(0, 255, 204, 0.3);
+    }
+
+    footer a {
+      color: var(--primary-cyan);
+      font-family: 'Orbitron', sans-serif;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--primary-pink);
+    }
+
+    /* Mobile Adjustments */
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .nav-container {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem;
+      }
+
+      .nav-links {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .social-icons a {
+        font-size: 1.2rem;
+      }
+
+      .animate-charcter {
+        font-size: 1.5rem;
+      }
+
+      .modal-content {
+        padding: 1.5rem;
+        width: 95%;
+      }
+
+      .sound-toggle {
+        top: 5px;
+        right: 5px;
+        width: 30px;
+        height: 30px;
+      }
+
+      .sound-toggle i {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-frame"></div>
+  <div class="sound-toggle" onclick="toggleSound()"><i class="fas fa-volume-up"></i></div>
+
+  <main class="container">
+    <div>
+      <a href="../index.html"><img src="images/logo.jpg" width="50" height="50" alt="MemeTorrent Logo"></a>
+      <nav class="nav-container">
+        <div class="nav-links">
+          <a href="../index.html">About</a>
+          <a href="../token.html">Tokenomics</a>
+          <a href="../safety.html">Safety</a>
+          <a href="../utility.html">Utility</a>
+          <a href="../update.html">Updates</a>
+          <a href="/games">Games</a>
+          <a href="../software.html">Software</a>
+          <a href="../downloads.html">Downloads</a>
+          <a href="#" id="submit-link">Submit</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+        <div class="social-icons">
+          <a href="https://twitter.com/MemeTorrent" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="https://t.me/MemeTorrentPortal" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Modal Popup -->
+    <div class="modal" id="submit-modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h3 class="animate-charcter">Submit Your Work</h3>
+        <form class="submit-form" id="submit-form" onsubmit="sendSubmission(event)">
+          <label for="email">Your Email:</label>
+          <input type="email" id="email" name="email" placeholder="Your email" required />
+
+          <label for="handle">Telegram or Twitter Handle:</label>
+          <input type="text" id="handle" name="handle" placeholder="@username" required />
+
+          <label for="type">Submission Type:</label>
+          <select id="type" name="type" required>
+            <option value="" disabled selected>Select type</option>
+            <option value="Artwork">Artwork</option>
+            <option value="Games">Games</option>
+            <option value="Music">Music</option>
+            <option value="Animation">Animation</option>
+          </select>
+
+          <label for="title">Submission Title:</label>
+          <input type="text" id="title" name="title" placeholder="e.g., My Awesome Game" required />
+
+          <label for="description">Description:</label>
+          <textarea id="description" name="description" placeholder="Tell us about your submission..." required></textarea>
+
+          <label for="file">Upload File:</label>
+          <input type="file" id="file" name="file" accept=".jpg,.png,.gif,.mp3,.mp4,.zip" />
+
+          <button type="submit" class="submit-btn">Submit</button>
+        </form>
+      </div>
+    </div>
+
+    <section class="submit-container">
+      <h3 class="animate-charcter">Submit Your Idea</h3>
+      <p style="text-align: center; font-family: 'Orbitron', sans-serif;">
+        Got something dank to share? Click "Submit" above to send us your artwork, games, music, or animations!
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <b><a href="https://futuret3ch.com.au" target="_blank">FUTURET3CH 2025</a></b>
+  </footer>
+
+  <script>
+    // Background Music
+    const bgMusic = new Audio('edm.mp3');
+    bgMusic.volume = 0.2;
+    bgMusic.loop = true;
+    bgMusic.play().catch(err => console.log("Background audio play failed:", err));
+
+    // Sound Toggle
+    let isMuted = false;
+    function toggleSound() {
+      const toggleBtn = document.querySelector('.sound-toggle');
+      if (isMuted) {
+        bgMusic.play();
+        toggleBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        toggleBtn.classList.remove('muted');
+      } else {
+        bgMusic.pause();
+        toggleBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        toggleBtn.classList.add('muted');
+      }
+      isMuted = !isMuted;
+    }
+
+    // Modal Functionality
+    const modal = document.getElementById('submit-modal');
+    const submitLink = document.getElementById('submit-link');
+
+    submitLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      modal.style.display = 'flex';
+    });
+
+    function closeModal() {
+      modal.style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    // Submission Handling
+    function sendSubmission(event) {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const handle = document.getElementById('handle').value;
+      const type = document.getElementById('type').value;
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const fileInput = document.getElementById('file');
+
+      const subject = `New ${type} Submission: ${title}`;
+      const body = `Email: ${email}\nHandle: ${handle}\nType: ${type}\nTitle: ${title}\nDescription: ${description}\n\nNote: File is attached if provided.`;
+      const mailtoLink = `mailto:jason.c@futuret3ch.com.au?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+      // Open email client
+      window.location.href = mailtoLink;
+
+      // Note: File attachment won't work with mailto directly; user must attach manually in their email client
+      if (fileInput.files.length > 0) {
+        alert("Please attach your file manually in the email client that opens.");
+      }
+
+      // Close modal after submission
+      setTimeout(() => closeModal(), 500);
+    }
+  </script>
+</body>
+</html>

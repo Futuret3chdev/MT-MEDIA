@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MemeTorrent | $MT</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">  
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <link href="content/css/font-awesome/css/font-awesome.css?family=font+awesome" rel="stylesheet" type="text/css">
+    
+    <style>
+.copy-icon {
+  font-size: 24px;
+  cursor: pointer;
+  color: green;
+}
+
+:root {
+  --primary-color: #ffcc00;
+  --accent-color: #00ff99;
+  --text-color: #f8f9fa;
+  --background-overlay: rgba(255, 255, 255, 0.40);
+  --card-bg: rgba(0, 0, 0, 0.75);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  box-sizing: border-box;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("./images/bg3.png") center/cover fixed;
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+.container, main, section {
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* === Stats Panel === */
+.stats-panel {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--text-color);
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  width: auto;
+  max-width: 300px;
+  z-index: 1001;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 10px rgba(0, 255, 153, 0.3);
+  transition: max-height 0.3s ease;
+  overflow: hidden;
+}
+.stats-header {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.stats-body {
+  margin-top: 0.5rem;
+}
+.stats-panel.collapsed .stats-body {
+  display: none;
+}
+.stats-panel.collapsed ..dropdown-icon {
+  transform: rotate(-90deg);
+  transition: transform 0.3s ease;
+}
+.stat {
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+/* === Socials === */
+.social-icons {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.social-icons a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #f8f9fa;
+  font-size: 1.8rem;
+  text-decoration: none;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  outline: none;
+  border: none;
+}
+.social-icons a:hover {
+  transform: scale(1.2);
+  background-color: rgba(255, 204, 0, 0.2);
+  color: var(--primary-color);
+}
+.social-icons a:focus,
+.social-icons a:active {
+  outline: none;
+  border: none;
+}
+.social-icons i {
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* === Banner === */
+.banner {
+  background: linear-gradient(90deg, #ffcc00, #ff6600);
+  color: #000;
+  padding: 12px 0;
+  font-weight: bold;
+  overflow: hidden;
+  text-shadow: 0 0 10px rgba(0,0,0,0.5);
+  z-index: 1002;
+}
+.banner-content {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll 28s linear infinite;
+  font-size: 1.1rem;
+}
+.banner-content:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scroll { 
+  0% { transform: translateX(100%); } 
+  100% { transform: translateX(-100%); } 
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* === Flash animations === */
+.flash-green {
+  animation: flashGreen 0.5s ease;
+}
+.flash-red {
+  animation: flashRed 0.5s ease;
+}
+@keyframes flashGreen {
+  0% { background-color: rgba(0, 255, 0, 0.2); }
+  100% { background-color: transparent; }
+}
+@keyframes flashRed {
+  0% { background-color: rgba(255, 0, 0, 0.2); }
+  100% { background-color: transparent; }
+}
+
+/* === Navbar === */
+.nav-container {
+  background: rgba(0,0,0,0.7);
+  padding: 1rem;
+  text-align: center;
+  border-top: 1px solid #00ff99;
+  border-bottom: 1px solid #00ff99;
+  backdrop-filter: blur(10px);
+}
+.nav-links a {
+  color: #f8f9fa;
+  text-decoration: none;
+  padding: 0.7rem 1.4rem;
+  margin: 0 0.5rem;
+  border-radius: 50px;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+.nav-links a:hover {
+  background: #ffcc00;
+  color: #000;
+  box-shadow: 0 0 15px rgba(255,204,0,0.6);
+}
+
+
+/* === Contact Card === */
+.contact-card {
+  background: rgba(15,15,25,0.95);
+  border: 2px solid #00ff99;
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  margin: 4rem auto;
+  max-width: 1200px;
+  box-shadow: 0 0 50px rgba(0,255,153,0.4);
+  backdrop-filter: blur(15px);
+  position: relative;
+  overflow: hidden;
+}
+.section-header {
+  font-size: 3.2rem;
+  text-align: center;
+  background: linear-gradient(90deg, #ffcc00, #00ff99, #ffcc00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 2.5rem;
+}
+@keyframes pulseTitle {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.contact-wrapper {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.direct-contact-container {
+  flex: 1;
+  min-width: 280px;
+}
+.form-horizontal {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.form-control, textarea {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: white;
+  letter-spacing: 1px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-control::placeholder, textarea::placeholder {
+  color: #ccc;
+}
+.send-button {
+  background: var(--primary-color);
+  color: black;
+  font-weight: bold;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.send-button:hover {
+  transform: scale(1.05);
+  background: #ffe066;
+}
+
+/* === Meme Terminal === */
+.meme-terminal {
+  background: #111;
+  border: 2px solid lime;
+  border-radius: 1rem;
+  padding: 1rem;
+  color: lime;
+  font-family: 'Courier New', monospace;
+  box-shadow: 0 0 10px lime;
+}
+.terminal-header {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.terminal-body {
+  height: 150px;
+  overflow-y: auto;
+  background: #000;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.terminal-input {
+  width: 100%;
+  padding: 0.5rem;
+  background: #222;
+  border: none;
+  color: lime;
+  font-family: inherit;
+  border-radius: 0.5rem;
+}
+
+/* === Contact List === */
+.contact-list {
+  list-style-type: none;
+  margin-left: -30px;
+  padding-right: 20px;
+}
+.list-item {
+  line-height: 4;
+  color: #aaa;
+}
+.contact-text {
+  font: 300 18px 'Lato', sans-serif;
+  letter-spacing: 1.9px;
+  color: #bbb;
+}
+.contact-text a {
+  color: #bbb;
+  text-decoration: none;
+  transition-duration: 0.2s;
+}
+.contact-text a:hover {
+  color: #fff;
+}
+
+/* === Social Media List === */
+.social-media-list {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.social-media-list li {
+  list-style: none;
+}
+.social-media-list a {
+  font-size: 1.5rem;
+  color: white;
+  transition: transform 0.2s ease;
+}
+.social-media-list a:hover {
+  transform: scale(1.2);
+  color: var(--primary-color);
+}
+
+/* === Modal === */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.modal-content {
+  background: rgba(0,0,0,0.9);
+  border: 2px solid var(--primary-color);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 0 20px rgba(255,204,0,0.4);
+  overflow: hidden;
+}
+.crypto-card.green-theme {
+  background: linear-gradient(135deg, rgba(0, 255, 153, 0.2), rgba(0, 0, 0, 0.9));
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.5);
+}
+.crypto-card.green-theme h3 {
+  color: var(--accent-color);
+  text-shadow: 0 0 5px rgba(0, 255, 153, 0.7);
+}
+.crypto-card.green-theme .btn-glow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--accent-color);
+  color: black;
+  border: 2px solid var(--accent-color);
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+}
+.crypto-card.green-theme .btn-glow:hover {
+  background: #33ffad;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+}
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.close-btn:hover {
+  transform: scale(1.2) rotate(90deg);
+}
+
+/* === Auth Tabs === */
+.auth-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.auth-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--accent-color);
+  border-radius: 50%;
+  color: var(--accent-color);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
+}
+.auth-tab:hover {
+  background: #33ffad;
+  color: black;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+}
+.auth-tab.active {
+  background: var(--accent-color);
+  color: black;
+  box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+}
+.auth-content {
+  display: none;
+}
+.auth-content.active {
+  display: block;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-width: 100%;
+}
+.auth-form input {
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--primary-color);
+  background: rgba(255,255,255,0.05);
+  color: white;
+  width: 100%;
+  box-sizing: border-box;
+}
+.auth-form label {
+  color: var(--accent-color);
+}
+
+/* === Auth Buttons (crypto style) === */
+.auth-icon {
+  font-size: 0.9rem;
+  color: var(--primary-color);
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--primary-color);
+  border-radius: 50%;
+  padding: 0.3rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-icon:hover {
+  color: black;
+  background: var(--primary-color);
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.9),
+              0 0 25px rgba(255, 204, 0, 0.7);
+}
+
+/* === Status Bar === */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  margin: 0.5rem 1rem 0 auto;
+  z-index: 2001;
+  overflow: hidden;
+}
+.status-bar i {
+  color: var(--primary-color);
+  margin-right: 0.3rem;
+}
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+#auth-buttons, #user-info {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.portal-icon {
+  font-size: 0.9rem;
+  color: #00ff99;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #00ff99;
+  border-radius: 50%;
+  padding: 0.3rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.portal-icon:hover {
+  color: black;
+  background: #00ff99;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+}
+
+#logoutButton {
+  font-size: 0.9rem;
+  color: #ff0000;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #ff0000;
+  border-radius: 50%;
+  padding: 0.3rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#logoutButton:hover {
+  color: black;
+  background: #ff0000;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.9);
+}
+
+/* === Masthead === */
+.masthead {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+}
+.brand img {
+  width: 70px;
+  border: 3px solid #00ff99;
+  border-radius: 50%;
+  box-shadow: 0 0 25px #00ff99;
+}
+.right-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.social-row {
+  display: flex;
+  gap: 14px;
+}
+.social-row a {
+  color: white;
+  font-size: 1.8rem;
+  margin: 0 12px;
+  transition: all 0.3s;
+}
+.social-row a:hover {
+  color: #ffcc00;
+  transform: translateY(-6px) scale(1.4);
+  text-shadow: 0 0 20px #ffcc00;
+}
+
+/* === Flash animations === */
+.flash-green {
+  animation: flashGreen 0.5s ease;
+}
+.flash-red {
+  animation: flashRed 0.5s ease;
+}
+@keyframes flashGreen {
+  0% { background-color: rgba(0, 255, 0, 0.2); }
+  100% { background-color: transparent; }
+}
+@keyframes flashRed {
+  0% { background-color: rgba(255, 0, 0, 0.2); }
+  100% { background-color: transparent; }
+}
+
+/* === Navbar === */
+.nav-container {
+  background: rgba(0,0,0,0.7);
+  padding: 1rem;
+  text-align: center;
+  border-top: 1px solid #00ff99;
+  border-bottom: 1px solid #00ff99;
+  backdrop-filter: blur(10px);
+}
+.nav-links a {
+  color: #f8f9fa;
+  text-decoration: none;
+  padding: 0.7rem 1.4rem;
+  margin: 0 0.5rem;
+  border-radius: 50px;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+.nav-links a:hover {
+  background: #ffcc00;
+  color: #000;
+  box-shadow: 0 0 15px rgba(255,204,0,0.6);
+}
+
+/* === Card Panels === */
+.card {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 1200px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  color: var(--text-color);
+}
+.card h1, .card h2 {
+  color: var(--primary-color);
+  font-size: 2rem;
+  text-align: center;
+  position: relative;
+  animation: pulseTitle 2s infinite ease-in-out;
+}
+@keyframes pulseTitle {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.card p, .card h4 {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #eee;
+}
+
+/* === Wallet Cards === */
+.wallet-card {
+  background: var(--bg-overlay);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: transform 0.3s ease, background 0.3s ease;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+.wallet-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+}
+.wallet-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+.wallet-icon img {
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* === CTA Button === */
+.cta-button {
+  background: var(--primary-color);
+  color: black;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+  text-align: center;
+  display: inline-block;
+}
+.cta-button:hover {
+  transform: scale(1.05);
+  background: #ffe066;
+}
+
+/* === Grid Container === */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+/* === Modal === */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.modal-content {
+  background: rgba(0,0,0,0.9);
+  border: 2px solid var(--primary-color);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 0 20px rgba(255,204,0,0.4);
+  overflow: hidden;
+}
+.crypto-card.green-theme {
+  background: linear-gradient(135deg, rgba(0, 255, 153, 0.2), rgba(0, 0, 0, 0.9));
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.5);
+}
+.crypto-card.green-theme h3 {
+  color: var(--accent-color);
+  text-shadow: 0 0 5px rgba(0, 255, 153, 0.7);
+}
+.crypto-card.green-theme .btn-glow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--accent-color);
+  color: black;
+  border: 2px solid var(--accent-color);
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+}
+.crypto-card.green-theme .btn-glow:hover {
+  background: #33ffad;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+}
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.close-btn:hover {
+  transform: scale(1.2) rotate(90deg);
+}
+
+/* === Auth Tabs === */
+.auth-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.auth-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--accent-color);
+  border-radius: 50%;
+  color: var(--accent-color);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
+}
+.auth-tab:hover {
+  background: #33ffad;
+  color: black;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+}
+.auth-tab.active {
+  background: var(--accent-color);
+  color: black;
+  box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+}
+.auth-content {
+  display: none;
+}
+.auth-content.active {
+  display: block;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-width: 100%;
+}
+.auth-form input {
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--primary-color);
+  background: rgba(255,255,255,0.05);
+  color: white;
+  width: 100%;
+  box-sizing: border-box;
+}
+.auth-form label {
+  color: var(--accent-color);
+}
+
+/* === Auth Buttons (crypto style) === */
+.auth-icon {
+  font-size: 0.9rem;
+  color: var(--primary-color);
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--primary-color);
+  border-radius: 50%;
+  padding: 0.3rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-icon:hover {
+  color: black;
+  background: var(--primary-color);
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.9),
+              0 0 25px rgba(255, 204, 0, 0.7);
+}
+
+/* === Status Bar === */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  margin: 0.5rem 1rem 0 auto;
+  z-index: 2001;
+  overflow: hidden;
+}
+.status-bar i {
+  color: var(--primary-color);
+  margin-right: 0.3rem;
+}
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+#auth-buttons, #user-info {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.portal-icon {
+  font-size: 0.9rem;
+  color: #00ff99;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #00ff99;
+  border-radius: 50%;
+  padding: 0.3rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.portal-icon:hover {
+  color: black;
+  background: #00ff99;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+}
+
+#logoutButton {
+  font-size: 0.9rem;
+  color: #ff0000;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #ff0000;
+  border-radius: 50%;
+  padding: 0.3rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#logoutButton:hover {
+  color: black;
+  background: #ff0000;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.9);
+}
+
+/* === Masthead === */
+.masthead {
+  position: relative;
+  z-index: 1000;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  overflow: hidden;
+}
+.brand img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.right-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.social-row {
+  display: flex;
+  gap: 14px;
+}
+.social-row a {
+  color: white;
+  font-size: 1.8rem;
+  margin: 0 12px;
+  transition: all 0.3s;
+}
+.social-row a:hover {
+  color: #ffcc00;
+  transform: translateY(-6px) scale(1.4);
+  text-shadow: 0 0 20px #ffcc00;
+}
+
+/* === Crypto Pulse === */
+.flashable {
+  transition: background-color 0.3s ease;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.3rem;
+}
+.flash-green {
+  background-color: rgba(0, 255, 153, 0.3);
+}
+.flash-red {
+  background-color: rgba(255, 0, 0, 0.3);
+}
+
+/* === Utility Dashboard Grid (3×3 Holographic) === */
+
+.utility-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Cards */
+.u-card {
+  background: rgba(0,0,0,0.55);
+  border: 2px solid rgba(0,255,153,0.4);
+  border-radius: 22px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: var(--text-color);
+  box-shadow: 0 0 25px rgba(0,255,153,0.25);
+  position: relative;
+  overflow: hidden;
+  transition: all .3s ease;
+}
+
+/* Hologram Glow */
+.u-card.holo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg,
+    rgba(0,255,153,0.2),
+    rgba(0,0,0,0),
+    rgba(255,204,0,0.1)
+  );
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+.u-card:hover.holo::before {
+  opacity: 1;
+}
+
+/* Hover movement */
+.u-card:hover {
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 0 40px rgba(0,255,153,0.5),
+              0 0 80px rgba(255,204,0,0.5);
+}
+
+/* Icons */
+.u-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--accent-color);
+  text-shadow: 0 0 20px var(--accent-color);
+  transition: transform .3s;
+}
+
+.u-card:hover .u-icon {
+  transform: scale(1.3) rotate(8deg);
+}
+
+/* Pulse effect for center card */
+.center-pulse {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 40px rgba(255,204,0,0.3);
+}
+.pulse {
+  animation: pulseGlow 1.6s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0% { transform: scale(1); text-shadow: 0 0 20px var(--primary-color); }
+  50% { transform: scale(1.25); text-shadow: 0 0 40px var(--primary-color); }
+  100% { transform: scale(1); text-shadow: 0 0 20px var(--primary-color); }
+}
+
+/* Titles */
+.u-card h3 {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  margin: .5rem 0 1rem;
+  letter-spacing: 1px;
+}
+
+/* Paragraphs */
+.u-card p {
+  color: #ccc;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.nav-shield-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px #00ff99);
+  transition: 0.25s ease;
+}
+
+.nav-shield-icon:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 16px #00ffcc);
+}
+
+.nav-shield {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1rem;
+}
+
+/* ==== LIVE SPRAY CAN ICON ==== */
+
+.nav-spray-live {
+  position: relative;
+  animation: sprayPulse 2s infinite ease-in-out;
+  cursor: pointer;
+}
+
+@keyframes sprayPulse {
+  0%   { transform: scale(1); filter: drop-shadow(0 0 8px #00ff99); }
+  50%  { transform: scale(1.15); filter: drop-shadow(0 0 14px #00ffcc); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 8px #00ff99); }
+}
+
+.nav-spray-live:hover {
+  transform: scale(1.25) rotate(-6deg);
+  filter: drop-shadow(0 0 22px #00ffcc);
+}
+	  @keyframes pulseGreen {
+  0%, 100% { box-shadow: 0 0 20px #00ff99; transform: scale(1); }
+  50% { box-shadow: 0 0 35px #00ff99, 0 0 50px rgba(0,255,153,0.6); transform: scale(1.05); }
+}
+    </style>
+  </head>
+  <body>
+<div class="banner">
+  <div class="banner-content">
+    $MT IS LIVE • P2E • NFTs • MINING • REAL UTILITY • $MT IS LIVE • NOT JUST A PUMPFUN • MOON SOON •
+  </div>
+</div>
+
+    <div class="status-bar" id="statusBar">
+      <span id="auth-buttons">
+        <a id="loginBtn" class="auth-icon" onclick="openAuthModal('login')" title="Login">
+          <i class="fas fa-wallet"></i>
+        </a>
+        <a id="registerBtn" class="auth-icon" onclick="openAuthModal('register')" title="Register">
+          <i class="fas fa-user-plus"></i>
+        </a>
+      </span>
+<span id="user-info" style="display: none;">
+  <a id="portalLink" class="auth-icon portal-icon" href="/games/portal.html" title="Back to Portal">
+    <i class="fas fa-home"></i>
+  </a>
+  <span class="status-item"><i class="fas fa-user-circle"></i> User: <span id="status-username">-</span></span>
+  <span class="status-item"><i class="fas fa-clock"></i> Last Login: <span id="status-lastlogin">-</span></span>
+  <span class="status-item"><i class="fas fa-coins"></i> $MT: <span id="status-balance">-</span></span>
+  <a id="logoutButton" class="auth-icon" title="Logout">
+    <i class="fas fa-sign-out-alt"></i>
+  </a>
+</span>
+    </div>
+
+<header class="masthead">
+  <a href="index.html" class="brand">
+    <img src="images/memecoin.gif" alt="MemeTorrent" />
+  </a>
+  <div class="social-row">
+    <a href="https://discord.gg/FxT7q7fpkT" target="_blank"><i class="fab fa-discord"></i></a>
+    <a href="https://twitter.com/MemeTorrent" target="_blank"><i class="fab fa-twitter"></i></a>
+    <a href="https://t.me/MemeTorrentPortal" target="_blank"><i class="fab fa-telegram"></i></a>
+  </div>
+</header>
+
+<nav class="nav-container">
+  <div class="nav-links">
+    <a href="index.html">About</a>
+    <a href="token.html">Tokenomics</a>
+        <a href="safety.html" class="nav-shield">
+  <img src="images/shield.png" alt="MT Shield" class="nav-shield-icon">
+</a>
+    <a href="utility.html">Utility</a>
+<a href="create.html" class="nav-shield">
+  <img src="images/spray.png" alt="MT Spray" class="nav-shield-icon nav-spray-live" id="liveSprayIcon">
+</a>
+    <a href="contact.html">Contact</a>
+  </div></nav>
+      <div class="modal" id="auth-modal">
+        <div class="modal-content crypto-card green-theme">
+          <button class="close-btn" onclick="closeModal()">×</button>
+          <h3 class="animate-charcter">🚀 Enter the MT Eco System</h3>
+          <div class="auth-tabs">
+            <div class="auth-tab active" data-tab="login" onclick="switchAuthTab('login')" title="Login">
+              <i class="fas fa-wallet"></i>
+            </div>
+            <div class="auth-tab" data-tab="register" onclick="switchAuthTab('register')" title="Register">
+              <i class="fas fa-user-plus"></i>
+            </div>
+          </div>
+          <div class="auth-content active" id="login-content">
+            <form class="auth-form">
+              <label>Email:</label>
+              <input type="email" placeholder="you@memetorrent.io" required>
+              <label>Password:</label>
+              <input type="password" placeholder="••••••••" required>
+              <button type="submit" class="btn-glow" title="Login"><i class="fas fa-wallet"></i></button>
+            </form>
+          </div>
+          <div class="auth-content" id="register-content">
+            <form class="auth-form">
+              <label>Username:</label>
+              <input type="text" placeholder="GreenMiner007" required>
+              <label>Email:</label>
+              <input type="email" placeholder="wallet@email.com" required>
+              <label>Password:</label>
+              <input type="password" placeholder="Choose wisely..." required>
+              <button type="submit" class="btn-glow" title="Register"><i class="fas fa-user-plus"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    <center>
+	<br>
+      <h2>	<a href="https://memetorrent.futuret3ch.com.au/whitepaper.pdf" target="_blank" 
+       style="background: #00ff99; color: #000 !important; padding: 0.7rem 1.8rem; border-radius: 50px; 
+              font-weight: 900; box-shadow: 0 0 20px #00ff99; animation: pulseGreen 1.8s infinite;">
+      WHITE PAPER
+    </a></h2>
+    </center>
+
+    <main class="container">
+    <section class="contact-card" style="padding:3.5rem 2rem;">
+
+  <h2 class="section-header">UTILITY CONTROL PANEL</h2>
+
+  <p style="text-align:center;color:#ccc;margin-top:-1rem;margin-bottom:2.5rem;font-size:1.2rem;">
+    Your $MT unlocks the full power of the MemeTorrent ecosystem.
+  </p>
+
+  <div class="utility-grid">
+
+    <!-- CARD 1 -->
+    <div class="u-card holo">
+      <div class="u-icon"><i class="fas fa-link"></i></div>
+      <h3>Token Exclusivity</h3>
+      <p>$MT is the universal key. Every feature, game, marketplace, login & identity runs with $MT.</p>
+    </div>
+
+    <!-- CARD 2 -->
+    <div class="u-card holo">
+      <div class="u-icon"><i class="fas fa-gamepad"></i></div>
+      <h3>P2E Mining</h3>
+      <p>Earn real $MT by gaming, raiding socials, or completing MemeTorrent missions.</p>
+    </div>
+
+    <!-- CARD 3 -->
+    <div class="u-card holo">
+      <div class="u-icon"><i class="fas fa-image"></i></div>
+      <h3>NFT Digital Identity</h3>
+      <p>Burn $MT → Mint your 1/1 NFT identity. Required for premium areas & exclusive utilities.</p>
+    </div>
+
+    <!-- CARD 4 -->
+    <div class="u-card holo">
+      <div class="u-icon"><i class="fas fa-shopping-bag"></i></div>
+      <h3>Physical / Digital Store</h3>
+      <p>Buy hardware, software, tech services, AI tools, dev work — ONLY with $MT.</p>
+    </div>
+
+    <!-- CARD 5 (CENTER — STAR FEATURE) -->
+    <div class="u-card holo center-pulse">
+      <div class="u-icon pulse"><i class="fas fa-bolt"></i></div>
+      <h3>MT-CHAIN (Soon)</h3>
+      <p>Our blockchain is coming. Validators, nodes, staking, governance, gas-less features.</p>
+    </div>
+
+    <!-- CARD 6 -->
+    <div class="u-card holo">
+      <div class="u-icon"><i class="fas fa-chart-line"></i></div>
+      <h3>Weekly Drops</h3>
+      <p>New utilities roll out constantly. New apps, bots, tools, games and protocols.</p>
+    </div>
+
+    <!-- CARD 7 -->
+    <div class="u-card holo">
+      <div class="u-icon"><i class="fas fa-shield-alt"></i></div>
+      <h3>Safety & Security</h3>
+      <p>Anti-rug tech, secure ecosystem, wallet protection, community guardians.</p>
+    </div>
+
+    <!-- CARD 8 -->
+    <div class="u-card holo">
+      <div class="u-icon"><i class="fas fa-rocket"></i></div>
+      <h3>Launchpad Access</h3>
+      <p>Exclusive early access to future tokens, NFTs, dApps & partner projects.</p>
+    </div>
+
+    <!-- CARD 9 -->
+    <div class="u-card holo">
+      <div class="u-icon"><i class="fas fa-coins"></i></div>
+      <h3>Vault & Rewards</h3>
+      <p>Lock $MT → earn yield, XP, badges, NFT rank-ups & weekly reward distributions.</p>
+    </div>
+
+  </div>
+</section>
+
+    </main>
+
+    <script>
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute("href")).scrollIntoView({
+            behavior: "smooth",
+          });
+        });
+      });
+    </script>
+
+    <script>
+      function toggleStats() {
+        const panel = document.getElementById("statsPanel");
+        panel.classList.toggle("collapsed");
+      }
+
+      function copyText() {
+        const textToCopy = document.getElementById('textToCopy').innerText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          alert('Text copied to clipboard!');
+        }).catch(err => {
+          console.error('Failed to copy text: ', err);
+        });
+      }
+    </script>
+
+    <script>
+      const canvas = document.getElementById("cryptoPulse");
+      const ctx = canvas.getContext("2d");
+
+      let x = 0;
+      function drawPulse() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.moveTo(0, 50);
+        for (let i = 0; i < canvas.width; i++) {
+          const y = 50 + Math.sin((i + x) * 0.05) * 20;
+          ctx.lineTo(i, y);
+        }
+        ctx.strokeStyle = "#00ff99";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        x += 2;
+        requestAnimationFrame(drawPulse);
+      }
+
+      drawPulse();
+    </script>
+
+    <script>
+      function openAuthModal(tab = 'login') {
+        document.getElementById("auth-modal").style.display = "flex";
+        switchAuthTab(tab);
+      }
+      function closeModal() {
+        document.getElementById("auth-modal").style.display = "none";
+      }
+      function switchAuthTab(tab) {
+        document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.auth-content').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.auth-tab[data-tab="${tab}"]`).classList.add('active');
+        document.getElementById(`${tab}-content`).classList.add('active');
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const loginForm = document.querySelector('#login-content form');
+        const registerForm = document.querySelector('#register-content form');
+        const loginBtn = document.getElementById("loginBtn");
+        const registerBtn = document.getElementById("registerBtn");
+        const logoutButton = document.getElementById("logoutButton");
+        const statusBar = document.getElementById("statusBar");
+        const authButtons = document.getElementById("auth-buttons");
+        const userInfo = document.getElementById("user-info");
+        const usernameEl = document.getElementById("status-username");
+        const lastLoginEl = document.getElementById("status-lastlogin");
+        const balanceEl = document.getElementById("status-balance");
+
+        if (sessionStorage.getItem("isLoggedIn") === "true") {
+          authButtons.style.display = "none";
+          userInfo.style.display = "flex";
+          statusBar.style.display = "flex";
+          usernameEl.textContent = sessionStorage.getItem("userEmail") || "Guest";
+          lastLoginEl.textContent = localStorage.getItem("lastLogin") || new Date().toLocaleString();
+          balanceEl.textContent = sessionStorage.getItem("mtBalance") || "0.00";
+        } else {
+          authButtons.style.display = "flex";
+          userInfo.style.display = "none";
+          statusBar.style.display = "flex";
+        }
+
+        if (loginForm) {
+          loginForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const email = e.target.querySelector('input[type="email"]').value;
+            const password = e.target.querySelector('input[type="password"]').value;
+            try {
+              const res = await fetch('/games/api/login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+                credentials: 'include'
+              });
+              const data = await res.json();
+              if (data.success) {
+                alert('✅ Login successful!');
+                sessionStorage.setItem('isLoggedIn', 'true');
+                sessionStorage.setItem('userEmail', email);
+                localStorage.setItem("lastLogin", new Date().toLocaleString());
+                sessionStorage.setItem("mtBalance", data.balance || "0.00");
+
+                authButtons.style.display = "none";
+                userInfo.style.display = "flex";
+                statusBar.style.display = "flex";
+                usernameEl.textContent = email;
+                lastLoginEl.textContent = new Date().toLocaleString();
+                balanceEl.textContent = data.balance || "0.00";
+
+                closeModal();
+                window.location.href = '/games/portal.html';
+              } else {
+                alert('❌ ' + (data.message || 'Login failed'));
+              }
+            } catch (err) {
+              alert('❌ Error: ' + err.message);
+            }
+          });
+        }
+
+        if (registerForm) {
+          registerForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const username = e.target.querySelector('input[type="text"]').value;
+            const email = e.target.querySelector('input[type="email"]').value;
+            const password = e.target.querySelector('input[type="password"]').value;
+            try {
+              const res = await fetch('/games/api/register.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password }),
+                credentials: 'include'
+              });
+              const data = await res.json();
+              if (data.success) {
+                alert('✅ Registration successful! Please login.');
+                switchAuthTab('login');
+              } else {
+                alert('❌ ' + (data.message || 'Registration failed'));
+              }
+            } catch (err) {
+              alert('❌ Error: ' + err.message);
+            }
+          });
+        }
+
+        if (logoutButton) {
+          logoutButton.addEventListener("click", async () => {
+            try {
+              const res = await fetch("/games/api/logout.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include"
+              });
+              const data = await res.json();
+              if (data.success) {
+                localStorage.clear();
+                sessionStorage.clear();
+                authButtons.style.display = "flex";
+                userInfo.style.display = "none";
+                statusBar.style.display = "flex";
+                console.log("✅ Logout successful → back to home");
+                window.location.href = "/";
+              } else {
+                alert("❌ Logout failed: " + data.error);
+              }
+            } catch (err) {
+              alert("❌ Logout failed: " + err.message);
+            }
+          });
+        }
+      });
+    </script>
+	<script>
+  let isLoadingModule = false;
+  document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+      if (href && href !== '#' && !href.startsWith('http')) {
+        e.preventDefault();
+        if (isLoadingModule) return;
+        isLoadingModule = true;
+        console.log(`Navigating to: ${href}`);
+        window.location.href = href;
+        isLoadingModule = false;
+      }
+    });
+  });
+</script>
+  </body>
+  <footer>
+    <center><a href="#" onclick="window.open('https://www.sitelock.com/verify.php?site=memetorrent.futuret3ch.com.au','SiteLock','width=600,height=600,left=160,top=170');" ><img class="img-fluid" alt="SiteLock" title="SiteLock" src="https://shield.sitelock.com/shield/memetorrent.futuret3ch.com.au" /></a><br><b><a href="https://futuret3ch.com.au" target="_blank" style="color: white"> FUTURET3CH 2024 - 2026 </a></b></center>
+    </script>
+  </footer>
+</html>

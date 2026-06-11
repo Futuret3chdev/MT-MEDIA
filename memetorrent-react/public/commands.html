@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Center</title>
+    <script>
+        function waitForTelegramWebApp(callback) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                console.log("Telegram.WebApp is available");
+                callback(window.Telegram.WebApp);
+            } else {
+                console.log("Waiting for Telegram.WebApp...");
+                setTimeout(() => waitForTelegramWebApp(callback), 100);
+            }
+        }
+
+        waitForTelegramWebApp((webApp) => {
+            webApp.ready();
+            console.log("WebApp ready");
+            window.webApp = webApp;
+        });
+
+        function sendCommand(command) {
+            console.log("Attempting to send command:", command);
+            if (window.webApp) {
+                console.log("Using Telegram.WebApp.sendData with:", command);
+                window.webApp.sendData(command);
+                console.log("Data sent, closing Web App");
+                window.webApp.close();
+            } else {
+                console.error("Telegram.WebApp not available, falling back to deep link");
+                const deepLink = `https://t.me/mod_Futuret3ch_bot?start=${encodeURIComponent(command)}`;
+                console.log("Deep link:", deepLink);
+                window.location.href = deepLink;
+            }
+        }
+    </script>
+    <style>
+        /* Existing styles unchanged */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            color: #555;
+            margin-top: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 10px;
+            background-color: #f9f9f9;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        li:hover {
+            background-color: #e0e0e0;
+        }
+        .emoji {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        .command {
+            font-weight: bold;
+            color: #007bff;
+            margin-right: 10px;
+        }
+        .description {
+            color: #666;
+        }
+        .admin-note {
+            color: #888;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Command Center 🌟</h1>
+        <p style="text-align: center;">✨ Your Ultimate Shortcut Hub! ✨</p>
+
+        <!-- New Support Section with /reportbug at the top -->
+        <h2>🔹 Support</h2>
+        <ul>
+            <li onclick="sendCommand('reportbug')"><span class="emoji">🐞</span> <span class="command">/reportbug</span> - <span class="description">Report a Bug</span></li>
+        </ul>
+
+        <h2>🔹 MemeTorrent Essentials</h2>
+        <ul>
+            <li onclick="sendCommand('mt')"><span class="emoji">📲</span> <span class="command">/mt</span> - <span class="description">Visit MemeTorrent Website</span></li>
+            <li onclick="sendCommand('token')"><span class="emoji">💰</span> <span class="command">/token</span> - <span class="description">Real-Time DEX Data</span></li>
+            <li onclick="sendCommand('topholders')"><span class="emoji">🏆</span> <span class="command">/topholders</span> - <span class="description">Top 10 Token Holders</span></li>
+            <li onclick="sendCommand('futuret3ch')"><span class="emoji">🚀</span> <span class="command">/futuret3ch</span> - <span class="description">Futuret3ch Website</span></li>
+            <li onclick="sendCommand('ca')"><span class="emoji">🔗</span> <span class="command">/ca</span> - <span class="description">Contract Address</span></li>
+            <li onclick="sendCommand('tg')"><span class="emoji">📡</span> <span class="command">/tg</span> - <span class="description">MemeTorrent Telegram Portal</span></li>
+            <li onclick="sendCommand('whitepaper')"><span class="emoji">📜</span> <span class="command">/whitepaper</span> - <span class="description">Official Whitepaper</span></li>
+            <li onclick="sendCommand('website')"><span class="emoji">🌐</span> <span class="command">/website</span> - <span class="description">MemeTorrent Homepage</span></li>
+            <li onclick="sendCommand('x')"><span class="emoji">🐦</span> <span class="command">/x or /twitter</span> - <span class="description">Follow on X</span></li>
+            <li onclick="sendCommand('updates')"><span class="emoji">🔔</span> <span class="command">/updates</span> - <span class="description">Latest Bot Updates</span></li>
+            <li onclick="sendCommand('dev')"><span class="emoji">📢</span> <span class="command">/dev</span> - <span class="description">Upcoming Features</span></li>
+            <li onclick="sendCommand('help')"><span class="emoji">⚠️</span> <span class="command">/help</span> - <span class="description">Avoid Scams & Stay Safe</span></li>
+        </ul>
+
+        <h2>🔹 User Tools</h2>
+        <ul>
+            <li onclick="sendCommand('chat')"><span class="emoji">💬</span> <span class="command">/chat</span> - <span class="description">Ask InnoBot Anything</span></li>
+            <li onclick="sendCommand('balance')"><span class="emoji">💰</span> <span class="command">/balance</span> - <span class="description">Check Token Balance</span></li>
+            <li onclick="sendCommand('profile')"><span class="emoji">👤</span> <span class="command">/profile</span> - <span class="description">View Your Profile</span></li>
+            <li onclick="sendCommand('setwallet')"><span class="emoji">💼</span> <span class="command">/setwallet</span> - <span class="description">Link Your Solana Wallet</span></li>
+            <li onclick="sendCommand('rewards')"><span class="emoji">🏆</span> <span class="command">/rewards</span> - <span class="description">Check Your Points</span></li>
+            <li onclick="sendCommand('mc')"><span class="emoji">📊</span> <span class="command">/mc</span> - <span class="description">Group Message Stats</span></li>
+            <li onclick="sendCommand('feedback')"><span class="emoji">📝</span> <span class="command">/feedback</span> - <span class="description">Submit Feedback</span></li>
+        </ul>
+
+        <h2>🔹 Games</h2>
+        <ul>
+            <li onclick="sendCommand('gengine')"><span class="emoji">🎮</span> <span class="command">/gengine</span> - <span class="description">Gaming Engines (WIP)</span></li>
+            <li onclick="sendCommand('games')"><span class="emoji">🕹️</span> <span class="command">/games</span> - <span class="description">Games Network</span></li>
+            <li onclick="sendCommand('silk')"><span class="emoji">🕸️</span> <span class="command">/silk</span> - <span class="description">Play SILK</span></li>
+            <li onclick="sendCommand('nwc')"><span class="emoji">🌌</span> <span class="command">/nwc</span> - <span class="description">Play NWC</span></li>
+            <li onclick="sendCommand('tap')"><span class="emoji">👆</span> <span class="command">/tap</span> - <span class="description">Play TAP</span></li>
+            <li onclick="sendCommand('pacman')"><span class="emoji">🍽️</span> <span class="command">/pacman</span> - <span class="description">Play PACMAN</span></li>
+            <li onclick="sendCommand('tetrismob')"><span class="emoji">📱</span> <span class="command">/tetrismob</span> - <span class="description">Play Tetris Mobile</span></li>
+            <li onclick="sendCommand('racer')"><span class="emoji">🏎️</span> <span class="command">/racer</span> - <span class="description">Play Racer</span></li>
+            <li onclick="sendCommand('tetris')"><span class="emoji">🧱</span> <span class="command">/tetris</span> - <span class="description">Play Tetris PC</span></li>
+        </ul>
+
+        <h2>🔹 Admin Commands</h2>
+        <p class="admin-note">Note: These commands are available only to group administrators.</p>
+        <ul>
+            <li onclick="sendCommand('togglerestrictions')"><span class="emoji">🔄</span> <span class="command">/togglerestrictions</span> - <span class="description">Enable/Disable Restrictions</span></li>
+            <li onclick="sendCommand('fetchmessages')"><span class="emoji">🔍</span> <span class="command">/fetchmessages</span> - <span class="description">Manually Fetch Messages</span></li>
+            <li onclick="sendCommand('updatepoints')"><span class="emoji">🏆</span> <span class="command">/updatepoints</span> - <span class="description">Update User Points</span></li>
+            <li onclick="sendCommand('poll')"><span class="emoji">📊</span> <span class="command">/poll</span> - <span class="description">Create a Poll</span></li>
+        </ul>
+
+        <div class="footer">
+            Power up your experience! 🚀
+        </div>
+    </div>
+</body>
+</html>

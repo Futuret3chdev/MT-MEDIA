@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User List - MemeTorrent</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        function App() {
+            const [users, setUsers] = React.useState([]);
+            const [error, setError] = React.useState(null);
+            const [loading, setLoading] = React.useState(true);
+            const [userId, setUserId] = React.useState(null);
+
+            React.useEffect(() => {
+                const telegram = window.Telegram.WebApp;
+                telegram.ready();
+                setUserId(telegram.initDataUnsafe.user.id);
+
+                axios.get('https://api.memetorrent.futuret3ch.com.au/users', {
+                    headers: { 'X-Telegram-User-ID': telegram.initDataUnsafe.user.id }
+                })
+                .then(response => {
+                    setUsers(response.data.users);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    setError('Failed to load users: ' + err.message);
+                    setLoading(false);
+                });
+            }, []);
+
+            const toggleRestriction = (targetUserId, username, isRestricted) => {
+                axios.post('https://api.memetorrent.futuret3ch.com.au/toggle_restriction', {
+                    user_id: userId,
+                    target_user_id: targetUserId,
+                    chat_id: -1002403282101
+                }, {
+                    headers: { 'X-Telegram-User-ID': userId }
+                })
+                .then(response => {
+                    setUsers(users.map(user =>
+                        user.id === targetUserId ? { ...user, is_restricted: !isRestricted } : user
+                    ));
+                    Telegram.WebApp.showAlert(`User @${username} ${isRestricted ? 'unrestricted' : 'restricted'} successfully.`);
+                })
+                .catch(err => {
+                    Telegram.WebApp.showAlert('Error: ' + err.response?.data?.error || err.message);
+                });
+            };
+
+            if (loading) return <div className="text-center mt-10">Loading...</div>;
+            if (error) return <div className="text-center mt-10 text-red-500">{error}</div>;
+
+            return (
+                <div className="container mx-auto p-4">
+                    <h1 className="text-2xl font-bold mb-4">User List - MemeTorrent</h1>
+                    <div className="border border-gray-300 rounded-lg">
+                        {users.map(user => (
+                            <div key={user.id} className="border-b last:border-b-0 p-4 flex justify-between items-center">
+                                <div>
+                                    <span className="font-semibold">@{user.username || `User_${user.id}`}</span>
+                                    <span className="ml-2 text-gray-600">(ID: {user.id})</span>
+                                    <span className="ml-2 text-sm">{user.is_restricted ? 'Restricted' : 'Unrestricted'}</span>
+                                </div>
+                                <button
+                                    className={`px-4 py-2 rounded ${user.is_restricted ? 'bg-green-500' : 'bg-red-500'} text-white`}
+                                    onClick={() => toggleRestriction(user.id, user.username, user.is_restricted)}
+                                >
+                                    {user.is_restricted ? 'Unrestrict' : 'Restrict'}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

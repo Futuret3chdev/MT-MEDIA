@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FUTURET3CH | MEMETORRENT GAMES</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Rajdhani:wght@600;700&family=Orbitron:wght@700&family=Press+Start+2P&family=Roboto:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1: #15171b;
+      --bg2: #202329;
+      --card: #242730;
+      --muted: #9aa3b2;
+      --text: #eef1f7;
+      --accent: #4cc2ff;
+      --accent-2: #ff9f43;
+      --success: #2dd4bf;
+      --danger: #ff6b6b;
+      --border: #2d3340;
+      --shadow: 0 10px 25px rgba(0,0,0,0.35);
+      --radius: 14px;
+      --primary-cyan: #00FFCC;
+      --primary-pink: #FF007A;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(1200px 800px at 20% -10%, #1e222b 0%, #14161a 60%), linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      position: relative;
+    }
+    #particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      flex-direction: column;
+      animation: fadeOut 1s forwards 2s;
+    }
+    #loading-text {
+      font-family: 'Press Start 2P', cursive;
+      color: var(--accent);
+      font-size: 2rem;
+      text-shadow: 0 0 10px var(--accent);
+      animation: blink 0.5s infinite;
+    }
+    #loading-bar {
+      width: 200px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid var(--accent-2);
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    #loading-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      animation: load 2s linear forwards;
+    }
+    @keyframes load { 0% { width: 0; } 100% { width: 100%; } }
+    @keyframes blink { 50% { opacity: 0.5; } }
+    @keyframes fadeOut { 100% { opacity: 0; display: none; } }
+    .p2e-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(90deg, var(--accent-2), #ffd166);
+      color: #0f1216;
+      font-weight: 800;
+      padding: 10px 14px;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      box-shadow: var(--shadow);
+    }
+    .nav-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      box-shadow: var(--shadow);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #7be3ff);
+      box-shadow: 0 0 0 3px rgba(76, 194, 255, 0.2);
+    }
+    .brand h1 {
+      margin: 0;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      font-size: 22px;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-family: 'Orbitron', sans-serif;
+      padding: 0.5rem;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+    }
+    .nav-links a:hover {
+      color: var(--accent);
+      text-shadow: 0 0 5px var(--accent);
+    }
+    .social-icons a {
+      color: var(--text);
+      font-size: 1.5rem;
+      margin-left: 1rem;
+      transition: all 0.3s ease;
+    }
+    .social-icons a:hover {
+      color: var(--accent-2);
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn:hover {
+      border-color: #3a4252;
+      transform: translateY(-1px);
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #7be3ff);
+      color: #081017;
+      border: none;
+    }
+    .btn.primary:hover {
+      filter: brightness(1.03);
+    }
+    .btn.success {
+      background: linear-gradient(135deg, var(--success), #6cf3e2);
+      color: #071614;
+      border: none;
+    }
+    .sound-toggle {
+      position: fixed;
+      top: 10px;
+      right: 60px;
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1002;
+      box-shadow: var(--shadow);
+      transition: background 0.3s ease;
+    }
+    .sound-toggle.muted {
+      background: var(--accent-2);
+    }
+    .sound-toggle i {
+      color: #fff;
+      font-size: 1.2rem;
+    }
+    .login-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(45deg, var(--accent), var(--accent-2));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1002;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+    .login-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px var(--accent), 0 0 25px var(--accent-2);
+    }
+    .login-toggle i {
+      color: #fff;
+      font-size: 1.2rem;
+    }
+    .login-toggle::before {
+      content: var(--tooltip-content, 'Login/Register');
+      position: absolute;
+      top: 50px;
+      right: 0;
+      background: rgba(0, 0, 0, 0.9);
+      color: var(--accent);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 5px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .login-toggle:hover::before {
+      opacity: 1;
+    }
+    .earnings {
+      max-width: 1200px;
+      margin: 6px auto 0;
+      padding: 0 16px 6px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .earn-chip {
+      background: rgba(76, 194, 255, 0.12);
+      border: 1px solid rgba(76, 194, 255, 0.25);
+      color: #cfeeff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .info-chip {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .section {
+      max-width: 1200px;
+      margin: 10px auto;
+      padding: 0 16px;
+    }
+    .section h3 {
+      margin: 10px 0 14px;
+      font-size: 18px;
+      letter-spacing: 0.3px;
+      font-weight: 800;
+      color: #f6f8fc;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @media (min-width: 720px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (min-width: 1024px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      min-height: 220px;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      border-color: #3a4252;
+    }
+    .thumb {
+      position: relative;
+      height: 140px;
+      background: #0f1216;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: contrast(1.05);
+      transition: transform 0.3s ease;
+    }
+    .card:hover .thumb img {
+      transform: scale(1.05);
+    }
+    .p2e-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: linear-gradient(135deg, #ffd166, var(--accent-2));
+      color: #111;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 12px;
+      box-shadow: 0 4px 12px rgba(255, 159, 67, 0.35);
+    }
+    .coming {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .body {
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .title {
+      font-weight: 800;
+      font-size: 15px;
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .actions {
+      margin-top: 8px;
+    }
+    .play {
+      width: 100%;
+    }
+    .play a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .tab {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      transition: 0.15s;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent), #7be3ff);
+      color: #081017;
+      border: none;
+    }
+    .panel {
+      display: none;
+      margin-top: 12px;
+    }
+    .panel.active {
+      display: block;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+    thead th {
+      color: #c8d0df;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 0 10px;
+      font-family: 'Orbitron', sans-serif;
+    }
+    tbody tr {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+    }
+    tbody td {
+      padding: 12px 10px;
+      font-size: 14px;
+    }
+    tbody tr:hover {
+      background: rgba(124, 178, 255, 0.06);
+    }
+    .iframe-wrap {
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      background: var(--card);
+    }
+    iframe {
+      width: 100%;
+      height: 430px;
+      border: 0;
+      display: block;
+    }
+    .racer-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .racer-filters select {
+      padding: 0.5rem;
+      background: rgba(76, 194, 255, 0.2);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .racer-filters select:hover {
+      background: var(--accent-2);
+      color: #000;
+      box-shadow: 0 0 10px var(--accent-2);
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1003;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .submit-form, .login-form, .register-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .submit-form label, .login-form label, .register-form label {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--text);
+      font-size: 1rem;
+    }
+    .submit-form input, .submit-form textarea, .submit-form select,
+    .login-form input, .register-form input {
+      padding: 0.6rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--accent);
+      border-radius: 5px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .submit-form input:focus, .submit-form textarea:focus, .submit-form select:focus,
+    .login-form input:focus, .register-form input:focus {
+      outline: none;
+      border-color: var(--accent-2);
+      box-shadow: 0 0 10px var(--accent-2);
+    }
+    .submit-form input::placeholder, .login-form input::placeholder, .register-form input::placeholder {
+      color: var(--accent);
+      opacity: 0.7;
+    }
+    .submit-form textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 80px;
+      height: 40px;
+      background: var(--accent-2);
+      border: none;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px var(--accent-2);
+    }
+    .close-btn:hover {
+      background: var(--accent);
+      color: #000;
+      box-shadow: 0 0 10px var(--accent);
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .auth-tab {
+      padding: 0.5rem 1rem;
+      background: rgba(76, 194, 255, 0.2);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .auth-tab:hover, .auth-tab.active {
+      background: var(--accent-2);
+      color: #000;
+      box-shadow: 0 0 10px var(--accent-2);
+    }
+    .auth-content {
+      display: none;
+    }
+    .auth-content.active {
+      display: block;
+    }
+    .error-message {
+      color: var(--danger);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      display: none;
+    }
+    .animate-charcter {
+      font-family: 'Press Start 2P', cursive;
+      text-transform: uppercase;
+      font-size: 1.5rem;
+      color: var(--accent);
+      text-shadow: 0 0 10px var(--accent);
+      margin-bottom: 1rem;
+    }
+    .tag {
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: #d9e2f1;
+    }
+    .virtual-pets-section, .submit-section {
+      display: none;
+    }
+    footer {
+      padding: 1rem;
+      background: var(--bg1);
+      text-align: center;
+      box-shadow: 0 -2px 10px rgba(76, 194, 255, 0.3);
+    }
+    footer a {
+      color: var(--accent);
+      font-family: 'Orbitron', sans-serif;
+      text-decoration: none;
+    }
+    footer a:hover {
+      color: var(--accent-2);
+    }
+    @media (max-width: 768px) {
+      .nav-container {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem;
+      }
+      .nav-links {
+        flex-direction: column;
+        text-align: center;
+      }
+      .social-icons a {
+        font-size: 1.2rem;
+      }
+      .sound-toggle, .login-toggle {
+        top: 5px;
+        width: 30px;
+        height: 30px;
+      }
+      .sound-toggle {
+        right: 45px;
+      }
+      .login-toggle {
+        right: 5px;
+      }
+      .sound-toggle i, .login-toggle i {
+        font-size: 1rem;
+      }
+      .login-toggle::before {
+        font-size: 0.7rem;
+        top: 40px;
+      }
+      .modal-content {
+        padding: 1rem;
+        width: 85%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .submit-form, .login-form, .register-form {
+        gap: 0.5rem;
+      }
+      .submit-form label, .login-form label, .register-form label {
+        font-size: 0.9rem;
+      }
+      .submit-form input, .submit-form textarea, .submit-form select,
+      .login-form input, .register-form input {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+      }
+      .submit-form textarea {
+        min-height: 60px;
+      }
+      .close-btn {
+        top: 8px;
+        right: 8px;
+        width: 70px;
+        height: 35px;
+        font-size: 0.9rem;
+      }
+      .auth-tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .auth-tab {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+      }
+      .racer-filters select {
+        width: 100%;
+        max-width: 150px;
+        font-size: 0.8rem;
+      }
+      .animate-charcter {
+        font-size: 1.2rem;
+      }
+      .iframe-wrap {
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-screen">
+    <div id="loading-text">Loading...</div>
+    <div id="loading-bar"></div>
+  </div>
+  <canvas id="particles"></canvas>
+  <div class="p2e-banner">
+    🚀 Play-to-Earn coming soon — Grind games, earn $MT, climb the leaderboards.
+  </div>
+  <header class="nav-container">
+    <div class="brand">
+      <a href="../index.html"><div class="brand-mark"></div></a>
+      <div>
+        <h1>FUTURET3CH | MemeTorrent Arcade</h1>
+        <div class="sub">Play. Compete. Earn $MT.</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="../index.html">About</a>
+      <a href="../token.html">Tokenomics</a>
+      <a href="../safety.html">Safety</a>
+      <a href="../utility.html">Utility</a>
+      <a href="../update.html">Updates</a>
+      <a href="/games">Portal</a>
+      <a href="../contact.html">Contact</a>
+    </div>
+    <div class="social-icons">
+      <a href="https://twitter.com/MemeTorrent" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+      <a href="https://t.me/MemeTorrentPortal" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
+    </div>
+  </header>
+  <div class="sound-toggle" onclick="toggleSound()"><i class="fas fa-volume-up"></i></div>
+  <div class="login-toggle" onclick="openAuthModal()"><i class="fas fa-user"></i></div>
+  <div class="earnings">
+    <div class="earn-chip">My Earnings: 0.00 $MT</div>
+    <div class="earn-chip">Next $MT payout in: <span id="countdown">--:--:--</span></div>
+    <div class="info-chip">Wallet status: Not connected</div>
+  </div>
+  <main class="section">
+    <h3>Daily Missions</h3>
+    <ul style="list-style:none;padding-left:0;font-size:14px;color:#cfeeff">
+      <li>🏁 Complete 3 races in Racer</li>
+      <li>🧩 Stack 500 blocks in Tetris</li>
+      <li>🍉 Slice 50 fruits in Fruit Ninja</li>
+    </ul>
+    <div class="tabs">
+      <button class="tab active" data-panel="games">Games</button>
+      <button class="tab" data-panel="virtual-pets">Virtual Pets</button>
+      <button class="tab" data-panel="scoreboards">Leaderboards</button>
+      <button class="tab" data-panel="submit">Submit</button>
+      <button class="tab" data-panel="software">Software</button>
+    </div>
+    <div class="panel active" id="panel-games">
+      <h3 class="animate-charcter">Featured Games</h3>
+      <div class="grid">
+        <article class="card" data-category="pc">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="racer.jpg" alt="Racer">
+            <span class="coming">Beta 6.0</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 1: Racer</h4>
+            <div class="meta">
+              <span class="tag">Arcade</span><span class="tag">Racing</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/racer">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+        <article class="card" data-category="pc">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="tetris.jpg" alt="Tetris">
+            <span class="coming">Beta 1.0</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 2: Tetris</h4>
+            <div class="meta">
+              <span class="tag">Puzzle</span><span class="tag">Classic</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/2">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="mobiletet.jpg" alt="Tetris Mobile">
+            <span class="coming">Beta 3.7</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 3: Tetris Mobile</h4>
+            <div class="meta">
+              <span class="tag">Puzzle</span><span class="tag">Mobile</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetetris.netlify.app/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="cookie.gif" alt="Pac-Man">
+            <span class="coming">v1.3.4</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 4: Pac-Man</h4>
+            <div class="meta">
+              <span class="tag">Arcade</span><span class="tag">Retro</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/1/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="taptap.jpg" alt="Tap-Tap-Tap">
+            <span class="coming">v2.0.3</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 5: Tap-Tap-Tap</h4>
+            <div class="meta">
+              <span class="tag">Casual</span><span class="tag">Clicker</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/tap/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="fruitninja.jpg" alt="Fruit Ninja">
+            <span class="coming">v1.1</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 6: Fruit Ninja</h4>
+            <div class="meta">
+              <span class="tag">Arcade</span><span class="tag">Action</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/fruitninja/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="dash.jpg" alt="Doodle Dash">
+            <span class="coming">v1.0</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 7: Doodle Dash</h4>
+            <div class="meta">
+              <span class="tag">Runner</span><span class="tag">Arcade</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/dash/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="chicken.jpg" alt="Chicken">
+            <span class="coming">v1.0</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 8: Chicken</h4>
+            <div class="meta">
+              <span class="tag">Arcade</span><span class="tag">Casual</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/chicken/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+        <article class="card" data-category="software">
+          <div class="thumb">
+            <span class="p2e-badge">Utility</span>
+            <img src="zip.jpg" alt="Zip">
+            <span class="coming">v1.0</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Software 1: Zip</h4>
+            <div class="meta">
+              <span class="tag">Utility</span><span class="tag">Software</span>
+            </div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/software/zip/">Run Now</a></button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="panel virtual-pets-section" id="panel-virtual-pets">
+      <h3 class="animate-charcter">Virtual Pets</h3>
+      <div class="iframe-wrap">
+        <iframe src=""></iframe>
+      </div>
+    </div>
+    <div class="panel scoreboards-section" id="panel-scoreboards">
+      <h3 class="animate-charcter">Game Scoreboards</h3>
+      <div class="tabs">
+        <button class="tab active" data-panel="racer">Racer</button>
+        <button class="tab" data-panel="tap">Tap-Tap-Tap</button>
+        <button class="tab" data-panel="tetris">Tetris</button>
+        <button class="tab" data-panel="pacman">Pac-Man</button>
+        <button class="tab" data-panel="fruitninja">Fruit Ninja</button>
+        <button class="tab" data-panel="dash">Doodle Dash</button>
+        <button class="tab" data-panel="chicken">Chicken</button>
+      </div>
+      <div class="panel active" id="panel-racer">
+        <div class="racer-filters">
+          <select id="racer-mode">
+            <option value="race">Race Mode</option>
+            <option value="time_attack">Time Attack</option>
+          </select>
+          <select id="racer-track">
+            <option value="0">Forest Loop</option>
+            <option value="1">Mountain Pass</option>
+          </select>
+          <select id="racer-difficulty">
+            <option value="0">Easy</option>
+            <option value="1">Medium</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Player</th><th>Time (s)</th></tr>
+          </thead>
+          <tbody id="racer-scores">
+            <tr><td colspan="3" style="color:var(--muted)">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel" id="panel-tap">
+        <table>
+          <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+          <tbody><tr><td colspan="3" style="color:var(--muted)">Score tracking not yet implemented.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel" id="panel-tetris">
+        <table>
+          <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+          <tbody><tr><td colspan="3" style="color:var(--muted)">Score tracking not yet implemented.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel" id="panel-pacman">
+        <table>
+          <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+          <tbody><tr><td colspan="3" style="color:var(--muted)">Score tracking not yet implemented.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel" id="panel-fruitninja">
+        <table>
+          <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+          <tbody><tr><td colspan="3" style="color:var(--muted)">Score tracking not yet implemented.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel" id="panel-dash">
+        <table>
+          <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+          <tbody><tr><td colspan="3" style="color:var(--muted)">Score tracking not yet implemented.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel" id="panel-chicken">
+        <table>
+          <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+          <tbody><tr><td colspan="3" style="color:var(--muted)">Score tracking not yet implemented.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel submit-section" id="panel-submit">
+      <div class="modal" id="submit-modal" style="display: block;">
+        <div class="modal-content">
+          <button class="close-btn" onclick="closeModal('submit-modal')">CLOSE</button>
+          <h3 class="animate-charcter">Submit Your Work</h3>
+          <form class="submit-form" id="submit-form" action="submit.php" method="POST" enctype="multipart/form-data">
+            <label for="email">Your Email:</label>
+            <input type="email" id="email" name="email" placeholder="Enter the meme-verse" required>
+            <label for="handle">Telegram or Twitter Handle:</label>
+            <input type="text" id="handle" name="handle" placeholder="@username" required>
+            <label for="type">Submission Type:</label>
+            <select id="type" name="type" required>
+              <option value="" disabled selected>Select type</option>
+              <option value="Artwork">Artwork</option>
+              <option value="Games">Games</option>
+            </select>
+            <label for="title">Submission Title:</label>
+            <input type="text" id="title" name="title" placeholder="e.g., My Awesome Game" required>
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" placeholder="Tell us about your submission..." required></textarea>
+            <label for="file">Upload File:</label>
+            <input type="file" id="file" name="file" accept=".jpg,.png,.gif,.mp3,.mp4,.zip">
+            <button type="submit" class="btn success">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="panel-software">
+      <h3 class="animate-charcter">Software</h3>
+      <div class="grid" id="software-grid"></div>
+    </div>
+  </main>
+  <div class="modal" id="auth-modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal('auth-modal')">CLOSE</button>
+      <h3 class="animate-charcter">Enter the Meme-Verse</h3>
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Login</div>
+        <div class="auth-tab" data-tab="register">Register</div>
+      </div>
+      <div class="auth-content active" id="login-content">
+        <form class="login-form" id="login-form">
+          <label for="login-email">Email:</label>
+          <input type="email" id="login-email" name="email" placeholder="Enter the meme-verse" required>
+          <span class="error-message" id="login-email-error">Please enter a valid email</span>
+          <label for="login-password">Password:</label>
+          <input type="password" id="login-password" name="password" placeholder="Password to the MOON" autocomplete="current-password" required>
+          <span class="error-message" id="login-password-error">Password must be at least 6 characters</span>
+          <button type="submit" class="btn success">Login</button>
+          <span class="error-message" id="login-error"></span>
+        </form>
+      </div>
+      <div class="auth-content" id="register-content">
+        <form class="register-form" id="register-form">
+          <label for="register-username">Username:</label>
+          <input type="text" id="register-username" name="username" placeholder="Choose your meme name" required>
+          <span class="error-message" id="register-username-error">Username must be at least 3 characters</span>
+          <label for="register-email">Email:</label>
+          <input type="email" id="register-email" name="email" placeholder="Enter the meme-verse" required>
+          <span class="error-message" id="register-email-error">Please enter a valid email</span>
+          <label for="register-password">Password:</label>
+          <input type="password" id="register-password" name="password" placeholder="Password to the MOON" autocomplete="new-password" required>
+          <span class="error-message" id="register-password-error">Password must be at least 6 characters</span>
+          <button type="submit" class="btn success">Register</button>
+          <span class="error-message" id="register-error"></span>
+        </form>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <b><a href="https://futuret3ch.com.au" target="_blank">FUTURET3CH 2025</a></b>
+  </footer>
+  <script>
+    "use strict";
+    let isMuted = false;
+    let bgMusicPlayed = false;
+    const bgMusic = new Audio('/games/assets/edm.mp3');
+    bgMusic.volume = 0.2;
+    bgMusic.loop = true;
+    const clickSound = new Audio('/games/assets/click.mp3');
+    clickSound.volume = 0.5;
+    function playBGMusic() {
+      if (!bgMusicPlayed) {
+        bgMusic.play().catch(err => console.error("Audio play failed:", err));
+        bgMusicPlayed = true;
+      }
+    }
+    document.addEventListener('click', playBGMusic);
+    function toggleSound() {
+      const toggleBtn = document.querySelector('.sound-toggle');
+      if (!toggleBtn) return;
+      if (isMuted) {
+        bgMusic.play().catch(err => console.error("Audio play failed:", err));
+        toggleBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        toggleBtn.classList.remove('muted');
+      } else {
+        bgMusic.pause();
+        toggleBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        toggleBtn.classList.add('muted');
+      }
+      isMuted = !isMuted;
+    }
+	
+	
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.style.display = 'none';
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p?.classList.remove('active'));
+      document.querySelector('.tab[data-panel="games"]').classList.add('active');
+      document.getElementById('panel-games').classList.add('active');
+    }
+    function openAuthModal() {
+      const authModal = document.getElementById('auth-modal');
+      if (authModal) authModal.style.display = 'flex';
+      const submitModal = document.getElementById('submit-modal');
+      if (submitModal) submitModal.style.display = 'none';
+    }
+    window.onclick = function(event) {
+      const submitModal = document.getElementById('submit-modal');
+      const authModal = document.getElementById('auth-modal');
+      if (event.target === submitModal) closeModal('submit-modal');
+      if (event.target === authModal) closeModal('auth-modal');
+    };
+    const tabButtons = document.querySelectorAll('.tab');
+    const panels = {
+      games: document.getElementById('panel-games'),
+      'virtual-pets': document.getElementById('panel-virtual-pets'),
+      scoreboards: document.getElementById('panel-scoreboards'),
+      submit: document.getElementById('panel-submit'),
+      software: document.getElementById('panel-software')
+    };
+    const gameCards = document.querySelectorAll('.card');
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!isMuted) clickSound.play().catch(err => console.error("Click sound failed:", err));
+        tabButtons.forEach(b => b.classList.remove('active'));
+        Object.values(panels).forEach(p => p?.classList.remove('active'));
+        btn.classList.add('active');
+        const panel = panels[btn.dataset.panel];
+        if (panel) panel.classList.add('active');
+        if (btn.dataset.panel === 'scoreboards') fetchRacerScores();
+        if (btn.dataset.panel === 'submit') {
+          const submitModal = document.getElementById('submit-modal');
+          if (submitModal) submitModal.style.display = 'block';
+        } else {
+          const submitModal = document.getElementById('submit-modal');
+          if (submitModal) submitModal.style.display = 'none';
+        }
+        if (btn.dataset.panel === 'software') {
+          const softwareGrid = document.getElementById('software-grid');
+          if (softwareGrid) {
+            softwareGrid.innerHTML = '';
+            gameCards.forEach(card => {
+              if (card.dataset.category === 'software') {
+                softwareGrid.appendChild(card.cloneNode(true));
+              }
+            });
+          }
+        }
+      });
+    });
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        if (!isMuted) clickSound.play().catch(err => console.error("Click sound failed:", err));
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const content = document.getElementById(`${tab.dataset.tab}-content`);
+        if (content) content.classList.add('active');
+      });
+    });
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+    function validatePassword(password) {
+      return password.length >= 6;
+    }
+    function validateUsername(username) {
+      return username.length >= 3;
+    }
+    let isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    let userEmail = sessionStorage.getItem('userEmail');
+    if (isLoggedIn && userEmail) {
+      const loginToggle = document.querySelector('.login-toggle');
+      if (loginToggle) {
+        loginToggle.innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+        loginToggle.onclick = logout;
+        loginToggle.style.setProperty('--tooltip-content', '"Logout"');
+      }
+    }
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+      loginForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!isMuted) clickSound.play().catch(err => console.error("Click sound failed:", err));
+        const emailInput = document.getElementById('login-email');
+        const passwordInput = document.getElementById('login-password');
+        const emailError = document.getElementById('login-email-error');
+        const passwordError = document.getElementById('login-password-error');
+        const loginError = document.getElementById('login-error');
+        if (!emailInput || !passwordInput || !emailError || !passwordError || !loginError) return;
+        emailError.style.display = 'none';
+        passwordError.style.display = 'none';
+        loginError.style.display = 'none';
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        let isValid = true;
+        if (!validateEmail(email)) {
+          emailError.style.display = 'block';
+          isValid = false;
+        }
+        if (!validatePassword(password)) {
+          passwordError.style.display = 'block';
+          isValid = false;
+        }
+        if (isValid) {
+          try {
+            const response = await fetch('/games/api/login.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: email, password: password })
+            });
+            const data = await response.json();
+            if (data.success) {
+              alert('Login successful! Redirecting to portal...');
+              sessionStorage.setItem('isLoggedIn', 'true');
+              sessionStorage.setItem('userEmail', email);
+              isLoggedIn = true;
+              userEmail = email;
+              const loginToggle = document.querySelector('.login-toggle');
+              if (loginToggle) {
+                loginToggle.innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+                loginToggle.onclick = logout;
+                loginToggle.style.setProperty('--tooltip-content', '"Logout"');
+              }
+              closeModal('auth-modal');
+              window.location.href = 'portal.html';
+            } else {
+              loginError.textContent = data.message || 'Login failed';
+              loginError.style.display = 'block';
+            }
+          } catch (err) {
+            console.error('Login error:', err);
+            loginError.textContent = 'Error connecting to server';
+            loginError.style.display = 'block';
+          }
+        }
+      });
+    }
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+      registerForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!isMuted) clickSound.play().catch(err => console.error("Click sound failed:", err));
+        const usernameInput = document.getElementById('register-username');
+        const emailInput = document.getElementById('register-email');
+        const passwordInput = document.getElementById('register-password');
+        const usernameError = document.getElementById('register-username-error');
+        const emailError = document.getElementById('register-email-error');
+        const passwordError = document.getElementById('register-password-error');
+        const registerError = document.getElementById('register-error');
+        if (!usernameInput || !emailInput || !passwordInput || !usernameError || !emailError || !passwordError || !registerError) return;
+        usernameError.style.display = 'none';
+        emailError.style.display = 'none';
+        passwordError.style.display = 'none';
+        registerError.style.display = 'none';
+        const username = usernameInput.value;
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        let isValid = true;
+        if (!validateUsername(username)) {
+          usernameError.style.display = 'block';
+          isValid = false;
+        }
+        if (!validateEmail(email)) {
+          emailError.style.display = 'block';
+          isValid = false;
+        }
+        if (!validatePassword(password)) {
+          passwordError.style.display = 'block';
+          isValid = false;
+        }
+        if (isValid) {
+          try {
+            const response = await fetch('/games/api/register.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, email, password })
+            });
+            const data = await response.json();
+            if (data.success) {
+              alert('Registration successful! Please log in.');
+              const loginTab = document.querySelector('.auth-tab[data-tab="login"]');
+              if (loginTab) loginTab.click();
+            } else {
+              registerError.textContent = data.message || 'Registration failed';
+              registerError.style.display = 'block';
+            }
+          } catch (err) {
+            console.error('Register error:', err);
+            registerError.textContent = 'Error connecting to server';
+            registerError.style.display = 'block';
+          }
+        }
+      });
+    }
+    function logout() {
+      if (!isMuted) clickSound.play().catch(err => console.error("Click sound failed:", err));
+      sessionStorage.removeItem('isLoggedIn');
+      sessionStorage.removeItem('userEmail');
+      isLoggedIn = false;
+      userEmail = null;
+      const loginToggle = document.querySelector('.login-toggle');
+      if (loginToggle) {
+        loginToggle.innerHTML = '<i class="fas fa-user"></i>';
+        loginToggle.onclick = openAuthModal;
+        loginToggle.style.setProperty('--tooltip-content', '"Login/Register"');
+      }
+      alert('Logged out!');
+    }
+    async function fetchRacerScores() {
+      const mode = document.getElementById('racer-mode')?.value;
+      const track_id = document.getElementById('racer-track')?.value;
+      const difficulty = document.getElementById('racer-difficulty')?.value;
+      const tbody = document.getElementById('racer-scores');
+      if (!mode || !track_id || !difficulty || !tbody) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="3">Error: Missing filters</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">Loading...</td></tr>';
+      try {
+        const url = new URL('https://futuret3ch.pythonanywhere.com/api/scores/racer');
+        url.searchParams.append('mode', mode);
+        url.searchParams.append('track_id', track_id);
+        url.searchParams.append('difficulty', difficulty);
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const data = await response.json();
+        if (data.error) {
+          tbody.innerHTML = `<tr><td colspan="3">${data.error}</td></tr>`;
+          return;
+        }
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3">No scores available.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.map((entry, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${entry.username || 'N/A'}</td>
+            <td>${entry.score || 0}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Scoreboard error:', err.message);
+        tbody.innerHTML = `
+          <tr><td>1</td><td>NeoMeme</td><td>42.31</td></tr>
+          <tr><td>2</td><td>ByteBlaster</td><td>44.12</td></tr>
+          <tr><td>3</td><td>GlitchQueen</td><td>45.73</td></tr>
+        `;
+      }
+    }
+    document.querySelectorAll('.scoreboards-section .tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        if (!isMuted) clickSound.play().catch(err => console.error("Click sound failed:", err));
+        document.querySelectorAll('.scoreboards-section .tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.scoreboards-section .panel').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const content = document.getElementById(`panel-${tab.dataset.panel}`);
+        if (content) content.classList.add('active');
+        if (tab.dataset.panel === 'racer') fetchRacerScores();
+      });
+    });
+    ['racer-mode', 'racer-track', 'racer-difficulty'].forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.addEventListener('change', fetchRacerScores);
+    });
+    fetchRacerScores();
+    const canvas = document.getElementById('particles');
+    const ctx = canvas?.getContext('2d');
+    if (canvas && ctx) {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      let particlesArray = [];
+      const numberOfParticles = 50;
+      class Particle {
+        constructor() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 5 + 1;
+          this.speedX = Math.random() * 2 - 1;
+          this.speedY = Math.random() * 2 - 1;
+          this.color = Math.random() > 0.5 ? 'rgba(76, 194, 255, 0.5)' : 'rgba(255, 159, 67, 0.5)';
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          if (this.size > 0.2) this.size -= 0.05;
+          if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+          if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+        }
+        draw() {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } 
+      function initParticles() {
+        for (let i = 0; i < numberOfParticles; i++) {
+          particlesArray.push(new Particle());
+        }
+      }
+      function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particlesArray.length; i++) {
+          particlesArray[i].update();
+          particlesArray[i].draw();
+          if (particlesArray[i].size <= 0.2) {
+            particlesArray.splice(i, 1);
+            i--;
+            particlesArray.push(new Particle());
+          }
+        }
+        requestAnimationFrame(animateParticles);
+      }
+      initParticles();
+      animateParticles();
+      window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
+    }
+  </script>
+</body>
+</html>

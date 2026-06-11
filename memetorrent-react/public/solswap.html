@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raydium Swap</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+        }
+        .wallet-btn, .swap-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            width: 100%;
+        }
+        .wallet-btn:hover, .swap-btn:hover {
+            background-color: #0056b3;
+        }
+        .disconnect-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .wallet-box {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: none;
+        }
+        .reopen-btn {
+            display: none;
+            margin: 5px;
+            padding: 5px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://unpkg.com/@solana/web3.js@1.66.2/dist/solana-web3.min.js"></script>
+    <script src="https://unpkg.com/@solana/spl-token@0.3.5/dist/spl-token.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Raydium Swap</h2>
+        <p>Token: <span id="token-symbol">Unknown</span></p>
+        <p>Amount to Buy (SOL):</p>
+        <input type="number" id="sol-amount" class="input-field" placeholder="Enter SOL amount" step="0.01" min="0">
+        <div id="connect-wallet-box">
+            <button id="phantom-btn" class="wallet-btn" onclick="connectWallet('phantom')">Connect Phantom</button>
+            <button id="solflare-btn" class="wallet-btn" onclick="connectWallet('solflare')">Connect Solflare</button>
+        </div>
+        <div id="phantom-wallet-box" class="wallet-box">
+            <p id="phantom-wallet-address">Connected: </p>
+            <p id="phantom-wallet-balance">Wallet Balance: </p>
+            <button onclick="minimizeWallet('phantom')">Minimize</button>
+            <div id="phantom-disconnect-btn-container"></div>
+        </div>
+        <button id="phantom-reopen-btn" class="reopen-btn" onclick="reopenWallet('phantom')">Reopen Phantom Wallet</button>
+        <div id="solflare-wallet-box" class="wallet-box">
+            <p id="solflare-wallet-address">Connected: </p>
+            <p id="solflare-wallet-balance">Wallet Balance: </p>
+            <button onclick="minimizeWallet('solflare')">Minimize</button>
+            <div id="solflare-disconnect-btn-container"></div>
+        </div>
+        <button id="solflare-reopen-btn" class="reopen-btn" onclick="reopenWallet('solflare')">Reopen Solflare Wallet</button>
+        <div class="reopen-container"></div>
+        <button id="swap-btn" class="swap-btn" onclick="executeSwap()" disabled>Execute Swap</button>
+        <p id="token-balance">Token Balance: 0.00</p>
+    </div>
+
+    <script>
+        let wallets = {
+            phantom: null,
+            solflare: null
+        };
+
+        const SOLANA_HTTP_URL = "https://thrumming-fluent-mansion.solana-mainnet.quiknode.pro/d783f3b5140172f93f2f05fa72ba7838a563042e/";
+        const connection = new solanaWeb3.Connection(SOLANA_HTTP_URL, "confirmed");
+        const RAYDIUM_PROGRAM_ID = new solanaWeb3.PublicKey("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8");
+        const SOL_ADDRESS = new solanaWeb3.PublicKey("So11111111111111111111111111111111111111112");
+        const TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+        let tokenMintAddress = null;
+
+        // Parse the token contract address from the URL
+        window.addEventListener("load", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            tokenMintAddress = urlParams.get("token");
+            document.getElementById("token-symbol").innerText = tokenMintAddress ? tokenMintAddress.substring(0, 6) + "..." : "Unknown";
+            fetchTokenBalance();
+            checkSwapButtonState();
+        });
+
+        async function detectWallet(walletType) {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const interval = setInterval(() => {
+                    attempts++;
+                    if (walletType === "phantom" && window.solana && window.solana.isPhantom) {
+                        clearInterval(interval);
+                        resolve(window.solana);
+                    }
+                    if (walletType === "solflare" && window.solflare && window.solflare.isSolflare) {
+                        clearInterval(interval);
+                        resolve(window.solflare);
+                    }
+                    if (attempts >= 10) {
+                        clearInterval(interval);
+                        resolve(null);
+                    }
+                }, 500);
+            });
+        }
+
+        function updateConnectBoxVisibility() {
+            const connectBox = document.getElementById("connect-wallet-box");
+            if (wallets.phantom || wallets.solflare) {
+                connectBox.style.display = "none";
+            } else {
+                connectBox.style.display = "block";
+            }
+            checkSwapButtonState();
+        }
+
+        async function connectWallet(walletType) {
+            let provider = await detectWallet(walletType);
+
+            if (!provider) {
+                alert(`${walletType.charAt(0).toUpperCase() + walletType.slice(1)} Wallet not detected. 
+                🚀 Try opening this page inside the ${walletType} app browser.`);
+                return;
+            }
+
+            try {
+                await provider.connect();
+                wallets[walletType] = provider;
+                const walletBox = document.getElementById(`${walletType}-wallet-box`);
+                walletBox.style.display = "block";
+                document.getElementById(`${walletType}-wallet-address`).innerText = `Connected: ${provider.publicKey.toString()}`;
+                fetchWalletData(provider.publicKey.toString(), walletType);
+                fetchTokenBalance();
+
+                const connectBtn = document.getElementById(`${walletType}-btn`);
+                connectBtn.style.display = "none";
+
+                const disconnectBtnContainer = document.getElementById(`${walletType}-disconnect-btn-container`);
+                const disconnectBtn = document.createElement("button");
+                disconnectBtn.innerText = `Disconnect ${walletType.charAt(0).toUpperCase() + walletType.slice(1)}`;
+                disconnectBtn.className = "disconnect-btn";
+                disconnectBtn.onclick = () => disconnectWallet(walletType);
+                disconnectBtnContainer.appendChild(disconnectBtn);
+
+                document.querySelector(".reopen-container").appendChild(walletBox);
+                updateConnectBoxVisibility();
+            } catch (error) {
+                console.error(`${walletType} connection error:`, error);
+                alert(`Connection to ${walletType} wallet failed.`);
+            }
+        }
+
+        function disconnectWallet(walletType) {
+            wallets[walletType] = null;
+            const walletBox = document.getElementById(`${walletType}-wallet-box`);
+            walletBox.style.display = "none";
+
+            const disconnectBtnContainer = document.getElementById(`${walletType}-disconnect-btn-container`);
+            disconnectBtnContainer.innerHTML = "";
+
+            const connectBtn = document.getElementById(`${walletType}-btn`);
+            connectBtn.style.display = "block";
+            connectBtn.innerText = `Connect ${walletType.charAt(0).toUpperCase() + walletType.slice(1)}`;
+            connectBtn.className = "wallet-btn";
+            connectBtn.onclick = () => connectWallet(walletType);
+
+            document.getElementById(`${walletType}-reopen-btn`).style.display = "block";
+            if (!document.querySelector(".reopen-container").contains(walletBox)) {
+                document.querySelector(".reopen-container").appendChild(walletBox);
+            }
+
+            fetchTokenBalance();
+            updateConnectBoxVisibility();
+        }
+
+        function minimizeWallet(walletType) {
+            const walletBox = document.getElementById(`${walletType}-wallet-box`);
+            walletBox.style.display = "none";
+            document.getElementById(`${walletType}-reopen-btn`).style.display = "block";
+        }
+
+        function reopenWallet(walletType) {
+            const walletBox = document.getElementById(`${walletType}-wallet-box`);
+            walletBox.style.display = "block";
+            document.getElementById(`${walletType}-reopen-btn`).style.display = "none";
+            if (!document.querySelector(".reopen-container").contains(walletBox)) {
+                document.querySelector(".reopen-container").appendChild(walletBox);
+            }
+        }
+
+        async function fetchWalletData(wallet, walletType) {
+            let balanceBox = document.getElementById(`${walletType}-wallet-balance`);
+            try {
+                const balance = await connection.getBalance(new solanaWeb3.PublicKey(wallet));
+                balanceBox.innerText = `Wallet Balance: ${(balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4)} SOL`;
+            } catch (error) {
+                console.error(`Error fetching wallet data for ${walletType}:`, error);
+                balanceBox.innerText = "Error fetching balance.";
+            }
+        }
+
+        async function fetchTokenBalance() {
+            const tokenBalanceElement = document.getElementById("token-balance");
+            let totalTokenBalance = 0;
+
+            try {
+                for (const walletType in wallets) {
+                    const provider = wallets[walletType];
+                    if (!provider || !provider.publicKey) continue;
+
+                    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+                        new solanaWeb3.PublicKey(provider.publicKey.toString()),
+                        { programId: TOKEN_PROGRAM_ID }
+                    );
+
+                    tokenAccounts.value.forEach((account) => {
+                        const tokenInfo = account.account.data.parsed.info;
+                        if (tokenInfo.mint === tokenMintAddress) {
+                            totalTokenBalance += tokenInfo.tokenAmount.uiAmount;
+                        }
+                    });
+                }
+
+                if (totalTokenBalance > 0) {
+                    tokenBalanceElement.innerText = `Token Balance: ${totalTokenBalance.toFixed(2)}`;
+                } else {
+                    tokenBalanceElement.innerText = "Token Balance: 0.00";
+                }
+            } catch (error) {
+                console.error("Error fetching token balance:", error);
+                tokenBalanceElement.innerText = "Token Balance: Error";
+            }
+        }
+
+        function checkSwapButtonState() {
+            const swapBtn = document.getElementById("swap-btn");
+            const solAmount = document.getElementById("sol-amount").value;
+            const hasWallet = wallets.phantom || wallets.solflare;
+            const hasAmount = solAmount && parseFloat(solAmount) > 0;
+            swapBtn.disabled = !(hasWallet && hasAmount);
+        }
+
+        document.getElementById("sol-amount").addEventListener("input", checkSwapButtonState);
+
+        async function executeSwap() {
+            if (!tokenMintAddress) {
+                alert("Token contract address not provided.");
+                return;
+            }
+
+            const solAmount = parseFloat(document.getElementById("sol-amount").value);
+            if (!solAmount || solAmount <= 0) {
+                alert("Please enter a valid SOL amount.");
+                return;
+            }
+
+            const provider = wallets.phantom || wallets.solflare;
+            if (!provider) {
+                alert("Please connect a wallet first.");
+                return;
+            }
+
+            try {
+                const walletPublicKey = provider.publicKey;
+                const tokenMint = new solanaWeb3.PublicKey(tokenMintAddress);
+                const amountInLamports = solAmount * solanaWeb3.LAMPORTS_PER_SOL;
+
+                // Find the user's Associated Token Account (ATA) for the token
+                const tokenAccount = await splToken.getAssociatedTokenAddress(
+                    tokenMint,
+                    walletPublicKey,
+                    false,
+                    TOKEN_PROGRAM_ID,
+                    splToken.ASSOCIATED_TOKEN_PROGRAM_ID
+                );
+
+                // Check if the token account exists; if not, create it
+                const tokenAccountInfo = await connection.getAccountInfo(tokenAccount);
+                const transaction = new solanaWeb3.Transaction();
+
+                if (!tokenAccountInfo) {
+                    const createAtaIx = splToken.createAssociatedTokenAccountInstruction(
+                        walletPublicKey, // Payer
+                        tokenAccount, // ATA
+                        walletPublicKey, // Owner
+                        tokenMint, // Mint
+                        TOKEN_PROGRAM_ID,
+                        splToken.ASSOCIATED_TOKEN_PROGRAM_ID
+                    );
+                    transaction.add(createAtaIx);
+                }
+
+                // Placeholder for Raydium pool address and swap instruction
+                // In a real implementation, you’d need to:
+                // 1. Fetch the Raydium pool address for the SOL/Token pair
+                // 2. Fetch the pool state to get the current price and liquidity
+                // 3. Construct the swap instruction with proper parameters
+                const poolAddress = new solanaWeb3.PublicKey("POOL_ADDRESS"); // Replace with actual pool address
+                const amountOutMin = 0; // Minimum amount of tokens to receive (set slippage in a real implementation)
+
+                // Simplified swap instruction (this is a placeholder)
+                const swapIx = new solanaWeb3.TransactionInstruction({
+                    keys: [
+                        { pubkey: walletPublicKey, isSigner: true, isWritable: true }, // User wallet
+                        { pubkey: SOL_ADDRESS, isSigner: false, isWritable: true }, // SOL account
+                        { pubkey: tokenAccount, isSigner: false, isWritable: true }, // Token account
+                        { pubkey: poolAddress, isSigner: false, isWritable: true }, // Raydium pool
+                        { pubkey: RAYDIUM_PROGRAM_ID, isSigner: false, isWritable: false }, // Raydium program
+                        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }, // Token program
+                    ],
+                    programId: RAYDIUM_PROGRAM_ID,
+                    data: Buffer.from([/* Instruction data for swap */]), // Replace with actual swap instruction data
+                });
+
+                transaction.add(swapIx);
+
+                // Add recent blockhash and set fee payer
+                const { blockhash } = await connection.getLatestBlockhash();
+                transaction.recentBlockhash = blockhash;
+                transaction.feePayer = walletPublicKey;
+
+                // Sign and send the transaction
+                const signedTx = await provider.signTransaction(transaction);
+                const txId = await connection.sendRawTransaction(signedTx.serialize());
+                await connection.confirmTransaction(txId);
+
+                alert(`Swap successful! Transaction ID: ${txId}`);
+                fetchTokenBalance();
+
+                // Redirect back to the group chat
+                window.location.href = "https://t.me/c/2307194635";
+            } catch (error) {
+                console.error("Swap error:", error);
+                alert("Swap failed: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

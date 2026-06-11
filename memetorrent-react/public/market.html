@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MemeTorrent | Futuret3ch - Market</title>
+  
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+    />
+	
+   <style>
+        .copy-icon {
+            font-size: 24px;
+            cursor: pointer;
+			
+        }
+    </style>
+    <style>
+      :root {
+        --primary-color: #ffcc00;
+        --text-color: white;
+        --background-overlay: rgba(255, 255, 255, 0.40); /* 40% opacity */
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+          url("./images/bg3.png") center/cover fixed;
+        color: var(--text-color);
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      .banner {
+        color: black;
+        background-color: rgba(255, 204, 0, 0.9);
+        padding: 0.75rem;
+        overflow: hidden;
+      }
+
+      .banner-content {
+        display: inline-block;
+        white-space: nowrap;
+        animation: marquee 10s linear infinite;
+      }
+	  
+	  
+
+      @keyframes marquee {
+		0% { transform: translateX(0); }
+        100% { transform: translateX(-100%); }
+      }
+	  
+	  
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: lightbrown;
+     
+        top: 0;
+        z-index: 1000;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .nav-links a {
+        color: var(--text-color);
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a:hover {
+        background: green;
+      }
+
+      .card {
+        background: rgba(--background-overlay); /* White with 70% opacity */
+        border-radius: 1rem;
+        padding: 2rem;
+        margin: 2rem auto;
+        width: 90%;
+        max-width: 1200px;
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px); /* Optional for a frosted glass effect */
+      }
+
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        align-items: center;
+      }
+
+      .cta-button {
+        display: inline-block;
+        padding: 1rem 2rem;
+        text-align: center;
+        background: var(--primary-color);
+        color: var(--text-color);
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: bold;
+        transition: transform 0.2s ease;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-2px);
+	
+      }
+
+      .responsive-img {
+        width: 100%;
+        height: auto;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      @media (max-width: 768px) {
+        .nav-container {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .banner-content {
+          animation-duration: 25s;
+        }
+
+        .card {
+          padding: 1rem;
+          margin: 1rem auto;
+        }
+      }
+
+      .contract-address {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        word-break: break-all;
+        margin: 1rem 0;
+      }
+	  
+	  .social-icons {
+        display: inline-block;
+        margin-left: 20px;
+		color: #f8f9fa;
+      }
+      .social-icons a {
+        color: black;
+        margin-left: 15px;
+        font-size: 40px;
+		color: #f8f9fa;
+      }
+      .social-icons a:hover {
+        color: green;
+
+      }
+	  
+	  
+    </style>
+	    <style>
+        .copy-icon {
+            cursor: pointer;
+            font-size: 24px;
+            color: green;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="banner" aria-label="Important announcement">
+      <div class="banner-content" aria-hidden="true">
+        ♢ $MT is live NOW! ♢ Launched on Pump.fun NOT JUST a Pump fun ♢ $MT is live NOW! ♢ Launched on Pump.fun NOT JUST a Pump fun ♢ $MT is live NOW! ♢ Launched on Pump.fun NOT JUST a Pump fun ♢ $MT is live NOW! ♢ Launched on Pump.fun NOT JUST a Pump fun ♢
+      </div>
+    </div>
+ <a href="index.html"><img src="images/memecoin.gif" width="50" height="50"></img></a>
+    <nav class="nav-container">
+     
+	  <div class="nav-links">
+	  
+        <a href="index.html">About</a>
+        <a href="token.html">Tokenomics</a>
+        <a href="safety.html">Safety</a>
+         <a href="utility.html">Utility</a>
+		  <a href="update.html">Updates</a>
+		 <a href="/games">Games</a>
+		  <a href="contact.html">Contact</a>
+      </div>
+      <div class="social-icons">
+        <a href="https://twitter.com/MemeTorrent" aria-label="Twitter" style="color: #f8f9fa;">
+          <i class="fab fa-twitter"></i>
+        </a>
+        <a href="https://t.me/MemeTorrentPortal" aria-label="Telegram" style="color: #f8f9fa;">
+          <i class="fab fa-telegram"></i>
+        </a>
+
+      </div>
+    </nav>
+    <main class="container">
+      <section class="card" id="about">
+        <div class="grid-container">
+          <div>
+            <h1>Market Stats</h1>
+<div class="containertech">
+      <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-12">
+
+        </div><!--end col-->
+    </div><!--end row-->
+</div>
+	
+    </div>
+          </div>
+      </section>
+    </main>
+
+    <script>
+      // Add smooth scrolling
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute("href")).scrollIntoView({
+            behavior: "smooth",
+          });
+        });
+      });
+    </script>
+	<script>
+        function copyText() {
+            const textToCopy = document.getElementById('textToCopy').innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('Text copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+    </script>
+  </body>
+  <footer>
+    <center><b><a href="https://futuret3ch.com.au" target="_blank" style="color: white"> FUTURET3CH 2025 </a></b></center>
+	</footer>
+</html>
