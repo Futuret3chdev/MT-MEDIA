@@ -44,6 +44,10 @@
     {
       "destination": "/store_discord_member.txt",
       "source": "/store_discord_member.php"
+    },
+    {
+      "source": "/message_counts.php",
+      "destination": "https://futuret3ch.com.au/message_counts.php"
     }
   ]
 }
