@@ -1,0 +1,118 @@
+let draw = () => {
+  if (gamePaused) return;
+
+  age++;
+
+  p.background('#222');
+
+  // Goals
+  p.strokeWeight(2);
+  p.stroke('#eee');
+  p.noFill();
+  p.rect(1, HEIGHT - GROUND_HEIGHT - GOAL_HEIGHT, GOAL_WIDTH, GOAL_HEIGHT + 10);
+
+  p.fill('#eee');
+  p.rect(
+    WIDTH - 21,
+    HEIGHT - GROUND_HEIGHT - GOAL_HEIGHT,
+    GOAL_WIDTH,
+    GOAL_HEIGHT + 10
+  );
+
+  // Ground
+  p.noStroke();
+  p.fill('#444');
+  p.rect(0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT);
+
+// Draw score (Responsive)
+p.fill('#fff6');
+p.textStyle('bold');
+p.textAlign('center', 'top');
+p.textFont('Inter');	
+
+// Score size scales with screen width
+const scoreSize = Math.max(WIDTH * 0.12, 40);
+p.textSize(scoreSize);
+
+// Padding from edges
+const sidePadding = WIDTH * 0.15;
+
+// Left score
+p.text(scores[0], sidePadding, 40);
+
+// Right score
+p.text(scores[1], WIDTH - sidePadding, 40);
+
+
+  // Get user input
+  keys();
+  touch();
+  if (secondBot && !aboutToReset && age > p.frameRate() * 0.25) {
+    p1.moveAutomatic();
+  }
+  if (firstBot && !aboutToReset && age > p.frameRate() * 0.25) {
+    p0.moveAutomatic();
+  }
+
+  p0.update();
+  p1.update();
+  ball.update();
+
+  // Collisions
+  if (physicsType === 'realistic') {
+    for (let a of entities) {
+      for (let b of entities) {
+        if (a === b || (a instanceof Player && b instanceof Player)) continue;
+
+        if (a.pos.dist(b.pos) < a.radius + b.radius) {
+          collide(a, b);
+        }
+      }
+    }
+  } else {
+    for (let player of [p0, p1]) {
+      let d = dist(player.pos.x, player.pos.y, ball.pos.x, ball.pos.y);
+
+      if (d < PLAYER_SIZE + BALL_SIZE) {
+        // Player collides with ball
+        player.vel.x +=
+          (((player.pos.x - ball.pos.x) * BALL_MASS) / PLAYER_MASS) * 0.1;
+        player.vel.y +=
+          (((player.pos.y - ball.pos.y) * BALL_MASS) / PLAYER_MASS) * 0.1;
+
+        ball.vel.x +=
+          (((ball.pos.x - player.pos.x) * PLAYER_MASS) / BALL_MASS) *
+          0.01 *
+          (Math.abs(player.vel.x) + 1);
+        ball.vel.y +=
+          (((ball.pos.y - player.pos.y) * PLAYER_MASS) / BALL_MASS) *
+          0.01 *
+          (Math.abs(player.vel.x) + 1);
+
+        if (player.vel.y >= ball.vel.y) {
+          ball.vel.y -= 1.0 * Math.abs(player.vel.x);
+        }
+      }
+    }
+  }
+
+  // Scoring
+  if (!aboutToReset && ball.pos.y >= HEIGHT - GROUND_HEIGHT - GOAL_HEIGHT) {
+    if (ball.pos.x < BALL_SIZE + GOAL_WIDTH) {
+      scores[1]++;
+		scoreRightEl.textContent = scores[1];
+		window.setTimeout(restart, 500);
+
+      aboutToReset = true;
+    } else if (ball.pos.x > WIDTH - (BALL_SIZE + GOAL_WIDTH)) {
+      scores[0]++;
+		scoreLeftEl.textContent = scores[0];
+		window.setTimeout(restart, 500);
+      aboutToReset = true;
+    }
+  }
+
+  p0.display();
+  p1.display();
+  ball.display();
+};

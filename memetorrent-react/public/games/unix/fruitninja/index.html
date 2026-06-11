@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Fruit Ninja</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes" />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css"
+    />
+    <link rel="icon" href="https://i.ibb.co/M6KTWnf/pic.jpg" />
+  </head>
+  <body>
+    <div id="container">
+      <div id="fruitcontainer">
+        <div id="instructions">Slice Fruits!</div>
+        <div id="score">
+          <div class="scoreDisplay">
+            <img
+              src="https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/scr.png"
+              alt=""
+            />
+            <span id="scoreValue">0</span>
+            <span id="difficultyDisplay"></span>
+          </div>
+        </div>
+        <div id="trialsleft"></div>
+        <div id="front">
+          <div class="branding">FUTURET3CH | MEMETORRENT</div>
+          Are you ready for the ultimate slice action? <br />
+          <img
+            src="https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/splash.png"
+            alt="Fruit logo"
+          />
+          <div id="highScore">High Score: <span id="highScoreValue">0</span></div>
+        </div>
+        <img id="fruit1" class="fruit" />
+        <div id="splashEffect"></div>
+        <div id="startReset">Reset Game</div>
+        <div id="difficulty">
+          <button class="diffBtn" data-diff="easy">Easy</button>
+          <button class="diffBtn" data-diff="medium">Medium</button>
+          <button class="diffBtn" data-diff="hard">Hard</button>
+        </div>
+        <div id="musicToggle">Music: ON</div>
+      </div>
+      <div id="gameOver"></div>
+    </div>
+    <audio id="slicesound"> 
+      <source
+        src="https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/audio/slicefruit.mp3"
+      />
+      <source
+        src="https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/audio/slicefruit.ogg"
+      />
+      <source
+        src="https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/audio/slicefruit.wav"
+      />
+    </audio>
+    <audio id="bgmusic" loop>
+      <source src="bgmusic.mp3" type="audio/mpeg" />
+    </audio>
+    <audio id="bombsound">
+      <source
+        src="https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/audio/bomb.mp3"
+      />
+    </audio>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+    <script src="script.js"></script>
+    <div id="footer">$MT to the Moon</div>
+  </body>
+</html>

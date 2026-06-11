@@ -1,0 +1,16 @@
+@font-face {
+    font-family: "Lobster";
+    src: url("../fonts/Lobster.otf");
+}
+
+$screen_width: 800px;
+$screen_height: 500px;
+$screen-top-offset: 30px;
+$screen_y: $screen_height - $screen-top-offset;
+$profile-size: 100px;
+$profile-ingame-size: 80px;
+$timer-bg-color: #dadbee;
+$timer-stroke: 1px solid #3e3e3e;
+$title-color: #dadbde;
+$title-stroke: #3e3e3e 0px 0px 5px;
+$bg-name: "../img/menu_bg.jpg";

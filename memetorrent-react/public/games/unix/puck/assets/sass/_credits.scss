@@ -1,0 +1,23 @@
+@import "settings";
+
+.credits {
+    .btn {
+        left: 87%;
+        top: 90%;
+    }
+    
+    .developers {
+        text-align: center;
+        left: 50%;
+        top: 55%;
+        width: 350px;
+        height: 260px;
+        background: rgba(220, 221, 224, 0.7);
+        border-radius: 6%;
+        color: white;
+        
+        .subtitle {
+            font-weight: bold;
+        }
+    }
+}

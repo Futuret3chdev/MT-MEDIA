@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Tap Tap Tap - FUTURET3CH 2025</title>
+    <meta name="description" content="TAP TAP TAP VERSION 2.0 OUTNOW!"/>
+    <link href="style.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="mobile-web-app-capable" content="yes">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600" rel="stylesheet">
+
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="favicons/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicons/favicon-16x16.png" sizes="16x16">
+    <link rel="manifest" href="favicons/manifest.json">
+    <link rel="mask-icon" href="favicons/safari-pinned-tab.svg" color="#0b1d31">
+    <link rel="shortcut icon" href="favicons/favicon.ico">
+    <meta name="msapplication-config" content="favicons/browserconfig.xml">
+    <meta name="theme-color" content="#0b1d31">
+</head>
+<body ontouchstart="">
+    <div class="main-wrapper">
+        <!-- SPLASH/LOADING PAGE -->
+        <div id="pageSplash" class="page-cont page-splash page-faded-bg">
+            <div class="fixed-75w-wrapper">
+                <div id="splashScreenLogo" class="tpbl-circle c-white splash-screen-logo"></div>
+                <div id="splashScreenTxt">Loading AWESOME STUFF</div>
+            </div>
+        </div>
+
+        <!-- GAME MENU PAGE -->
+        <div id="pageGameMenu" class="page-cont page-game-menu page-faded-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="gm-menu-header-cont">
+                    <div class="tpbl-circle c-blue gm-menu-logo-bg"></div>
+                    <h1 class="gm-menu-title">Tap Tap Tap</h1>
+                    <h2 class="gm-menu-subtitle">Every Tap Matters</h2>
+                </div>
+                <button id="newGameBtn" class="gm-btn btn-blue" type="button" name="button">New Game</button>
+                <button id="multiplayerBtn" class="gm-btn" type="button" name="button" disabled>Multiplayer (TBA)</button>
+                <button id="achievementsBtn" class="gm-btn" type="button" name="button">Achievements</button>
+                <button id="leaderboardBtn" class="gm-btn" type="button" name="button">Leaderboard</button>
+                <button id="aboutBtn" class="gm-btn" type="button" name="button">About</button>
+                <button id="mysteryGameBtn" class="gm-btn btn-mystery" type="button" name="button" style="display: none;">Riddle Challenge</button>
+            </div>
+        </div>
+
+        <!-- ABOUT PAGE -->
+        <div id="pageAbout" class="page-cont page-about page-faded-bg anmtd-grdnt-bg blu-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont"><div class="info-screen-ttl-txt-bld">About</div></div>
+                <div class="info-screen-txt-cont">
+                    <div>Created by</div>
+                    <a href="http://futuret3ch.com.au/" class="txt-bold">Futuret3ch 2025</a>
+                    <hr>
+                    <div>Credits</div>
+                    <div class="credits-cont">
+                        <ul class="credits-list">
+                            <li class="credit-name">Jason Cilia</li>
+                            <li class="credit-name">Tammy Nguyen</li>
+                            <li class="credit-name">Seyoon Park</li>
+                            <li class="credit-name">Charlie Shu</li>
+                            <li class="credit-name">MemeTorrent</li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="abtPageBackBtn" class="tpbl-circle c-white submit-circle"></div>
+            </div>
+        </div>
+
+        <!-- HIGH SCORE PAGE -->
+        <div id="pageHighScore" class="page-cont page-high-score page-faded-bg anmtd-grdnt-bg rd-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont">
+                    <div class="info-screen-icon you-lost-icon"></div>
+                    <div class="info-screen-ttl-txt-bld">Game Over</div>
+                    <div>You Lost</div>
+                </div>
+                <div class="info-screen-txt-cont">
+                    <div class="info-screen-body-txt-reg">Score</div>
+                    <div id="lvlLostNewHighScore" class="lvl-fnshd-score-nmb">86</div>
+                    <div class="info-screen-body-txt-reg">New High Score</div>
+                    <div class="lvl-fnshd-highscore-icon"></div>
+                </div>
+                <div class="sbmt-tryagain-txt">Try again?</div>
+                <div class="tpbl-circle c-white submit-circle"></div>
+            </div>
+        </div>
+
+        <!-- LEADERBOARD PAGE -->
+        <div id="pageLeaderboard" class="page-cont page-leaderboard page-faded-bg anmtd-grdnt-bg blu-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont">
+                    <div class="info-screen-ttl-txt-bld">Leaderboard</div>
+                </div>
+                <div class="info-screen-txt-cont">
+                    <table id="leaderboardTable" class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="leaderboardBackBtn" class="tpbl-circle c-white submit-circle"></div>
+            </div>
+        </div>
+
+        <!-- TUTORIAL PAGE -->
+        <div id="pageTutorial" class="page-cont page-tutorial page-faded-bg">
+            <div class="fixed-100w-wrapper">
+                <div class="tut-text">Enter your username:</div>
+                <input type="text" id="usernameInput" class="multiplayer-input" placeholder="Your Username" maxlength="20">
+                <div id="tutPgStartGameBtn" class="tpbl-circle c-blue tut-circle"></div>
+                <div class="tut-arrow"></div>
+                <h2 class="tut-text">TAP THE CIRCLE<br/>TO START</h2>
+            </div>
+        </div>
+
+        <!-- PLAY DELAY PAGE -->
+        <div id="pagePlayDelay" class="page-cont page-play-delay page-faded-bg">
+            <div id="palyDelayCont" class="fixed-75w-wrapper"><div id="playDelayNum">3</div></div>
+        </div>
+
+        <!-- GAME PLAY AREA PAGE -->
+        <div id="pagePlayArea" class="page-cont page-play-area">
+            <div class="game-stats-cont">
+                <div id="gmStatsTimeProgress" class="gm-stats-time-progress"></div>
+                <div class="gm-stats-wrapper">
+                    <div class="gm-stats-vcont"><button id="gmStatsPauseBtn" class="gm-stats-pause-button"></button></div>
+                    <div class="gm-stats-vcont">
+                        <div class="stat-wrapper">
+                            <div class="gm-stats-title">Score</div>
+                            <div id="gmStatsScore" class="gm-stats-value">2894</div>
+                            <div id="gmStatsCombo" class="gm-stats-combo"></div>
+                        </div>
+                    </div>
+                    <div class="gm-stats-vcont">
+                        <div class="stat-wrapper text-align-right">
+                            <div id="gmStatsLvlNumb" class="gm-stats-title">Level 7</div>
+                            <div class="gm-stats-value">
+                                <span id="gmStatsCurrentTapCount" class="gm-stats-tap-count">16</span>
+                                <span id="gmStatsTotalTapCount">/20</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="gameSpace" class="game-space"></div>
+        </div>
+
+        <!-- PAUSE MENU PAGE -->
+        <div id="pagePauseMenu" class="page-cont page-pause-menu page-faded-bg anmtd-grdnt-bg blu-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont">
+                    <div class="info-screen-icon puz-icon"></div>
+                    <div class="info-screen-ttl-txt-bld">GAME PAUSED</div>
+                </div>
+                <div class="info-screen-txt-cont">
+                    <div class="info-screen-body-txt-reg">Score</div>
+                    <div id="lvlPausedScore" class="lvl-fnshd-score-nmb">521</div>
+                </div>
+                <div class="puz-menu-btnz-cont">
+                    <button id="pmCntnuGmBtn" class="gm-btn btn-blue">Continue</button>
+                    <button id="pmRstrtLvlBtn" class="gm-btn pm-rstrt-lvl-btn">Restart</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- YOU LOST PAGE -->
+        <div id="pageYouLost" class="page-cont page-you-lost page-faded-bg anmtd-grdnt-bg rd-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont">
+                    <div id="lvlLostIcon" class="info-screen-icon you-lost-icon"></div>
+                    <div class="info-screen-ttl-txt-bld">Game Over</div>
+                    <div id="lvlLostTtl">You Lost</div>
+                </div>
+                <div class="info-screen-txt-cont">
+                    <div class="info-screen-body-txt-reg">Score</div>
+                    <div id="lvlLostScore" class="lvl-fnshd-score-nmb">746</div>
+                </div>
+                <div class="sbmt-tryagain-txt">Try again?</div>
+                <div id="lvlLostTryAgainBtn" class="tpbl-circle c-white submit-circle"></div>
+            </div>
+        </div>
+
+        <!-- LEVEL PASSED PAGE -->
+        <div id="pageLevelPassed" class="page-cont page-level-passed page-faded-bg anmtd-grdnt-bg grn-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont">
+                    <div class="info-screen-icon flag-icon"></div>
+                    <div id="lvlPssdTtl">Level 2</div>
+                    <div class="info-screen-ttl-txt-bld">Passed</div>
+                </div>
+                <div class="info-screen-txt-cont">
+                    <div class="info-screen-body-txt-reg">Score</div>
+                    <div id="lvlPssdScore" class="lvl-fnshd-score-nmb">521</div>
+                    <div id="lvlPssdBonusScore" class="grow-animation"></div>
+                </div>
+                <div id="lvlPssdContinueNextLvlBtn" class="tpbl-circle c-white submit-circle"></div>
+            </div>
+        </div>
+
+        <!-- ACHIEVEMENTS PAGE -->
+        <div id="pageAchievements" class="page-cont page-achievements page-faded-bg anmtd-grdnt-bg grn-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont"><div class="info-screen-ttl-txt-bld">Achievements</div></div>
+                <div class="info-screen-txt-cont">
+                    <div id="comboMaster" class="achievement-item">
+                        <div class="achievement-name">Combo Master</div>
+                        <div class="achievement-desc">Reach a 10x combo</div>
+                        <div class="status">Locked</div>
+                    </div>
+                    <div id="speedDemon" class="achievement-item">
+                        <div class="achievement-name">Speed Demon</div>
+                        <div class="achievement-desc">Finish a level in under 5 seconds</div>
+                        <div class="status">Locked</div>
+                    </div>
+                    <div id="themeExplorer" class="achievement-item">
+                        <div class="achievement-name">Theme Explorer</div>
+                        <div class="achievement-desc">Complete a themed level</div>
+                        <div class="status">Locked</div>
+                    </div>
+                </div>
+                <div id="achPageBackBtn" class="tpbl-circle c-white submit-circle"></div>
+            </div>
+        </div>
+
+        <!-- MULTIPLAYER PAGE -->
+        <div id="pageMultiplayer" class="page-cont page-multiplayer page-faded-bg anmtd-grdnt-bg blu-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont"><div class="info-screen-ttl-txt-bld">Multiplayer</div></div>
+                <div class="info-screen-txt-cont">
+                    <div><input type="text" id="playerName" placeholder="Enter your name" class="multiplayer-input"></div>
+                    <button id="joinGameBtn" class="gm-btn btn-blue">Join Game</button>
+                    <div id="opponentScore" class="multiplayer-score">Opponent Score: 0</div>
+                </div>
+                <div id="mpBackBtn" class="tpbl-circle c-white submit-circle"></div>
+            </div>
+        </div>
+
+        <!-- RIDDLE GAME PAGE -->
+        <div id="pageMysteryGame" class="page-cont page-mystery-game page-faded-bg anmtd-grdnt-bg grn-grdnt-bg no-bg">
+            <div class="fixed-75w-wrapper">
+                <div class="info-screen-title-cont"><div class="info-screen-ttl-txt-bld">Riddle Challenge</div></div>
+                <div class="info-screen-txt-cont">
+                    <div id="mysteryResult" class="multiplayer-score">Solve the riddle to unlock Part 1 of the secret code!</div>
+                    <div id="attemptsLeft" class="attempts-left">Attempts Left: 3</div>
+                    <input type="text" id="mysteryGuessInput" class="multiplayer-input" placeholder="Type your answer here">
+                    <button id="mysteryGuessBtn" class="gm-btn btn-blue">Submit Answer</button>
+                </div>
+                <div id="mysteryBackBtn" class="tpbl-circle c-white submit-circle"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/habibiScript.js"></script>
+    <h1 style="color:white;"><center><a href="https://futuret3ch.com.au" target="_blank" style="color:white;">FUTURET3CH|MEMETORRENT</a><br>Gaming Engine</center></h1>
+</body>
+</html>

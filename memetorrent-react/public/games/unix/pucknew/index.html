@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+<title>Puck Game!</title>
+
+<link href="assets/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/css/style_soccer.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="wrapper">
+
+    <!-- BACKGROUND -->
+    <div class="bg"></div>
+
+    <!-- MENU -->
+    <div id="menu" class="screen">
+        <img class="logo" src="assets/img/logo.png">
+        <button id="btn-play" class="btn btn-danger menu-btn">Play</button>
+        <button id="btn-credits" class="btn btn-danger menu-btn">Credits</button>
+        <button id="btn-online" class="btn btn-danger menu-btn">Online Play</button>
+    </div>
+
+    <!-- ONLINE MENU -->
+    <div id="online" class="screen" style="display:none;">
+
+        <p class="title font">Online Play</p>
+
+        <button id="btn-host" class="btn btn-danger menu-btn">Host Game</button>
+
+        <input id="join-code" class="form-control"
+               placeholder="Enter Room Code"
+               maxlength="4"
+               style="text-align:center; width:150px; margin:20px auto;">
+
+        <button id="btn-join" class="btn btn-danger menu-btn">Join Game</button>
+
+        <button id="btn-back-online" class="btn btn-danger menu-btn">Back</button>
+
+    </div>
+
+    <!-- CREDITS -->
+    <div id="credits" class="screen" style="display:none; position:relative;">
+
+        <video id="credits-video"
+               playsinline muted autoplay
+               style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; z-index:0;">
+            <source src="assets/video/intro.mp4" type="video/mp4">
+        </video>
+
+        <div class="credits-overlay"
+             style="position:absolute; top:0; left:0; width:100%; height:100%;
+             z-index:2; display:flex; flex-direction:column; justify-content:center; align-items:center;
+             color:white; text-shadow:0 2px 8px black;">
+
+            <p class="title font">Credits</p>
+
+            <div class="credits-box"
+                 style="background:rgba(0,0,0,0.55); padding:25px; border-radius:12px;
+                 width:80%; max-width:380px;">
+
+                <h3>Developed In</h3>
+                <h4>Web3, Node, Next.js</h4>
+
+                <br>
+
+                <h3>Developers</h3>
+                <h4>FutureT3ch</h4>
+                <h4>MemeTorrent</h4>
+
+            </div>
+
+            <button id="btn-back-credits" class="btn btn-danger menu-btn"
+                    style="margin-top:20px; z-index:3;">
+                Back
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ADD PLAYERS -->
+    <div id="addplayers" class="screen addplayers" style="display:none;">
+
+        <p class="title font">Add Players</p>
+
+        <!-- PLAYER 1 -->
+        <div class="player-block">
+
+            <div id="img-p1" class="carousel slide" data-ride="carousel" data-interval="false">
+                <div class="carousel-inner">
+                    <div class="item active"><img id="0" src="assets/img/profiles/australia.png"></div>
+                    <div class="item"><img id="1" src="assets/img/profiles/china.png"></div>
+                    <div class="item"><img id="2" src="assets/img/profiles/poland.png"></div>
+                    <div class="item"><img id="3" src="assets/img/profiles/usa.png"></div>
+                    <div class="item"><img id="4" src="assets/img/profiles/brazil.png"></div>
+                </div>
+
+                <a class="left carousel-control" href="#img-p1" data-slide="prev">
+                    <span class="glyphicon glyphicon-triangle-left"></span>
+                </a>
+                <a class="right carousel-control" href="#img-p1" data-slide="next">
+                    <span class="glyphicon glyphicon-triangle-right"></span>
+                </a>
+            </div>
+
+            <div id="n-p1" class="name-block">
+                <input value="player1" maxlength="10" type="text" class="form-control">
+            </div>
+
+        </div>
+
+        <p class="vs font">VS</p>
+
+        <!-- PLAYER 2 -->
+        <div class="player-block">
+
+            <div id="img-p2" class="carousel slide" data-ride="carousel" data-interval="false">
+                <div class="carousel-inner">
+                    <div class="item"><img id="0" src="assets/img/profiles/brazil.png"></div>
+                    <div class="item"><img id="1" src="assets/img/profiles/china.png"></div>
+                    <div class="item active"><img id="2" src="assets/img/profiles/poland.png"></div>
+                    <div class="item"><img id="3" src="assets/img/profiles/usa.png"></div>
+                </div>
+
+                <a class="left carousel-control" href="#img-p2" data-slide="prev">
+                    <span class="glyphicon glyphicon-triangle-left"></span>
+                </a>
+                <a class="right carousel-control" href="#img-p2" data-slide="next">
+                    <span class="glyphicon glyphicon-triangle-right"></span>
+                </a>
+            </div>
+
+            <div id="n-p2" class="name-block">
+                <div class="bot-name">Innobot</div>
+            </div>
+
+        </div>
+
+        <button id="btn-back-addplayers" class="btn btn-danger action-btn back-btn">Back</button>
+
+        <button id="btn-start" class="btn btn-danger action-btn start-btn">Start!</button>
+
+    </div>
+
+    <!-- IN-GAME -->
+    <div id="ingame" class="screen" style="display:none;">
+        <canvas id="canvas"></canvas>
+
+        <img id="profile-p1" class="profile" src="assets/img/profiles/australia.png">
+        <img id="profile-p2" class="profile" src="assets/img/profiles/poland.png">
+
+        <h1 id="name-p1" class="hud-name">player1</h1>
+        <h1 id="name-p2" class="hud-name">InnoBot</h1>
+
+        <h1 id="score-p1" class="hud-score">0</h1>
+        <h1 id="score-p2" class="hud-score">0</h1>
+
+        <p class="vs-hud font">VS</p>
+
+        <span id="bar-p1" class="turn-indicator">Your turn</span>
+        <span id="bar-p2" class="turn-indicator">Enemy turn</span>
+
+        <div class="progress timer-bar">
+            <div id="timer" class="progress-bar progress-bar-danger"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- LIBRARIES -->
+<script src="assets/lib/jquery-2.1.3.min.js"></script>
+<script src="assets/lib/bootstrap.min.js"></script>
+<script data-main="assets/js/main" src="assets/lib/require.js"></script>
+
+</body>
+</html>

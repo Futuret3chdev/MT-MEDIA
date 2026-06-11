@@ -1,0 +1,82 @@
+@import "settings";
+
+.ingame {
+    $profile-top: 10%;
+    $profile-left: 10%;
+    $name-top: 8%;
+    $name-left: 36%;
+    $score-top: 8%;
+    $score-left: 60%;
+    
+    #canvas {
+        left: 50%;
+        top: 50%;
+    }
+    
+    .quit-btn {
+        left: 87%;
+        top: 90%;
+    }
+    
+    .progress {
+        width: 100px;
+        left: 50%;
+        top: 20%;
+        background-color: $timer-bg-color;
+        border: $timer-stroke;
+    }
+    
+    .turn-indicator {
+        top: $profile-top + 10%;
+        width: 80px;
+    }
+    #bar-p1 {
+        left: $profile-left;
+    }
+    #bar-p2 {
+        left: 100% - $profile-left;
+    }
+    
+    .score {
+        top: $score-top;
+    }
+    #score-p1 {
+        left: $score-left;
+    }
+    #score-p2 {
+        left: 100% - $score-left;
+    }
+    
+    .vs {
+        font-size: 50px;
+        top: 10%;
+        left: 50%;
+        text-shadow: $title-stroke, $title-stroke, $title-stroke, $title-stroke, $title-stroke, $title-stroke;
+    }
+    
+    .profile {
+        width: $profile-ingame-size;
+        height: $profile-ingame-size;
+        top: $profile-top;
+    }
+    #profile-p1 {
+        left: $profile-left;
+    }
+    #profile-p2 {
+        left: 100% - $profile-left;
+    }
+    
+    .name {
+        width: 250px;
+        font-size: 25px;
+        top: $name-top;
+    }
+    #name-p1 {
+        text-align: left;
+        left: $name-left;
+    }
+    #name-p2 {
+        text-align: right;
+        left: 100% - $name-left;
+    }
+}

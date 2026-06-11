@@ -1,0 +1,161 @@
+:root {
+  --range-track-color: rgba(64, 64, 64, 0.2);
+  --range-thumb-color: #000;
+}
+
+body,
+html {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: none;
+
+  font-family: 'Inter', sans-serif;
+}
+
+h1 {
+  font-size: 32pt;
+}
+
+h2 {
+  margin-bottom: 10px;
+}
+
+p {
+  margin: 0 0;
+}
+
+button {
+  font-family: 'Inter', sans-serif;
+  font-weight: normal;
+  border: 1px solid #000;
+}
+
+label {
+  margin-bottom: 10px;
+}
+
+input[type='range'] {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  height: 100%;
+}
+
+#root button {
+  margin: 15px 10px;
+}
+
+/* MOBILE FIX — scoreboard responsive layout */
+@media (max-width: 600px) {
+  #scoreboard {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    z-index: 9999;
+    font-size: 16px;
+  }
+}
+/* === HUD === */
+#hud-container {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  color: white;
+}
+
+#score-hud {
+  font-size: 32px;
+  font-weight: bold;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#hud-buttons {
+  display: flex;
+  gap: 5px;
+  justify-content: center;   /* Centers horizontally */
+  align-items: center;        /* Centers vertically */
+  width: 100%;                /* Makes sure centering behaves correctly */
+}
+
+
+#hud-buttons button .icon {
+  font-size: 24px;
+  line-height: 1;
+  display: inline-block;
+  pointer-events: none; /* fixes safari press-remapping */
+  -webkit-text-size-adjust: none;
+}
+
+/* ICON-ONLY HUD BUTTONS */
+#hud-buttons button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+
+  font-size: 28px; /* adjust icon size */
+  line-height: 1;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* disable highlight background on tap (iOS Safari fix) */
+#hud-buttons button:active,
+#hud-buttons button:focus {
+  outline: none;
+  background: none;
+  border: none;
+}
+
+
+/* === SIDE BUTTONS (Settings + About) — FIX OVERLAP === */
+#side-buttons {
+  position: absolute;
+  top: 40px;
+  left: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  z-index: 5000; /* Above canvas, below HUD */
+}
+
+#side-buttons button {
+  width: 130px;
+  padding: 8px 12px;
+  background: #eaeaea;
+  border-radius: 6px;
+  border: 1px solid #000;
+  font-size: 16px;
+  cursor: pointer;
+  margin: 0; /* IMPORTANT: override default margin */
+}
+
+#side-buttons button:hover {
+  background: #dcdcdc;
+}
