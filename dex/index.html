@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeFi Pairs Explorer</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .pair-table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .pair-table th, .pair-table td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        .pair-table th { background-color: #007bff; color: white; }
+        .pair-table tr:hover { background-color: #f9f9f9; }
+        .tabs { margin-bottom: 20px; }
+        .tabs button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DeFi Pairs Explorer</h1>
+        <div class="tabs">
+            <button onclick="loadPairs('eth')">Ethereum</button>
+            <button onclick="loadPairs('bsc')">BSC</button>
+        </div>
+        <table class="pair-table">
+            <thead>
+                <tr>
+                    <th>Pair</th>
+                    <th>Price</th>
+                    <th>24h Volume</th>
+                    <th>Liquidity</th>
+                </tr>
+            </thead>
+            <tbody id="pairs-list"></tbody>
+        </table>
+    </div>
+
+    <script>
+        async function loadPairs(network) {
+            const tbody = document.getElementById('pairs-list');
+            tbody.innerHTML = ''; // Clear existing rows
+            const url = network === 'eth' ? '/eth-pairs' : '/bsc-pairs';
+            try {
+                const response = await fetch(url);
+                const pairs = await response.json();
+                pairs.forEach(pair => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${pair.pair}</td>
+                        <td>${pair.price}</td>
+                        <td>${pair.volume}</td>
+                        <td>${pair.liquidity}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading pairs:', error);
+            }
+        }
+
+        // Load Ethereum pairs by default
+        window.onload = () => loadPairs('eth');
+    </script>
+</body>
+</html>

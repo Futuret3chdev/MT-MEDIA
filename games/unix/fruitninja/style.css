@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Fruit Slash Game</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      background-image: url('background.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: Arial, sans-serif;
+      touch-action: manipulation;
+    }
+    #container {
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      min-height: none;
+      margin: 0;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255,255,255,0.05);
+      border-radius: 0;
+      position: relative;
+    }
+    #front {
+      font-size: 40px;
+      color: #d3901d;
+      width: 90%;
+      max-width: 650px;
+      padding: 10px;
+      margin: 50px auto 20px;
+      text-align: center;
+      z-index: 2;
+    }
+    .branding {
+      font-size: 20px;
+      font-weight: bold;
+      color: #d3901d;
+      text-shadow: 2px 2px 4px #2e1d11;
+      margin-bottom: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #front img { width: 180px; }
+    #highScore { font-size: 24px; color: #d3901d; margin: 20px 0; }
+    #difficulty {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      pointer-events: auto;
+    }
+    .diffBtn {
+      padding: 8px 16px;
+      margin: 2px 0;
+      cursor: pointer;
+      background-color: #d3901d;
+      border: 2px solid #2e1d11;
+      border-radius: 5px;
+      color: #2e1d11;
+      font-size: 14px;
+      box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
+      width: 90px;
+      text-align: center;
+    }
+    .diffBtn:hover { background-color: #b3740f; }
+    #instructions {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 450px;
+      height: 50px;
+      margin: 0;
+      font-size: 30px;
+      background-color: #d3901d;
+      color: #2e1d11;
+      text-align: center;
+      line-height: 50px;
+      border-radius: 20px;
+      box-shadow: 0px 4px 0px #775012;
+      z-index: 1000;
+    }
+    #fruitcontainer {
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      padding: 10px;
+      margin: 0;
+      background: url(wood-bg2.jpg) center/cover;
+      border-radius: 0;
+      box-shadow: none;
+      position: relative;
+      touch-action: none;
+      overflow: hidden;
+    }
+    .fruit {
+      display: none;
+      position: absolute;
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      touch-action: none;
+      width: 60px;
+      height: 60px;
+    }
+    #splashEffect {
+      display: none;
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, rgba(255,165,0,0.7), transparent);
+      border-radius: 50%;
+      z-index: 1;
+      animation: splash 0.5s ease-out;
+    }
+    @keyframes splash {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+    #score { display: none; }
+    .scoreDisplay {
+      z-index: 10;
+      display: flex;
+      background: transparent;
+      color: #888e61;
+      position: absolute;
+      font-size: 30px;
+      align-items: center;
+      top: 10px;
+      left: 10px;
+    }
+    #score img { width: 40px; padding-right: 5px; }
+    #difficultyDisplay { margin-left: 10px; text-transform: capitalize; }
+    #trialsleft {
+      margin-top: 7px;
+      display: flex;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: transparent;
+      z-index: 10;
+    }
+    .life { width: 30px; padding-right: 5px; }
+    #startReset {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: center;
+      background-color: #8d8315;
+      box-shadow: 0px 4px 0px #5c5619;
+      border-radius: 5px;
+      transition: all 0.2s;
+      z-index: 1000;
+      touch-action: manipulation;
+      pointer-events: auto;
+      display: none;
+    }
+    #startReset:active {
+      background-color: #69620c;
+      box-shadow: 0px 0px #5c5619;
+      top: 14px;
+      color: white;
+    }
+    #musicToggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 90px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: center;
+      background-color: #d3901d;
+      box-shadow: 0px 4px 0px #775012;
+      border-radius: 5px;
+      transition: all 0.2s;
+      z-index: 1000;
+      touch-action: manipulation;
+      pointer-events: auto;
+    }
+    #musicToggle:active {
+      background-color: #b3740f;
+      box-shadow: 0px 0px #775012;
+      top: 14px;
+      color: white;
+    }
+    #gameOver {
+      box-sizing: border-box;
+      width: 90%;
+      max-width: 600px;
+      height: 300px;
+      background: rgba(0,0,0,0.8);
+      color: #d3901d;
+      text-transform: uppercase;
+      text-align: center;
+      font-size: 2em;
+      line-height: 1.2;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      border-radius: 10px;
+      padding: 20px;
+      display: none;
+    }
+    #footer {
+      position: absolute;
+      bottom: 5px;
+      width: 100%;
+      text-align: center;
+      color: #d3901d;
+      font-size: 20px;
+      text-shadow: 1px 1px 2px #2e1d11;
+      z-index: 1;
+    }
+    @media (max-width: 600px), (orientation: landscape) {
+      #container { padding: 5px; }
+      #front { font-size: 16px; margin: 10px auto; }
+      #front img { width: 100px; }
+      #highScore { font-size: 16px; }
+      .diffBtn { padding: 4px 8px; font-size: 11px; width: 80px; }
+      .branding { font-size: 18px; margin-top: 10px; }
+      #instructions { font-size: 14px; height: 20px; line-height: 20px; max-width: 200px; }
+      .scoreDisplay { font-size: 24px; }
+      #score img { width: 18px; }
+      #difficultyDisplay { font-size: 14px; }
+      .life { width: 14px; }
+      .fruit { width: 50px; height: 50px; }
+      #splashEffect { width: 40px; height: 40px; }
+      #startReset, #musicToggle { width: 70px; padding: 6px; font-size: 12px; }
+      #gameOver { font-size: 1.2em; max-width: 90%; height: auto; min-height: 150px; padding: 15px; }
+      #footer { font-size: 14px; }
+      #trialsleft { top: 50px; right: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="front">
+      <div class="branding">Fruit Slash</div>
+      <img src="logo.png" alt="Logo">
+      <div id="highScore">High Score: 0</div>
+    </div>
+    <div id="instructions">Slice the fruits!</div>
+    <div id="fruitcontainer"></div>
+    <div id="score"><div class="scoreDisplay">0 <img src="coin.png"><span id="difficultyDisplay"></span></div></div>
+    <div id="trialsleft"></div>
+    <div id="startReset">Start</div>
+    <div id="musicToggle">Music On</div>
+    <div id="gameOver">
+      <p>Game Over</p>
+      <p>Score: <span id="finalScore">0</span></p>
+      <p id="startReset" style="display:block;margin-top:20px;">Play Again</p>
+    </div>
+    <div id="footer">© 2025 Fruit Slash</div>
+    <div id="difficulty">
+      <div class="diffBtn" data-diff="easy">Easy</div>
+      <div class="diffBtn" data-diff="medium">Medium</div>
+      <div class="diffBtn" data-diff="hard">Hard</div>
+    </div>
+  </div>
+
+  <script>
+    // Game variables
+    let score = 0, trialsLeft = 0, step, chosenFruit, isPlaying = false, difficulty = 'medium';
+    const fruits = ['apple', 'banana', 'orange', 'grape', 'watermelon'];
+    const diffSettings = {
+      easy: { speed: 3, lives: 5, interval: 1500 },
+      medium: { speed: 5, lives: 3, interval: 1200 },
+      hard: { speed: 7, lives: 1, interval: 800 }
+    };
+    let gameInterval, fruitTimeout;
+
+    // Elements
+    const container = document.getElementById('container');
+    const fruitContainer = document.getElementById('fruitcontainer');
+    const scoreEl = document.querySelector('.scoreDisplay');
+    const trialsEl = document.getElementById('trialsleft');
+    const startBtn = document.getElementById('startReset');
+    const gameOverEl = document.getElementById('gameOver');
+    const finalScoreEl = document.getElementById('finalScore');
+    const diffBtns = document.querySelectorAll('.diffBtn');
+    const diffDisplay = document.getElementById('difficultyDisplay');
+    const highScoreEl = document.getElementById('highScore');
+    let highScore = localStorage.getItem('highScore') || 0;
+    highScoreEl.textContent = `High Score: ${highScore}`;
+
+    // Audio (placeholder)
+    const sliceSound = new Audio('slice.mp3'); // Add real audio
+    const gameOverSound = new Audio('gameover.mp3');
+
+    // Init
+    diffBtns.forEach(btn => btn.addEventListener('click', () => {
+      difficulty = btn.dataset.diff;
+      diffDisplay.textContent = difficulty;
+      resetGame();
+    }));
+    startBtn.addEventListener('click', toggleGame);
+    document.querySelector('#musicToggle').addEventListener('click', toggleMusic);
+
+    function toggleGame() {
+      if (isPlaying) resetGame();
+      else startGame();
+    }
+
+    function startGame() {
+      isPlaying = true;
+      score = 0;
+      trialsLeft = diffSettings[difficulty].lives;
+      scoreEl.textContent = '0 ';
+      updateTrials();
+      document.getElementById('front').style.display = 'none';
+      document.getElementById('score').style.display = 'block';
+      startBtn.textContent = 'Reset';
+      startBtn.style.display = 'block';
+      gameInterval = setInterval(throwFruit, diffSettings[difficulty].interval);
+    }
+
+    function resetGame() {
+      isPlaying = false;
+      clearInterval(gameInterval);
+      clearTimeout(fruitTimeout);
+      fruitContainer.innerHTML = '';
+      document.getElementById('score').style.display = 'none';
+      document.getElementById('front').style.display = 'block';
+      startBtn.textContent = 'Start';
+      gameOverEl.style.display = 'none';
+    }
+
+    function throwFruit() {
+      if (!isPlaying) return;
+      const fruit = document.createElement('img');
+      chosenFruit = fruits[Math.floor(Math.random() * fruits.length)];
+      fruit.src = `${chosenFruit}.png`;
+      fruit.classList.add('fruit');
+      fruit.style.left = `${Math.random() * (fruitContainer.offsetWidth - 60)}px`;
+      fruit.style.display = 'block';
+      fruitContainer.appendChild(fruit);
+
+      const startY = fruitContainer.offsetHeight;
+      let posY = startY;
+      step = diffSettings[difficulty].speed;
+
+      function move() {
+        posY -= step;
+        fruit.style.bottom = `${posY}px`;
+        if (posY < -60) {
+          fruit.remove();
+          if (--trialsLeft === 0) endGame();
+          else updateTrials();
+        } else requestAnimationFrame(move);
+      }
+      move();
+
+      fruit.addEventListener('touchstart', sliceFruit, { passive: false });
+      fruit.addEventListener('mousedown', sliceFruit);
+
+      fruitTimeout = setTimeout(() => fruit.remove(), 3000);
+    }
+
+    function sliceFruit(e) {
+      if (!isPlaying) return;
+      e.preventDefault();
+      const fruit = e.target;
+      if (!fruit.classList.contains('fruit')) return;
+
+      score++;
+      scoreEl.textContent = score + ' ';
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+        highScoreEl.textContent = `High Score: ${highScore}`;
+      }
+
+      sliceSound.play();
+
+      const splash = document.createElement('div');
+      splash.id = 'splashEffect';
+      splash.style.left = `${e.touches ? e.touches[0].clientX - container.offsetLeft - 50 : e.clientX - container.offsetLeft - 50}px`;
+      splash.style.top = `${e.touches ? e.touches[0].clientY - container.offsetTop - 50 : e.clientY - container.offsetTop - 50}px`;
+      container.appendChild(splash);
+      setTimeout(() => splash.remove(), 500);
+
+      fruit.remove();
+    }
+
+    function updateTrials() {
+      trialsEl.innerHTML = '';
+      for (let i = 0; i < trialsLeft; i++) {
+        const life = document.createElement('img');
+        life.src = 'heart.png';
+        life.classList.add('life');
+        trialsEl.appendChild(life);
+      }
+    }
+
+    function endGame() {
+      isPlaying = false;
+      clearInterval(gameInterval);
+      finalScoreEl.textContent = score;
+      gameOverEl.style.display = 'block';
+      gameOverSound.play();
+      startBtn.style.display = 'none';
+    }
+
+    function toggleMusic() {
+      // Placeholder: implement real audio toggle
+      this.textContent = this.textContent === 'Music On' ? 'Music Off' : 'Music On';
+    }
+
+    // Init difficulty
+    diffDisplay.textContent = difficulty;
+  </script>
+</body>
+</html>

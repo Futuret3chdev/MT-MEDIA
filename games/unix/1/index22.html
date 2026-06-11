@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+    <!-- Allow page to be saved as web app on iOS. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <!-- Hide status bar -->
+    <meta names="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- icon used for iOS Web App -->
+    <link rel="apple-touch-icon-precomposed" href="icon/ios_icon.png"/>
+
+
+    <style>
+        body {
+            margin:0;
+            background: #000;
+        }
+        @font-face {
+            font-family: 'ArcadeR';
+            src: url('font/ARCADE_R.TTF');
+            /*
+            src: url('font/PressStart2P.ttf');
+            */
+        }
+        #canvas-warning {
+            color: #FF0;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+<canvas id='canvas' width="1280" height="720">
+<script src="jquery.js"></script>
+<script src="interp.js"></script>
+<script src="render.js"></script>
+    <script>
+        var timer = setTimeout(function() {
+            window.location='game.html'
+        }, 14000);
+    </script>
+</body>
+</html>

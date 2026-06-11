@@ -1,0 +1,66 @@
+/* Roadmap Background */
+.roadmap-container {
+
+    background-color: black;
+
+  }
+/* Live Banner Marquee */
+
+.wallet-container {
+    padding: 60px 20px;
+    text-align: center; /* Ensures all text is centered */
+}
+
+/* Wallet Heading */
+.wallet-heading {
+    font-size: 32px;
+    font-weight: bold;
+    color: white;
+    text-align: center; /* Ensures text is centered */
+    margin-bottom: 10px;
+}
+
+/* Wallet Subtitle */
+.wallet-subtitle {
+    font-size: 16px;
+    color: #bbb;
+    text-align: center; /* Ensures text is centered */
+    margin-bottom: 30px;
+}
+
+/* Wallet Cards */
+.wallet-card {
+    background-color: rgba(0, 0, 0, 0.5); /* Transparent black background */
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Semi-transparent border */
+    margin-bottom: 20px;
+}
+
+
+/* Hover Effect */
+.wallet-card:hover {
+    transform: scale(1.05);
+    border-color: #8a2be2; /* Purple highlight */
+}
+
+/* Wallet Icons */
+.wallet-icon {
+    font-size: 40px;
+    color: #8a2be2; /* Purple icon */
+    margin-bottom: 10px;
+}
+
+/* Wallet Card Title */
+.wallet-card h4 {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* Wallet Card Description */
+.wallet-card p {
+    font-size: 14px;
+    color: #ccc;
+}

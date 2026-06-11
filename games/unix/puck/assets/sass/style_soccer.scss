@@ -1,0 +1,97 @@
+@import "menu";
+@import "credits";
+@import "addplayers";
+@import "ingame";
+@import "settings";
+
+body {
+	background: #121212;
+}
+
+.wrapper {
+    position: absolute;
+    left: 50%;
+    text-align: center;
+    margin-top: $screen-top-offset;
+    width: $screen_width;
+    height: $screen_height;
+    
+    .show-limits {
+        //background-color: #f0f;
+        line-height: 1.3em;
+        border: 2px dashed #fff;
+        border-color: #f0f;
+        border-radius: 10px;
+    }
+    
+    .bg {
+        position: absolute;
+        //display: inline-block;
+        background: url($bg-name);
+        background-size: $screen_width $screen_height;
+        background-repeat: no-repeat;
+        transform: translate(-50%, 0%);
+        z-index: -1;
+    }
+    
+    .darken {
+        background-image: 
+            linear-gradient(
+                rgba(0, 0, 0, 0.5),
+                rgba(0, 0, 0, 0.5)
+            ),
+            url($bg-name);
+    }
+    
+    .not-supported {
+        background-image: 
+            linear-gradient(
+                rgba(0, 0, 0, 0.8),
+                rgba(0, 0, 0, 0.8)
+            ),
+            url($bg-name);
+        
+        .font {
+            font-size: 50px;
+            left: 50%;
+            text-shadow: $title-stroke, $title-stroke, $title-stroke, $title-stroke, $title-stroke, $title-stroke;
+        }
+        
+        .what {
+            top: 40%;
+        }
+        .why {
+            top: 60%;
+        }
+    }
+    
+    .screen {
+        text-align: left;
+        position: absolute;
+        transform: translate(-50%, 0%);
+        width: inherit;
+        height: inherit;
+        
+        .obj {
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+        
+        .btn {
+            width: 150px;
+            font-size: 20px;
+        }
+        
+        .font {
+            font-family: "Lobster";
+            color: $title-color;
+        }
+        
+        .title {
+            margin-top: 60px;
+            font-size: 50px;
+            left: 50%;
+            text-shadow: $title-stroke, $title-stroke, $title-stroke, $title-stroke, $title-stroke, $title-stroke;
+        }
+    }
+}

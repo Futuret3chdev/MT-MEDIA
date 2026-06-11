@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doodle Dash</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('http://i.imgur.com/Y0BMP.png') no-repeat center center fixed;
+            background-size: cover;
+            background-color: #87ceeb; /* Fallback sky blue color */
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #canvas {
+            border: 1px solid #000;
+            display: block;
+            background-color: transparent; /* Ensure canvas is transparent to show body background */
+        }
+        #mainMenu, #gameOverMenu, #scoreBoard {
+            position: absolute;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #mainMenu {
+            z-index: 1;
+            display: block;
+        }
+        #gameOverMenu, #scoreBoard {
+            z-index: -1;
+            visibility: hidden;
+            display: none;
+        }
+        #loadingMessage {
+            position: absolute;
+            top: 70%; /* Move below the title, credits, and instructions */
+            text-align: center;
+            font-size: 14px;
+            color: #555;
+            font-family: Arial, sans-serif;
+        }
+        #scoreBoard {
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+        }
+        #highScoresList {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        #highScoresList li {
+            margin: 5px 0;
+        }
+        #tweetBtn, #telegramBtn {
+            margin: 10px;
+            text-decoration: none;
+            color: #fff;
+            background-color: #1DA1F2;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        #telegramBtn {
+            background-color: #0088cc;
+        }
+        h1 {
+            margin: 0;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            font-size: 36px;
+            font-weight: bold;
+            text-rendering: optimizeLegibility; /* Improve text rendering */
+            color: #000;
+        }
+        h3 {
+            margin: 2px 0;
+            font-size: 12px;
+            color: #000;
+            font-family: Arial, sans-serif;
+        }
+        h3 a {
+            color: #00f;
+            text-decoration: none;
+        }
+        h3 a:hover {
+            text-decoration: underline;
+        }
+        .info {
+            margin: 8px 0;
+            font-size: 12px;
+            color: #000;
+            font-family: Arial, sans-serif;
+        }
+        .key {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 0 2px;
+            background: #ccc;
+            border: 1px solid #999;
+            border-radius: 3px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1;
+        }
+        .left::before {
+            content: '←';
+        }
+        .right::before {
+            content: '→';
+        }
+        .button {
+            display: inline-block;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: white;
+            background-color: #2e8b57; /* Darker green to match screenshot */
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #276e43; /* Slightly darker on hover */
+        }
+        .hidden {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            #canvas {
+                width: 100%;
+                height: 100%;
+            }
+            #mainMenu, #gameOverMenu {
+                width: 80%;
+                padding: 15px;
+            }
+            h1 {
+                font-size: 28px; /* Reduce font size on mobile */
+            }
+            h3 {
+                font-size: 10px;
+            }
+            .info {
+                font-size: 10px;
+            }
+            .key {
+                padding: 1px 4px;
+                font-size: 10px;
+            }
+            .button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            #loadingMessage {
+                top: 65%; /* Adjust for mobile */
+                font-size: 12px; /* Reduce font size on mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+    <img id="sprite" src="sprites.png" style="display: none;">
+    <canvas id="canvas"></canvas>
+    <div id="mainMenu">
+        <h1>Doodle Dash</h1>
+        <h3>using HTML5/WEB3,</h3>
+        <h3>...by <a href="http://twitter.com/futuret3chdev/" target="_blank">Futuret3ch</a></h3>
+        <h3>and <a href="http://twitter.com/memetorrent" target="_blank">MemeTorrent</a></h3>
+        <p class="info">
+            use
+            <span class="key left"></span>
+            <span class="key right"></span>
+            to move and space to (re) start...
+        </p>
+        <a class="button hidden" href="javascript:window.startGame()">Play</a>
+        <div id="loadingMessage">Loading sprites...</div>
+    </div>
+    <div id="gameOverMenu">
+        <h2>Game Over</h2>
+        <p id="go_score">You scored 0 points!</p>
+        <button onclick="reset()">Play Again</button>
+        <a id="tweetBtn" href="#" target="_blank">Share on X</a>
+        <a id="telegramBtn" href="#" onclick="postToTelegram()">Share on Telegram</a>
+        <h3>High Scores</h3>
+        <ul id="highScoresList"></ul>
+    </div>
+    <div id="scoreBoard">
+        Score: <span id="score">0</span>
+    </div>
+    <script src="main.js?v=6"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+@import "settings";
+
+.addplayers {
+    .back-btn {
+        left: 13%;
+        top: 90%;
+    }
+    
+    .start-btn {
+        left: 87%;
+        top: 90%;
+    }
+    
+    .carousel {
+        top: 50%;
+        width: $profile-size;
+        height: $profile-size;
+        
+        .item {    
+            text-align: center;
+            background: #333;
+            width: $profile-size;
+            height: $profile-size;
+        }
+        
+        .glyphicon {
+            top: 40%;
+        }
+    }
+    
+    .vs {
+        font-size: 50px;
+        left: 50%;
+        top: 250px;
+        text-shadow: $title-stroke, $title-stroke, $title-stroke, $title-stroke, $title-stroke, $title-stroke;
+    }
+    
+    .name {
+        width: 150px;
+        top: 50%;
+    }
+    
+    #n-p1 {
+        left: 30%;
+    }
+    
+    #n-p2 {
+        left: 70%;
+    }
+    
+    #img-p1 {
+        left: 10%;
+    }
+    
+    #img-p2 {
+        left: 90%;
+    }
+}

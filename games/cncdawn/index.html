@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>C&C Tiberian Dawn — Remastered</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: black;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+/* ===== TOP BRAND BAR ===== */
+#brand-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0.6));
+  border-bottom: 1px solid rgba(120,255,120,0.35);
+  color: #9fffa0;
+  font-size: 13px;
+  letter-spacing: 0.6px;
+  text-shadow: 0 0 6px rgba(0,255,0,0.35);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ===== GAME CONTAINER ===== */
+#game-container {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 36px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== GAME WRAPPER ===== */
+#game-wrapper {
+  position: relative;
+  transform-origin: center center;
+}
+
+/* ===== CANVAS ===== */
+canvas {
+  width: 640px;
+  height: 535px;
+  background: black;
+  display: block;
+  touch-action: none;
+  pointer-events: auto;
+  cursor: default;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+}
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+<script src="js/cnc-v0.3d.js"></script>
+</head>
+
+<body>
+<div id="brand-bar">
+  REMASTERED BY <strong>FutureT3ch</strong> × <strong>MemeTorrent</strong>
+</div>
+
+<div id="game-container">
+  <div id="game-wrapper">
+    <canvas id="canvas" width="640" height="535"></canvas>
+  </div>
+</div>
+
+<script>
+const wrapper = document.getElementById("game-wrapper");
+const canvas = document.getElementById("canvas");
+
+const BASE_W = 640;
+const BASE_H = 535;
+const BRAND_H = 36;
+
+const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent) || 'ontouchstart' in window;
+
+function resizeGame() {
+  const availW = window.innerWidth;
+  const availH = window.innerHeight - BRAND_H;
+
+  let scale = 1;
+
+  if (isMobile) {
+    // Mobile: scale to fit height exactly, with a little extra space for visibility
+    scale = (availH / BASE_H) * 0.95;
+  } else {
+    // Desktop: always 1:1, centered perfectly
+    scale = 1;
+  }
+
+  wrapper.style.transform = `scale(${scale})`;
+
+  // Perfect centering
+  const scaledW = BASE_W * scale;
+  const scaledH = BASE_H * scale;
+  wrapper.style.left = `${(availW - scaledW) / 2}px`;
+  wrapper.style.top = `${(availH - scaledH) / 2 + BRAND_H}px`;
+  wrapper.style.position = 'absolute';
+}
+
+// Touch-to-Mouse polyfill only on mobile
+if (isMobile) {
+  let activeTouches = {};
+
+  function createCorrectedMouseEvent(type, touch) {
+    const rect = canvas.getBoundingClientRect();
+    const physicalX = touch.clientX - rect.left;
+    const physicalY = touch.clientY - rect.top;
+    const logicalX = physicalX * (canvas.width / rect.width);
+    const logicalY = physicalY * (canvas.height / rect.height);
+
+    const fakeClientX = rect.left + logicalX;
+    const fakeClientY = rect.top + logicalY;
+
+    const ev = new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      clientX: fakeClientX,
+      clientY: fakeClientY,
+      pageX: fakeClientX,
+      pageY: fakeClientY,
+      offsetX: logicalX,
+      offsetY: logicalY,
+      button: 0
+    });
+
+    if (type === 'mousedown' || type === 'mousemove') ev.buttons = 1;
+    if (type === 'mouseup') ev.buttons = 0;
+
+    return ev;
+  }
+
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    Array.from(e.changedTouches).forEach(touch => {
+      activeTouches[touch.identifier] = true;
+      canvas.dispatchEvent(createCorrectedMouseEvent('mousedown', touch));
+    });
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    Array.from(e.changedTouches).forEach(touch => {
+      if (activeTouches[touch.identifier]) {
+        canvas.dispatchEvent(createCorrectedMouseEvent('mousemove', touch));
+      }
+    });
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', e => {
+    e.preventDefault();
+    Array.from(e.changedTouches).forEach(touch => {
+      if (activeTouches[touch.identifier]) {
+        canvas.dispatchEvent(createCorrectedMouseEvent('mouseup', touch));
+        canvas.dispatchEvent(createCorrectedMouseEvent('click', touch));
+        delete activeTouches[touch.identifier];
+      }
+    });
+  }, { passive: false });
+
+  canvas.addEventListener('touchcancel', e => e.preventDefault());
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+window.addEventListener('resize', resizeGame);
+window.addEventListener('orientationchange', resizeGame);
+resizeGame();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+[30-Nov-2025 09:37:38 America/Chicago] send_all_users.php: Not authenticated, session user_id missing
+[30-Nov-2025 09:37:38 America/Chicago] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_users.php:9) in /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_users.php on line 10
+[30-Nov-2025 11:40:05 America/Chicago] send_all_users.php: Not authenticated, session user_id missing
+[30-Nov-2025 11:40:05 America/Chicago] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_users.php:9) in /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_users.php on line 10
+[30-Nov-2025 17:10:29 America/Chicago] send_all_friends.php: Not authenticated, session user_id missing
+[30-Nov-2025 17:10:29 America/Chicago] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_friends.php:9) in /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_friends.php on line 10
+[02-Dec-2025 14:37:32 America/Chicago] send_all_users.php: Not authenticated, session user_id missing
+[02-Dec-2025 14:37:32 America/Chicago] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_users.php:9) in /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_users.php on line 10
+[19-Dec-2025 23:30:20 America/Chicago] send_all_friends.php: Not authenticated, session user_id missing
+[19-Dec-2025 23:30:20 America/Chicago] PHP Warning:  http_response_code(): Cannot set response code - headers already sent (output started at /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_friends.php:9) in /home2/tcvkxete/public_html/website_06ce6cd1/games/api/messages/send_all_friends.php on line 10

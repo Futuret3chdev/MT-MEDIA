@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MemeTorrent Live Stats</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 1rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .bucket-selector button {
+      background: #333;
+      color: #eee;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin: 0.2rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .bucket-selector button.active {
+      background: #00ff99;
+      color: #000;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .metric {
+      background: #222;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+    }
+
+    .flashable.flash {
+      background: #00ff99;
+      color: #000;
+      transition: background 0.3s ease;
+    }
+
+    canvas {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📊 MemeTorrent Live Stats</h1>
+    <div class="bucket-selector">
+      <button data-bucket="5m" class="active">5m</button>
+      <button data-bucket="1h">1h</button>
+      <button data-bucket="6h">6h</button>
+      <button data-bucket="24h">24h</button>
+    </div>
+  </header>
+
+  <section class="metrics">
+    <div class="metric flashable">💲 Price: <span id="price">$0.0000000000</span></div>
+    <div class="metric">💰 Supply: <span id="supply">0</span></div>
+    <div class="metric">📈 Buys: <span id="buys">0</span></div>
+    <div class="metric">📉 Sells: <span id="sells">0</span></div>
+    <div class="metric">💹 Buy Volume: <span id="buyVolume">0</span></div>
+    <div class="metric">📊 Sell Volume: <span id="sellVolume">0</span></div>
+  </section>
+
+  <section class="charts">
+    <canvas id="priceChart"></canvas>
+  </section>
+
+  <script>
+    let currentBucket = '5m';
+    let lastPrice = null;
+
+    const priceEl = document.getElementById('price');
+    const supplyEl = document.getElementById('supply');
+    const buysEl = document.getElementById('buys');
+    const sellsEl = document.getElementById('sells');
+    const buyVolEl = document.getElementById('buyVolume');
+    const sellVolEl = document.getElementById('sellVolume');
+
+    const priceCtx = document.getElementById('priceChart').getContext('2d');
+    const priceChart = new Chart(priceCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: '$MT Price',
+          data: [],
+          borderColor: '#00ff99',
+          backgroundColor: 'rgba(0,255,153,0.1)',
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: { duration: 500 },
+        scales: {
+          x: { display: true },
+          y: { display: true }
+        }
+      }
+    });
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('https://futuret3ch.pythonanywhere.com/api/token-data');
+        const data = await res.json();
+
+        const price = parseFloat(data.price).toFixed(10);
+        const supply = parseFloat(data.total_supply).toFixed(2);
+        const buys = data.total_buys[currentBucket];
+        const sells = data.total_sells[currentBucket];
+        const buyVol = data.total_buy_volume[currentBucket];
+        const sellVol = data.total_sell_volume[currentBucket];
+
+        if (lastPrice !== null && price !== lastPrice) {
+          priceEl.parentElement.classList.add('flash');
+          setTimeout(() => priceEl.parentElement.classList.remove('flash'), 300);
+        }
+        lastPrice = price;
+
+        priceEl.textContent = `$${price}`;
+        supplyEl.textContent = supply;
+        buysEl.textContent = buys;
+        sellsEl.textContent = sells;
+        buyVolEl.textContent = buyVol;
+        sellVolEl.textContent = sellVol;
+
+        const timeLabel = new Date().toLocaleTimeString();
+        priceChart.data.labels.push(timeLabel);
+        priceChart.data.datasets[0].data.push(price);
+        if (priceChart.data.labels.length > 20) {
+          priceChart.data.labels.shift();
+          priceChart.data.datasets[0].data.shift();
+        }
+        priceChart.update();
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    }
+
+    setInterval(fetchStats, 5000);
+    fetchStats();
+
+    document.querySelectorAll('.bucket-selector button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.bucket-selector button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentBucket = btn.dataset.bucket;
+        fetchStats();
+      });
+    });
+  </script>
+</body>
+</html>

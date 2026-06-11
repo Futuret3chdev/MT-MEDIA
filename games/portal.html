@@ -1,0 +1,5085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PORTAL Dashboard</title>
+  <link rel="icon" href="data:,">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.12.2/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emoji-mart@5.6.0/dist/emoji-mart-element/index.js"></script>
+
+
+<style>
+  emoji-picker {
+    --background: rgba(0,0,0,0.95);
+    --border-color: #00ffff;
+    --border-width: 1px;
+    --border-radius: 12px;
+    box-shadow: 0 0 20px #00ffff;
+    z-index: 9999;
+  }
+</style>
+  <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  font-family: 'Orbitron', sans-serif;
+  background: radial-gradient(circle at 20% 20%, #001018, #000000);
+  color: #fff;
+}
+
+#matrix, #trail {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%; z-index: 0;
+}
+#matrix { opacity: 0.7; }
+body::before {
+  content: "";
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1));
+  z-index: 0;
+  animation: glowShift 10s infinite alternate;
+}
+@keyframes glowShift { 0% { filter: hue-rotate(0deg);} 100% { filter: hue-rotate(360deg);} }
+
+header {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 60px;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(0,255,255,0.3);
+  color: #0ff; display: flex; justify-content: space-between; align-items: center;
+  padding: 0 20px; z-index: 999; text-shadow: 0 0 6px #0ff;
+}
+
+/* New Top Navbar Styles */
+.nav-container {
+  display: flex; justify-content: center; align-items: center;
+  flex-grow: 1; margin: 0 20px;
+}
+.nav-links {
+  display: flex; gap: 20px; align-items: center;
+}
+.nav-links a {
+  color: #0ff; text-decoration: none; font-size: 0.9em;
+  padding: 8px 12px; border-radius: 6px;
+  transition: all 0.3s ease; text-shadow: 0 0 6px #0ff;
+}
+.nav-links a:hover {
+  background: rgba(0,255,255,0.2); box-shadow: 0 0 10px #0ff;
+}
+
+/* Hamburger Menu for Mobile */
+.nav-toggle {
+  display: none; font-size: 1.5em; background: none;
+  border: none; color: #0ff; cursor: pointer;
+  padding: 5px 10px;
+}
+
+/* Sidebar Styles (Unchanged) */
+nav.sidebar {
+  position: fixed; top: 60px; left: 0;
+  width: 200px; height: calc(100% - 60px);
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(6px);
+  display: flex; flex-direction: column; padding-top: 20px;
+  border-right: 1px solid rgba(0,255,255,0.3); z-index: 999;
+  transition: transform 0.3s ease;
+}
+nav.sidebar.hidden { transform: translateX(-100%); }
+nav.sidebar a {
+  color: #0ff; padding: 12px 20px;
+  text-decoration: none; font-size: 0.95em;
+  transition: 0.3s; border-left: 2px solid transparent;
+}
+nav.sidebar a:hover { background: rgba(0,255,255,0.15); border-left: 2px solid #0ff; text-shadow: 0 0 10px #0ff; }
+
+/* Enhanced Button Styles */
+.header-buttons {
+  display: flex; align-items: center; gap: 10px;
+}
+.header-button {
+  padding: 6px 12px; border-radius: 6px; border: 1px solid #0ff;
+  background: rgba(0,255,255,0.2); color: #0ff; font-weight: bold;
+  cursor: pointer; transition: all 0.3s ease; font-size: 0.85em;
+  display: flex; align-items: center; gap: 5px;
+}
+.header-button:hover {
+  background: rgba(0,255,255,0.4); box-shadow: 0 0 10px #0ff;
+}
+#wallet-status { background: none; border: none; }
+#muteButton { background: #0ff; color: black; }
+#muteButton:hover { background: #00e0e0; }
+#logoutButton { background: #ff4444; border: 1px solid #ff6666; color: white; }
+#logoutButton:hover { background: #ff2222; box-shadow: 0 0 10px #ff6666; }
+#sidebar-toggle { background: rgba(0,255,255,0.2); }
+
+/* Main Content */
+main {
+  margin-left: 200px; margin-top: 60px; padding: 20px;
+  height: 100%; z-index: 10; position: relative; display: flex; flex-direction: column;
+  transition: margin-left 0.3s ease;
+}
+main.full-width { margin-left: 0; }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .nav-container { display: none; }
+  .nav-container.active { 
+    display: flex; flex-direction: column; position: absolute; top: 60px; left: 0; 
+    width: 100%; background: rgba(0,0,0,0.8); padding: 10px; z-index: 998;
+  }
+  .nav-links { flex-direction: column; gap: 10px; }
+  .nav-toggle { display: block; }
+  nav.sidebar { width: 100%; transform: translateX(-100%); }
+  nav.sidebar.active { transform: translateX(0); }
+  main { margin-left: 0; }
+  .header-buttons { gap: 5px; }
+  .header-button { padding: 5px 8px; font-size: 0.8em; }
+}
+
+/* Existing Styles (Unchanged) */
+.module {
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,255,255,0.4); border-radius: 12px;
+  padding: 20px; margin-bottom: 20px;
+  box-shadow: 0 0 20px rgba(0,255,255,0.2);
+  transition: transform 0.2s ease;
+}
+.module:hover { transform: translateY(-2px); }
+.module h2 { font-size: 1.4em; margin-bottom: 10px; color: #00ffee; text-shadow: 0 0 6px #00ffee; }
+
+.btn-link {
+  display: inline-block; margin-top: 10px; padding: 12px 24px;
+  color: black; background: linear-gradient(135deg, #0ff, #00aaff);
+  font-weight: bold; text-decoration: none; border-radius: 8px;
+  box-shadow: 0 0 20px #0ff; margin-right: 10px; transition: all 0.3s ease;
+}
+.btn-link:hover { background: linear-gradient(135deg, #00ffee, #00ccff); box-shadow: 0 0 30px #0ff; transform: scale(1.05); }
+
+.branding {
+  position: fixed; bottom: 15px; left: 50%;
+  transform: translateX(-50%); color: #00ffea; font-size: 0.9em;
+  text-shadow: 0 0 8px #00ffee; z-index: 999;
+}
+
+.module div {
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+#me-wallet {
+  display: block;
+  font-family: monospace;
+  font-size: 0.85em;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Neon glowing style for profile bio textarea */
+#profile-bio {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid #0ff;
+  border-radius: 8px;
+  color: #0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9em;
+  padding: 8px 10px;
+  outline: none;
+  resize: none;
+  box-shadow: 0 0 8px rgba(0,255,255,0.5);
+  transition: all 0.3s ease;
+}
+
+#profile-bio:focus {
+  border-color: #ff00ff;
+  box-shadow: 0 0 12px rgba(255,0,255,0.7);
+}
+
+/* Style for the Save button */
+.profile-extra .btn.success {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0ff, #00aaff);
+  color: black;
+  cursor: pointer;
+  box-shadow: 0 0 20px #0ff;
+  transition: all 0.3s ease;
+}
+
+.profile-extra .btn.success:hover {
+  background: linear-gradient(135deg, #00ffee, #00ccff);
+  box-shadow: 0 0 30px #0ff;
+  transform: scale(1.05);
+}
+
+.profile-extra .btn.cancel {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background: #555;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profile-extra .btn.cancel:hover {
+  background: #777;
+}
+
+.friend-cards {
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+
+.friend-card {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(0,255,255,0.3);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0,255,255,0.2);
+  position: relative; flex: 0 0 calc(25% - 7.5px);
+}
+@media (max-width: 1024px) { .friend-card { flex: 0 0 calc(33.33% - 6.67px); } }
+@media (max-width: 720px) { .friend-card { flex: 0 0 calc(50% - 5px); } }
+@media (max-width: 480px) { .friend-card { flex: 0 0 100%; } }
+
+.friend-card img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-bottom: 8px;
+  border: 1px solid #0ff;
+}
+
+.friend-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  z-index: 1;
+}
+
+.friend-actions .btn {
+  flex: 0;
+  font-size: 1.2em;
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.friend-actions .btn.success {
+  background: linear-gradient(135deg, #0ff, #00aaff);
+  color: black;
+  box-shadow: 0 0 6px #0ff;
+}
+
+.friend-actions .btn.success:hover {
+  background: linear-gradient(135deg, #00ffee, #00ccff);
+}
+
+.friend-actions .btn.cancel {
+  background: #444;
+  color: white;
+}
+
+.friend-actions .btn.cancel:hover {
+  background: #666;
+}
+
+.friend-actions .btn.block {
+  background: #ff4444;
+  color: white;
+  box-shadow: 0 0 6px #ff4444;
+}
+
+.friend-actions .btn.block:hover {
+  background: #ff2222;
+}
+
+.friend-actions .btn.report {
+  background: #ffaa00;
+  color: black;
+  box-shadow: 0 0 6px #ffaa00;
+}
+
+.friend-actions .btn.report:hover {
+  background: #ffcc00;
+}
+
+.friend-actions .btn.submit-report {
+  background: #ffaa00;
+  color: black;
+  box-shadow: 0 0 6px #ffaa00;
+  font-size: 0.8em;
+  width: auto;
+  padding: 4px 8px;
+}
+
+.friend-actions .btn.submit-report:hover {
+  background: #ffcc00;
+}
+
+.friend-actions .btn.cancel-report {
+  background: #444;
+  color: white;
+  font-size: 0.8em;
+  width: auto;
+  padding: 4px 8px;
+}
+
+.friend-actions .btn.cancel-report:hover {
+  background: #666;
+}
+
+.friend-actions .btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.report-form {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid #0ff;
+  border-radius: 4px;
+  padding: 8px;
+  z-index: 10;
+  margin-top: 5px;
+}
+
+.report-form select {
+  width: 100%;
+  padding: 4px;
+  background: #222;
+  color: #0ff;
+  border: 1px solid #0ff;
+  border-radius: 4px;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.report-form-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: center;
+}
+
+.report-other {
+  width: 100%;
+  padding: 6px;
+  margin-top: 5px;
+  border: 1px solid #0ff;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.6);
+  color: #0ff;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.friends-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.friends-tabs span {
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.tab-btn.active span {
+  color: black;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border: 1px solid #0ff;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.5);
+  color: #0ff;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #00ffee, #00ccff);
+  color: black;
+  box-shadow: 0 0 15px #00ffee;
+}
+
+.msg-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.msg-tab {
+  padding: 8px 16px;
+  border: 1px solid #0ff;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.5);
+  color: #0ff;
+  cursor: pointer;
+  font-weight: bold;
+  text-shadow: 0 0 6px #0ff;
+}
+.msg-tab.active {
+  background: linear-gradient(135deg, #0ff, #00aaff);
+  color: black;
+  box-shadow: 0 0 15px #0ff;
+}
+
+.msg-conversation {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(0,255,255,0.3);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+.msg-conversation h3 {
+  color: #0ff;
+  margin-bottom: 10px;
+}
+
+.msg-conversation .msg-list {
+  max-height: 400px;
+  overflow-y: auto !important;
+  padding-right: 12px;
+  box-sizing: border-box;
+}
+
+/* Firefox */
+.msg-conversation .msg-list {
+  scrollbar-width: thin;
+  scrollbar-color: #1e3a8a #e5e7eb !important;
+}
+
+/* WebKit (Chrome, Safari, Edge) */
+.msg-conversation .msg-list::-webkit-scrollbar {
+  width: 10px !important;
+}
+
+.msg-conversation .msg-list::-webkit-scrollbar-track {
+  background: #e5e7eb !important;
+  border-radius: 5px !important;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2) !important;
+}
+
+.msg-conversation .msg-list::-webkit-scrollbar-thumb {
+  background: #1e3a8a !important;
+  border-radius: 5px !important;
+  border: 2px solid #e5e7eb !important;
+}
+
+.msg-conversation .msg-list::-webkit-scrollbar-thumb:hover {
+  background: #1e40af !important;
+}
+
+.msg-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 8px;
+}
+.msg-item.sent {
+  justify-content: flex-end;
+  background: rgba(0,255,255,0.15);
+}
+.msg-item.received {
+  justify-content: flex-start;
+  background: rgba(0,0,0,0.3);
+}
+.msg-item .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin: 0 8px;
+}
+.msg-item .content-wrapper {
+  max-width: 70%;
+}
+.msg-item .name {
+  font-weight: bold;
+  font-size: 0.9em;
+  margin-bottom: 4px;
+}
+.msg-item .content {
+  word-wrap: break-word;
+}
+.msg-item .timestamp {
+  font-size: 0.75em;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+.reply-form {
+  display: none;
+  margin-top: 10px;
+}
+.reply-form textarea {
+  width: 100%;
+  height: 60px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid #0ff;
+  border-radius: 8px;
+  color: #0ff;
+  padding: 8px;
+  font-family: 'Orbitron', sans-serif;
+}
+.reply-form button {
+  padding: 5px 10px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.reply-form .send-btn {
+  background: #007bff;
+  color: white;
+}
+.reply-form .cancel-btn {
+  background: #555;
+  color: white;
+  margin-left: 5px;
+}
+
+.chat-module {
+  display: flex;
+  background: #2f3136;
+  border-radius: 8px;
+  height: calc(100vh - 100px);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+}
+
+.chat-sidebar {
+  width: 240px;
+  background: #202225;
+  padding: 10px;
+  border-right: 1px solid #1a1c1e;
+  overflow-y: auto;
+}
+
+.chat-sidebar h3 {
+  color: #b9bbbe;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  margin: 10px 0 5px;
+  padding-left: 10px;
+}
+
+.chat-channel {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  color: #b9bbbe;
+  font-size: 0.95em;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 2px 0;
+}
+
+.chat-channel:hover {
+  background: #35383c;
+  color: #fff;
+}
+
+.chat-channel.active {
+  background: #5865f2;
+  color: #fff;
+}
+
+.chat-channel .icon {
+  margin-right: 8px;
+  font-size: 1.1em;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #36393f;
+}
+
+.chat-header {
+  padding: 10px;
+  border-bottom: 1px solid #1a1c1e;
+  background: #2f3136;
+  color: #fff;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #1e3a8a #e5e7eb;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #1e3a8a;
+  border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #1e40af;
+}
+
+.chat-message {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  padding: 5px 10px;
+}
+
+.chat-message.sent {
+  justify-content: flex-end;
+}
+
+.chat-message.received {
+  justify-content: flex-start;
+}
+
+.chat-message .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0 10px;
+}
+
+.chat-message .content-wrapper {
+  max-width: 70%;
+  background: #40444b;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.chat-message.sent .content-wrapper {
+  background: #5865f2;
+  color: #fff;
+}
+
+.chat-message .name {
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #b9bbbe;
+}
+
+.chat-message.sent .name {
+  color: #fff;
+}
+
+.chat-message .content {
+  word-wrap: break-word;
+  font-size: 0.95em;
+}
+
+.chat-message .timestamp {
+  font-size: 0.75em;
+  color: #72767d;
+  margin-top: 4px;
+}
+
+.chat-input-area {
+  padding: 10px;
+  border-top: 1px solid #1a1c1e;
+  background: #2f3136;
+}
+
+.chat-input-area input {
+  width: calc(100% - 90px);
+  padding: 10px;
+  background: #40444b;
+  border: 1px solid #1a1c1e;
+  border-radius: 4px;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.chat-input-area button {
+  width: 80px;
+  margin-left: 10px;
+  padding: 10px;
+  background: #5865f2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.chat-users {
+  width: 200px;
+  background: #2f3136;
+  border-left: 1px solid #1a1c1e;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.chat-users h4 {
+  color: #b9bbbe;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.chat-user {
+  color: #dcddde;
+  font-size: 0.9em;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+}
+
+.chat-user .status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3ba55c;
+  margin-right: 8px;
+}
+
+.group-create {
+  margin-top: 10px;
+  padding: 10px;
+  background: #2f3136;
+  border-top: 1px solid #1a1c1e;
+}
+
+.group-create input {
+  width: 70%;
+  padding: 8px;
+  background: #40444b;
+  border: 1px solid #1a1c1e;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.group-create button {
+  padding: 8px 16px;
+  background: #5865f2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.chat-channel[data-chat-tab^="group-"] .icon { content: "👥"; }
+.chat-channel[data-chat-tab^="private-"] .icon { content: "📩"; }
+
+.chat-leave-btn {
+  margin-left: auto;
+  padding: 2px 6px;
+  background: #f04747;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.7em;
+  cursor: pointer;
+}
+
+.chat-leave-btn:hover {
+  background: #d32f2f;
+}
+
+.p2e-banner {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: linear-gradient(90deg, #ff9f43, #ffd166); color: #0f1216;
+  font-weight: 800; padding: 10px 14px; font-size: 14px; position: sticky;
+  top: 0; z-index: 30; box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+}
+.earnings {
+  max-width: 1200px; margin: 6px auto 0; padding: 0 16px 6px;
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  justify-content: space-between;
+}
+.earn-chip {
+  background: rgba(76, 194, 255, 0.12); border: 1px solid rgba(76, 194, 255, 0.25);
+  color: #cfeeff; padding: 8px 12px; border-radius: 999px; font-weight: 700; font-size: 13px;
+}
+.info-chip {
+  color: #9aa3b2; font-size: 12px;
+}
+.section {
+  max-width: 1200px; margin: 10px auto; padding: 0 16px;
+}
+.section h3 {
+  margin: 10px 0 14px; font-size: 18px; letter-spacing: 0.3px;
+  font-weight: 800; color: #f6f8fc; font-family: 'Rajdhani', sans-serif;
+}
+.grid {
+  display: flex; flex-wrap: wrap; gap: 14px;
+}
+.card {
+  position: relative; max-height: 300px; border-radius: 16px; background: #242730;
+  border: 1px solid #2d3340; box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  display: flex; flex-direction: column; min-height: 220px; flex: 0 0 calc(25% - 10.5px);
+}
+@media (max-width: 1024px) { .card { flex: 0 0 calc(33.33% - 9.33px); } }
+@media (max-width: 720px) { .card { flex: 0 0 calc(50% - 7px); } }
+@media (max-width: 480px) { .card { flex: 0 0 100%; } }
+.card:hover {
+  transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+  border-color: #3a4252;
+}
+.thumb {
+  position: relative;
+  height: 160px;
+  background: #0f1216;
+  overflow: hidden;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: contrast(1.05);
+  transition: transform 0.3s ease;
+}
+
+.card:hover .thumb img { transform: scale(1.05); }
+
+.p2e-badge {
+  position: absolute;
+  top: 10px; left: 10px;
+  background: linear-gradient(135deg, #ffd166, #ff9f43);
+  color: #111;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(255, 159, 67, 0.35);
+}
+
+.card[data-category="software"] .p2e-badge {
+  background: linear-gradient(135deg, #4cc2ff, #007bff);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.35);
+}
+
+.coming {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(255, 255, 255, 0.08); color: #fff;
+  padding: 6px 10px; border-radius: 999px; font-weight: 800; font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.body {
+  padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 6px;
+}
+.title {
+  font-weight: 800; font-size: 15px; margin: 0; font-family: 'Orbitron', sans-serif;
+}
+.meta {
+  display: flex; align-items: center; gap: 8px; color: #9aa3b2; font-size: 12px;
+}
+.actions { margin-top: 8px; }
+.play { width: 100%; }
+.play a { color: inherit; text-decoration: none; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.tab {
+  padding: 8px 12px; border-radius: 999px; border: 1px solid #2d3340;
+  color: #eef1f7; background: rgba(255, 255, 255, 0.03); cursor: pointer;
+  font-weight: 700; font-size: 13px; transition: 0.15s; font-family: 'Orbitron', sans-serif;
+}
+.tab.active {
+  background: linear-gradient(135deg, #4cc2ff, #7be3ff); color: #081017; border: none;
+}
+.panel { display: none; margin-top: 12px; }
+.panel.active { display: block; }
+.iframe-wrap {
+  overflow: hidden; border-radius: 16px; border: 1px solid #2d3340;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35); background: #242730;
+}
+iframe {
+  width: 100%; height: 430px; border: 0; display: block;
+}
+@media (max-width: 768px) {
+  .iframe-wrap { height: 300px; }
+}
+
+.racer-filters {
+  display: flex; gap: 10px; margin-bottom: 10px;
+}
+table {
+  width: 100%; border-collapse: collapse; background: rgba(0,0,0,0.6); color: #0ff;
+}
+th, td {
+  padding: 8px; text-align: left; border-bottom: 1px solid rgba(0,255,255,0.3);
+}
+th {
+  background: rgba(0,0,0,0.8); font-weight: bold;
+}
+
+/* Gameverse Cards & Leaderboard */
+#panel-games .grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+#panel-games .card {
+  flex: 0 0 calc(25% - 20px);
+  min-height: 350px;
+  max-height: none;
+  background: linear-gradient(145deg, #1a1d26, #111318);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.7), 0 0 10px rgba(0,255,255,0.25);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+#panel-games .card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 18px rgba(0,255,255,0.5);
+}
+
+#panel-games .card .thumb {
+  height: 180px;
+  background: #0f1216;
+  overflow: hidden;
+  position: relative;
+}
+#panel-games .card .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+#panel-games .card:hover .thumb img {
+  transform: scale(1.1);
+  filter: brightness(1.15);
+}
+
+#panel-games .p2e-badge,
+#panel-games .coming {
+  position: absolute;
+  top: 10px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+}
+#panel-games .p2e-badge {
+  left: 10px;
+  background: linear-gradient(135deg, #0ff, #00ccff);
+  color: #000;
+  box-shadow: 0 0 12px rgba(0,255,255,0.6);
+}
+#panel-games .coming {
+  right: 10px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+#panel-games .card .body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px;
+}
+#panel-games .card .title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  text-shadow: 0 0 6px #00ffee;
+}
+#panel-games .card .meta {
+  font-size: 12px;
+  color: #9aa3b2;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+#panel-games .card .actions .btn.success.play {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  background: linear-gradient(135deg, #0ff, #00aaff);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,255,255,0.5);
+  transition: all 0.25s ease;
+}
+#panel-games .card .actions .btn.success.play:hover {
+  background: linear-gradient(135deg, #00ffee, #00ccff);
+  box-shadow: 0 0 18px rgba(0,255,255,0.9);
+  transform: scale(1.05);
+}
+#panel-games .card .actions a {
+  color: #000;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+#panel-scoreboards {
+  background: linear-gradient(145deg, #12141a, #0b0c10);
+  border: 1px solid rgba(0,255,255,0.2);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0,255,255,0.25);
+}
+#panel-scoreboards h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: #00ffee;
+  text-shadow: 0 0 10px #0ff;
+  border-bottom: 1px solid rgba(0,255,255,0.25);
+  padding-bottom: 6px;
+}
+#panel-scoreboards .tabs .tab {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,255,255,0.25);
+  font-weight: 700;
+  font-size: 13px;
+  color: #9aa3b2;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+#panel-scoreboards .tabs .tab.active {
+  background: linear-gradient(135deg, #0ff, #00aaff);
+  color: #000;
+  border: none;
+  box-shadow: 0 0 12px rgba(0,255,255,0.6);
+}
+
+#panel-scoreboards table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 12px;
+  overflow: hidden;
+}
+#panel-scoreboards th, 
+#panel-scoreboards td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(0,255,255,0.15);
+}
+#panel-scoreboards th {
+  background: linear-gradient(135deg, #0ff, #00aaff);
+  color: #000;
+  font-weight: 800;
+}
+#panel-scoreboards td { color: #e0f7ff; }
+#panel-scoreboards tbody tr:nth-child(odd) { background: rgba(0,255,255,0.05); }
+#panel-scoreboards tbody tr:hover {
+  background: rgba(0,255,255,0.15);
+  box-shadow: inset 0 0 12px rgba(0,255,255,0.4);
+}
+#panel-scoreboards td:first-child {
+  font-weight: bold;
+  color: #00ffee;
+  text-shadow: 0 0 6px #0ff;
+}
+
+#panel-submit {
+  padding: 20px;
+}
+
+#submit-modal .modal-content {
+  background: linear-gradient(145deg, #181c25, #0e1016);
+  border: 1px solid rgba(0,255,255,0.3);
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 0 25px rgba(0,255,255,0.3);
+}
+
+#submit-modal h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 18px;
+  color: #00ffee;
+  text-shadow: 0 0 10px #0ff;
+  border-bottom: 1px solid rgba(0,255,255,0.25);
+  padding-bottom: 6px;
+}
+
+#submit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#submit-form label {
+  font-weight: bold;
+  font-size: 14px;
+  color: #00ffee;
+  text-shadow: 0 0 6px #0ff;
+}
+
+#submit-form input,
+#submit-form textarea,
+#submit-form select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(0,255,255,0.3);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.6);
+  color: #0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  transition: all 0.25s ease;
+}
+#submit-form input:focus,
+#submit-form textarea:focus,
+#submit-form select:focus {
+  border-color: #ff00ff;
+  box-shadow: 0 0 12px rgba(255,0,255,0.6);
+  outline: none;
+}
+
+#submit-form input[type="file"] {
+  padding: 6px;
+  background: rgba(0,0,0,0.4);
+  border: 1px dashed rgba(0,255,255,0.4);
+  cursor: pointer;
+}
+
+#submit-form button[type="submit"] {
+  margin-top: 12px;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0ff, #00aaff);
+  color: #000;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 0 15px rgba(0,255,255,0.7);
+  transition: all 0.3s ease;
+}
+#submit-form button[type="submit"]:hover {
+  background: linear-gradient(135deg, #00ffee, #00ccff);
+  box-shadow: 0 0 22px rgba(0,255,255,0.9);
+  transform: scale(1.05);
+}
+
+#submit-modal .close-btn {
+  float: right;
+  background: #ff4444;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(255,0,0,0.6);
+  transition: background 0.3s ease;
+}
+#submit-modal .close-btn:hover {
+  background: #ff2222;
+}
+
+#panel-software .grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+#panel-software .card {
+  flex: 0 0 calc(25% - 14px);
+  min-height: 320px;
+  max-height: none;
+  border-radius: 16px;
+  background: #242730;
+  border: 1px solid #2d3340;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+#panel-software .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+  border-color: #3a4252;
+}
+
+#panel-software .card .thumb {
+  height: 160px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0f1216;
+  overflow: hidden;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+#panel-software .card .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#panel-software .card .body {
+  flex: 1;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#panel-software .card .actions {
+  margin-top: auto;
+}
+#panel-software .card .actions .btn {
+  width: 100%;
+}
+
+/* Fix input/editor not clickable in Inbox */
+#msg-content-editor,
+.ql-editor,
+textarea,
+input,
+select {
+  position: relative;
+  z-index: 10; /* ensure above overlays */
+  pointer-events: auto !important;
+}
+
+/* safety net: prevent matrix or pulse overlays from blocking typing */
+canvas#matrix,
+.hero-pulse {
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+.matrix-theme { background: #000 !important; color: #0f0 !important; }
+.crypto-theme { background: #1a1a3d !important; color: #00f !important; }
+.cosmic-theme { background: #0a0a23 !important; color: #fff !important; }
+.retro-theme { background: #1c2526 !important; color: #ff69b4 !important; }
+.module { transition: border-color 0.3s ease; }
+
+@media (max-width: 480px) {
+  #spin-wheel {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+.sidebar a {
+  display: block;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #0ff;
+  background: rgba(0,255,255,0.08);
+  cursor: grab;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+.sidebar a:hover {
+  background: rgba(0,255,255,0.25);
+}
+.sidebar a:active {
+  cursor: grabbing;
+}
+.dragging {
+  opacity: 0.6;
+  border: 1px dashed #0ff;
+}
+
+
+/* === Portal Sidebar Layout Fix === */
+#portal-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Sidebar */
+#sidebar-nav {
+  width: 240px;
+  background: rgba(0, 10, 10, 0.85);
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  z-index: 10;
+}
+
+#sidebar-nav.hidden {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Main content */
+.main-content {
+  flex: 1;
+  transition: all 0.4s ease;
+  overflow-y: auto;
+}
+
+/* When sidebar is hidden — dashboard expands fully */
+.sidebar-hidden .main-content {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+/* Sidebar footer */
+.sidebar-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+/* Buttons */
+#save-sidebar-order {
+  flex: 1;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+}
+
+#save-sidebar-order:hover {
+  background: rgba(0, 255, 255, 0.25);
+  box-shadow: 0 0 16px #00ffff;
+}
+
+/* Hide/Show Button */
+.hide-menu-btn {
+  background: rgba(0, 255, 255, 0.12);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  font-size: 14px;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.hide-menu-btn:hover {
+  background: rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 12px #00ffff;
+}
+
+/* Floating Show Button */
+.hide-menu-btn.floating {
+  position: fixed;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  z-index: 1000;
+  background: rgba(0, 255, 255, 0.25);
+  border: 1px solid #00ffff;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  color: #00ffff;
+  font-size: 14px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  animation: pulse-glow 2s infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 8px rgba(0,255,255,0.3); }
+  100% { box-shadow: 0 0 22px rgba(0,255,255,0.9); }
+}
+
+.sidebar-footer {
+  display: flex;
+  justify-content: flex-start; /* Aligns buttons to the left */
+  align-items: center;
+  padding: 10px 8px;
+  gap: 10px;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+/* Save Order Button */
+#save-sidebar-order {
+  flex: 0 0 auto;
+  width: 60%;
+  background: rgba(0, 255, 255, 0.08);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11.5px;
+  border-radius: 6px;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+}
+#save-sidebar-order:hover {
+  background: rgba(0, 255, 255, 0.25);
+  box-shadow: 0 0 12px #00ffff;
+}
+
+/* Hide Menu Button */
+#toggle-sidebar {
+  flex: 0 0 auto;
+  width: 25px; /* fixed small width */
+  text-align: center;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  font-size: 16px;
+  border-radius: 6px;
+  padding: 5px 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+  margin-left: 5px; /* slight visual offset from edge */
+}
+#toggle-sidebar:hover {
+  background: rgba(0, 255, 255, 0.25);
+  box-shadow: 0 0 12px #00ffff;
+}
+
+
+
+
+
+
+
+
+
+  </style>
+</head>
+<body>
+  <audio id="backgroundMusic" autoplay loop>
+    <source src="https://memetorrent.futuret3ch.com.au/games/edm.mp3" type="audio/mp3">
+    <source src="/edm.mp3" type="audio/mp3">
+  </audio>
+  <canvas id="matrix"></canvas>
+  <canvas id="trail"></canvas>
+
+  <header>
+    <div>🚀 PORTAL</div>
+<nav class="nav-container">
+  <div class="nav-links">
+    <a href="../../../index.html">About</a>
+    <a href="../../../token.html">Tokenomics</a>
+    <a href="../../../safety.html">Safety</a>
+    <a href="../../../utility.html">Utility</a>
+    <a href="../../../contact.html">Contact</a>
+  </div>
+</nav>
+    <button class="nav-toggle">☰</button>
+    <div class="header-buttons">
+	 <button id="cog-settings" class="header-button" style="background: rgba(0,255,255,0.2);">⚙️</button>
+      <button id="sidebar-toggle" class="header-button">🗂️</button>
+      <button id="wallet-status" class="header-button">💰 Disconnected</button>
+      <button id="muteButton" class="header-button">🔇 Mute</button>
+      <button id="logoutButton" class="header-button">🚪 Logout</button>
+    </div>
+  </header>
+
+<!-- Sidebar Navigation -->
+
+
+
+<div id="portal-layout">
+  <nav class="sidebar" id="sidebar-nav">
+    <center>
+      Welcome<div id="welcome-user" class="welcome-text"></div>
+    </center>
+
+    <div id="sidebar-links">
+      <a href="#" data-module="me">🧬 My Portal</a>
+      <a href="#" data-module="messages">✉️ Messages</a>
+      <a href="#" data-module="friends">👥 Friends</a>
+      <a href="#" data-module="chat">💬 Live Chat</a>
+      <a href="#" data-module="wallet">💠 Wallet</a>
+      <a href="#" data-module="avatar">👾 Avatar Fusion</a>
+      <a href="#" data-module="games">🎮 Gameverse</a>
+      <a href="#" data-module="nft">🌌 NFT Multiverse</a>
+      <a href="#" data-module="leaderboard">📈 Leaderboard</a>
+      <a href="#" data-module="intel">📡 Intel Feed</a>
+      <a href="#" data-module="skins">🪩 Portal Skins</a>
+    </div>
+
+<div class="sidebar-footer">
+  <button id="save-sidebar-order" class="btn success">💾 Save Order</button>
+  <button id="toggle-sidebar" class="hide-menu-btn" title="Hide Menu">⮜</button>
+</div>
+
+  </nav>
+
+  <!-- MAIN DASHBOARD AREA -->
+  <div class="main-content">
+    <main id="dashboard-content" class="dashboard"></main>
+    <div class="branding">FutureT3ch | MemeTorrent</div>
+  </div>
+</div>
+
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+<script>
+
+  const { Connection, PublicKey } = window.solanaWeb3;
+
+  // Module definitions
+  const modules = {
+    me: `
+      <div class='module'>
+        <div style="display:flex;gap:18px;align-items:center;">
+          <img id="me-avatar" src="/games/default-avatar.png" alt="avatar"
+               style="width:64px;height:64px;border-radius:12px;border:1px solid rgba(0,255,255,.4)"/>
+          <div>
+            <h2 id="me-name">@User</h2>
+            <div style='opacity:.8'>Badge: <span id="me-badge">—</span></div>
+          </div>
+        </div>
+        <div class="profile-extra" style="margin-top:16px;">
+          <h3>About Me</h3>
+          <p id="me-bio">—</p>
+          <button id="edit-bio" class="btn success">Edit</button>
+          <div id="bio-editor" style="display:none; margin-top:10px;">
+            <textarea id="profile-bio" style="width:100%;height:80px;"></textarea>
+            <button onclick="saveBio()" class="btn success">Save</button>
+            <button onclick="cancelEditBio()" class="btn cancel">Cancel</button>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:12px;">
+          <div class="module"><div>Email</div><div id='me-email'>—</div></div>
+          <div class="module"><div>Wallet</div><div id='me-wallet'>—</div></div>
+          <div class="module"><div>Discord ID</div><div id='me-discord'>—</div></div>
+          <div class="module"><div>Telegram ID</div><div id='me-telegram'>—</div></div>
+        </div>
+        <div class="module" style="margin-top:16px;">
+          <h3>Leaderboard</h3>
+          <p>Rank: <span id="me-rank">—</span> | Score: <span id="me-score">—</span></p>
+        </div>
+      </div>
+    `,
+
+    messages: `
+<div class='module' id="messages-module">
+  <h2>✉️ Messages</h2>
+
+  <div class="msg-tabs">
+    <button class="msg-tab active" data-tab="inbox">📥 Inbox</button>
+    <button class="msg-tab" data-tab="sent">📤 Sent</button>
+    <button class="msg-tab" data-tab="replies">↔️ Replies</button>
+  </div>
+
+  <div id="msg-list"></div>
+
+  <!-- 📝 New Message -->
+  <div id="msg-new-section" style="margin-top:15px;">
+    <h3>New Message</h3>
+    <select id="msg-to" style="width:60%;padding:6px;">
+      <option value="">-- Select Friend --</option>
+    </select>
+    <div id="msg-content-editor" style="height:100px;margin-top:8px;background:#fff;color:#000;"></div>
+    <button class="emoji-btn" style="margin-top:8px;padding:5px 10px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;">😊 Emoji</button>
+    <input type="file" id="msg-files" multiple accept="image/*,application/pdf" style="margin-top:8px;">
+    <button onclick="sendMessage()" class="btn-link" style="margin-top:8px;">Send</button>
+  </div>
+
+  <!-- 👥 Message All Friends -->
+  <div style="margin-top:15px;">
+    <h3>Message All Friends</h3>
+    <textarea id="message-all-content" placeholder="Message all your friends..."
+      style="width:100%;height:60px;margin-bottom:8px;border:1px solid #0ff;background:rgba(0,0,0,0.6);color:#0ff;padding:8px;font-family:'Orbitron',sans-serif;"></textarea>
+    <button class="emoji-btn" style="margin-top:8px;padding:5px 10px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;">😊 Emoji</button>
+    <button onclick="sendMessageAllFriends()" class="btn-link">Send to All Friends</button>
+  </div>
+
+  <!-- 🛡️ Admin -->
+  <div id="admin-message-section" style="margin-top:15px;display:none;">
+    <h3>Message All Users (Admin)</h3>
+    <textarea id="message-all-users-content" placeholder="Message all Memetorrent users..."
+      style="width:100%;height:60px;margin-bottom:8px;border:1px solid #0ff;background:rgba(0,0,0,0.6);color:#0ff;padding:8px;font-family:'Orbitron',sans-serif;"></textarea>
+    <button class="emoji-btn" style="margin-top:8px;padding:5px 10px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;">😊 Emoji</button>
+    <button onclick="sendMessageAllUsers()" class="btn-link">Send to All Users</button>
+  </div>
+</div>
+`,
+    avatar: `
+      <div class='module'>
+        <h2>👾 Manage Avatar</h2>
+        <img id="me-avatar-preview" src="/games/default-avatar.png" alt="avatar"
+             style="width:96px;height:96px;border-radius:12px;border:1px solid rgba(0,255,255,.4);margin-bottom:12px"/>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="avatar-input" placeholder="Paste image URL" style="width:100%;padding:6px;"/>
+          <button id="avatar-save-url" class="btn-link">Save from URL</button>
+        </div>
+        <div>
+          <input type="file" id="avatar-file" accept="image/*">
+          <button id="avatar-save-file" class="btn-link">Upload Avatar</button>
+        </div>
+        <div class="module" style="margin-top:20px;">
+          <h2>🧪 Avatar Fusion Lab</h2>
+          <textarea id="grok-prompt" placeholder="Describe your avatar..." style="width:100%;height:60px;"></textarea>
+          <button id="generate-avatar" class="btn-link">Generate with AI</button>
+          <div id="fusion-preview" style="margin-top:12px; text-align:center;"></div>
+        </div>
+      </div>
+    `,
+   games: `
+<div class='module'>
+  <h2>🎮 Portal Gameverse</h2>
+
+  <div class="p2e-banner">
+    🚀 Play-to-Earn coming soon — Grind games, earn $MT, climb the leaderboards.
+  </div>
+
+  <div class="earnings">
+    <div class="earn-chip">My Earnings: 0.00 $MT</div>
+    <div class="earn-chip">Next $MT payout in: <span id="countdown">--:--:--</span></div>
+    <div class="info-chip">Wallet status: Not connected</div>
+  </div>
+
+  <main class="section">
+    <h3>Daily Missions</h3>
+    <ul style="list-style:none;padding-left:0;font-size:14px;color:#cfeeff">
+      <li>🏁 Complete 3 races in Racer</li>
+      <li>🧩 Stack 500 blocks in Tetris</li>
+      <li>🍉 Slice 50 fruits in Fruit Ninja</li>
+    </ul>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-panel="games">Games</button>
+      <button class="tab" data-panel="virtual-pets">Virtual Pets</button>
+      <button class="tab" data-panel="scoreboards">Leaderboards</button>
+      <button class="tab" data-panel="submit">Submit</button>
+      <button class="tab" data-panel="software">Software</button>
+    </div>
+
+    <!-- GAMES PANEL -->
+    <div class="panel active" id="panel-games">
+      <h3 class="animate-charcter">Featured Games</h3>
+      <div class="grid">
+
+        <article class="card" data-category="pc">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="tetris.jpg" alt="Tetris">
+            <span class="coming">Beta 1.0</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 2: Tetris</h4>
+            <div class="meta"><span class="tag">Puzzle</span><span class="tag">Classic</span></div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/2">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="mobiletet.jpg" alt="Tetris Mobile">
+            <span class="coming">Beta 3.7</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 3: Tetris Mobile</h4>
+            <div class="meta"><span class="tag">Puzzle</span><span class="tag">Mobile</span></div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetetris.netlify.app/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="cookie.gif" alt="Pac-Man">
+            <span class="coming">v1.3.4</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 4: Pac-Man</h4>
+            <div class="meta"><span class="tag">Arcade</span><span class="tag">Retro</span></div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/1/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="taptap.jpg" alt="Tap-Tap-Tap">
+            <span class="coming">v2.0.3</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 5: Tap-Tap-Tap</h4>
+            <div class="meta"><span class="tag">Casual</span><span class="tag">Clicker</span></div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/tap/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="fruitninja.jpg" alt="Fruit Ninja">
+            <span class="coming">v1.1</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 6: Fruit Ninja</h4>
+            <div class="meta"><span class="tag">Arcade</span><span class="tag">Action</span></div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/fruitninja/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="dash.jpg" alt="Doodle Dash">
+            <span class="coming">v1.0</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 7: Doodle Dash</h4>
+            <div class="meta"><span class="tag">Runner</span><span class="tag">Arcade</span></div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/dash/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-category="universal">
+          <div class="thumb">
+            <span class="p2e-badge">Earn $MT</span>
+            <img src="chicken.jpg" alt="Chicken">
+            <span class="coming">v1.0</span>
+          </div>
+          <div class="body">
+            <h4 class="title">Game 8: Chicken</h4>
+            <div class="meta"><span class="tag">Arcade</span><span class="tag">Casual</span></div>
+            <div class="actions">
+              <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/unix/chicken/">▶ Play Now</a></button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div><!-- /panel-games -->
+
+    <!-- VIRTUAL PETS -->
+    <div class="panel" id="panel-virtual-pets">
+      <h3 class="animate-charcter">Virtual Pets</h3>
+      <div class="iframe-wrap"><iframe src=""></iframe></div>
+    </div>
+
+    <!-- LEADERBOARDS -->
+    <div class="panel" id="panel-scoreboards">
+      <h3 class="animate-charcter">Game Scoreboards</h3>
+      <div class="tabs">
+        <button class="tab active" data-panel="racer">Racer</button>
+        <button class="tab" data-panel="tap">Tap-Tap-Tap</button>
+        <button class="tab" data-panel="tetris">Tetris</button>
+        <button class="tab" data-panel="pacman">Pac-Man</button>
+        <button class="tab" data-panel="fruitninja">Fruit Ninja</button>
+        <button class="tab" data-panel="dash">Doodle Dash</button>
+        <button class="tab" data-panel="chicken">Chicken</button>
+      </div>
+      <div class="panel active" id="panel-racer">
+        <div class="racer-filters">
+          <select id="racer-mode"><option value="race">Race Mode</option><option value="time_attack">Time Attack</option></select>
+          <select id="racer-track"><option value="0">Forest Loop</option><option value="1">Mountain Pass</option></select>
+          <select id="racer-difficulty"><option value="0">Easy</option><option value="1">Medium</option></select>
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Player</th><th>Time (s)</th></tr></thead>
+          <tbody id="racer-scores"><tr><td colspan="3">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel" id="panel-tap"><p>Score tracking not yet implemented.</p></div>
+      <div class="panel" id="panel-tetris"><p>Score tracking not yet implemented.</p></div>
+      <div class="panel" id="panel-pacman"><p>Score tracking not yet implemented.</p></div>
+      <div class="panel" id="panel-fruitninja"><p>Score tracking not yet implemented.</p></div>
+      <div class="panel" id="panel-dash"><p>Score tracking not yet implemented.</p></div>
+      <div class="panel" id="panel-chicken"><p>Score tracking not yet implemented.</p></div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="panel" id="panel-submit">
+      <h3 class="animate-charcter">Submit Your Work</h3>
+      <form class="submit-form" id="submit-form" action="submit.php" method="POST" enctype="multipart/form-data">
+        <label for="email">Your Email:</label>
+        <input type="email" id="email" name="email" required>
+        <label for="handle">Telegram or Twitter Handle:</label>
+        <input type="text" id="handle" name="handle" required>
+        <label for="type">Submission Type:</label>
+        <select id="type" name="type" required>
+          <option value="Artwork">Artwork</option>
+          <option value="Games">Games</option>
+        </select>
+        <label for="title">Submission Title:</label>
+        <input type="text" id="title" name="title" required>
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" required></textarea>
+        <label for="file">Upload File:</label>
+        <input type="file" id="file" name="file">
+        <button type="submit" class="btn success">Submit</button>
+      </form>
+    </div>
+
+<div id="software-source" style="display:none;">
+  <article class="card" data-category="software">
+    <div class="thumb">
+      <span class="p2e-badge">Utility</span>
+      <img src="zip.jpg" alt="Zip Software">
+      <span class="coming">v1.0</span>
+    </div>
+    <div class="body">
+      <h4 class="title">Software 1: Zip</h4>
+      <div class="meta"><span class="tag">Utility</span><span class="tag">Software</span></div>
+      <div class="actions">
+        <button class="btn success play"><a href="https://memetorrent.futuret3ch.com.au/games/software/zip/">Run Now</a></button>
+      </div>
+    </div>
+  </article>
+</div>
+
+
+<!-- Visible software panel -->
+<div class="panel" id="panel-software">
+  <h3 class="animate-charcter">Software</h3>
+  <div class="grid" id="software-grid"></div>
+</div>
+
+  </main>
+</div>
+
+`,
+    wallet: `
+      <div class='module'><h2>💠 Wallet</h2>
+        <p>Wallet: <span id="wallet-address">Not connected</span></p>
+        <p>SOL Balance: <span id="wallet-balance">0 SOL</span></p>
+        <p>$MT Balance: <span id="mt-balance">0.00</span></p>
+        <p>NFTs: <span id="nft-balance">0</span></p>
+        <button id="connect-telegram" class="btn-link">Connect Telegram</button>
+        <button id="connect-discord" class="btn-link">Connect Discord</button>
+        <button id="disconnect-social" class="btn-link" style="display:none;">Disconnect</button>
+      </div>
+    `,
+    nft: `
+      <div class='module'>
+        <h2>🌌 NFT Multiverse</h2>
+        <p>View pixel pets, cosmic gear & collectible NFTs.</p>
+      </div>
+    `,
+    leaderboard: `
+      <div class='module'>
+        <h2>📈 Real-time Leaderboard</h2>
+        <p>Top 10 players will be shown here (live updates soon).</p>
+      </div>
+    `,
+    intel: `
+      <div class='module'>
+        <h2>📡 Auto-Synced Intel</h2>
+        <p>Tweets from @FutureT3ch & @MemeTorrent. HashHawk scans coming soon.</p>
+      </div>
+    `,
+    skins: `
+  <div class='module' id="customize-module" style="display: none;">
+    <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2>⚙️ Customize & Shop</h2>
+      <button id="close-customize" class="btn cancel" style="padding: 5px 10px;">Close</button>
+    </div>
+    <div class="customize-tabs" style="margin-bottom: 20px;">
+      <button class="tab active" data-panel="customize">Customize</button>
+      <button class="tab" data-panel="shop">Shop</button>
+    </div>
+    <!-- Customize Panel -->
+    <div class="panel active" id="panel-customize">
+      <div class="tabs" style="margin-bottom: 15px;">
+        <button class="tab active" data-subpanel="themes">Themes</button>
+        <button class="tab" data-subpanel="colors">Colors</button>
+        <button class="tab" data-subpanel="layout">Layout</button>
+        <button class="tab" data-subpanel="settings">Settings</button>
+      </div>
+      <!-- Themes Subpanel -->
+      <div class="subpanel active" id="subpanel-themes">
+        <h3>Animated Themes</h3>
+        <div class="grid" id="theme-grid">
+          <article class="theme-card" data-theme="matrix" data-animated="true">
+            <div class="thumb" style="background: linear-gradient(135deg, #0f0, #000); height: 120px; border-radius: 8px;"></div>
+            <div class="body">
+              <h4>Matrix Digital Rain</h4>
+              <button class="btn success apply-theme">Apply</button>
+              <button class="btn preview-theme">Preview</button>
+            </div>
+          </article>
+          <article class="theme-card" data-theme="crypto-pulse" data-animated="true">
+            <div class="thumb" style="background: linear-gradient(135deg, #f7931a, #00aaff); height: 120px; border-radius: 8px; animation: pulse 2s infinite;"></div>
+            <div class="body">
+              <h4>Crypto Pulse</h4>
+              <button class="btn success apply-theme">Apply</button>
+              <button class="btn preview-theme">Preview</button>
+            </div>
+          </article>
+          <article class="theme-card" data-theme="neon-crypto" data-animated="true">
+            <div class="thumb" style="background: linear-gradient(135deg, #00ff88, #ff00ff); height: 120px; border-radius: 8px; animation: neon-glow 3s infinite;"></div>
+            <div class="body">
+              <h4>Neon Crypto</h4>
+              <button class="btn success apply-theme">Apply</button>
+              <button class="btn preview-theme">Preview</button>
+            </div>
+          </article>
+          <article class="theme-card" data-theme="plasma-grid" data-animated="true">
+            <div class="thumb" style="background: linear-gradient(135deg, #8a2be2, #ff1493); height: 120px; border-radius: 8px; animation: plasma 4s infinite;"></div>
+            <div class="body">
+              <h4>Plasma Grid</h4>
+              <button class="btn success apply-theme">Apply</button>
+              <button class="btn preview-theme">Preview</button>
+            </div>
+          </article>
+          <article class="theme-card" data-theme="particle-swarm" data-animated="true">
+            <div class="thumb" style="background: linear-gradient(135deg, #ffd700, #ff4500); height: 120px; border-radius: 8px; animation: swarm 5s infinite;"></div>
+            <div class="body">
+              <h4>Particle Swarm</h4>
+              <button class="btn success apply-theme">Apply</button>
+              <button class="btn preview-theme">Preview</button>
+            </div>
+          </article>
+        </div>
+        <button class="btn-link" id="toggle-matrix" style="margin-top: 15px;">Toggle Matrix Effect</button>
+      </div>
+      <!-- Colors Subpanel -->
+      <div class="subpanel" id="subpanel-colors">
+        <h3>Custom Colors</h3>
+        <form id="custom-colors-form" style="display: flex; flex-direction: column; gap: 10px;">
+          <label>Background Start</label>
+          <input type="color" id="bg-start" value="#001018">
+          <label>Background End</label>
+          <input type="color" id="bg-end" value="#000000">
+          <label>Accent Color</label>
+          <input type="color" id="accent-color" value="#00ffff">
+          <label>Text Color</label>
+          <input type="color" id="text-color" value="#ffffff">
+          <button type="button" class="btn success" id="apply-custom-colors">Apply</button>
+        </form>
+      </div>
+      <!-- Layout Subpanel -->
+      <div class="subpanel" id="subpanel-layout">
+        <h3>Dashboard Layout</h3>
+        <div id="layout-drag-zone" style="min-height: 200px; border: 1px solid #0ff; padding: 10px; border-radius: 8px;">
+          <p>Drag modules here to reorder (e.g., Messages, Wallet).</p>
+        </div>
+        <button class="btn success" id="save-layout">Save Layout</button>
+      </div>
+      <!-- Settings Subpanel -->
+      <div class="subpanel" id="subpanel-settings">
+        <h3>Other Settings</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <label>Font Size: <input type="range" id="font-size" min="12" max="24" value="16"></label>
+          <label>Dark/Light Mode: <select id="mode-toggle"><option>Dark</option><option>Light</option></select></label>
+          <label>Notifications: <input type="checkbox" id="notifications" checked></label>
+          <button class="btn success" id="save-settings">Save Settings</button>
+        </div>
+      </div>
+    </div>
+    <!-- Shop Panel -->
+    <div class="panel" id="panel-shop">
+      <div class="shop-tabs" style="margin-bottom: 20px;">
+        <button class="tab active" data-panel="checkin">Checkin</button>
+        <button class="tab" data-panel="stash">Stash</button>
+        <button class="tab" data-panel="market">Market</button>
+      </div>
+      <!-- Checkin Subpanel -->
+      <div class="subpanel active" id="subpanel-checkin">
+        <h3>Daily Checkin Rewards</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+          <div class="checkin-card">
+            <h4>Day 1: 10 $MT</h4>
+            <button class="btn success" onclick="claimReward('day1')">Claim</button>
+          </div>
+          <div class="checkin-card">
+            <h4>Day 2: 20 $MT</h4>
+            <button class="btn success" onclick="claimReward('day2')">Claim</button>
+          </div>
+          <!-- Add more days -->
+        </div>
+        <div id="checkin-board" style="margin-top: 20px;">
+          <p>Your checkin streak: 0 days</p>
+        </div>
+      </div>
+      <!-- Stash Subpanel -->
+      <div class="subpanel" id="subpanel-stash">
+        <h3>Your Stash</h3>
+        <div class="grid" id="stash-grid">
+          <!-- Items populated dynamically -->
+        </div>
+        <button class="btn" onclick="nftItem('selected')">Mint as NFT</button>
+      </div>
+      <!-- Market Subpanel -->
+      <div class="subpanel" id="subpanel-market">
+        <h3>Market</h3>
+        <div class="market-tabs" style="margin-bottom: 10px;">
+          <button class="tab active" data-market="buy">Buy</button>
+          <button class="tab" data-market="sell">Sell</button>
+          <button class="tab" data-market="trade">Trade</button>
+        </div>
+        <div id="market-grid" class="grid">
+          <!-- Items populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+`,
+    friends: `
+      <div class='module'>
+        <h2>👥 Friends</h2>
+        <div style="margin-bottom:15px;">
+          <h3>Add Friend</h3>
+          <input type="text" id="friend-username" placeholder="Enter username or email" style="width:70%;padding:6px;"/>
+          <button onclick="sendFriendRequest()" class="btn-link">Send</button>
+        </div>
+        <div id="friend-tabs" class="friends-tabs">
+          <button class="tab-btn active" data-tab="accepted">
+            Friends (<span id="count-accepted">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="pending">
+            Pending (<span id="count-pending">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="sent">
+            Sent (<span id="count-sent">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="blocked">
+            Blocked (<span id="count-blocked">0</span>)
+          </button>
+        </div>
+        <div id="friendsContainer" class="friend-cards"></div>
+      </div>
+	  
+    `,
+	chat: `
+  <div class='module chat-module'>
+  <div class="chat-sidebar">
+    <h3>Channels</h3>
+    <div class="chat-channel active" data-chat-tab="global"><span class="icon">🌍</span>Global</div>
+    <h3>Groups</h3>
+    <div id="groups-list"></div>
+    <h3>Private</h3>
+    <div id="private-chats"></div>
+  </div>
+  <div class="chat-main">
+    <div class="chat-header" id="chat-header">Global</div>
+    <div class="chat-messages" id="chat-messages">
+      <div id="messages-list"></div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendChatMessage();">
+      <button onclick="sendChatMessage()">Send</button>
+    </div>
+  </div>
+  <div class="chat-users">
+    <h4>Online Users (<span id="online-count">0</span>)</h4>
+    <div id="user-list"></div>
+  </div>
+</div>
+<div class="group-create">
+  <h4>Create Group</h4>
+  <input type="text" id="group-name" placeholder="Group name">
+  <button onclick="createGroup()">Create</button>
+  <h4>Add User to Group</h4>
+  <form id="add-member-form">
+    <input type="number" id="group-id" placeholder="Group ID">
+    <input type="number" id="user-id" placeholder="User ID">
+    <button type="submit">Add User</button>
+  </form>
+</div>
+  `
+  };
+
+
+
+  // Loader
+window.loadModule = async function(key) {
+  const content = modules[key] || '<div class="module"><h2>Error</h2><p>Module not found.</p></div>';
+  const dashboardContent = document.getElementById('dashboard-content');
+  if (!dashboardContent) {
+    console.error("dashboard-content not found");
+    return;
+  }
+
+  dashboardContent.innerHTML = content;
+  console.log(`Loading module: ${key}`);
+
+  if (key === 'wallet') {
+    initSocialConnect();
+  } else if (key === 'me') {
+    hydrateMe();
+  } else if (key === 'chat') {
+    await initChat();
+  } else if (key === 'avatar') {
+    initAvatar();
+  } else if (key === 'friends') {
+    loadFriends();
+  } else if (key === 'games') {
+    document.querySelectorAll('.tabs .tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        const panel = document.getElementById(`panel-${tab.dataset.panel}`);
+        if (panel) panel.classList.add('active');
+        if (tab.dataset.panel === 'scoreboards') {
+          document.querySelectorAll('#panel-scoreboards .tab').forEach(scoreTab => {
+            scoreTab.addEventListener('click', () => {
+              document.querySelectorAll('#panel-scoreboards .tab').forEach(t => t.classList.remove('active'));
+              document.querySelectorAll('#panel-scoreboards .panel').forEach(p => p.classList.remove('active'));
+              scoreTab.classList.add('active');
+              const scorePanel = document.getElementById(`panel-${scoreTab.dataset.panel}`);
+              if (scorePanel) scorePanel.classList.add('active');
+              if (scoreTab.dataset.panel === 'racer') fetchRacerScores();
+            });
+          });
+          fetchRacerScores();
+        } else if (tab.dataset.panel === 'software') {
+          const softwareGrid = document.getElementById('software-grid');
+          if (softwareGrid) {
+            softwareGrid.innerHTML = '';
+            document.querySelectorAll('.card[data-category="software"]').forEach(card => {
+              softwareGrid.appendChild(card.cloneNode(true));
+            });
+          }
+        }
+      });
+    });
+    ['racer-mode', 'racer-track', 'racer-difficulty'].forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.addEventListener('change', fetchRacerScores);
+    });
+  } else if (key === 'messages') {
+    await loadFriends();
+    populateMsgRecipients();
+    loadMessages("inbox");
+    checkAdminStatus();
+    await initEmojiSystem();
+  } else if (key === 'skins') {
+    setTimeout(() => updateSkins(), 0); // Delay to ensure DOM is updated
+  }
+};
+
+
+function getContrastColor(hex) {
+  if (!hex) return '#fff';
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 155 ? '#000' : '#fff';
+}
+
+
+
+
+// Nav listeners with debouncing
+let isLoadingModule = false;
+document.querySelectorAll('nav.sidebar a, .nav-links a').forEach(link => {
+  link.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (isLoadingModule) return;
+    isLoadingModule = true;
+    const module = link.getAttribute('data-module');
+    const href = link.getAttribute('href');
+    try {
+      if (module) {
+        // Handle module-based navigation
+        console.log(`Nav clicked, loading module: ${module}`);
+        await window.loadModule(module);
+      } else if (href && href !== '#') {
+        // Handle file-based navigation
+        console.log(`Navigating to: ${href}`);
+        window.location.href = href;
+      } else {
+        console.error(`No data-module or valid href found on link: ${link.textContent}`);
+      }
+    } catch (err) {
+      console.error(`Failed to process link ${link.textContent}:`, err);
+    } finally {
+      isLoadingModule = false;
+    }
+  });
+});
+
+
+  // Matrix rain
+  const matrixCanvas = document.getElementById('matrix');
+  const mCtx = matrixCanvas.getContext('2d');
+  matrixCanvas.width = window.innerWidth;
+  matrixCanvas.height = window.innerHeight;
+  const cols = Math.floor(matrixCanvas.width / 20);
+  const drops = Array(cols).fill(1);
+  const chars = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿ0123456789ﾊﾐﾑﾒﾓ";
+  function drawMatrix() {
+    mCtx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+    mCtx.fillStyle = "#0f0";
+    mCtx.font = "16px monospace";
+    for (let i = 0; i < drops.length; i++) {
+      const text = chars[Math.floor(Math.random() * chars.length)];
+      const x = i * 20;
+      const y = drops[i] * 20;
+      mCtx.fillText(text, x, y);
+      if (y > matrixCanvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+    requestAnimationFrame(drawMatrix);
+  }
+  drawMatrix();
+
+  // Mute button
+  function initAudioControls() {
+  const audio = document.getElementById('backgroundMusic');
+  const muteButton = document.getElementById('muteButton');
+  if (!muteButton) {
+    console.error("muteButton not found");
+    return;
+  }
+  if (!audio) {
+    console.warn("No audio element found for mute control");
+    muteButton.textContent = "No Audio";
+    muteButton.disabled = true;
+    return;
+  }
+
+  // Set initial mute state
+  muteButton.textContent = audio.muted ? 'Unmute' : 'Mute';
+
+  // Attach click listener immediately
+  muteButton.addEventListener('click', () => {
+    audio.muted = !audio.muted;
+    muteButton.textContent = audio.muted ? 'Unmute' : 'Mute';
+    console.log(`muteButton clicked, audio.muted: ${audio.muted}`);
+  });
+
+  audio.addEventListener('error', (e) => {
+    console.error('Audio load error:', e);
+    muteButton.textContent = 'Audio Error';
+    muteButton.disabled = true;
+  });
+}
+
+async function fetchRacerScores() {
+  const mode = document.getElementById('racer-mode')?.value || 'race';
+  const track_id = document.getElementById('racer-track')?.value || 0;
+  const difficulty = document.getElementById('racer-difficulty')?.value || 0;
+  const tbody = document.getElementById('racer-scores');
+
+  if (!tbody) {
+    console.warn("⚠️ Racer scoreboard elements not loaded yet.");
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">Loading...</td></tr>';
+
+  try {
+    const url = new URL('https://futuret3ch.pythonanywhere.com/api/scores/racer');
+    url.searchParams.append('mode', mode);
+    url.searchParams.append('track_id', track_id);
+    url.searchParams.append('difficulty', difficulty);
+
+    console.log("Fetching scoreboard:", url.toString());
+
+    const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const raw = await response.json();
+    const scores = Array.isArray(raw) ? raw : raw.scores || [];
+
+    if (!scores.length) {
+      tbody.innerHTML = '<tr><td colspan="3">No scores available.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = scores.map((entry, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${entry.username || entry.player || 'N/A'}</td>
+        <td>${entry.time || entry.score || 0}</td>
+      </tr>
+    `).join('');
+
+  } catch (err) {
+    console.error("Scoreboard fetch error:", err);
+    tbody.innerHTML = `
+      <tr><td>1</td><td>NeoMeme</td><td>42.31</td></tr>
+      <tr><td>2</td><td>ByteBlaster</td><td>44.12</td></tr>
+      <tr><td>3</td><td>GlitchQueen</td><td>45.73</td></tr>
+    `;
+  }
+}
+
+
+
+  async function hydrateMe() {
+  try {
+    const res = await fetch('/games/api/user/profile.php', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.success) {
+      console.error("Profile fetch failed:", data.error);
+      return;
+    }
+
+    const p = data.profile || {};
+    const elements = {
+      'me-name': p.first_name ? `${p.first_name} ${p.last_name || ''}`.trim() : (p.portal_username || p.username || 'User'),
+      'me-email': p.email || '—',
+      'me-wallet': p.wallet || p.wallet_address || '—',
+      'me-discord': p.discord_id || '—',
+      'me-telegram': p.telegram_id || '—',
+      'me-avatar': p.avatar_url || '/games/default-avatar.png',
+      'me-badge': data.badge || '—',
+      'me-bio': p.bio && p.bio.trim() !== "" ? p.bio : "No bio set yet.",
+      'profile-bio': p.bio || "",
+      'me-rank': data.leaderboard?.rank ?? '—',
+      'me-score': data.leaderboard?.score ?? '—'
+    };
+
+    Object.entries(elements).forEach(([id, value]) => {
+      const element = document.getElementById(id);
+      if (!element) {
+        console.warn(`Element #${id} not found in DOM`);
+        return;
+      }
+      if (id === 'me-avatar') {
+        element.src = value;
+      } else if (id === 'profile-bio') {
+        element.value = value;
+      } else {
+        element.textContent = value;
+      }
+    });
+
+    const editBtn = document.getElementById("edit-bio");
+    if (editBtn) {
+      editBtn.addEventListener("click", enableEditBio);
+    } else {
+      console.warn("edit-bio button not found");
+    }
+  } catch (e) {
+    console.error('hydrateMe error:', e);
+  }
+}
+
+  function enableEditBio() {
+    document.getElementById("edit-bio").style.display = "none";
+    document.getElementById("me-bio").style.display = "none";
+    document.getElementById("bio-editor").style.display = "block";
+  }
+
+  function cancelEditBio() {
+    document.getElementById("edit-bio").style.display = "inline-block";
+    document.getElementById("me-bio").style.display = "block";
+    document.getElementById("bio-editor").style.display = "none";
+  }
+
+  async function saveBio() {
+    const bio = document.getElementById('profile-bio').value.trim();
+    try {
+      const res = await fetch('/games/api/user/save_bio.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ bio })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById("me-bio").textContent = bio || "No bio set yet.";
+        cancelEditBio();
+      } else {
+        alert('❌ Error: ' + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('❌ Failed to save bio');
+    }
+  }
+
+  let msgCurrentTab = "inbox";
+
+   function populateMsgRecipients(attempt = 1, maxAttempts = 3) {
+     const select = document.getElementById("msg-to");
+     if (!select) {
+       if (attempt <= maxAttempts) {
+         console.warn(`msg-to select element not found, retrying (${attempt}/${maxAttempts})`);
+         setTimeout(() => populateMsgRecipients(attempt + 1, maxAttempts), 1000);
+         return;
+       }
+       console.error("msg-to select element not found after max retries");
+       return;
+     }
+     select.innerHTML = '<option value="">-- Select Friend --</option>';
+     if (!friendsData.accepted || !Array.isArray(friendsData.accepted) || friendsData.accepted.length === 0) {
+       select.innerHTML += '<option value="" disabled>No friends available</option>';
+       return;
+     }
+     friendsData.accepted.forEach(f => {
+       if (!f.id || isNaN(parseInt(f.id))) return;
+       const opt = document.createElement("option");
+       opt.value = String(f.id);
+       opt.textContent = f.username || `User #${f.id}`;
+       select.appendChild(opt);
+     });
+   }
+
+
+let currentChatTab = "global";
+let lastMessageIds = { global: 0 };
+let pollInterval;
+
+async function initChat() {
+  const chatModule = document.querySelector(".chat-module");
+  if (!chatModule) {
+    console.error("Chat module not found in DOM");
+    return;
+  }
+
+  try {
+    // Fetch user profile
+    const profileRes = await fetch('/games/api/user/profile.php', { credentials: 'include' });
+    const profileData = await profileRes.json();
+    if (profileData.success && profileData.profile) {
+      currentUser.id = parseInt(profileData.profile.id) || null;
+      currentUser.name = profileData.profile.username || "You";
+      currentUser.avatar = profileData.profile.avatar_url || "/games/default-avatar.png";
+    } else {
+      console.error("Failed to fetch user profile:", profileData.error);
+      return;
+    }
+
+    // Join chat
+    const joinRes = await fetch("/games/api/chat/join.php", { credentials: "include" });
+    const joinData = await joinRes.json();
+    if (!joinData.success) {
+      console.error("Chat join failed:", joinData.error);
+      return;
+    }
+
+    // Setup chat sidebar
+    const chatSidebar = document.querySelector(".chat-sidebar");
+    if (!chatSidebar) {
+      console.error("Chat sidebar not found");
+      return;
+    }
+
+    chatSidebar.addEventListener("click", (e) => {
+      const btn = e.target.closest(".chat-channel");
+      if (!btn) return;
+
+      document.querySelectorAll(".chat-channel").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentChatTab = btn.dataset.chatTab;
+      console.log("Switched to tab:", currentChatTab);
+      document.getElementById("chat-header").textContent = btn.textContent.replace("Leave", "").trim();
+
+      document.querySelectorAll(".chat-leave-btn").forEach(b => b.remove());
+
+      if (btn.dataset.chatTab.startsWith("group-")) {
+        const leaveBtn = document.createElement("button");
+        leaveBtn.className = "chat-leave-btn";
+        leaveBtn.textContent = "Leave";
+        leaveBtn.onclick = () => leaveGroup(btn.dataset.chatTab.replace("group-", ""));
+        btn.appendChild(leaveBtn);
+      } else if (btn.dataset.chatTab.startsWith("private-")) {
+        const leaveBtn = document.createElement("button");
+        leaveBtn.className = "chat-leave-btn";
+        leaveBtn.textContent = "End";
+        leaveBtn.onclick = () => leavePrivateChat(btn.dataset.chatTab.replace("private-", ""));
+        btn.appendChild(leaveBtn);
+      }
+
+      lastMessageIds[currentChatTab] = lastMessageIds[currentChatTab] || 0;
+      document.getElementById("messages-list").innerHTML = "";
+      loadChatMessages();
+    });
+
+    // Setup send button and input
+    const sendButton = document.querySelector(".chat-input-area button");
+    const chatInput = document.getElementById("chat-input");
+    if (sendButton && chatInput) {
+      sendButton.onclick = () => {
+        console.log("Send button clicked, tab:", currentChatTab);
+        sendChatMessage();
+      };
+      chatInput.onkeypress = (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          console.log("Enter key pressed, tab:", currentChatTab);
+          e.preventDefault();
+          sendChatMessage();
+        }
+      };
+    } else {
+      console.error("Send button or chat input not found");
+    }
+
+    // Setup add member form
+    const addMemberForm = document.getElementById("add-member-form");
+    if (addMemberForm) {
+      addMemberForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const groupId = document.getElementById("group-id").value;
+        const userId = document.getElementById("user-id").value;
+        addMember(groupId, userId);
+      });
+    } else {
+      console.error("Add member form not found");
+    }
+
+    // Load initial data
+    loadGroups();
+    loadPrivateChats();
+    loadChatMessages();
+    updateUserList();
+
+    // Start polling
+    pollInterval = setInterval(() => {
+      loadChatMessages();
+      updateUserList();
+      loadGroups();
+    }, 2000);
+  } catch (err) {
+    console.error("Chat init failed:", err);
+  }
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById("chat-input");
+  if (!input) return console.error("Chat input missing");
+
+  const content = input.value.trim();
+  if (!content) return alert("❌ Enter message");
+
+  if (!currentUser.id) return alert("❌ Not authenticated");
+
+  console.log("Sending message to tab:", currentChatTab);
+  try {
+    const res = await fetch(`/games/api/chat/send_chat.php?tab=${currentChatTab}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        content,
+        sender_id: currentUser.id,
+        sender_name: currentUser.name
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      input.value = "";
+      loadChatMessages();
+      console.log("Message sent, id:", data.id);
+    } else {
+      alert("❌ Send failed: " + data.error);
+    }
+  } catch (err) {
+    console.error("Send failed:", err);
+    alert("❌ Send failed");
+  }
+}
+
+async function loadChatMessages() {
+  try {
+    console.log("Loading messages for tab:", currentChatTab, "since_id:", lastMessageIds[currentChatTab] || 0);
+    const res = await fetch(`/games/api/chat/messages.php?tab=${currentChatTab}&since_id=${lastMessageIds[currentChatTab] || 0}`, {
+      credentials: "include"
+    });
+    const data = await res.json();
+    if (data.success) {
+      data.messages.forEach(msg => {
+        if (msg.id > (lastMessageIds[currentChatTab] || 0)) {
+          appendChatMessage(msg);
+          lastMessageIds[currentChatTab] = Math.max(lastMessageIds[currentChatTab] || 0, msg.id);
+        }
+      });
+    } else {
+      console.error("Load messages failed:", data.error);
+    }
+  } catch (err) {
+    console.error("Load messages failed:", err);
+  }
+}
+
+
+
+function appendChatMessage(msg) {
+  const messagesList = document.getElementById("messages-list");
+  if (!messagesList) return console.error("Messages list not found");
+  const div = document.createElement("div");
+  div.className = `chat-message ${msg.sender_id === currentUser.id ? 'sent' : 'received'}`;
+  div.innerHTML = `
+    <img src="${msg.sender_id === currentUser.id ? currentUser.avatar : '/games/default-avatar.png'}" class="avatar" alt="${msg.sender_name}">
+    <div class="content-wrapper">
+      <div class="name">${msg.sender_name}</div>
+      <div class="content">${msg.content}</div>
+      <div class="timestamp">${new Date(msg.created_at).toLocaleTimeString()}</div>
+    </div>
+  `;
+  messagesList.appendChild(div);
+  messagesList.scrollTop = messagesList.scrollHeight;
+}
+
+window.addEventListener("beforeunload", () => {
+  if (pollInterval) clearInterval(pollInterval);
+});
+
+async function loadGroups() {
+  try {
+    const sidebar = document.querySelector(".chat-sidebar");
+    if (!sidebar) {
+      console.error("Chat sidebar not found");
+      return;
+    }
+    const res = await fetch("/games/api/chat/groups.php", { credentials: "include" });
+    const data = await res.json();
+    if (data.success) {
+      sidebar.querySelectorAll(".chat-channel:not([data-chat-tab='global'])").forEach(btn => btn.remove());
+      data.groups.forEach(group => {
+        const btn = document.createElement("div");
+        btn.className = "chat-channel";
+        btn.dataset.chatTab = `group-${group.id}`;
+        btn.innerHTML = `<span class="icon">👥</span>${group.name}`;
+        sidebar.querySelector("#groups-list").appendChild(btn);
+      });
+    } else {
+      console.error("Load groups failed:", data.error);
+    }
+  } catch (err) {
+    console.error("Load groups failed:", err);
+  }
+}
+
+
+async function createGroup() {
+  const groupName = document.getElementById("group-name").value.trim();
+  if (!groupName) return alert("❌ Enter group name");
+
+  try {
+    const res = await fetch("/games/api/chat/create_group.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ name: groupName })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("group-name").value = "";
+      loadGroups();
+    } else {
+      alert("❌ Create group failed: " + data.error);
+    }
+  } catch (err) {
+    console.error("Create group failed:", err);
+    alert("❌ Create group failed");
+  }
+}
+
+
+
+async function addMember(groupId, userId) {
+  try {
+    const res = await fetch("/games/api/chat/add_member.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ group_id: groupId, user_id: userId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log("User added to group:", groupId, userId);
+      loadGroups();
+      alert("✅ User added to group");
+    } else {
+      alert("❌ Add user failed: " + data.error);
+    }
+  } catch (err) {
+    console.error("Add user failed:", err);
+    alert("❌ Add user failed");
+  }
+}
+
+async function leaveGroup(groupId) {
+  if (confirm("Leave this group?")) {
+    try {
+      const res = await fetch("/games/api/chat/leave_group.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ group_id: groupId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentChatTab = "global";
+        const globalChannel = document.querySelector(".chat-channel[data-chat-tab='global']");
+        if (globalChannel) {
+          document.querySelectorAll(".chat-channel").forEach(b => b.classList.remove("active"));
+          globalChannel.classList.add("active");
+          document.getElementById("chat-header").textContent = "Global";
+          document.querySelectorAll(".chat-leave-btn").forEach(b => b.remove());
+        }
+        loadGroups();
+        loadChatMessages();
+        alert("✅ Left group");
+      } else {
+        alert("❌ Failed: " + data.error);
+      }
+    } catch (err) {
+      console.error("Leave group failed:", err);
+      alert("❌ Leave failed");
+    }
+  }
+}
+
+async function loadPrivateChats() {
+  try {
+    const res = await fetch("/games/api/chat/private_chats.php", { credentials: "include" });
+    const data = await res.json();
+    if (data.success) {
+      const privateChatsList = document.getElementById("private-chats");
+      if (!privateChatsList) return console.error("Private chats list not found");
+      privateChatsList.innerHTML = "";
+      data.chats.forEach(chat => {
+        const div = document.createElement("div");
+        div.className = "chat-channel";
+        div.dataset.chatTab = `private-${chat.user_id}`;
+        div.innerHTML = `<span class="icon">📩</span>${chat.username}`;
+        privateChatsList.appendChild(div);
+      });
+    } else {
+      console.error("Load private chats failed:", data.error);
+    }
+  } catch (err) {
+    console.error("Load private chats failed:", err);
+  }
+}
+
+async function leavePrivateChat(userId) {
+  if (confirm("End this private chat?")) {
+    try {
+      const res = await fetch("/games/api/chat/leave_private.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ user_id: userId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentChatTab = "global";
+        loadPrivateChats();
+        loadChatMessages();
+        alert("✅ Private chat ended");
+      } else {
+        alert("❌ Failed: " + data.error);
+      }
+    } catch (err) {
+      console.error("Leave private chat failed:", err);
+      alert("❌ Leave failed");
+    }
+  }
+}
+function updateUserList() {
+  const userList = document.getElementById("user-list");
+  const count = document.getElementById("online-count");
+  if (userList) {
+    userList.innerHTML = "";
+    onlineUsers.forEach(userId => {
+      const div = document.createElement("div");
+      div.className = "chat-user";
+      div.innerHTML = `<span class="status"></span>User #${userId}`;
+      userList.appendChild(div);
+    });
+  }
+  if (count) {
+    count.textContent = onlineUsers.size;
+  }
+}
+
+window.addEventListener("beforeunload", () => {
+  if (pollInterval) clearInterval(pollInterval);
+});
+
+
+
+/* ==========================================================
+   ✅ FUTURET3CH PORTAL — FINAL WORKING MESSAGES SYSTEM
+   ========================================================== */
+
+let quill = null;
+
+/* ==========================================================
+   🧩 UNIVERSAL QUILL INITIALIZER
+   ========================================================== */
+function initQuillEditor(selector, placeholder) {
+  const el = document.querySelector(selector);
+  if (!el) {
+    console.warn(`⚠️ Quill editor target not found: ${selector}`);
+    return null;
+  }
+  el.innerHTML = "";
+  const instance = new Quill(selector, {
+    theme: "snow",
+    placeholder,
+    modules: {
+      toolbar: [
+        ["bold", "italic", "underline", "strike"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["link", "image"],
+        ["clean"],
+      ],
+    },
+  });
+  const editorDiv = el.querySelector(".ql-editor");
+  if (editorDiv) editorDiv.setAttribute("contenteditable", "true");
+  console.log(`✅ Quill initialized on ${selector}`);
+  return instance;
+}
+
+/* ==========================================================
+   🧠 GET ACTIVE QUILL INSTANCE
+   ========================================================== */
+function getActiveQuill(target) {
+  try {
+    if (!target) return null;
+    if (target.classList.contains("ql-editor")) return Quill.find(target);
+    if (target.closest(".ql-editor")) return Quill.find(target.closest(".ql-editor"));
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/* ==========================================================
+   📥 LOAD MESSAGES
+   ========================================================== */
+window.loadMessages = async function (tab = "inbox") {
+  const container = document.getElementById("msg-list");
+  const newMsgSection = document.querySelector("#msg-new-section");
+  if (!container) return;
+  container.innerHTML = `<p style="color:#0ff;">Loading ${tab}...</p>`;
+
+  if (newMsgSection) newMsgSection.style.display = tab === "replies" ? "none" : "block";
+
+  try {
+    const profileRes = await fetch("/games/api/user/profile.php", { credentials: "include" });
+    const profileData = await profileRes.json();
+    if (!profileData.success) throw new Error("Profile load failed");
+    const me = profileData.profile;
+    const myId = parseInt(me.id);
+
+    const [inboxRes, outboxRes] = await Promise.all([
+      fetch("/games/api/messages/inbox.php", { credentials: "include" }),
+      fetch("/games/api/messages/outbox.php", { credentials: "include" }),
+    ]);
+    const [inboxData, outboxData] = await Promise.all([inboxRes.json(), outboxRes.json()]);
+    const inboxMsgs = inboxData.messages || [];
+    const outboxMsgs = outboxData.messages || [];
+
+    let filtered = [];
+    if (tab === "inbox") filtered = inboxMsgs.filter((m) => m.receiver_id == myId);
+    else if (tab === "sent") filtered = outboxMsgs.filter((m) => m.sender_id == myId);
+    else if (tab === "replies") {
+      const all = [...inboxMsgs, ...outboxMsgs];
+      const map = new Map();
+      for (const msg of all) {
+        const key = [msg.sender_id, msg.receiver_id].sort().join("-");
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(msg);
+      }
+      filtered = [...map.values()].flat().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+
+    if (!filtered.length) {
+      container.innerHTML = `<p style="color:#888;">No ${tab} messages.</p>`;
+      return;
+    }
+
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    container.innerHTML = "";
+
+    for (const m of filtered) {
+      const sent = m.sender_id == myId;
+      const msgDiv = document.createElement("div");
+      msgDiv.className = `msg-item ${sent ? "sent" : "received"}`;
+      msgDiv.innerHTML = `
+        <div class="content-wrapper">
+          <div class="name">${sent ? "You → " + m.receiver_name : m.sender_name}</div>
+          <div class="content">${m.content}</div>
+          <div class="timestamp">${m.created_at}</div>
+        </div>`;
+      container.appendChild(msgDiv);
+    }
+  } catch (err) {
+    container.innerHTML = `<p style="color:red;">Error loading messages: ${err.message}</p>`;
+  }
+};
+
+/* ==========================================================
+   🎉 FUTURET3CH PORTAL — UNIVERSAL EMOJI PICKER (STABLE)
+   ========================================================== */
+
+let emojiPickerContainer = null;
+let emojiPickerInstance = null;
+let emojiReady = false;
+let activeEditorEl = null;
+
+// Track whichever editor or textarea is focused
+document.addEventListener("focusin", (e) => {
+  const editor = e.target.closest(".ql-editor, textarea, [contenteditable='true']");
+  if (editor) activeEditorEl = editor;
+});
+
+// Main initializer
+async function initEmojiSystem() {
+  console.log("🟢 Emoji system initializing…");
+
+  // Create container for picker
+  if (!emojiPickerContainer) {
+    emojiPickerContainer = document.createElement("div");
+    emojiPickerContainer.id = "emoji-picker";
+    Object.assign(emojiPickerContainer.style, {
+      background: "rgba(0,0,0,0.95)",
+      border: "1px solid #00ffff",
+      borderRadius: "12px",
+      padding: "8px",
+      position: "absolute",
+      zIndex: "9999",
+      display: "none",
+    });
+    document.body.appendChild(emojiPickerContainer);
+  }
+
+  // Load Emoji-Mart web component
+  if (!emojiReady) {
+    await new Promise((resolve) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/emoji-mart@5.6.0/dist/browser.js";
+
+      s.onload = () => {
+        emojiReady = true;
+        console.log("✅ Emoji-Mart Web Component loaded");
+        resolve();
+      };
+      s.onerror = () => {
+        console.error("❌ Failed to load Emoji-Mart");
+        resolve();
+      };
+      document.body.appendChild(s);
+    });
+  }
+
+  // Bind all .emoji-btns in the messages module
+  document.querySelectorAll(".emoji-btn").forEach((btn) => {
+    btn.removeEventListener("click", handleEmojiButton);
+    btn.addEventListener("click", handleEmojiButton);
+  });
+
+  console.log("✅ Emoji buttons bound");
+}
+
+// Toggle picker
+function handleEmojiButton(e) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+
+  // Create picker only once
+  if (!emojiPickerInstance) {
+    // ✅ Use correct component name for browser.js build
+    emojiPickerInstance = document.createElement("em-emoji-picker");
+    emojiPickerInstance.setAttribute("theme", "dark");
+    emojiPickerInstance.style.maxHeight = "380px";
+    emojiPickerInstance.style.overflowY = "auto";
+
+    // ✅ Correct event payload for browser.js version
+  emojiPickerInstance.addEventListener("emoji-click", (ev) => {
+  const char = ev.detail.unicode || ev.detail.emoji?.unicode;
+  insertEmoji(char);
+});
+
+
+    emojiPickerContainer.appendChild(emojiPickerInstance);
+  }
+
+  // Toggle picker visibility + position
+  const visible = emojiPickerContainer.style.display === "block";
+  const rect = btn.getBoundingClientRect();
+  emojiPickerContainer.style.top = `${rect.bottom + window.scrollY + 8}px`;
+  emojiPickerContainer.style.left = `${rect.left + window.scrollX}px`;
+  emojiPickerContainer.style.display = visible ? "none" : "block";
+}
+
+
+// Insert emoji into active Quill or textarea
+function insertEmoji(char) {
+  const target =
+    activeEditorEl ||
+    document.activeElement.closest(".ql-editor, textarea") ||
+    document.querySelector("#msg-content-editor .ql-editor");
+  if (!target) return;
+
+  const q = target.__quill || target.closest(".ql-container")?.__quill;
+  if (q && typeof q.insertText === "function") {
+    const range = q.getSelection(true) || { index: q.getLength() };
+    q.insertText(range.index, char, "user");
+    q.setSelection(range.index + char.length);
+    hideEmojiPicker();
+    return;
+  }
+
+  if (target.tagName === "TEXTAREA") {
+    const start = target.selectionStart || 0;
+    const end = target.selectionEnd || 0;
+    target.value = target.value.slice(0, start) + char + target.value.slice(end);
+    target.selectionStart = target.selectionEnd = start + char.length;
+    target.focus();
+    hideEmojiPicker();
+  }
+}
+
+function hideEmojiPicker() {
+  if (emojiPickerContainer) emojiPickerContainer.style.display = "none";
+}
+
+// Hide picker on outside click
+document.addEventListener("click", (e) => {
+  if (
+    emojiPickerContainer &&
+    emojiPickerContainer.style.display === "block" &&
+    !emojiPickerContainer.contains(e.target) &&
+    !e.target.classList.contains("emoji-btn")
+  ) {
+    hideEmojiPicker();
+  }
+});
+
+
+
+
+/* ==========================================================
+   ✉️ SEND MESSAGE
+   ========================================================== */
+async function sendMessage() {
+  const toSelect = document.getElementById("msg-to");
+  const to = toSelect?.value?.trim();
+
+  if (!to) return alert("Please select a friend to message.");
+  if (!window.quill) return alert("Message editor not ready.");
+
+  const html = window.quill.root.innerHTML.trim();
+  const plain = window.quill.getText().replace(/\s+/g, "").trim();
+  const isEmpty = !plain && !/<img|<a|<strong|<em|<u|<p|👍|😀|😂|❤️/i.test(html);
+  if (isEmpty || html === "<p><br></p>") return alert("Message cannot be empty.");
+
+  const formData = new FormData();
+  formData.append("to", to);
+  formData.append("content_b64", btoa(unescape(encodeURIComponent(html))));
+
+  const files = document.getElementById("msg-files");
+  if (files && files.files.length) for (const f of files.files) formData.append("files[]", f);
+
+  const res = await fetch("/games/api/messages/send.php", {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  const data = await res.json();
+  if (data.success) {
+    alert("✅ Message sent!");
+    window.quill.root.innerHTML = "";
+    loadMessages("sent");
+  } else alert("❌ Failed: " + (data.error || "Unknown error"));
+}
+
+/* ==========================================================
+   🧩 INIT MESSAGE MODULE
+   ========================================================== */
+async function initMessagesModule() {
+  const waitForEditor = setInterval(() => {
+    const el = document.querySelector("#msg-content-editor");
+    if (el) {
+      clearInterval(waitForEditor);
+      window.quill = initQuillEditor("#msg-content-editor", "Write your message...");
+      loadMessages("inbox");
+    }
+  }, 300);
+}
+
+
+
+async function sendConversationMessage(recipientId, convoDiv, content, replyForm, globalForm, replyBtn, currentUser, messageId = null) {
+  if (!content) {
+    console.warn("Empty content in reply");
+    alert("❌ Please enter a message");
+    replyForm.querySelector(".reply-content").focus();
+    return;
+  }
+
+  try {
+    const sendBtn = replyForm.querySelector(".send-btn");
+    sendBtn.disabled = true;
+
+    console.log("Sending conversation message to recipient_id:", recipientId, "content:", content, "messageId:", messageId);
+
+    // Encode content to Base64
+    const content_b64 = btoa(unescape(encodeURIComponent(content.trim())));
+
+    // Prepare x-www-form-urlencoded data
+    const params = new URLSearchParams();
+    params.append("receiver_id", Number.isInteger(parseInt(recipientId)) ? parseInt(recipientId) : 0);
+    params.append("content_b64", content_b64);
+    if (messageId) params.append("in_reply_to", parseInt(messageId));
+
+    // Mark message as read if replying to an unread message
+    if (messageId) {
+      const markReadParams = new URLSearchParams();
+      markReadParams.append("message_id", parseInt(messageId));
+      const markReadRes = await fetch("https://memetorrent.futuret3ch.com.au/games/api/messages/mark_read.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json"
+        },
+        credentials: "include",
+        body: markReadParams.toString()
+      }).catch(err => {
+        console.error("Mark read fetch error:", err);
+        throw new Error("Network error: Unable to mark message as read");
+      });
+      const markReadText = await markReadRes.text();
+      let markReadData;
+      try {
+        markReadData = JSON.parse(markReadText);
+        console.log("Mark read response:", markReadData);
+        if (!markReadData.success) {
+          console.warn("Failed to mark message as read:", markReadData.error);
+        }
+      } catch (e) {
+        console.error("Invalid JSON response from mark_read.php:", markReadText);
+      }
+    }
+
+    // Send message
+    const res = await fetch("https://memetorrent.futuret3ch.com.au/games/api/messages/send.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+      },
+      credentials: "include",
+      body: params.toString()
+    }).catch(err => {
+      console.error("Fetch error:", err);
+      throw new Error("Network error: Unable to send message");
+    });
+
+    console.log(`send.php response status:`, res.status);
+    const text = await res.text();
+    console.log("Raw response from send.php:", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+      console.log("Parsed send response:", data);
+    } catch (e) {
+      console.error("Invalid JSON response from send.php:", text);
+      alert("❌ Message not sent. Server returned non-JSON response (possible ModSecurity block) — check console.");
+      return;
+    }
+
+    if (data.success) {
+      alert("✅ Message sent!");
+      replyForm.style.display = "none";
+      replyForm.querySelector(".reply-content").value = "";
+      globalForm.style.display = "block";
+      replyBtn.style.display = "block";
+
+      const inboxTab = document.querySelector(".msg-tab[data-tab='inbox']");
+      const sentTab = document.querySelector(".msg-tab[data-tab='outbox']");
+      const repliesTab = document.querySelector(".msg-tab[data-tab='replies']");
+      if (inboxTab && sentTab && repliesTab) {
+        inboxTab.classList.remove("active");
+        sentTab.classList.remove("active");
+        repliesTab.classList.add("active");
+        console.log("Switched to replies tab after sending conversation message");
+      } else {
+        console.warn("Message tabs not found, forcing replies load");
+      }
+
+      setTimeout(async () => {
+        await loadMessages("replies");
+        let newConvoDiv = document.getElementById("msg-list").querySelector(`.msg-conversation[data-user-id="${recipientId}"]`);
+        if (!newConvoDiv) {
+          newConvoDiv = document.createElement("div");
+          newConvoDiv.className = "msg-conversation";
+          newConvoDiv.setAttribute("data-user-id", recipientId);
+          newConvoDiv.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px;">
+              <img src="/games/default-avatar.png" width="48" style="border-radius:50%;"/>
+              <h3>${recipientId === "2" ? "futuret3ch" : "User #" + recipientId}</h3>
+            </div>
+            <div class="msg-list"></div>
+            <button class="reply-btn" data-recipient-id="${recipientId}" style="margin-top:10px;padding:5px 10px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;">
+              Reply
+            </button>
+            <div class="reply-form">
+              <textarea class="reply-content" placeholder="Type your reply..."></textarea>
+              <button class="send-btn">Send</button>
+              <button class="cancel-btn">Cancel</button>
+            </div>
+          `;
+          document.getElementById("msg-list").prepend(newConvoDiv);
+          newConvoDiv.querySelector(".reply-btn").addEventListener("click", () => {
+            globalForm.style.display = "none";
+            newConvoDiv.querySelector(".reply-form").style.display = "block";
+            newConvoDiv.querySelector(".reply-btn").style.display = "none";
+            newConvoDiv.querySelector(".reply-content").focus();
+            console.log(`Reply button clicked, showing reply form for recipient ID: ${recipientId}`);
+            const sendBtn = newConvoDiv.querySelector(".send-btn");
+            const cancelBtn = newConvoDiv.querySelector(".cancel-btn");
+            sendBtn.onclick = () => sendConversationMessage(recipientId, newConvoDiv, newConvoDiv.querySelector(".reply-content").value.trim(), newConvoDiv.querySelector(".reply-form"), globalForm, newConvoDiv.querySelector(".reply-btn"), currentUser);
+            cancelBtn.onclick = () => {
+              newConvoDiv.querySelector(".reply-form").style.display = "none";
+              globalForm.style.display = "block";
+              newConvoDiv.querySelector(".reply-btn").style.display = "block";
+              newConvoDiv.querySelector(".reply-content").value = "";
+              console.log("Reply cancelled, restored global form and reply button");
+            };
+          });
+        }
+
+        const msgList = newConvoDiv.querySelector(".msg-list");
+        const newMessage = document.createElement("div");
+        newMessage.className = "msg-item sent";
+        newMessage.innerHTML = `
+          <input type="checkbox" class="msg-checkbox" data-message-id="${data.message_id || 'new'}" style="margin-right: 8px;">
+          <img src="${currentUser.avatar}" class="avatar" alt="${currentUser.name}"/>
+          <div class="content-wrapper">
+            <div class="name">${currentUser.name}</div>
+            <div class="content">${content}</div>
+            <div class="timestamp">${new Date().toLocaleString()}</div>
+          </div>
+          <button class="delete-btn" data-message-id="${data.message_id || 'new'}" style="padding: 2px 6px; background: #ff4444; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.7em; margin-left: 5px;">Delete</button>
+        `;
+        msgList.appendChild(newMessage);
+        msgList.scrollTop = msgList.scrollHeight;
+
+        // Reattach delete button listener
+        newMessage.querySelector(".delete-btn").addEventListener("click", async () => {
+          if (confirm("Delete this message?")) {
+            try {
+              const deleteParams = new URLSearchParams();
+              deleteParams.append("message_id", parseInt(data.message_id));
+              const res = await fetch("https://memetorrent.futuret3ch.com.au/games/api/messages/delete.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                credentials: "include",
+                body: deleteParams.toString()
+              });
+              const deleteData = await res.json();
+              if (deleteData.success) {
+                const msgItem = newMessage;
+                const convoDiv = msgItem.closest(".msg-conversation");
+                msgItem.remove();
+                console.log("Message deleted:", data.message_id);
+                if (!convoDiv.querySelector(".msg-item")) {
+                  convoDiv.remove();
+                  console.log(`Removed empty conversation for user ID: ${convoDiv.dataset.userId}`);
+                }
+                updateDeleteButton();
+                if (!document.getElementById("msg-list").querySelector(".msg-conversation")) {
+                  document.getElementById("msg-list").innerHTML = `<p>No messages in ${msgCurrentTab}.</p>`;
+                }
+              } else {
+                alert("❌ Delete failed: " + deleteData.error);
+              }
+            } catch (err) {
+              console.error("Delete error:", err);
+              alert("❌ Delete failed: " + err.message);
+            }
+          }
+        });
+
+        // Reattach checkbox listener
+        newMessage.querySelector(".msg-checkbox").addEventListener("change", updateDeleteButton);
+      }, 100);
+    } else {
+      console.error("Send message failed with error:", data.error);
+      alert("❌ Failed to send message: " + (data.error || data.message || "Failed to send"));
+    }
+  } catch (err) {
+    console.error("Send conversation message failed:", err);
+    alert("❌ Failed to send message: " + err.message);
+  } finally {
+    const sendBtn = replyForm.querySelector(".send-btn");
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
+
+
+
+let isAdmin = false;
+
+   async function checkAdminStatus() {
+     try {
+       const res = await fetch("/games/api/user/admin.php", {
+         method: "GET",
+         headers: { "Accept": "application/json" },
+         credentials: "include"
+       });
+       const data = await res.json();
+       isAdmin = data.is_admin === true || data.is_admin === 1;
+       const adminSection = document.getElementById("admin-message-section");
+       if (adminSection) adminSection.style.display = isAdmin ? "block" : "none";
+     } catch (err) {
+       console.error("Admin check failed:", err);
+       const adminSection = document.getElementById("admin-message-section");
+       if (adminSection) adminSection.style.display = "none";
+     }
+   }
+
+   async function sendMessageAllFriends() {
+     const content = document.getElementById("message-all-content")?.value.trim();
+     if (!content) return alert("❌ Enter message");
+     if (!confirm("Send to all friends?")) return;
+     try {
+       const res = await fetch("/games/api/messages/send_all_friends.php", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         credentials: "include",
+         body: JSON.stringify({ content })
+       });
+       const data = await res.json();
+       if (data.success) {
+         alert("✅ Sent to all friends");
+         document.getElementById("message-all-content").value = "";
+         loadMessages(msgCurrentTab);
+       } else {
+         alert("❌ Failed: " + data.error);
+       }
+     } catch (err) {
+       console.error("Send all friends error:", err);
+       alert("❌ Send failed");
+     }
+   }
+
+   async function sendMessageAllUsers() {
+     if (!isAdmin) return alert("❌ Admin only");
+     const content = document.getElementById("message-all-users-content")?.value.trim();
+     if (!content) return alert("❌ Enter message");
+     if (!confirm("Send to all Memetorrent users?")) return;
+     try {
+       const res = await fetch("/games/api/messages/send_all_users.php", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         credentials: "include",
+         body: JSON.stringify({ content })
+       });
+       const data = await res.json();
+       if (data.success) {
+         alert("✅ Sent to all users");
+         document.getElementById("message-all-users-content").value = "";
+         loadMessages(msgCurrentTab);
+       } else {
+         alert("❌ Failed: " + data.error);
+       }
+     } catch (err) {
+       console.error("Send all users error:", err);
+       alert("❌ Send failed");
+     }
+   }
+
+  let friendsData = { accepted: [], pending: [], sent: [], blocked: [] };
+  let currentTab = "accepted";
+
+function renderFriends(tab = "accepted") {
+  currentTab = tab;
+  const container = document.getElementById("friendsContainer");
+  if (!container) {
+    console.error("⚠️ friendsContainer not found in DOM!");
+    return;
+  }
+
+  container.innerHTML = "";
+  const list = friendsData[tab] || [];
+  console.log(`Rendering ${tab}, found ${list.length} entries`);
+
+  if (!list.length) {
+    container.innerHTML = `<p>No ${tab} friends.</p>`;
+    updateFriendCounts();
+    return;
+  }
+
+  list.forEach(f => {
+    const card = document.createElement("div");
+    card.className = "friend-card";
+    let actions = "";
+    if (tab === "accepted") {
+      actions = `
+        <button class="btn success" onclick="msgFriend(${Number(f.id)})" title="Message" alt="Message friend">✉️</button>
+        <button class="btn cancel" onclick="removeFriend(${Number(f.relation_id)})" title="Remove" alt="Remove friend">❌</button>
+        <button class="btn block" onclick="blockFriend(${Number(f.relation_id)})" title="Block" alt="Block friend">🚫</button>
+        <button class="btn report" onclick="toggleReport(${Number(f.relation_id)}, ${Number(f.reported)})" title="${Number(f.reported) ? 'Unreport' : 'Report'}" alt="${Number(f.reported) ? 'Unreport friend' : 'Report friend'}">${Number(f.reported) ? '🔄' : '⚠️'}</button>
+        <div class="report-form" id="report-form-${Number(f.relation_id)}" style="display:none;">
+          <select class="report-reason">
+            <option value="spam">Spam</option>
+            <option value="harassment">Harassment</option>
+            <option value="inappropriate">Inappropriate Content</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="text" class="report-other" placeholder="Specify reason" style="display:none;">
+          <div class="report-form-buttons">
+            <button class="btn submit-report" onclick="reportFriend(${Number(f.relation_id)}, this)">Submit</button>
+            <button class="btn cancel-report" onclick="hideReportForm(this)">Cancel</button>
+          </div>
+        </div>
+      `;
+    } else if (tab === "pending") {
+      actions = `
+        <button class="btn success" onclick="acceptFriend(${Number(f.relation_id)})" title="Accept" alt="Accept friend request">✅</button>
+        <button class="btn cancel" onclick="rejectFriend(${Number(f.relation_id)})" title="Reject" alt="Reject friend request">❌</button>
+      `;
+    } else if (tab === "sent") {
+      actions = `<p style="color:#0ff;" title="Request sent" alt="Friend request sent">⏳</p>`;
+    } else if (tab === "blocked") {
+      actions = `
+        <button class="btn success" onclick="unblockFriend(${Number(f.relation_id)})" title="Unblock" alt="Unblock friend">🔓</button>
+        <button class="btn report" onclick="toggleReport(${Number(f.relation_id)}, ${Number(f.reported)})" title="${Number(f.reported) ? 'Unreport' : 'Report'}" alt="${Number(f.reported) ? 'Unreport friend' : 'Report friend'}">${Number(f.reported) ? '🔄' : '⚠️'}</button>
+        <div class="report-form" id="report-form-${Number(f.relation_id)}" style="display:none;">
+          <select class="report-reason">
+            <option value="spam">Spam</option>
+            <option value="harassment">Harassment</option>
+            <option value="inappropriate">Inappropriate Content</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="text" class="report-other" placeholder="Specify reason" style="display:none;">
+          <div class="report-form-buttons">
+            <button class="btn submit-report" onclick="reportFriend(${Number(f.relation_id)}, this)">Submit</button>
+            <button class="btn cancel-report" onclick="hideReportForm(this)">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <img src="${f.avatar_url || '/games/default-avatar.png'}" alt="${f.username || 'User'} avatar"/>
+      <h3>${f.username || "—"}</h3>
+      <p>${f.bio || "—"}</p>
+      <p>Status: ${f.online ? "🟢 Online" : "⚪ Offline"}</p>
+      <div class="friend-actions">${actions}</div>
+    `;
+    container.appendChild(card);
+
+    // Toggle "other" input visibility
+    const select = card.querySelector('.report-reason');
+    const otherInput = card.querySelector('.report-other');
+    if (select && otherInput) {
+      select.addEventListener('change', () => {
+        otherInput.style.display = select.value === 'other' ? 'block' : 'none';
+      });
+    }
+  });
+
+  updateFriendCounts();
+}
+
+function toggleReport(relationId, reported) {
+  document.querySelectorAll('.report-form').forEach(form => form.style.display = 'none'); // Hide all forms
+  const reportForm = document.getElementById(`report-form-${relationId}`);
+  if (reported) {
+    unreportFriend(relationId);
+  } else {
+    reportForm.style.display = 'block';
+  }
+}
+
+function hideReportForm(btn) {
+  const form = btn.closest('.report-form');
+  if (form) {
+    form.style.display = 'none';
+    const reportBtn = form.previousElementSibling;
+    if (reportBtn) reportBtn.style.display = 'block';
+  }
+}
+
+async function reportFriend(relationId, btn) {
+  const card = btn.closest('.friend-card');
+  const reasonSelect = card.querySelector('.report-reason');
+  let reason = reasonSelect ? reasonSelect.value.trim() : "";
+  const otherInput = card.querySelector('.report-other');
+
+  if (reason === "other" && otherInput) {
+    reason = otherInput.value.trim();
+    if (!reason) {
+      alert("❌ Please specify a reason for 'Other'.");
+      return;
+    }
+  } else if (!reason) {
+    alert("❌ Please select a reason to report this user.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/games/api/friends/report.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({ friend_id: relationId, reason })
+    });
+
+    const text = await res.text();
+    console.log("Raw report.php response:", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse JSON:", text);
+      alert("❌ Server returned invalid JSON (check console for raw response).");
+      return;
+    }
+
+    if (data.success) {
+      for (let tab of ["accepted", "pending", "blocked"]) {
+        const friend = friendsData[tab].find(f => f.relation_id === relationId);
+        if (friend) friend.reported = 1;
+      }
+      renderFriends(currentTab);
+      alert("⚠️ User reported");
+    } else {
+      alert("❌ " + (data.error || "Unknown error"));
+    }
+  } catch (err) {
+    console.error("reportFriend failed:", err);
+    alert("❌ Failed to report friend: " + err.message);
+  }
+}
+
+
+async function unreportFriend(relationId) {
+  if (!confirm("Unreport this user?")) return;
+
+  try {
+    const res = await fetch("/games/api/friends/unreport.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({ friend_id: relationId })
+    });
+
+    const text = await res.text();
+    console.log("Raw unreport.php response:", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse JSON:", text);
+      return alert("❌ Server returned invalid JSON (see console).");
+    }
+
+    if (data.success) {
+      for (let tab of ["accepted", "pending", "blocked"]) {
+        const friend = friendsData[tab].find(f => f.relation_id === relationId);
+        if (friend) friend.reported = 0;
+      }
+      renderFriends(currentTab);
+      alert("✅ User unreported");
+    } else {
+      alert("❌ " + (data.error || "Unreport failed"));
+    }
+  } catch (err) {
+    console.error("unreportFriend failed:", err);
+    alert("❌ Failed to unreport friend: " + err.message);
+  }
+}
+
+
+
+  function updateFriendCounts() {
+    if (document.getElementById("count-accepted")) {
+      document.getElementById("count-accepted").textContent = (friendsData.accepted || []).length;
+    }
+    if (document.getElementById("count-pending")) {
+      document.getElementById("count-pending").textContent = (friendsData.pending || []).length;
+    }
+    if (document.getElementById("count-sent")) {
+      document.getElementById("count-sent").textContent = (friendsData.sent || []).length;
+    }
+    if (document.getElementById("count-blocked")) {
+      document.getElementById("count-blocked").textContent = (friendsData.blocked || []).length;
+    }
+  }
+
+  async function loadFriends() {
+     try {
+       const res = await fetch('/games/api/friends/list.php', { credentials: 'include' });
+       const data = await res.json();
+       if (!data.success) throw new Error(data.error);
+       friendsData = data.friends || { accepted: [], pending: [], sent: [], blocked: [] };
+     } catch (err) {
+       console.error("Friend load failed:", err);
+     }
+   }
+
+  async function sendFriendRequest() {
+    const username = document.getElementById("friend-username").value.trim();
+    if (!username) return alert("Enter a username/email");
+    try {
+      const res = await fetch('/games/api/friends/add.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      loadFriends();
+    } catch (err) {
+      console.error("Send friend request failed:", err);
+      alert("❌ Failed to send friend request");
+    }
+  }
+
+  async function acceptFriend(id) {
+    try {
+      const res = await fetch("/games/api/friends/accept.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        credentials: "include",
+        body: `friend_id=${id}`
+      });
+      const data = await res.json();
+      if (data.success) {
+        const idx = friendsData.pending.findIndex(f => f.relation_id === id);
+        if (idx > -1) {
+          const moved = friendsData.pending[idx];
+          friendsData.pending.splice(idx, 1);
+          moved.status = "accepted";
+          friendsData.accepted.push(moved);
+        }
+        renderFriends(currentTab);
+        alert("✅ Friend accepted");
+      } else {
+        alert("❌ " + data.error);
+      }
+    } catch (err) {
+      console.error("acceptFriend failed:", err);
+      alert("❌ Failed to accept friend");
+    }
+  }
+
+  async function rejectFriend(id) {
+    try {
+      const res = await fetch("/games/api/friends/reject.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        credentials: "include",
+        body: `friend_id=${id}`
+      });
+      const data = await res.json();
+      if (data.success) {
+        friendsData.pending = friendsData.pending.filter(f => f.relation_id !== id);
+        renderFriends(currentTab);
+        alert("❌ Friend request rejected");
+      } else {
+        alert("❌ " + data.error);
+      }
+    } catch (err) {
+      console.error("rejectFriend failed:", err);
+      alert("❌ Failed to reject friend");
+    }
+  }
+
+  async function removeFriend(id) {
+    if (!confirm("Remove this friend?")) return;
+    try {
+      const res = await fetch("/games/api/friends/remove.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        credentials: "include",
+        body: `friend_id=${id}`
+      });
+      const data = await res.json();
+      if (data.success) {
+        for (let tab of ["accepted", "pending", "blocked"]) {
+          friendsData[tab] = friendsData[tab].filter(f => f.relation_id !== id);
+        }
+        renderFriends(currentTab);
+        alert("✅ Friend removed");
+      } else {
+        alert("❌ " + data.error);
+      }
+    } catch (err) {
+      console.error("removeFriend failed:", err);
+      alert("❌ Failed to remove friend");
+    }
+  }
+
+  async function blockFriend(id) {
+    if (!confirm("Block this user?")) return;
+    try {
+      const res = await fetch("/games/api/friends/block.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        credentials: "include",
+        body: `friend_id=${id}`
+      });
+      const data = await res.json();
+      if (data.success) {
+        let moved = null;
+        for (let tab of ["accepted", "pending"]) {
+          const idx = friendsData[tab].findIndex(f => f.relation_id === id);
+          if (idx > -1) {
+            moved = friendsData[tab][idx];
+            friendsData[tab].splice(idx, 1);
+          }
+        }
+        if (moved) {
+          moved.status = "blocked";
+          friendsData.blocked.push(moved);
+        }
+        renderFriends(currentTab);
+        alert("✅ User blocked");
+      } else {
+        alert("❌ " + data.error);
+      }
+    } catch (err) {
+      console.error("blockFriend failed:", err);
+      alert("❌ Failed to block user");
+    }
+  }
+
+  async function unblockFriend(id) {
+    try {
+      const res = await fetch("/games/api/friends/unblock.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        credentials: "include",
+        body: `friend_id=${id}`
+      });
+      const data = await res.json();
+      if (data.success) {
+        const idx = friendsData.blocked.findIndex(f => f.relation_id === id);
+        if (idx > -1) {
+          const moved = friendsData.blocked[idx];
+          friendsData.blocked.splice(idx, 1);
+          moved.status = "accepted";
+          friendsData.accepted.push(moved);
+        }
+        renderFriends(currentTab);
+        alert("✅ User unblocked");
+      } else {
+        alert("❌ " + data.error);
+      }
+    } catch (err) {
+      console.error("unblockFriend failed:", err);
+      alert("❌ Failed to unblock user");
+    }
+  }
+
+
+function msgFriend(userId) {
+  window.loadModule("messages");
+  setTimeout(() => {
+    populateMsgRecipients();
+    const select = document.getElementById("msg-to");
+    if (select) select.value = String(userId);
+    if (quill) quill.focus();
+  }, 200);
+}
+
+  async function fetchBalances(wallet_address) {
+    console.log('Fetching balances for wallet:', wallet_address);
+    if (!wallet_address || wallet_address === 'Not connected') {
+      document.getElementById('wallet-balance').textContent = '0 SOL';
+      document.getElementById('mt-balance').textContent = '0.00';
+      document.getElementById('nft-balance').textContent = '0';
+      return;
+    }
+
+    try {
+      const solPayload = { jsonrpc: "2.0", id: 1, method: "getBalance", params: [wallet_address] };
+      const solResponse = await fetch('https://thrumming-fluent-mansion.solana-mainnet.quiknode.pro/d783f3b5140172f93f2f05fa72ba7838a563042e/', {
+        method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(solPayload)
+      });
+      const solData = await solResponse.json();
+      if (solData.result && "value" in solData.result) {
+        const lamports = solData.result.value;
+        const solBalance = lamports / 1_000_000_000;
+        document.getElementById('wallet-balance').textContent = `${solBalance.toFixed(4)} SOL`;
+      }
+
+      const mtPayload = {
+        jsonrpc: "2.0", id: 1, method: "getTokenAccountsByOwner",
+        params: [ wallet_address, { mint: "ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump" }, { encoding: "jsonParsed" } ]
+      };
+      const mtResponse = await fetch('https://thrumming-fluent-mansion.solana-mainnet.quiknode.pro/d783f3b5140172f93f2f05fa72ba7838a563042e/', {
+        method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(mtPayload)
+      });
+      const mtData = await mtResponse.json();
+      let mtBalance = 0;
+      if (mtData.result?.value?.length > 0) {
+        const tokenAccount = mtData.result.value[0];
+        mtBalance = parseInt(tokenAccount.account.data.parsed.info.tokenAmount.amount);
+        mtBalance = mtBalance / 1_000_000;
+      }
+      document.getElementById('mt-balance').textContent = `${mtBalance.toFixed(2)}`;
+      document.getElementById('nft-balance').textContent = '0';
+    } catch (e) {
+      console.error('Balance fetch failed:', e);
+    }
+  }
+
+let socialUser = null; // Global scope
+
+async function initSocialConnect() {
+  console.log('initSocialConnect called, checking auth...');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionTokenFromUrl = urlParams.get('session_token');
+  console.log('Session token from URL:', sessionTokenFromUrl);
+  let sessionToken = document.cookie.split('; ').find(row => row.startsWith('session_token='))?.split('=')[1] || sessionTokenFromUrl;
+
+  try {
+    const response = await fetch('/games/api/authCheck.php', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      credentials: 'include'
+    });
+    console.log('Fetch response status:', response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+    const data = await response.json();
+    console.log('Fetch response data:', JSON.stringify(data, null, 2));
+    if (data.error || !data.success) {
+      throw new Error(data.error || 'Authentication failed');
+    }
+
+    if (data.success && (data.user.discord_id || data.user.telegram_id)) {
+      socialUser = {
+        wallet_address: data.user.wallet_address || 'Not set',
+        social_id: data.user.discord_id || data.user.telegram_id,
+        platform: data.user.discord_id ? 'Discord' : 'Telegram'
+      };
+      console.log('socialUser:', socialUser);
+      document.getElementById('wallet-status').textContent = `${socialUser.platform} Connected`;
+      document.getElementById('wallet-address').textContent = socialUser.wallet_address;
+      document.getElementById('connect-telegram').style.display = 'none';
+      document.getElementById('connect-discord').style.display = 'none';
+      document.getElementById('disconnect-social').style.display = 'inline-block';
+      if (socialUser.wallet_address && socialUser.wallet_address !== 'Not set') {
+        await fetchBalances(socialUser.wallet_address);
+      } else {
+        console.warn('No valid wallet address, setting default balances');
+        document.getElementById('wallet-balance').textContent = '0 SOL';
+        document.getElementById('mt-balance').textContent = '0.00';
+        document.getElementById('nft-balance').textContent = '0';
+      }
+    } else {
+      console.log('No social connection');
+      document.getElementById('wallet-status').textContent = 'Disconnected';
+      document.getElementById('wallet-address').textContent = 'Not connected';
+      document.getElementById('wallet-balance').textContent = '0 SOL';
+      document.getElementById('mt-balance').textContent = '0.00';
+      document.getElementById('nft-balance').textContent = '0';
+      document.getElementById('connect-telegram').style.display = 'inline-block';
+      document.getElementById('connect-discord').style.display = 'inline-block';
+      document.getElementById('disconnect-social').style.display = 'none';
+    }
+  } catch (e) {
+    console.error('Auth check failed:', e.message);
+    document.getElementById('wallet-status').textContent = 'Error connecting';
+    document.getElementById('wallet-address').textContent = 'Not connected';
+    document.getElementById('wallet-balance').textContent = '0 SOL';
+    document.getElementById('mt-balance').textContent = '0.00';
+    document.getElementById('nft-balance').textContent = '0';
+    document.getElementById('connect-telegram').style.display = 'inline-block';
+    document.getElementById('connect-discord').style.display = 'inline-block';
+    document.getElementById('disconnect-social').style.display = 'none';
+  }
+
+  document.getElementById('connect-discord')?.addEventListener('click', async () => {
+    try {
+      window.open('https://discord.com/api/oauth2/authorize?client_id=1380444668562505789&redirect_uri=https%3A%2F%2Fmemetorrent.futuret3ch.com.au%2Fgames%2Fapi%2Fdiscord-callback.php&response_type=code&scope=identify%20email', '_blank');
+      let attempts = 0;
+      const maxAttempts = 20;
+      const poll = setInterval(async () => {
+        if (attempts >= maxAttempts) {
+          clearInterval(poll);
+          document.getElementById('wallet-status').textContent = 'Discord connection timed out';
+          console.log('Discord connection timed out');
+          return;
+        }
+        attempts++;
+        console.log('Polling Discord, attempt', attempts);
+        try {
+          const response = await fetch('/games/api/authCheck.php', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            credentials: 'include'
+          });
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          const data = await response.json();
+          console.log('Discord poll data:', JSON.stringify(data, null, 2));
+          if (data.error || !data.success || !data.user.discord_id) {
+            throw new Error('Discord not connected');
+          }
+          clearInterval(poll);
+          socialUser = {
+            wallet_address: data.user.wallet_address || 'Not set',
+            social_id: data.user.discord_id,
+            platform: 'Discord'
+          };
+          console.log('socialUser updated:', socialUser);
+          document.getElementById('wallet-status').textContent = 'Discord Connected';
+          document.getElementById('wallet-address').textContent = socialUser.wallet_address;
+          document.getElementById('connect-telegram').style.display = 'none';
+          document.getElementById('connect-discord').style.display = 'none';
+          document.getElementById('disconnect-social').style.display = 'inline-block';
+          if (socialUser.wallet_address && socialUser.wallet_address !== 'Not set') {
+            await fetchBalances(socialUser.wallet_address);
+          } else {
+            console.warn('No valid wallet address, setting default balances');
+            document.getElementById('wallet-balance').textContent = '0 SOL';
+            document.getElementById('mt-balance').textContent = '0.00';
+            document.getElementById('nft-balance').textContent = '0';
+          }
+        } catch (e) {
+          console.error('Discord poll failed (attempt', attempts, '):', e.message);
+        }
+      }, 3000);
+    } catch (e) {
+      console.error('Discord connect failed:', e.message);
+      document.getElementById('wallet-status').textContent = 'Discord connect failed';
+    }
+  });
+
+  document.getElementById('connect-telegram')?.addEventListener('click', async () => {
+    try {
+      window.open('https://telegram.me/mod_Futuret3ch_bot?start=connect', '_blank');
+      let attempts = 0;
+      const maxAttempts = 20;
+      const poll = setInterval(async () => {
+        if (attempts >= maxAttempts) {
+          clearInterval(poll);
+          document.getElementById('wallet-status').textContent = 'Telegram connection timed out';
+          console.log('Telegram connection timed out');
+          return;
+        }
+        attempts++;
+        console.log('Polling Telegram, attempt', attempts);
+        try {
+          const response = await fetch('/games/api/authCheck.php', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            credentials: 'include'
+          });
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          const data = await response.json();
+          console.log('Telegram poll data:', JSON.stringify(data, null, 2));
+          if (data.error || !data.success || !data.user.telegram_id) {
+            throw new Error('Telegram not connected');
+          }
+          clearInterval(poll);
+          socialUser = {
+            wallet_address: data.user.wallet_address || 'Not set',
+            social_id: data.user.telegram_id,
+            platform: 'Telegram'
+          };
+          console.log('socialUser updated:', socialUser);
+          document.getElementById('wallet-status').textContent = 'Telegram Connected';
+          document.getElementById('wallet-address').textContent = socialUser.wallet_address;
+          document.getElementById('connect-telegram').style.display = 'none';
+          document.getElementById('connect-discord').style.display = 'none';
+          document.getElementById('disconnect-social').style.display = 'inline-block';
+          if (socialUser.wallet_address && socialUser.wallet_address !== 'Not set') {
+            await fetchBalances(socialUser.wallet_address);
+          } else {
+            console.warn('No valid wallet address, setting default balances');
+            document.getElementById('wallet-balance').textContent = '0 SOL';
+            document.getElementById('mt-balance').textContent = '0.00';
+            document.getElementById('nft-balance').textContent = '0';
+          }
+        } catch (e) {
+          console.error('Telegram poll failed (attempt', attempts, '):', e.message);
+        }
+      }, 3000);
+    } catch (e) {
+      console.error('Telegram connect failed:', e.message);
+      document.getElementById('wallet-status').textContent = 'Telegram connect failed';
+    }
+  });
+
+  document.getElementById('disconnect-social')?.addEventListener('click', async () => {
+    try {
+      const response = await fetch('/games/api/disconnectSocial.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      const data = await response.json();
+      if (data.error || !data.success) throw new Error(data.error || 'Disconnect failed');
+      socialUser = null;
+      console.log('Disconnected social, resetting UI');
+      document.getElementById('wallet-status').textContent = 'Disconnected';
+      document.getElementById('wallet-address').textContent = 'Not connected';
+      document.getElementById('wallet-balance').textContent = '0 SOL';
+      document.getElementById('mt-balance').textContent = '0.00';
+      document.getElementById('nft-balance').textContent = '0';
+      document.getElementById('connect-telegram').style.display = 'inline-block';
+      document.getElementById('connect-discord').style.display = 'inline-block';
+      document.getElementById('disconnect-social').style.display = 'none';
+    } catch (e) {
+      console.error('Disconnect failed:', e.message);
+      document.getElementById('wallet-status').textContent = 'Disconnect failed';
+    }
+  });
+}
+  
+// Enhanced skins and customization logic
+function updateSkins() {
+  const skinSelect = document.getElementById('skin-select');
+  const filterSelect = document.getElementById('filter-select');
+  const dashboard = document.querySelector('.dashboard') || document.getElementById('dashboard-content');
+  if (!skinSelect || !filterSelect || !dashboard) {
+    console.warn("Some skin elements missing, skipping initialization");
+    return;
+  }
+
+  const savedTheme = localStorage.getItem('selectedTheme') || 'matrix';
+  skinSelect.value = savedTheme;
+  applyTheme(savedTheme);
+
+  skinSelect.addEventListener('change', () => {
+    const selectedTheme = skinSelect.value;
+    localStorage.setItem('selectedTheme', selectedTheme);
+    applyTheme(selectedTheme);
+    console.log(`Theme changed to: ${selectedTheme}`);
+  });
+
+  filterSelect.addEventListener('change', () => {
+    initCustomizationStore(filterSelect.value);
+  });
+
+  initCustomizationStore('all');
+  initSpinWheel(); // Ensure wheel is initialized
+  renderActiveItems();
+  initDragAndDrop();
+}
+
+// Apply theme styles
+function applyTheme(theme) {
+  const dashboard = document.querySelector('.dashboard');
+  const themes = {
+    matrix: { background: '#000', color: '#0f0', borderColor: '#0ff' },
+    crypto: { background: '#1a1a3d', color: '#00f', borderColor: '#00f' },
+    cosmic: { background: '#0a0a23', color: '#fff', borderColor: '#ff0' },
+    retro: { background: '#1c2526', color: '#ff69b4', borderColor: '#ff69b4' }
+  };
+  const { background, color, borderColor } = themes[theme] || themes.matrix;
+  dashboard.classList.remove('matrix-theme', 'crypto-theme', 'cosmic-theme', 'retro-theme');
+  dashboard.classList.add(`${theme}-theme`);
+  dashboard.style.background = background;
+  dashboard.style.color = color;
+  document.querySelectorAll('.module').forEach(module => {
+    module.style.borderColor = borderColor;
+  });
+  updateThemeEffects(theme);
+}
+
+// Theme-specific effects
+function updateThemeEffects(theme) {
+  const matrixCanvas = document.getElementById("matrix");
+  const cosmicCanvas = document.getElementById("cosmic-particles");
+  if (matrixCanvas) matrixCanvas.style.display = theme === "matrix" ? "block" : "none";
+  if (cosmicCanvas) cosmicCanvas.style.display = theme === "cosmic" ? "block" : "none";
+  
+  document.body.style.background = theme === "crypto" ? "linear-gradient(135deg, #00ff00, #00aaff)" :
+                                  theme === "cosmic" ? "radial-gradient(circle, #1a0033, #000033)" :
+                                  theme === "retro" ? "linear-gradient(135deg, #1c2526, #2f4f4f)" : "#000";
+  if (theme === "cosmic") addCosmicParticles();
+}
+
+// Cosmic Dust particle effect
+function addCosmicParticles() {
+  const existingCanvas = document.getElementById("cosmic-particles");
+  if (existingCanvas) return;
+
+  const canvas = document.createElement("canvas");
+  canvas.id = "cosmic-particles";
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.zIndex = "0";
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
+  const particles = Array(100).fill().map(() => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 3 + 1,
+    speedX: Math.random() * 2 - 1,
+    speedY: Math.random() * 2 - 1,
+  }));
+
+  function animateParticles() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffffff";
+    particles.forEach(p => {
+      p.x += p.speedX;
+      p.y += p.speedY;
+      if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+}
+
+// Store items with free, purchasable, and winnable items
+const storeItems = [
+  { id: 1, name: "Neon Hologram", type: "decal", price: 50, src: "https://memetorrent.futuret3ch.com.au/games/assets/neon-hologram.gif", method: "purchase" },
+  { id: 2, name: "Glitch Orb", type: "animated", price: 100, src: "https://memetorrent.futuret3ch.com.au/games/assets/glitch-orb.gif", method: "purchase" },
+  { id: 3, name: "Starfield", type: "effect", price: 200, src: null, method: "purchase" },
+  { id: 4, name: "Pixel Star", type: "decal", price: 0, src: "https://memetorrent.futuret3ch.com.au/games/assets/pixel-star.png", method: "free" },
+  { id: 5, name: "Glow Ring", type: "animated", price: 0, src: "https://memetorrent.futuret3ch.com.au/games/assets/glow-ring.gif", method: "free" },
+  { id: 6, name: "Cosmic Badge", type: "decal", price: 0, src: "https://memetorrent.futuret3ch.com.au/games/assets/cosmic-badge.png", method: "win" },
+  { id: 7, name: "Event Trophy", type: "effect", price: 0, src: "https://memetorrent.futuret3ch.com.au/games/assets/event-trophy.gif", method: "win", event: "mini-prize-day" },
+  { id: 8, name: "Quantum Spark", type: "effect", price: 0, src: "https://memetorrent.futuret3ch.com.au/games/assets/quantum-spark.gif", method: "win" },
+  { id: 9, name: "Cyber Coin", type: "decal", price: 0, src: "https://memetorrent.futuret3ch.com.au/games/assets/cyber-coin.png", method: "win" }
+];
+
+// Initialize customization store with filter
+function initCustomizationStore(filter = 'all') {
+  const storeContainer = document.getElementById("store-items");
+  if (!storeContainer) return console.error("store-items not found");
+
+  let filteredItems = storeItems;
+  if (filter !== 'all') {
+    filteredItems = storeItems.filter(item => item.type === filter || item.method === filter);
+  }
+
+  storeContainer.innerHTML = filteredItems.map(item => `
+    <div style="background:rgba(0,0,0,0.6);padding:10px;border:1px solid #0ff;border-radius:8px;text-align:center;">
+      <h4 style="color:#0ff;">${item.name}</h4>
+      <p style="color:#00ffee;">${item.price === 0 ? (item.method === 'free' ? 'Free' : 'Win Only') : `${item.price} $MT`}</p>
+      ${item.src ? `<img src="${item.src}" style="width:60px;height:60px;border-radius:4px;margin-bottom:8px;" alt="${item.name}">` : ''}
+      ${item.method === 'free' ? `<button class="claim-item btn-link" data-item-id="${item.id}">Claim</button>` :
+        item.method === 'win' ? `<button class="win-item btn-link" data-item-id="${item.id}" disabled>Win Only</button>` :
+        `<button class="buy-item btn-link" data-item-id="${item.id}">Buy</button>`}
+    </div>
+  `).join("");
+
+  document.querySelectorAll(".buy-item").forEach(btn => btn.addEventListener("click", () => buyItem(btn.dataset.itemId)));
+  document.querySelectorAll(".claim-item").forEach(btn => btn.addEventListener("click", () => claimFreeItem(btn.dataset.itemId)));
+}
+
+// Claim free item
+async function claimFreeItem(itemId) {
+  const item = storeItems.find(i => i.id == itemId && i.method === 'free');
+  if (!item) return alert("Item not found or not free.");
+
+  try {
+    const res = await fetch('/games/api/user/profile.php', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.success) throw new Error("Not logged in");
+
+    const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+    if (userItems.some(i => i.id == itemId)) return alert("Item already claimed.");
+    userItems.push({ ...item, placed: false, x: 0, y: 0 });
+    localStorage.setItem("user-items", JSON.stringify(userItems));
+    alert(`✅ Claimed ${item.name}!`);
+    renderActiveItems();
+  } catch (err) {
+    console.error("Claim failed:", err);
+    alert("❌ Claim failed: " + err.message);
+  }
+}
+
+// Buy purchasable item
+async function buyItem(itemId) {
+  const item = storeItems.find(i => i.id == itemId && i.method === 'purchase');
+  if (!item) return alert("Item not found or not purchasable.");
+  if (!confirm(`Buy ${item.name} for ${item.price} $MT?`)) return;
+
+  try {
+    const walletAddress = document.getElementById("wallet-address")?.textContent || "Not connected";
+    if (walletAddress === "Not connected") throw new Error("Wallet not connected");
+
+    const res = await fetch('/games/api/wallet/balance.php', { credentials: 'include' });
+    const balanceData = await res.json();
+    if (!balanceData.success || balanceData.balance < item.price) throw new Error("Insufficient $MT balance");
+
+    // Simulate purchase API call
+    console.log(`Purchasing ${item.name} for ${walletAddress}`);
+    const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+    userItems.push({ ...item, placed: false, x: 0, y: 0 });
+    localStorage.setItem("user-items", JSON.stringify(userItems));
+    alert(`✅ Purchased ${item.name}!`);
+    renderActiveItems();
+  } catch (err) {
+    console.error("Purchase failed:", err);
+    alert("❌ Purchase failed: " + err.message);
+  }
+}
+
+// Daily spin-to-win
+function initSpinWheel() {
+  console.log("Initializing spin wheel...");
+  const spinButton = document.getElementById("spin-button");
+  const spinResult = document.getElementById("spin-result");
+  const canvas = document.getElementById("spin-wheel");
+  if (!spinButton || !spinResult || !canvas) {
+    console.error("Spin wheel elements not found:", { spinButton, spinResult, canvas });
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+  const winnableItems = storeItems.filter(i => i.method === 'win' && !i.event);
+  const segments = [...winnableItems.map(i => ({ name: i.name, id: i.id })), ...Array(4).fill({ name: "No Prize", id: null })];
+  const colors = ["#00ffee", "#ff00ff", "#00aaff", "#ff4444", "#33cc33", "#ffaa00", "#9933ff", "#ff9900"];
+  const segmentAngle = (2 * Math.PI) / segments.length;
+  let currentAngle = 0;
+  let isSpinning = false;
+
+  // Check last spin time
+  const lastSpin = localStorage.getItem("lastSpin");
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  spinButton.disabled = false; // Allow spinning for testing
+  console.log("Last spin date:", lastSpin, "Today:", today, "Button disabled:", spinButton.disabled);
+
+  // Draw wheel
+  function drawWheel() {
+    console.log("Drawing wheel");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(150, 150);
+    ctx.rotate(currentAngle);
+
+    segments.forEach((segment, i) => {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, 140, i * segmentAngle, (i + 1) * segmentAngle);
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.fill();
+      ctx.strokeStyle = "#0ff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.save();
+      ctx.rotate(i * segmentAngle + segmentAngle / 2);
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 14px Orbitron";
+      ctx.textAlign = "right";
+      ctx.fillText(segment.name, 120, 5);
+      ctx.restore();
+    });
+
+    ctx.restore();
+
+    // Draw pointer
+    ctx.beginPath();
+    ctx.moveTo(150, 20);
+    ctx.lineTo(140, 40);
+    ctx.lineTo(160, 40);
+    ctx.fillStyle = "#ff4444";
+    ctx.fill();
+    ctx.strokeStyle = "#0ff";
+    ctx.stroke();
+  }
+
+  // Spin animation
+  async function spinWheel() {
+    if (isSpinning) {
+      console.log("Spin already in progress, ignoring");
+      return;
+    }
+    isSpinning = true;
+    spinButton.disabled = true;
+    spinResult.textContent = "Spinning...";
+    console.log("Starting spin");
+
+    try {
+      // Mock API response for testing
+      const data = { success: true }; // Replace with actual fetch when API is stable
+      // const res = await fetch('/games/api/user/profile.php', { credentials: 'include' });
+      // const data = await res.json();
+      console.log("API response:", data);
+      if (!data.success) throw new Error("Not logged in");
+
+      localStorage.setItem("lastSpin", today);
+      console.log("Stored lastSpin:", today);
+      const spins = Math.floor(Math.random() * 4 + 4) * 360; // 4-8 full spins
+      const targetSegment = Math.floor(Math.random() * segments.length);
+      const finalAngle = targetSegment * segmentAngle + Math.random() * segmentAngle;
+      const totalRotation = spins + finalAngle;
+      let startTime = null;
+
+      function animate(time) {
+        if (!startTime) startTime = time;
+        const progress = (time - startTime) / 3000; // 3-second spin
+        const easeOut = 1 - Math.pow(1 - progress, 3); // Ease-out effect
+        currentAngle = (easeOut * totalRotation * Math.PI) / 180;
+
+        drawWheel();
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          isSpinning = false;
+          const selectedSegment = segments[Math.floor(((currentAngle % (2 * Math.PI)) / segmentAngle + segments.length) % segments.length)];
+          console.log("Spin landed on:", selectedSegment);
+          if (selectedSegment.id) {
+            const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+            if (!userItems.some(i => i.id == selectedSegment.id)) {
+              const item = storeItems.find(i => i.id == selectedSegment.id);
+              userItems.push({ ...item, placed: false, x: 0, y: 0 });
+              localStorage.setItem("user-items", JSON.stringify(userItems));
+              spinResult.textContent = `You won ${selectedSegment.name}!`;
+              console.log("Won item:", selectedSegment.name);
+              renderActiveItems();
+            } else {
+              spinResult.textContent = `You already own ${selectedSegment.name}.`;
+              console.log("Item already owned:", selectedSegment.name);
+            }
+          } else {
+            spinResult.textContent = "No prize this time. Try again tomorrow!";
+            console.log("No prize won");
+          }
+          spinButton.disabled = false; // Re-enable for testing
+        }
+      }
+      requestAnimationFrame(animate);
+    } catch (err) {
+      console.error("Spin failed:", err);
+      spinResult.textContent = "Spin failed: " + err.message;
+      isSpinning = false;
+      spinButton.disabled = false; // Re-enable for testing
+    }
+  }
+
+  spinButton.addEventListener("click", () => {
+    console.log("Spin button clicked");
+    spinWheel();
+  });
+  drawWheel();
+}
+
+// Mini prize day event
+function checkMiniPrizeDay() {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+  const isPrizeDay = dayOfWeek === 6; // Saturday
+  const prizeSection = document.getElementById("prize-day-section");
+  if (!prizeSection) return;
+
+  if (isPrizeDay) {
+    prizeSection.style.display = "block";
+    const prizeItems = storeItems.filter(i => i.method === 'win' && i.event === 'mini-prize-day');
+    if (prizeItems.length) {
+      const item = prizeItems[Math.floor(Math.random() * prizeItems.length)];
+      const claimButton = document.getElementById("claim-prize-button");
+      if (claimButton) {
+        claimButton.onclick = async () => {
+          try {
+            const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+            if (userItems.some(i => i.id == item.id)) return alert("Item already claimed.");
+            userItems.push({ ...item, placed: false, x: 0, y: 0 });
+            localStorage.setItem("user-items", JSON.stringify(userItems));
+            alert(`✅ Claimed ${item.name} from Mini Prize Day!`);
+            renderActiveItems();
+          } catch (err) {
+            console.error("Prize claim failed:", err);
+            alert("❌ Claim failed: " + err.message);
+          }
+        };
+      }
+    }
+  } else {
+    prizeSection.style.display = "none";
+  }
+}
+
+let renderTimeout = null;
+function renderActiveItems() {
+  if (renderTimeout) clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(() => {
+    const activeItemsContainer = document.getElementById("active-items");
+    const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+    if (!activeItemsContainer) return console.warn("active-items not found");
+    if (!userItems.length) {
+      activeItemsContainer.innerHTML = "<p style='color:#0ff;'>No items owned yet.</p>";
+      return;
+    }
+
+    activeItemsContainer.innerHTML = userItems.map(item => `
+      <div style="background:rgba(0,0,0,0.6);padding:8px;border:1px solid #0ff;border-radius:6px;margin-bottom:8px;">
+        <p style="color:#0ff;">${item.name} (${item.type})</p>
+        <button class="place-item" data-item-id="${item.id}" style="padding:5px 10px;background:#007bff;color:white;border:none;border-radius:4px;">${item.placed ? "Move" : "Place"}</button>
+        <button class="remove-item" data-item-id="${item.id}" style="padding:5px 10px;background:#ff4444;color:white;border:none;border-radius:4px;">Remove</button>
+      </div>
+    `).join("");
+
+    document.querySelectorAll(".place-item").forEach(btn => btn.addEventListener("click", () => placeItem(btn.dataset.itemId)));
+    document.querySelectorAll(".remove-item").forEach(btn => btn.addEventListener("click", () => removeItem(btn.dataset.itemId)));
+
+    userItems.forEach(item => {
+      if (item.placed && item.src) {
+        let el = document.getElementById(`dashboard-item-${item.id}`);
+        if (!el) {
+          el = document.createElement("img");
+          el.id = `dashboard-item-${item.id}`;
+          el.src = item.src;
+          el.style.position = "absolute";
+          el.style.width = "100px";
+          el.style.zIndex = "10";
+          document.body.appendChild(el);
+        }
+        el.style.left = `${item.x}px`;
+        el.style.top = `${item.y}px`;
+      }
+    });
+  }, 100);
+}
+
+// Enhanced drag-and-drop with touch support
+function initDragAndDrop() {
+  let draggedItem = null;
+  let offsetX, offsetY;
+
+  const startDrag = (e, clientX, clientY) => {
+    if (e.target.id.startsWith("dashboard-item-")) {
+      draggedItem = e.target;
+      draggedItem.style.cursor = "grabbing";
+      const rect = draggedItem.getBoundingClientRect();
+      offsetX = clientX - rect.left;
+      offsetY = clientY - rect.top;
+      e.preventDefault();
+    }
+  };
+
+  const moveDrag = (e, clientX, clientY) => {
+    if (draggedItem) {
+      const x = Math.max(0, Math.min(clientX - offsetX, window.innerWidth - 100));
+      const y = Math.max(0, Math.min(clientY - offsetY, window.innerHeight - 100));
+      draggedItem.style.left = `${x}px`;
+      draggedItem.style.top = `${y}px`;
+    }
+  };
+
+  const endDrag = () => {
+    if (draggedItem) {
+      const itemId = draggedItem.id.replace("dashboard-item-", "");
+      const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+      const item = userItems.find(i => i.id == itemId);
+      if (item) {
+        item.x = parseInt(draggedItem.style.left);
+        item.y = parseInt(draggedItem.style.top);
+        item.placed = true;
+        localStorage.setItem("user-items", JSON.stringify(userItems));
+      }
+      draggedItem.style.cursor = "grab";
+      draggedItem = null;
+    }
+  };
+
+  document.addEventListener("mousedown", e => startDrag(e, e.clientX, e.clientY));
+  document.addEventListener("mousemove", e => moveDrag(e, e.clientX, e.clientY));
+  document.addEventListener("mouseup", endDrag);
+  document.addEventListener("touchstart", e => startDrag(e, e.touches[0].clientX, e.touches[0].clientY));
+  document.addEventListener("touchmove", e => moveDrag(e, e.touches[0].clientX, e.touches[0].clientY));
+  document.addEventListener("touchend", endDrag);
+}
+
+// Place item with bounds checking
+function placeItem(itemId) {
+  const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+  const item = userItems.find(i => i.id == itemId);
+  if (!item) return alert("Item not found.");
+
+  item.placed = true;
+  item.x = item.x || Math.max(0, Math.min(Math.random() * (window.innerWidth - 100), window.innerWidth - 100));
+  item.y = item.y || Math.max(0, Math.min(Math.random() * (window.innerHeight - 100), window.innerHeight - 100));
+  localStorage.setItem("user-items", JSON.stringify(userItems));
+  renderActiveItems();
+}
+
+// Remove item
+function removeItem(itemId) {
+  if (!confirm("Remove this item from the dashboard?")) return;
+  const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+  const item = userItems.find(i => i.id == itemId);
+  if (item) {
+    item.placed = false;
+    const el = document.getElementById(`dashboard-item-${itemId}`);
+    if (el) el.remove();
+    localStorage.setItem("user-items", JSON.stringify(userItems));
+    renderActiveItems();
+  }
+}
+
+// Auto-claim free items on login
+async function autoClaimFreeItems() {
+  try {
+    const res = await fetch('/games/api/user/profile.php', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.success) return;
+
+    const userItems = JSON.parse(localStorage.getItem("user-items") || "[]");
+    const freeItems = storeItems.filter(i => i.method === 'free');
+    freeItems.forEach(item => {
+      if (!userItems.some(i => i.id == item.id)) {
+        userItems.push({ ...item, placed: false, x: 0, y: 0 });
+      }
+    });
+    localStorage.setItem("user-items", JSON.stringify(userItems));
+    if (document.getElementById('active-items')) {
+      renderActiveItems();
+    }
+  } catch (err) {
+    console.error("Auto-claim failed:", err);
+  }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+  autoClaimFreeItems();
+  checkMiniPrizeDay();
+}); 
+
+// Cog button to open Customize sidebar
+document.getElementById('cog-settings')?.addEventListener('click', () => {
+  const module = document.getElementById('customize-module');
+  if (module) {
+    module.style.display = module.style.display === 'block' ? 'none' : 'block';
+    if (module.style.display === 'block') {
+      initCustomizeModule();
+    }
+  }
+});
+
+// Close button
+document.getElementById('close-customize')?.addEventListener('click', () => {
+  document.getElementById('customize-module').style.display = 'none';
+});
+
+function initCustomizeModule() {
+  // Bind all tabs and subpanels
+  document.querySelectorAll('.customize-tabs .tab, .shop-tabs .tab, .market-tabs .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const panelId = `subpanel-${tab.dataset.panel || tab.dataset.market}`;
+      tab.closest('.panel').querySelectorAll('.subpanel').forEach(p => p.classList.remove('active'));
+      document.getElementById(panelId)?.classList.add('active');
+    });
+  });
+
+  // Themes (Matrix default, animated)
+  document.querySelectorAll('.apply-theme').forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+  });
+  document.getElementById('toggle-matrix')?.addEventListener('click', () => {
+    const canvas = document.getElementById('matrix');
+    canvas.style.display = canvas.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // Colors
+  document.getElementById('apply-custom-colors')?.addEventListener('click', () => {
+    const bgStart = document.getElementById('bg-start').value;
+    const bgEnd = document.getElementById('bg-end').value;
+    const accent = document.getElementById('accent-color').value;
+    const text = getContrastColor(bgEnd); // Auto-contrast
+    document.documentElement.style.setProperty('--background-gradient', `linear-gradient(135deg, ${bgStart}, ${bgEnd})`);
+    document.documentElement.style.setProperty('--accent-color', accent);
+    document.documentElement.style.setProperty('--text-color', text);
+    localStorage.setItem('customColors', JSON.stringify({ bgStart, bgEnd, accent, text }));
+  });
+
+  // Layout (drag/drop example)
+  new Sortable(document.getElementById('layout-drag-zone'), { animation: 150 });
+  document.getElementById('save-layout')?.addEventListener('click', () => alert('Layout saved!'));
+
+  // Settings
+  document.getElementById('font-size')?.addEventListener('input', (e) => {
+    document.documentElement.style.setProperty('--font-size', `${e.target.value}px`);
+  });
+  document.getElementById('mode-toggle')?.addEventListener('change', (e) => {
+    document.body.classList.toggle('light-mode', e.target.value === 'Light');
+  });
+  document.getElementById('save-settings')?.addEventListener('click', () => alert('Settings saved!'));
+
+  // Shop: Checkin
+  window.claimReward = (day) => alert(`Claimed Day ${day} reward: 10 $MT!`);
+
+  // Shop: Stash & Market (populate dynamically via API later)
+  // Example: loadStash(), loadMarket()
+}
+
+// Load on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  // ... existing code ...
+  applyTheme('matrix'); // Default to original Matrix
+});
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🔐 Auth script running...");
+
+  let userData = null; // <-- store globally in this scope
+
+  function clearCookies() {
+    document.cookie.split(";").forEach(cookie => {
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie.trim();
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.memetorrent.futuret3ch.com.au`;
+    });
+    console.log("Cookies cleared at " + new Date().toISOString());
+  }
+
+  try {
+    const res = await fetch("/games/api/check-session.php", {
+      method: "GET",
+      credentials: "include", // send cookies
+      headers: { Accept: "application/json" },
+    });
+
+    if (!res.ok) {
+      console.error(`check-session failed ${res.status}`);
+      clearCookies();
+      window.location.href = "/games/index.html";
+      return;
+    }
+
+    const text = await res.text();
+    console.log("check-session.php raw response:", text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+      userData = data; // save it for later use
+    } catch (e) {
+      console.error("Invalid JSON from check-session.php:", text);
+      throw new Error("Invalid server response");
+    }
+
+    if (data.valid) {
+      const welcomeUser = document.getElementById("welcome-user");
+      if (welcomeUser) {
+        welcomeUser.textContent = data.username || "Player";
+      }
+
+      console.log("✅ Auth check succeeded, user:", data.username);
+
+      // === Restore Sidebar Order from Preferences ===
+      if (data.preferences && data.preferences.sidebarOrder) {
+        const sidebar = document.getElementById("sidebar-links");
+        if (sidebar) {
+          const links = [...sidebar.querySelectorAll("a")];
+          data.preferences.sidebarOrder.forEach(mod => {
+            const el = links.find(a => a.dataset.module === mod);
+            if (el) sidebar.appendChild(el);
+          });
+          console.log("✅ Sidebar order restored from database");
+        }
+      }
+
+      // Continue with default module load
+      await window.loadModule("me");
+      initAudioControls();
+
+      // Logout button setup
+      const logoutButton = document.getElementById("logoutButton");
+      if (logoutButton) {
+        logoutButton.addEventListener("click", async () => {
+          clearCookies();
+          window.location.href = "/games/index.html";
+        });
+      }
+
+    } else {
+      console.warn("❌ Auth check failed → redirecting:", data.error);
+      clearCookies();
+      window.location.href = "/games/index.html";
+      return;
+    }
+
+  } catch (err) {
+    console.error("Auth check error:", err.message);
+    clearCookies();
+    window.location.href = "/games/index.html";
+    return;
+  }
+
+  // 🔓 Logout
+  const logoutButton = document.getElementById("logoutButton");
+  if (logoutButton) {
+    logoutButton.addEventListener("click", async () => {
+      try {
+        const res = await fetch("/games/api/logout.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.clear();
+          sessionStorage.clear();
+          console.log("✅ Logout successful → back to home");
+          window.location.href = "/";  // root of memetorrent.futuret3ch.com.au
+        } else {
+          alert("❌ Logout failed: " + data.error);
+        }
+      } catch (err) {
+        alert("❌ Logout failed: " + err.message);
+      }
+    });
+  }
+
+  // 🔄 Tabs
+  document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("tab-btn")) {
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+      e.target.classList.add("active");
+      renderFriends(e.target.dataset.tab);
+    }
+    if (e.target.classList.contains("msg-tab")) {
+      document.querySelectorAll(".msg-tab").forEach(btn => btn.classList.remove("active"));
+      e.target.classList.add("active");
+      loadMessages(e.target.dataset.tab);
+    }
+  });
+
+  // ✅ Extra safeguard: if already logged in and element exists
+  if (userData && userData.username) {
+    const welcomeUser = document.getElementById("welcome-user");
+    if (welcomeUser) {
+      welcomeUser.textContent = userData.username;
+    }
+  }
+}); // ✅ closes the main DOMContentLoaded listener
+
+// === OTHER NON-AUTH SCRIPTS ===
+
+// 🔄 Tabs for game sections
+document.querySelectorAll('.tabs .tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.getElementById(`panel-${tab.dataset.panel}`);
+    if (panel) panel.classList.add('active');
+    if (tab.dataset.panel === 'scoreboards') fetchRacerScores();
+    if (tab.dataset.panel === 'software') {
+      const softwareGrid = document.getElementById('software-grid');
+      if (softwareGrid) {
+        softwareGrid.innerHTML = '';
+        document.querySelectorAll('.card[data-category="software"]').forEach(card => {
+          softwareGrid.appendChild(card.cloneNode(true));
+        });
+      }
+    }
+  });
+});
+
+// 🧠 SCOREBOARD SYSTEM
+document.querySelectorAll('.scoreboards-section .tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.scoreboards-section .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.scoreboards-section .panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.getElementById(`panel-${tab.dataset.panel}`);
+    if (panel) panel.classList.add('active');
+    if (tab.dataset.panel === 'racer') fetchRacerScores();
+  });
+});
+
+['racer-mode', 'racer-track', 'racer-difficulty'].forEach(id => {
+  const element = document.getElementById(id);
+  if (element) element.addEventListener('change', fetchRacerScores);
+});
+
+// ✉️ MESSAGE EDITOR FIX
+document.addEventListener("DOMContentLoaded", () => {
+  const editor = document.getElementById("msg-content-editor");
+  if (editor) {
+    editor.setAttribute("contenteditable", "true");
+    editor.style.pointerEvents = "auto";
+    editor.style.zIndex = "10";
+    editor.style.position = "relative";
+  }
+
+  const observer = new MutationObserver(() => {
+    const ed = document.getElementById("msg-content-editor");
+    if (ed && !ed.getAttribute("contenteditable")) {
+      ed.setAttribute("contenteditable", "true");
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+});
+
+// 🎨 CUSTOMIZE PANEL (Themes + Colors)
+document.addEventListener("DOMContentLoaded", () => {
+  const themeGrid = document.getElementById("theme-grid");
+  const toggleMatrixBtn = document.getElementById("toggle-matrix");
+  const applyColorsBtn = document.getElementById("apply-custom-colors");
+  const bgStart = document.getElementById("bg-start");
+  const bgEnd = document.getElementById("bg-end");
+  const accentColor = document.getElementById("accent-color");
+  const textColor = document.getElementById("text-color");
+  const matrixCanvas = document.getElementById("matrix");
+
+  const themes = {
+    matrix: { start: "#000000", end: "#001000", accent: "#00ff00", text: "#00ff00", effect: "matrix" },
+    "crypto-pulse": { start: "#f7931a", end: "#00aaff", accent: "#ffcc00", text: "#ffffff", effect: "pulse" },
+    "neon-crypto": { start: "#00ff88", end: "#ff00ff", accent: "#00ffff", text: "#ffffff", effect: "neon" },
+    "plasma-grid": { start: "#8a2be2", end: "#ff1493", accent: "#ff66ff", text: "#ffffff", effect: "plasma" },
+    "particle-swarm": { start: "#ffd700", end: "#ff4500", accent: "#ff6600", text: "#111111", effect: "swarm" },
+  };
+
+  let matrixActive = false;
+  let matrixInterval;
+
+  function startMatrix() {
+    if (!matrixCanvas) return;
+    const ctx = matrixCanvas.getContext("2d");
+    matrixCanvas.width = window.innerWidth;
+    matrixCanvas.height = window.innerHeight;
+    const chars = "アァイゥウエオカキクケコサシスセソ0123456789";
+    const fontSize = 16;
+    const columns = Math.floor(matrixCanvas.width / fontSize);
+    const drops = Array(columns).fill(1);
+
+    matrixInterval = setInterval(() => {
+      ctx.fillStyle = "rgba(0,0,0,0.05)";
+      ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+      ctx.fillStyle = "#0f0";
+      ctx.font = fontSize + "px monospace";
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        ctx.fillText(text, x, y);
+        if (y > matrixCanvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }, 50);
+    matrixActive = true;
+  }
+
+  function stopMatrix() {
+    clearInterval(matrixInterval);
+    if (matrixCanvas) {
+      const ctx = matrixCanvas.getContext("2d");
+      ctx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+    }
+    matrixActive = false;
+  }
+
+  function applyTheme(themeKey) {
+    const t = themes[themeKey];
+    if (!t) return;
+    document.body.style.background = `linear-gradient(135deg, ${t.start}, ${t.end})`;
+    document.body.style.color = t.text;
+    document.querySelectorAll(".module").forEach(m => (m.style.borderColor = t.accent));
+    localStorage.setItem("selectedTheme", themeKey);
+    if (t.effect === "matrix") startMatrix();
+    else stopMatrix();
+    saveUserPref("theme", themeKey);
+  }
+
+  function previewTheme(themeKey) {
+    const t = themes[themeKey];
+    if (!t) return;
+    document.body.style.transition = "background 0.6s ease";
+    document.body.style.background = `linear-gradient(135deg, ${t.start}, ${t.end})`;
+    document.body.style.color = t.text;
+    document.querySelectorAll(".module").forEach(m => (m.style.borderColor = t.accent));
+  }
+
+  toggleMatrixBtn?.addEventListener("click", () => {
+    if (matrixActive) {
+      stopMatrix();
+      toggleMatrixBtn.textContent = "Enable Matrix Effect";
+    } else {
+      startMatrix();
+      toggleMatrixBtn.textContent = "Disable Matrix Effect";
+    }
+  });
+
+  applyColorsBtn?.addEventListener("click", () => {
+    const gradient = `linear-gradient(135deg, ${bgStart.value}, ${bgEnd.value})`;
+    document.body.style.background = gradient;
+    document.querySelectorAll(".module").forEach(m => (m.style.borderColor = accentColor.value));
+    document.body.style.color = textColor.value;
+    const colorData = {
+      bgStart: bgStart.value,
+      bgEnd: bgEnd.value,
+      accent: accentColor.value,
+      text: textColor.value
+    };
+    localStorage.setItem("customColors", JSON.stringify(colorData));
+    saveUserPref("colors", colorData);
+  });
+
+  const savedTheme = localStorage.getItem("selectedTheme");
+  if (savedTheme && themes[savedTheme]) applyTheme(savedTheme);
+
+  const savedColors = JSON.parse(localStorage.getItem("customColors") || "{}");
+  if (savedColors.bgStart) {
+    bgStart.value = savedColors.bgStart;
+    bgEnd.value = savedColors.bgEnd;
+    accentColor.value = savedColors.accent;
+    textColor.value = savedColors.text;
+    document.body.style.background = `linear-gradient(135deg, ${bgStart.value}, ${bgEnd.value})`;
+    document.body.style.color = savedColors.text;
+    document.querySelectorAll(".module").forEach(m => (m.style.borderColor = savedColors.accent));
+  }
+
+  themeGrid?.querySelectorAll(".theme-card").forEach(card => {
+    const theme = card.dataset.theme;
+    card.querySelector(".apply-theme")?.addEventListener("click", () => applyTheme(theme));
+    card.querySelector(".preview-theme")?.addEventListener("click", () => previewTheme(theme));
+  });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebar = document.getElementById("sidebar-nav");
+  const toggleBtn = document.getElementById("toggle-sidebar");
+  const layout = document.getElementById("portal-layout");
+
+  toggleBtn.addEventListener("click", () => {
+    const isHidden = sidebar.classList.toggle("hidden");
+    layout.classList.toggle("sidebar-hidden");
+
+    if (isHidden) {
+      toggleBtn.classList.add("floating");
+      toggleBtn.textContent = "⮞";
+      toggleBtn.title = "Show";
+      document.body.appendChild(toggleBtn);
+    } else {
+      toggleBtn.classList.remove("floating");
+      toggleBtn.textContent = "⮜";
+      toggleBtn.title = "Hide";
+      sidebar.querySelector(".sidebar-footer")?.appendChild(toggleBtn);
+    }
+  });
+});
+
+
+
+
+
+
+
+
+
+// 🪩 SIDEBAR DRAG + SAVE
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebarLinks = document.getElementById("sidebar-links");
+  const saveBtn = document.getElementById("save-sidebar-order");
+
+  if (sidebarLinks && window.Sortable) {
+    new Sortable(sidebarLinks, { animation: 150, ghostClass: "dragging" });
+    console.log("✅ Sidebar Sortable active");
+  }
+
+  saveBtn?.addEventListener("click", async () => {
+    const order = [...sidebarLinks.querySelectorAll("a")].map(a => a.dataset.module);
+    await saveUserPref("sidebarOrder", order);
+    alert("Sidebar order saved to database!");
+  });
+});
+
+// 🌐 GLOBAL SAVE HELPER
+async function saveUserPref(key, value) {
+  try {
+    const res = await fetch("/games/api/user/save-preferences.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ key, value }),
+    });
+    const data = await res.json();
+    console.log("Server response:", data);
+  } catch (err) {
+    console.error("❌ Save failed:", err);
+  }
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+</body>
+</html>

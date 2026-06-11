@@ -1,0 +1,271 @@
+html {
+    box-sizing: border-box;
+    font-size: 62.5%;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    outline: none;
+}
+*:hover, *:active { transition: all ease 0.2s; }
+body {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 2.2rem;
+    background: #0B1D31;
+    color: white;
+    overflow: hidden;
+    text-transform: uppercase;
+    text-align: center;
+}
+body, h1, h2, h3, p, menu, button { margin: 0; padding: 0; }
+a { color: #58D1FF; text-decoration: none; padding: 10px 0; display: inline-block; }
+hr { border: none; border-bottom: 1px solid rgba(255,255,255,0.3); margin-bottom: 1em; }
+.txt-bold { font-weight: 600; }
+.text-align-right { text-align: right; }
+.main-wrapper {
+    background: url('images/backgroundPattern.svg') repeat rgb(11, 29, 49);
+    width: 100%;
+    max-width: 640px;
+    height: 640px;
+    box-shadow: 0 0 250px 0 rgba(0,0,0,0.4);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+.fixed-100w-wrapper { position: absolute; width: 100%; top: 50%; transform: translateY(-50%); }
+.fixed-75w-wrapper { width: 75%; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+.page-cont { width: 100%; height: 100%; position: absolute; }
+.page-faded-bg::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -2;
+    background: rgba(11, 29, 49, 0.9);
+}
+.anmtd-grdnt-bg::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    animation: anmtdOpcty 2s alternate infinite ease-in-out;
+}
+.blu-grdnt-bg::after { background-image: linear-gradient(0deg, rgba(11,29,48,0.00) 0%, rgba(88,209,255,0.35) 100%); }
+.rd-grdnt-bg::after { background-image: linear-gradient(0deg, rgba(11,29,48,0.00) 0%, rgba(255,19,68,0.35) 100%); }
+.grn-grdnt-bg::after { background-image: linear-gradient(0deg, rgba(11,29,48,0.00) 0%, rgba(0,255,107,0.35) 100%); }
+.no-bg { background: none; }
+
+/* Page Visibility */
+.page-splash { z-index: 10; display: block; }
+.page-game-menu { z-index: 9; display: none; }
+.page-about { z-index: 8; display: none; }
+.page-high-score { z-index: 7; display: none; }
+.page-tutorial { z-index: 6; display: none; }
+.page-play-delay { z-index: 5; display: none; }
+.page-play-area { z-index: 4; display: none; }
+.page-pause-menu { z-index: 3; display: none; }
+.page-you-lost { z-index: 2; display: none; }
+.page-level-passed { z-index: 1; display: none; }
+.page-achievements { z-index: 8; display: none; }
+.page-multiplayer { z-index: 8; display: none; }
+.page-mystery-game { z-index: 8; display: none; }
+
+/* About Page Credits */
+.credits-cont {
+    text-align: center;
+    margin-top: 0.2em;
+}
+.credits-list {
+    list-style: none;
+    padding: 0;
+}
+
+/* Game Play Area */
+#playDelayNum { font-size: 10rem; }
+.game-stats-cont {
+    width: 100%;
+    height: 15%; /* Increased from 10% to 15% to give more space */
+    margin: 0 auto;
+    position: relative;
+}
+.gm-stats-time-progress {
+    background: #58D1FF;
+    width: 100%;
+    height: 20%; /* Increased from 4% to 20% of the parent container's height */
+    min-height: 10px; /* Ensure a minimum height for visibility */
+    display: block; /* Explicitly set to prevent overrides */
+    transition: all ease 0.2s;
+}
+.gm-stats-wrapper {
+    width: 94%;
+    height: 80%; /* Adjusted to account for the larger timer bar */
+    margin: 0 auto;
+    position: relative;
+}
+.gm-stats-vcont { height: 100%; display: inline-block; text-align: center; float: left; width: calc(100%/3); position: relative; }
+.gm-stats-pause-button { width: 44px; height: 100%; border: none; background: url('images/pauseIconSmall.svg') center no-repeat; float: left; }
+.gm-stats-pause-button:active { transform: scale(2); }
+.gm-stats-tap-count { display: inline-block; color: #58D1FF; }
+.stat-wrapper { width: 100%; position: absolute; top: 50%; transform: translateY(-50%); }
+.gm-stats-title { width: 100%; font-size: 1.2rem; }
+.gm-stats-value { width: 100%; font-size: 2rem; font-weight: 600; }
+.gm-stats-combo { width: 100%; font-size: 1.4rem; color: #58D1FF; font-weight: 600; margin-top: 0.5em; opacity: 0; transition: opacity 0.3s ease; }
+.gm-stats-combo:not(:empty) { opacity: 1; }
+.game-space { 
+    width: 100%; 
+    height: 85%; /* Adjusted from 90% to account for the increased height of .game-stats-cont */
+    position: relative; 
+    overflow: hidden; 
+}
+
+/* Tappable Circles */
+.tpbl-circle {
+    width: 44px;
+    height: 44px;
+    position: absolute;
+    border-radius: 50%;
+    z-index: 0;
+    cursor: pointer;
+}
+.tpbl-circle::before, .tpbl-circle::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    animation: beating 1.5s infinite ease-in-out;
+    opacity: 0;
+    z-index: -1;
+}
+.tpbl-circle::after { animation: beating 1.5s 0.4s infinite ease-in-out; }
+.tpbl-circle:active { transform: scale(2); }
+.c-blue { box-shadow: inset 0 0 0 17px #58D1FF; z-index: 3; }
+.c-blue::before, .c-blue::after { box-shadow: inset 0 0 0 2px #58D1FF; }
+.c-red { box-shadow: inset 0 0 0 17px #FA4760; z-index: 2; }
+.c-red::before, .c-red::after { box-shadow: inset 0 0 0 2px #FA4760; }
+.c-white { box-shadow: inset 0 0 0 17px #ffffff; }
+.c-white::before, .c-white::after { box-shadow: inset 0 0 0 2px #ffffff; }
+.submit-circle { display: block; position: relative; margin: 0 auto; }
+.evil-circle, .good-circle { transform: scale(0); cursor: pointer; background: rgba(0,0,0,0.5); }
+
+/* Themed Level Styles */
+.theme-night .game-space { background: #1a1a1a; }
+.theme-reverse .c-blue { box-shadow: inset 0 0 0 17px #FA4760; }
+.theme-reverse .c-red { box-shadow: inset 0 0 0 17px #58D1FF; }
+.theme-chaos .tpbl-circle { animation: moveRandom 2s infinite alternate; }
+
+/* Tutorial Page */
+.tut-circle {
+    position: relative;
+    margin: 0 auto;
+    z-index: 2;
+}
+.tut-arrow {
+    height: 4em;
+    width: 100%;
+    background: url('images/tapsIcon.svg') center center no-repeat;
+    animation: anmtdBG 0.5s alternate infinite cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    top: -44px;
+}
+.tut-text {
+    font-size: 1em;
+    font-weight: 400;
+    text-align: center;
+    width: 100%;
+    margin-top: -2em;
+}
+
+/* Game Menu */
+.gm-btn {
+    display: block;
+    width: 100%;
+    background: none;
+    border: 2px solid white;
+    font-size: 1em;
+    color: white;
+    padding: 0.8em 0;
+    border-radius: 3em;
+    margin: 0 auto 0.9em;
+    font-weight: 300;
+    cursor: pointer;
+}
+.gm-btn:active { transform: scale(1.1); background: white; color: rgba(11, 29, 49, 1); box-shadow: 0 0 20px 0 rgba(0,0,0,0.5); }
+.btn-blue { border-color: #58D1FF; font-weight: 600; }
+.btn-blue:active { background: #58D1FF; }
+.btn-mystery { border-color: #FFD700; font-weight: 600; } /* Gold color for riddle challenge button */
+.btn-mystery:active { background: #FFD700; color: rgba(11, 29, 49, 1); }
+
+/* Achievements & Multiplayer */
+.achievement-item { margin: 1em 0; padding: 0.5em; border-bottom: 1px solid rgba(255,255,255,0.3); }
+.achievement-name { font-weight: 600; font-size: 1.2rem; }
+.achievement-desc { font-size: 1rem; color: #58D1FF; }
+.status { font-size: 1rem; color: #ffffff; }
+.status-unlocked { color: #00FF6B; }
+.multiplayer-input { width: 80%; padding: 0.5em; margin: 1em 0; background: rgba(255,255,255,0.1); border: none; color: white; text-transform: uppercase; }
+.multiplayer-score { font-size: 1.4rem; margin: 1em 0; line-height: 1.5; } /* Adjusted for riddle text */
+.attempts-left { font-size: 1.2rem; color: #FFD700; margin: 0.5em 0; } /* Style for attempts counter */
+
+/* Animations */
+@keyframes beating { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes anmtdOpcty { 0% { opacity: 1; } 100% { opacity: 0.5; } }
+@keyframes grow { 0% { transform: scale(0); } 50% { transform: scale(2); } 100% { transform: scale(1); } }
+@keyframes burst { 0% { transform: scale(0); opacity: 1; } 50% { transform: scale(5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes moveRandom { 0% { transform: translate(0, 0); } 100% { transform: translate(20px, 20px); } }
+@keyframes anmtdBG { 0% { background-position: center 0.5em; } 100% { background-position: center 1.5em; } }
+.grow-animation { animation: grow .2s ease-in-out forwards; }
+.burst-animation { animation: burst 0.25s ease-in-out; }
+
+/* Responsive */
+@media screen and (max-width: 640px) {
+    .main-wrapper { 
+        margin: 0; 
+        width: 100%; 
+        max-width: 100%; 
+        height: 100vh; 
+        max-height: 100vh; 
+    }
+    .game-stats-cont {
+        margin-top: 20px; /* Add space at the top to lower the stats section */
+        height: 15%; /* Keep the height */
+    }
+    .gm-stats-time-progress {
+        height: 20%; /* Keep the height */
+        min-height: 15px; /* Increase minimum height on mobile for better visibility */
+    }
+    .game-space {
+        height: calc(85% - 20px); /* Adjusted to account for the margin-top of .game-stats-cont */
+    }
+}
+
+@media screen and (max-height: 480px) { 
+    body { font-size: 1.6rem; }
+    .game-stats-cont {
+        height: 20%;
+        margin-top: 15px; /* Slightly less margin on very small screens */
+    }
+    .gm-stats-time-progress {
+        height: 25%;
+        min-height: 12px; /* Slightly smaller minimum height for very small screens */
+    }
+    .gm-stats-wrapper {
+        height: 75%;
+    }
+    .game-space {
+        height: calc(80% - 15px); /* Adjusted for the increased height of .game-stats-cont and smaller margin-top */
+    }
+}

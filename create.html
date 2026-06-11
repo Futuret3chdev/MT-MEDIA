@@ -1,0 +1,2964 @@
+<!DOCTYPE html>
+	<html lang="en">
+	  <head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>MemeTorrent | $MT</title>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+		<style>
+
+	.copy-icon {
+	  font-size: 24px;
+	  cursor: pointer;
+	  color: green;
+	}
+
+	:root {
+	  --primary-color: #ffcc00;
+	  --accent-color: #00ff99;
+	  --text-color: #f8f9fa;
+	  --background-overlay: rgba(255, 255, 255, 0.40);
+	  --card-bg: rgba(0, 0, 0, 0.75);
+	}
+
+	html, body {
+	  margin: 0;
+	  padding: 0;
+	  width: 100%;
+	  height: 100%;
+	  overflow: auto;
+	  scrollbar-width: none;
+	  -ms-overflow-style: none;
+	  box-sizing: border-box;
+	}
+
+	body::-webkit-scrollbar {
+	  display: none;
+	}
+
+	body {
+	  font-family: Arial, sans-serif;
+	  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+		url("./images/bg3.png") center/cover fixed;
+	  color: var(--text-color);
+	  line-height: 1.6;
+	  touch-action: pan-x pan-y pinch-zoom;
+	}
+
+	.container, main, section {
+	  max-width: 100%;
+	  overflow: hidden;
+	  box-sizing: border-box;
+	}
+
+	/* === Stats Panel === */
+	.stats-panel {
+	  position: fixed;
+	  top: 60px;
+	  right: 20px;
+	  background: rgba(0, 0, 0, 0.6);
+	  color: var(--text-color);
+	  border-radius: 0.75rem;
+	  padding: 0.5rem 1rem;
+	  width: auto;
+	  max-width: 300px;
+	  z-index: 1001;
+	  backdrop-filter: blur(10px);
+	  box-shadow: 0 0 10px rgba(0, 255, 153, 0.3);
+	  transition: max-height 0.3s ease;
+	  overflow: hidden;
+	}
+	.stats-header {
+	  cursor: pointer;
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center;
+	}
+	.stats-body {
+	  margin-top: 0.5rem;
+	}
+	.stats-panel.collapsed .stats-body {
+	  display: none;
+	}
+	.stats-panel.collapsed ..dropdown-icon {
+	  transform: rotate(-90deg);
+	  transition: transform 0.3s ease;
+	}
+	.stat {
+	  margin: 0.3rem 0;
+	  font-size: 0.95rem;
+	}
+
+	/* === Socials === */
+	.social-icons {
+	  display: flex;
+	  justify-content: center;
+	  margin-top: 1rem;
+	}
+	.social-icons a {
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  width: 48px;
+	  height: 48px;
+	  border-radius: 50%;
+	  background-color: rgba(255, 255, 255, 0.05);
+	  color: #f8f9fa;
+	  font-size: 1.8rem;
+	  text-decoration: none;
+	  transition: transform 0.2s ease, background-color 0.2s ease;
+	  outline: none;
+	  border: none;
+	}
+	.social-icons a:hover {
+	  transform: scale(1.2);
+	  background-color: rgba(255, 204, 0, 0.2);
+	  color: var(--primary-color);
+	}
+	.social-icons a:focus,
+	.social-icons a:active {
+	  outline: none;
+	  border: none;
+	}
+	.social-icons i {
+	  line-height: 1;
+	  vertical-align: middle;
+	}
+
+	/* === Banner === */
+	.banner {
+	  background: linear-gradient(90deg, #ffcc00, #ff6600);
+	  color: #000;
+	  padding: 12px 0;
+	  font-weight: bold;
+	  overflow: hidden;
+	  text-shadow: 0 0 10px rgba(0,0,0,0.5);
+	  z-index: 1002;
+	}
+	.banner-content {
+	  display: inline-block;
+	  white-space: nowrap;
+	  animation: scroll 28s linear infinite;
+	  font-size: 1.1rem;
+	}
+	.banner-content:hover {
+	  animation-play-state: paused;
+	}
+
+	@keyframes scroll { 
+	  0% { transform: translateX(100%); } 
+	  100% { transform: translateX(-100%); } 
+	}
+	@keyframes marquee {
+	  0% { transform: translateX(0); }
+	  100% { transform: translateX(-100%); }
+	}
+
+	/* === Flash animations === */
+	.flash-green {
+	  animation: flashGreen 0.5s ease;
+	}
+	.flash-red {
+	  animation: flashRed 0.5s ease;
+	}
+	@keyframes flashGreen {
+	  0% { background-color: rgba(0, 255, 0, 0.2); }
+	  100% { background-color: transparent; }
+	}
+	@keyframes flashRed {
+	  0% { background-color: rgba(255, 0, 0, 0.2); }
+	  100% { background-color: transparent; }
+	}
+
+	/* === Navbar === */
+	.nav-container {
+	  background: rgba(0,0,0,0.7);
+	  padding: 1rem;
+	  text-align: center;
+	  border-top: 1px solid #00ff99;
+	  border-bottom: 1px solid #00ff99;
+	  backdrop-filter: blur(10px);
+	}
+	.nav-links a {
+	  color: #f8f9fa;
+	  text-decoration: none;
+	  padding: 0.7rem 1.4rem;
+	  margin: 0 0.5rem;
+	  border-radius: 50px;
+	  font-weight: bold;
+	  transition: all 0.3s;
+	}
+	.nav-links a:hover {
+	  background: #ffcc00;
+	  color: #000;
+	  box-shadow: 0 0 15px rgba(255,204,0,0.6);
+	}
+
+
+	/* === Contact Card === */
+	.contact-card {
+	  background: rgba(15,15,25,0.95);
+	  border: 2px solid #00ff99;
+	  border-radius: 24px;
+	  padding: 3rem 2rem;
+	  margin: 4rem auto;
+	  max-width: 1200px;
+	  box-shadow: 0 0 50px rgba(0,255,153,0.4);
+	  backdrop-filter: blur(15px);
+	  position: relative;
+	  overflow: hidden;
+	}
+	.section-header {
+	  font-size: 3.2rem;
+	  text-align: center;
+	  background: linear-gradient(90deg, #ffcc00, #00ff99, #ffcc00);
+	  -webkit-background-clip: text;
+	  -webkit-text-fill-color: transparent;
+	  margin-bottom: 2.5rem;
+	}
+	@keyframes pulseTitle {
+	  0% { transform: scale(1); opacity: 1; }
+	  50% { transform: scale(1.05); opacity: 0.9; }
+	  100% { transform: scale(1); opacity: 1; }
+	}
+	.contact-wrapper {
+	  display: flex;
+	  gap: 2rem;
+	  flex-wrap: wrap;
+	  justify-content: space-between;
+	}
+	.direct-contact-container {
+	  flex: 1;
+	  min-width: 280px;
+	}
+	.form-horizontal {
+	  flex: 1;
+	  min-width: 280px;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 1rem;
+	}
+	.form-control, textarea {
+	  background: rgba(255, 255, 255, 0.1);
+	  border: none;
+	  padding: 0.75rem;
+	  border-radius: 0.5rem;
+	  color: white;
+	  letter-spacing: 1px;
+	  width: 100%;
+	  box-sizing: border-box;
+	}
+	.form-control::placeholder, textarea::placeholder {
+	  color: #ccc;
+	}
+	.send-button {
+	  background: var(--primary-color);
+	  color: black;
+	  font-weight: bold;
+	  border: none;
+	  padding: 0.75rem;
+	  border-radius: 0.5rem;
+	  cursor: pointer;
+	  transition: transform 0.2s ease;
+	}
+	.send-button:hover {
+	  transform: scale(1.05);
+	  background: #ffe066;
+	}
+
+	/* === Meme Terminal === */
+	.meme-terminal {
+	  background: #111;
+	  border: 2px solid lime;
+	  border-radius: 1rem;
+	  padding: 1rem;
+	  color: lime;
+	  font-family: 'Courier New', monospace;
+	  box-shadow: 0 0 10px lime;
+	}
+	.terminal-header {
+	  font-weight: bold;
+	  margin-bottom: 0.5rem;
+	}
+	.terminal-body {
+	  height: 150px;
+	  overflow-y: auto;
+	  background: #000;
+	  padding: 0.5rem;
+	  border-radius: 0.5rem;
+	  margin-bottom: 0.5rem;
+	}
+	.terminal-input {
+	  width: 100%;
+	  padding: 0.5rem;
+	  background: #222;
+	  border: none;
+	  color: lime;
+	  font-family: inherit;
+	  border-radius: 0.5rem;
+	}
+
+	/* === Contact List === */
+	.contact-list {
+	  list-style-type: none;
+	  margin-left: -30px;
+	  padding-right: 20px;
+	}
+	.list-item {
+	  line-height: 4;
+	  color: #aaa;
+	}
+	.contact-text {
+	  font: 300 18px 'Lato', sans-serif;
+	  letter-spacing: 1.9px;
+	  color: #bbb;
+	}
+	.contact-text a {
+	  color: #bbb;
+	  text-decoration: none;
+	  transition-duration: 0.2s;
+	}
+	.contact-text a:hover {
+	  color: #fff;
+	}
+
+	/* === Social Media List === */
+	.social-media-list {
+	  display: flex;
+	  gap: 1rem;
+	  margin-top: 1rem;
+	}
+	.social-media-list li {
+	  list-style: none;
+	}
+	.social-media-list a {
+	  font-size: 1.5rem;
+	  color: white;
+	  transition: transform 0.2s ease;
+	}
+	.social-media-list a:hover {
+	  transform: scale(1.2);
+	  color: var(--primary-color);
+	}
+
+	/* === Modal === */
+	.modal {
+	  display: none;
+	  position: fixed;
+	  inset: 0;
+	  background: rgba(0,0,0,0.85);
+	  z-index: 2000;
+	  justify-content: center;
+	  align-items: center;
+	  overflow: hidden;
+	}
+	.modal-content {
+	  background: rgba(0,0,0,0.9);
+	  border: 2px solid var(--primary-color);
+	  border-radius: 16px;
+	  padding: 2rem;
+	  width: 90%;
+	  max-width: 400px;
+	  position: relative;
+	  box-shadow: 0 0 20px rgba(255,204,0,0.4);
+	  overflow: hidden;
+	}
+	.crypto-card.green-theme {
+	  background: linear-gradient(135deg, rgba(0, 255, 153, 0.2), rgba(0, 0, 0, 0.9));
+	  border: 2px solid var(--accent-color);
+	  box-shadow: 0 0 15px rgba(0, 255, 153, 0.5);
+	}
+	.crypto-card.green-theme h3 {
+	  color: var(--accent-color);
+	  text-shadow: 0 0 5px rgba(0, 255, 153, 0.7);
+	}
+	.crypto-card.green-theme .btn-glow {
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  width: 40px;
+	  height: 40px;
+	  background: var(--accent-color);
+	  color: black;
+	  border: 2px solid var(--accent-color);
+	  border-radius: 50%;
+	  font-size: 1rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+	}
+	.crypto-card.green-theme .btn-glow:hover {
+	  background: #33ffad;
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+	}
+	.close-btn {
+	  position: absolute;
+	  top: 12px;
+	  right: 12px;
+	  background: none;
+	  border: none;
+	  color: var(--primary-color);
+	  font-size: 1.5rem;
+	  cursor: pointer;
+	}
+	.close-btn:hover {
+	  transform: scale(1.2) rotate(90deg);
+	}
+
+	/* === Auth Tabs === */
+	.auth-tabs {
+	  display: flex;
+	  justify-content: center;
+	  gap: 1rem;
+	  margin-bottom: 1rem;
+	}
+	.auth-tab {
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  width: 40px;
+	  height: 40px;
+	  background: rgba(0, 0, 0, 0.4);
+	  border: 2px solid var(--accent-color);
+	  border-radius: 50%;
+	  color: var(--accent-color);
+	  font-size: 1rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
+	}
+	.auth-tab:hover {
+	  background: #33ffad;
+	  color: black;
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+	}
+	.auth-tab.active {
+	  background: var(--accent-color);
+	  color: black;
+	  box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+	}
+	.auth-content {
+	  display: none;
+	}
+	.auth-content.active {
+	  display: block;
+	}
+	.auth-form {
+	  display: flex;
+	  flex-direction: column;
+	  gap: 0.8rem;
+	  max-width: 100%;
+	}
+	.auth-form input {
+	  padding: 0.6rem;
+	  border-radius: 6px;
+	  border: 1px solid var(--primary-color);
+	  background: rgba(255,255,255,0.05);
+	  color: white;
+	  width: 100%;
+	  box-sizing: border-box;
+	}
+	.auth-form label {
+	  color: var(--accent-color);
+	}
+
+	/* === Auth Buttons (crypto style) === */
+	.auth-icon {
+	  font-size: 0.9rem;
+	  color: var(--primary-color);
+	  background: rgba(0, 0, 0, 0.4);
+	  border: 2px solid var(--primary-color);
+	  border-radius: 50%;
+	  padding: 0.3rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	}
+	.auth-icon:hover {
+	  color: black;
+	  background: var(--primary-color);
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(255, 204, 0, 0.9),
+				  0 0 25px rgba(255, 204, 0, 0.7);
+	}
+
+	/* === Status Bar === */
+	.status-bar {
+	  display: flex;
+	  align-items: center;
+	  justify-content: flex-end;
+	  gap: 1rem;
+	  background: rgba(0, 0, 0, 0.75);
+	  color: var(--primary-color);
+	  font-size: 0.9rem;
+	  padding: 0.4rem 1rem;
+	  border-radius: 6px;
+	  margin: 0.5rem 1rem 0 auto;
+	  z-index: 2001;
+	  overflow: hidden;
+	}
+	.status-bar i {
+	  color: var(--primary-color);
+	  margin-right: 0.3rem;
+	}
+	.status-item {
+	  display: flex;
+	  align-items: center;
+	  gap: 0.5rem;
+	}
+	#auth-buttons, #user-info {
+	  display: flex;
+	  gap: 0.5rem;
+	  align-items: center;
+	}
+	.portal-icon {
+	  font-size: 0.9rem;
+	  color: #00ff99;
+	  background: rgba(0, 0, 0, 0.4);
+	  border: 2px solid #00ff99;
+	  border-radius: 50%;
+	  padding: 0.3rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	}
+	.portal-icon:hover {
+	  color: black;
+	  background: #00ff99;
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+	}
+
+	#logoutButton {
+	  font-size: 0.9rem;
+	  color: #ff0000;
+	  background: rgba(0, 0, 0, 0.4);
+	  border: 2px solid #ff0000;
+	  border-radius: 50%;
+	  padding: 0.3rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	}
+	#logoutButton:hover {
+	  color: black;
+	  background: #ff0000;
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(255, 0, 0, 0.9);
+	}
+
+	/* === Masthead === */
+	.masthead {
+	  padding: 1rem;
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center;
+	  z-index: 1000;
+	}
+	.brand img {
+	  width: 70px;
+	  border: 3px solid #00ff99;
+	  border-radius: 50%;
+	  box-shadow: 0 0 25px #00ff99;
+	}
+	.right-cluster {
+	  display: flex;
+	  flex-direction: column;
+	  align-items: flex-end;
+	  gap: 8px;
+	}
+	.social-row {
+	  display: flex;
+	  gap: 14px;
+	}
+	.social-row a {
+	  color: white;
+	  font-size: 1.8rem;
+	  margin: 0 12px;
+	  transition: all 0.3s;
+	}
+	.social-row a:hover {
+	  color: #ffcc00;
+	  transform: translateY(-6px) scale(1.4);
+	  text-shadow: 0 0 20px #ffcc00;
+	}
+
+	/* === Flash animations === */
+	.flash-green {
+	  animation: flashGreen 0.5s ease;
+	}
+	.flash-red {
+	  animation: flashRed 0.5s ease;
+	}
+	@keyframes flashGreen {
+	  0% { background-color: rgba(0, 255, 0, 0.2); }
+	  100% { background-color: transparent; }
+	}
+	@keyframes flashRed {
+	  0% { background-color: rgba(255, 0, 0, 0.2); }
+	  100% { background-color: transparent; }
+	}
+
+	/* === Navbar === */
+	.nav-container {
+	  background: rgba(0,0,0,0.7);
+	  padding: 1rem;
+	  text-align: center;
+	  border-top: 1px solid #00ff99;
+	  border-bottom: 1px solid #00ff99;
+	  backdrop-filter: blur(10px);
+	}
+	.nav-links a {
+	  color: #f8f9fa;
+	  text-decoration: none;
+	  padding: 0.7rem 1.4rem;
+	  margin: 0 0.5rem;
+	  border-radius: 50px;
+	  font-weight: bold;
+	  transition: all 0.3s;
+	}
+	.nav-links a:hover {
+	  background: #ffcc00;
+	  color: #000;
+	  box-shadow: 0 0 15px rgba(255,204,0,0.6);
+	}
+
+	/* === Card Panels === */
+	.card {
+	  background: var(--card-bg);
+	  border-radius: 1rem;
+	  padding: 2rem;
+	  margin: 2rem auto;
+	  max-width: 1200px;
+	  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+	  backdrop-filter: blur(8px);
+	  color: var(--text-color);
+	}
+	.card h1, .card h2 {
+	  color: var(--primary-color);
+	  font-size: 2rem;
+	  text-align: center;
+	  position: relative;
+	  animation: pulseTitle 2s infinite ease-in-out;
+	}
+	@keyframes pulseTitle {
+	  0% { transform: scale(1); opacity: 1; }
+	  50% { transform: scale(1.05); opacity: 0.9; }
+	  100% { transform: scale(1); opacity: 1; }
+	}
+	.card p, .card h4 {
+	  font-size: 1rem;
+	  line-height: 1.6;
+	  color: #eee;
+	}
+
+	/* === Wallet Cards === */
+	.wallet-card {
+	  background: var(--bg-overlay);
+	  border-radius: 1rem;
+	  padding: 1.5rem;
+	  transition: transform 0.3s ease, background 0.3s ease;
+	  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+	}
+	.wallet-card:hover {
+	  transform: translateY(-5px);
+	  background: rgba(255, 255, 255, 0.15);
+	}
+	.wallet-icon {
+	  font-size: 2rem;
+	  margin-bottom: 1rem;
+	}
+	.wallet-icon img {
+	  animation: float 3s ease-in-out infinite;
+	}
+	@keyframes float {
+	  0% { transform: translateY(0); }
+	  50% { transform: translateY(-8px); }
+	  100% { transform: translateY(0); }
+	}
+	@keyframes pulse {
+	  0% { transform: scale(1); }
+	  50% { transform: scale(1.2); }
+	  100% { transform: scale(1); }
+	}
+
+	/* === CTA Button === */
+	.cta-button {
+	  background: var(--primary-color);
+	  color: black;
+	  padding: 1rem 2rem;
+	  border-radius: 0.5rem;
+	  font-weight: bold;
+	  text-decoration: none;
+	  transition: transform 0.2s ease;
+	  text-align: center;
+	  display: inline-block;
+	}
+	.cta-button:hover {
+	  transform: scale(1.05);
+	  background: #ffe066;
+	}
+
+	/* === Grid Container === */
+	.grid-container {
+	  display: grid;
+	  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	  gap: 2rem;
+	}
+
+	/* === Modal === */
+	.modal {
+	  display: none;
+	  position: fixed;
+	  inset: 0;
+	  background: rgba(0,0,0,0.85);
+	  z-index: 2000;
+	  justify-content: center;
+	  align-items: center;
+	  overflow: hidden;
+	}
+	.modal-content {
+	  background: rgba(0,0,0,0.9);
+	  border: 2px solid var(--primary-color);
+	  border-radius: 16px;
+	  padding: 2rem;
+	  width: 90%;
+	  max-width: 400px;
+	  position: relative;
+	  box-shadow: 0 0 20px rgba(255,204,0,0.4);
+	  overflow: hidden;
+	}
+	.crypto-card.green-theme {
+	  background: linear-gradient(135deg, rgba(0, 255, 153, 0.2), rgba(0, 0, 0, 0.9));
+	  border: 2px solid var(--accent-color);
+	  box-shadow: 0 0 15px rgba(0, 255, 153, 0.5);
+	}
+	.crypto-card.green-theme h3 {
+	  color: var(--accent-color);
+	  text-shadow: 0 0 5px rgba(0, 255, 153, 0.7);
+	}
+	.crypto-card.green-theme .btn-glow {
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  width: 40px;
+	  height: 40px;
+	  background: var(--accent-color);
+	  color: black;
+	  border: 2px solid var(--accent-color);
+	  border-radius: 50%;
+	  font-size: 1rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+	}
+	.crypto-card.green-theme .btn-glow:hover {
+	  background: #33ffad;
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+	}
+	.close-btn {
+	  position: absolute;
+	  top: 12px;
+	  right: 12px;
+	  background: none;
+	  border: none;
+	  color: var(--primary-color);
+	  font-size: 1.5rem;
+	  cursor: pointer;
+	}
+	.close-btn:hover {
+	  transform: scale(1.2) rotate(90deg);
+	}
+
+	/* === Auth Tabs === */
+	.auth-tabs {
+	  display: flex;
+	  justify-content: center;
+	  gap: 1rem;
+	  margin-bottom: 1rem;
+	}
+	.auth-tab {
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  width: 40px;
+	  height: 40px;
+	  background: rgba(0, 0, 0, 0.4);
+	  border: 2px solid var(--accent-color);
+	  border-radius: 50%;
+	  color: var(--accent-color);
+	  font-size: 1rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
+	}
+	.auth-tab:hover {
+	  background: #33ffad;
+	  color: black;
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+	}
+	.auth-tab.active {
+	  background: var(--accent-color);
+	  color: black;
+	  box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+	}
+	.auth-content {
+	  display: none;
+	}
+	.auth-content.active {
+	  display: block;
+	}
+	.auth-form {
+	  display: flex;
+	  flex-direction: column;
+	  gap: 0.8rem;
+	  max-width: 100%;
+	}
+	.auth-form input {
+	  padding: 0.6rem;
+	  border-radius: 6px;
+	  border: 1px solid var(--primary-color);
+	  background: rgba(255,255,255,0.05);
+	  color: white;
+	  width: 100%;
+	  box-sizing: border-box;
+	}
+	.auth-form label {
+	  color: var(--accent-color);
+	}
+
+	/* === Auth Buttons (crypto style) === */
+	.auth-icon {
+	  font-size: 0.9rem;
+	  color: var(--primary-color);
+	  background: rgba(0, 0, 0, 0.4);
+	  border: 2px solid var(--primary-color);
+	  border-radius: 50%;
+	  padding: 0.3rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	}
+	.auth-icon:hover {
+	  color: black;
+	  background: var(--primary-color);
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(255, 204, 0, 0.9),
+				  0 0 25px rgba(255, 204, 0, 0.7);
+	}
+
+	/* === Status Bar === */
+	.status-bar {
+	  display: flex;
+	  align-items: center;
+	  justify-content: flex-end;
+	  gap: 1rem;
+	  background: rgba(0, 0, 0, 0.75);
+	  color: var(--primary-color);
+	  font-size: 0.9rem;
+	  padding: 0.4rem 1rem;
+	  border-radius: 6px;
+	  margin: 0.5rem 1rem 0 auto;
+	  z-index: 2001;
+	  overflow: hidden;
+	}
+	.status-bar i {
+	  color: var(--primary-color);
+	  margin-right: 0.3rem;
+	}
+	.status-item {
+	  display: flex;
+	  align-items: center;
+	  gap: 0.5rem;
+	}
+	#auth-buttons, #user-info {
+	  display: flex;
+	  gap: 0.5rem;
+	  align-items: center;
+	}
+	.portal-icon {
+	  font-size: 0.9rem;
+	  color: #00ff99;
+	  background: rgba(0, 0, 0, 0.4);
+	  border: 2px solid #00ff99;
+	  border-radius: 50%;
+	  padding: 0.3rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	}
+	.portal-icon:hover {
+	  color: black;
+	  background: #00ff99;
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(0, 255, 153, 0.9);
+	}
+
+	#logoutButton {
+	  font-size: 0.9rem;
+	  color: #ff0000;
+	  background: rgba(0, 0, 0, 0.4);
+	  border: 2px solid #ff0000;
+	  border-radius: 50%;
+	  padding: 0.3rem;
+	  cursor: pointer;
+	  transition: all 0.25s ease;
+	  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	}
+	#logoutButton:hover {
+	  color: black;
+	  background: #ff0000;
+	  transform: scale(1.15);
+	  box-shadow: 0 0 15px rgba(255, 0, 0, 0.9);
+	}
+
+	/* === Masthead === */
+	.masthead {
+	  position: relative;
+	  z-index: 1000;
+	  padding: 8px 16px;
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: flex-start;
+	  overflow: hidden;
+	}
+	.brand img {
+	  width: 56px;
+	  height: 56px;
+	  object-fit: cover;
+	  border-radius: 50%;
+	}
+	.right-cluster {
+	  display: flex;
+	  flex-direction: column;
+	  align-items: flex-end;
+	  gap: 8px;
+	}
+	.social-row {
+	  display: flex;
+	  gap: 14px;
+	}
+	.social-row a {
+	  color: white;
+	  font-size: 1.8rem;
+	  margin: 0 12px;
+	  transition: all 0.3s;
+	}
+	.social-row a:hover {
+	  color: #ffcc00;
+	  transform: translateY(-6px) scale(1.4);
+	  text-shadow: 0 0 20px #ffcc00;
+	}
+
+	/* === Crypto Pulse === */
+	.flashable {
+	  transition: background-color 0.3s ease;
+	  padding: 0.1rem 0.3rem;
+	  border-radius: 0.3rem;
+	}
+	.flash-green {
+	  background-color: rgba(0, 255, 153, 0.3);
+	}
+	.flash-red {
+	  background-color: rgba(255, 0, 0, 0.3);
+	}
+
+	/* === Utility Dashboard Grid (3×3 Holographic) === */
+
+	.utility-grid {
+	  display: grid;
+	  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	  gap: 2rem;
+	  margin-top: 2rem;
+	}
+
+	/* Cards */
+	.u-card {
+	  background: rgba(0,0,0,0.55);
+	  border: 2px solid rgba(0,255,153,0.4);
+	  border-radius: 22px;
+	  padding: 2rem 1.5rem;
+	  text-align: center;
+	  color: var(--text-color);
+	  box-shadow: 0 0 25px rgba(0,255,153,0.25);
+	  position: relative;
+	  overflow: hidden;
+	  transition: all .3s ease;
+	}
+
+	/* Hologram Glow */
+	.u-card.holo::before {
+	  content: "";
+	  position: absolute;
+	  inset: 0;
+	  background: linear-gradient(145deg,
+		rgba(0,255,153,0.2),
+		rgba(0,0,0,0),
+		rgba(255,204,0,0.1)
+	  );
+	  opacity: 0;
+	  transition: opacity .4s ease;
+	}
+	.u-card:hover.holo::before {
+	  opacity: 1;
+	}
+
+	/* Hover movement */
+	.u-card:hover {
+	  transform: translateY(-10px) scale(1.03);
+	  box-shadow: 0 0 40px rgba(0,255,153,0.5),
+				  0 0 80px rgba(255,204,0,0.5);
+	}
+
+	/* Icons */
+	.u-icon {
+	  font-size: 3rem;
+	  margin-bottom: 1rem;
+	  color: var(--accent-color);
+	  text-shadow: 0 0 20px var(--accent-color);
+	  transition: transform .3s;
+	}
+
+	.u-card:hover .u-icon {
+	  transform: scale(1.3) rotate(8deg);
+	}
+
+	/* Pulse effect for center card */
+	.center-pulse {
+	  border-color: var(--primary-color);
+	  box-shadow: 0 0 40px rgba(255,204,0,0.3);
+	}
+	.pulse {
+	  animation: pulseGlow 1.6s ease-in-out infinite;
+	}
+	@keyframes pulseGlow {
+	  0% { transform: scale(1); text-shadow: 0 0 20px var(--primary-color); }
+	  50% { transform: scale(1.25); text-shadow: 0 0 40px var(--primary-color); }
+	  100% { transform: scale(1); text-shadow: 0 0 20px var(--primary-color); }
+	}
+
+	/* Titles */
+	.u-card h3 {
+	  color: var(--primary-color);
+	  font-size: 1.5rem;
+	  margin: .5rem 0 1rem;
+	  letter-spacing: 1px;
+	}
+
+	/* Paragraphs */
+	.u-card p {
+	  color: #ccc;
+	  font-size: 0.95rem;
+	  line-height: 1.6;
+	}
+	.nav-shield-icon {
+	  width: 28px;
+	  height: 28px;
+	  object-fit: contain;
+	  filter: drop-shadow(0 0 8px #00ff99);
+	  transition: 0.25s ease;
+	}
+
+	.nav-shield-icon:hover {
+	  transform: scale(1.2);
+	  filter: drop-shadow(0 0 16px #00ffcc);
+	}
+
+	.nav-shield {
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  padding: 0.7rem 1rem;
+	}
+	/* === Eco Box === */
+	.eco-box {
+	  position: relative;
+	  background:radial-gradient(circle at center, #001f1f, #000);
+	  border-radius: 1rem;
+	  height: 150px;
+	  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+	  cursor: pointer;
+	  overflow: hidden;
+	}
+	.coin {
+	  position: absolute;
+	  top: 50%;
+	  left: 50%;
+	  width: 60px;
+	  height: 60px;
+	  background: radial-gradient(circle, #00ff99, #007f3f);
+	  border-radius: 50%;
+	  transform: translate(-50%, -50%);
+	  box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+	  animation: shimmer 2s infinite ease-in-out;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  font-weight: bold;
+	  font-size: 16px;
+	  color: black;
+	  text-shadow: 0 0 2px lime;
+	}
+	@keyframes shimmer {
+	  0%, 100% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.6); }
+	  50% { box-shadow: 0 0 25px rgba(0, 255, 0, 0.9); }
+	}
+	#tokenPulseCanvas {
+	  position: absolute;
+	  top: 0;
+	  left: 0;
+	  width: 100%;
+	  height: 100%;
+	  pointer-events: none;
+	}
+	.eco-box:hover {
+	  box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+	}
+
+	/* ============================================================
+	   MT NEON — HYBRID SPRAY GRAFFITI TOKENOMICS
+	   Fully responsive – clean glow – mobile safe
+	============================================================ */
+
+	/* ROOT COLORS */
+	:root {
+	  --spray-green: #00ff99;
+	  --spray-gold: #ffcc00;
+	  --spray-white: #f8f9fa;
+	  --spray-dark: rgba(0,0,0,0.55);
+	  --spray-halo: 0 0 18px rgba(0,255,153,0.65), 0 0 32px rgba(255,204,0,0.45);
+	}
+
+	/* WRAPPER */
+	.neon-tokenomics {
+	  background: rgba(0,0,0,0.60);
+	  border: 2px solid rgba(0,255,153,0.3);
+	  border-radius: 22px;
+	  padding: 3rem 2rem;
+	  box-shadow: 0 0 40px rgba(0,255,153,0.15);
+	  margin-top: 3rem;
+	  position: relative;
+	  overflow: hidden;
+	}
+
+	/* ============================================================
+	   GRAFFITI HEADING — HYBRID SPRAY
+	============================================================ */
+
+	.graffiti-title {
+	  text-align: center;
+	  margin-bottom: 3rem;
+	  position: relative;
+	}
+
+	.graffiti-title .spray-outer {
+	  font-size: 3.4rem;
+	  letter-spacing: 2px;
+	  font-weight: 900;
+	  color: var(--spray-green);
+	  text-shadow:
+		0 0 12px var(--spray-green),
+		0 0 24px rgba(0,255,153,0.6),
+		0 0 40px rgba(0,255,153,0.4);
+	  opacity: 0.95;
+	  display: block;
+	  transform: rotate(-2deg);
+	}
+
+	.graffiti-title .spray-inner {
+	  font-size: 2.2rem;
+	  font-weight: bold;
+	  color: var(--spray-gold);
+	  text-shadow:
+		0 0 12px var(--spray-gold),
+		0 0 24px rgba(255,204,0,0.7),
+		0 0 40px rgba(255,204,0,0.3);
+	  position: relative;
+	  top: -10px;
+	  transform: rotate(4deg);
+	}
+
+	/* ============================================================
+	   TOTAL SUPPLY BOX
+	============================================================ */
+
+	.total-supply-box {
+	  text-align: center;
+	  padding: 1.2rem 1rem;
+	  background: rgba(255,255,255,0.06);
+	  border: 1px solid rgba(0,255,153,0.25);
+	  border-radius: 16px;
+	  margin-bottom: 2.4rem;
+	  backdrop-filter: blur(4px);
+	}
+
+	.spray-tag {
+	  font-size: 1.6rem;
+	  color: var(--spray-gold);
+	  text-shadow: 0 0 10px rgba(255,204,0,0.7);
+	  letter-spacing: 1px;
+	  font-weight: 900;
+	}
+
+	/* ============================================================
+	   TOKENOMICS GRID — GRAFFITI CARDS
+	============================================================ */
+
+	.graffiti-grid {
+	  display: grid;
+	  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+	  gap: 2rem;
+	}
+
+	/* INDIVIDUAL CARD */
+	.graffiti-card {
+	  background: rgba(0,0,0,0.55);
+	  border: 2px solid rgba(0,255,153,0.35);
+	  border-radius: 18px;
+	  padding: 1.8rem 1.4rem;
+	  color: #eee;
+	  box-shadow: 0 0 22px rgba(0,255,153,0.2);
+	  position: relative;
+	  overflow: hidden;
+	  transition: all 0.32s ease;
+	}
+
+	/* On hover — graffiti glow */
+	.graffiti-card:hover {
+	  transform: translateY(-8px) scale(1.03);
+	  box-shadow:
+		0 0 30px rgba(0,255,153,0.5),
+		0 0 60px rgba(255,204,0,0.45);
+	  border-color: var(--spray-green);
+	}
+
+	/* GRAFFITI HEADERS (HYBRID STYLE) */
+	.graffiti-header {
+	  color: var(--spray-gold);
+	  font-size: 1.4rem;
+	  font-weight: 900;
+	  letter-spacing: 1px;
+	  text-shadow:
+		0 0 8px rgba(255,204,0,0.8),
+		0 0 25px rgba(255,204,0,0.4);
+	  margin-bottom: 1rem;
+	  transform: rotate(-1deg);
+	}
+
+	/* Highlighted CENTER card (Mining 45%) */
+	.graffiti-highlight {
+	  border-color: var(--spray-gold);
+	  box-shadow: 0 0 35px rgba(255,204,0,0.4);
+	}
+
+	.graffiti-highlight:hover {
+	  box-shadow: 0 0 50px rgba(255,204,0,0.7);
+	}
+
+	/* ============================================================
+	   $MT — ANIMATED COIN BOX
+	============================================================ */
+
+	.graffiti-eco {
+	  position: relative;
+	  height: 170px;
+	  border-radius: 20px;
+	  border: 2px solid rgba(0,255,153,0.4);
+	  background: radial-gradient(circle at center, #003322, #000);
+	  cursor: pointer;
+	  overflow: hidden;
+	  box-shadow: 0 0 25px rgba(0,255,153,0.4);
+	  transition: 0.3s ease;
+	}
+
+	.graffiti-eco:hover {
+	  transform: scale(1.05);
+	  box-shadow: 0 0 40px rgba(0,255,153,0.55);
+	}
+
+	.graffiti-coin {
+	  position: absolute;
+	  top: 50%; left: 50%;
+	  transform: translate(-50%, -50%);
+	  width: 68px; height: 68px;
+	  background: radial-gradient(circle, #00ff99, #00774f);
+	  border-radius: 50%;
+	  box-shadow:
+		0 0 16px rgba(0,255,153,0.8),
+		0 0 28px rgba(0,255,153,0.5);
+	  font-size: 20px;
+	  font-weight: 900;
+	  color: black;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  animation: graffitiPulse 2s infinite ease-in-out;
+	}
+
+	/* COIN FLOAT ANIMATION */
+	@keyframes graffitiPulse {
+	  0%   { transform: translate(-50%, -50%) scale(1); }
+	  50%  { transform: translate(-50%, -52%) scale(1.15); }
+	  100% { transform: translate(-50%, -50%) scale(1); }
+	}
+
+	/* ============================================================
+	   WHITEPAPER BUTTON
+	============================================================ */
+
+	.whitepaper-link {
+	  text-align: center;
+	  margin-top: 3rem;
+	}
+
+	.spray-link {
+	  color: var(--spray-gold) !important;
+	  font-weight: 900;
+	  font-size: 1.3rem;
+	  padding: 1rem 2rem;
+	  border: 2px solid var(--spray-gold);
+	  border-radius: 14px;
+	  text-shadow: 0 0 8px var(--spray-gold);
+	  box-shadow: 0 0 25px rgba(255,204,0,0.3);
+	  transition: all 0.3s ease;
+	}
+
+	.spray-link:hover {
+	  background: var(--spray-gold);
+	  color: black !important;
+	  box-shadow:
+		0 0 35px rgba(255,204,0,0.7),
+		0 0 45px rgba(0,255,153,0.45);
+	  transform: scale(1.06);
+	}
+
+
+	/* ============================================================
+	   MOBILE OPTIMISATION
+	============================================================ */
+
+	@media (max-width: 600px) {
+	  .graffiti-title .spray-outer { font-size: 2.4rem; }
+	  .graffiti-title .spray-inner { font-size: 1.5rem; }
+
+	  .spray-tag { font-size: 1.2rem; }
+
+	  .graffiti-card { padding: 1.4rem 1rem; }
+
+	  .graffiti-header { font-size: 1.2rem; }
+
+	  .spray-link {
+		font-size: 1.1rem;
+		padding: 0.8rem 1.2rem;
+	  }
+	}
+	/* ===============================
+	   MT SAFETY WALL — HYBRID GRAFFITI PANEL
+	======================================= */
+
+	.mt-wall {
+	  margin: 3rem auto;
+	  padding: 2.5rem;
+	  max-width: 1200px;
+	  background: rgba(0,0,0,0.55);
+	  border-radius: 22px;
+	  border: 2px solid rgba(0,255,153,0.35);
+	  backdrop-filter: blur(10px);
+	  box-shadow: 0 0 25px rgba(0,255,153,0.25);
+	  position: relative;
+	  overflow: hidden;
+	}
+
+	.mt-wall-title {
+	  text-align: center;
+	  font-size: 2.4rem;
+	  background: linear-gradient(90deg,#ffcc00,#00ff99);
+	  -webkit-background-clip: text;
+	  -webkit-text-fill-color: transparent;
+	  margin-bottom: 0.5rem;
+	}
+
+	.mt-wall-sub {
+	  text-align: center;
+	  margin-bottom: 2rem;
+	  font-size: 1rem;
+	  color: #ccc;
+	}
+
+	/* GRID */
+	.mt-wall-grid {
+	  display: grid;
+	  grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+	  gap: 1.8rem;
+	}
+
+	/* TILE */
+	.mt-tile {
+	  background: rgba(0,0,0,0.65);
+	  border-radius: 20px;
+	  padding: 1.8rem;
+	  text-align: center;
+	  border: 2px solid rgba(0,255,153,0.25);
+	  box-shadow: 0 0 20px rgba(0,255,153,0.2);
+	  transition: 0.35s ease;
+	  position: relative;
+	  overflow: hidden;
+	}
+
+	/* CLEAN until hovered */
+	.mt-tile:hover {
+	  transform: translateY(-10px) scale(1.03);
+	  border-color: var(--primary-color);
+	  box-shadow: 0 0 45px rgba(255,204,0,0.5);
+	}
+
+	/* ICON DEFAULT */
+	.icon-wrap i {
+	  font-size: 2.5rem;
+	  color: var(--accent-color);
+	  text-shadow: 0 0 15px var(--accent-color);
+	  transition: 0.3s;
+	}
+
+	/* ICON HOVER */
+	.mt-tile:hover .icon-wrap i {
+	  transform: scale(1.2) rotate(8deg);
+	  color: var(--primary-color);
+	}
+
+	/* TEXT */
+	.mt-tile h3 {
+	  color: var(--primary-color);
+	  margin-top: 0.7rem;
+	}
+
+	.mt-tile p {
+	  color: #ccc;
+	  font-size: 0.95rem;
+	}
+
+	/* === HYBRID GRAFFITI EFFECT — "drip on hover" === */
+	.mt-tile::after {
+	  content: "";
+	  position: absolute;
+	  left: 50%;
+	  top: -40px;
+	  width: 6px;
+	  height: 0px;
+	  background: var(--primary-color);
+	  border-radius: 4px;
+	  opacity: 0;
+	  transform: translateX(-50%);
+	  transition: 0.35s;
+	}
+
+	.mt-tile:hover::after {
+	  height: 60px;
+	  opacity: 1;
+	  filter: drop-shadow(0 0 15px var(--primary-color));
+	}
+
+
+/* ==================================================
+   MT GRAFFITI WALL – FINAL CLEAN & 100% WORKING
+   Works on mobile + desktop + fullscreen + no hidden canvas
+================================================== */
+.graffiti-section {
+  margin: 90px auto 120px;
+  text-align: center;
+  padding: 0 12px;
+}
+.graffiti-title {
+  font-size: 3rem;
+  color: #00ff99;
+  text-shadow: 0 0 25px #00ff99;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+.graffiti-subtitle {
+  color: #aaa;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+/* Main container – becomes fullscreen */
+.graffiti-master {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  min-height: 420px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 0 40px rgba(0,255,153,0.6);
+   touch-action: pinch-zoom;
+}
+
+/* FULLSCREEN MODE */
+.graffiti-master.fullscreen {
+  position: fixed !important;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0 !important;
+  z-index: 999999 !important;
+  margin: 0 !important;
+}
+
+/* CANVASES – NOW ALWAYS VISIBLE */
+#graffitiBgCanvas,
+#graffitiCanvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+#graffitiCanvas { z-index: 10; }
+
+/* TOP CONTROL BAR – always visible */
+.graffiti-top-controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 99999;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.graffiti-top-controls > * { pointer-events: auto; }
+
+/* Background selector */
+.bg-selector {
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(16px);
+  border: 2px solid #00ff99;
+  border-radius: 20px;
+  padding: 10px 14px;
+  display: flex;
+  gap: 10px;
+}
+.bg-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+}
+.bg-thumb.active {
+  border-color: #ffcc00;
+  transform: scale(1.15);
+  box-shadow: 0 0 18px #ffcc00;
+}
+.bg-thumb:hover { transform: scale(1.2); }
+
+/* Right buttons */
+.graffiti-right-controls {
+  display: flex;
+  gap: 12px;
+}
+.share-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(0,255,153,0.25);
+  border: 2px solid #00ff99;
+  color: #00ff99;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 0 15px rgba(0,255,153,0.4);
+}
+.share-btn:hover {
+  background: #00ff99;
+  color: #000;
+  transform: scale(1.15);
+}
+
+/* Spray can trigger */
+.spray-trigger {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(20,20,20,0.95);
+  border: 3px solid #00ff99;
+  color: #00ff99;
+  font-size: 2rem;
+  cursor: pointer;
+  box-shadow: 0 0 25px #00ff99;
+  z-index: 999999;
+  transition: 0.3s;
+}
+.spray-trigger:hover {
+  background: #00ff99;
+  color: #000;
+  transform: scale(1.2);
+}
+
+/* ==============================
+   RADIAL MENU BUTTON (your beloved spray can)
+============================== */
+.radial-trigger {
+  position: absolute;
+  bottom: 22px;
+  right: 22px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: rgba(20,20,20,0.85);
+  border: 2px solid #00ff99;
+  color: #00ff99;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 12px #00ff99;
+  transition: 0.25s ease;
+  z-index: 20;
+}
+.radial-trigger:hover {
+  transform: scale(1.1);
+  background: #00ff99;
+  color: black;
+  box-shadow: 0 0 18px #00ff99;
+}
+
+/* ==============================
+   RADIAL MENU EXPANDING LAYOUT (bigger for 9 buttons)
+============================== */
+.radial-menu {
+  position: absolute;
+  bottom: 100px;
+  right: 20px;
+  width: 280px;        /* increased from 220px */
+  height: 280px;       /* increased from 220px */
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.3);
+  transform-origin: bottom right;
+  transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 999999;
+}
+.radial-menu.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* CIRCLE BUTTONS — YOUR EXACT STYLE */
+.radial-btn {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid #00ccff;
+  background: rgba(0,0,0,0.85);
+  color: #00ccff;
+  font-size: 1.3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 0 12px #00ccff;
+  transition: 0.22s ease;
+}
+.radial-btn:hover {
+  background: #00ccff;
+  color: black;
+  transform: scale(1.12);
+  box-shadow: 0 0 18px #00ccff;
+}
+
+/* PERFECT 9-BUTTON POSITIONS (exact circle, no overlap) */
+.radial-btn:nth-child(1)  { transform: translate(82px, -112px); }   /* Spray */
+.radial-btn:nth-child(2)  { transform: translate(112px, -82px); }   /* Palette */
+.radial-btn:nth-child(3)  { transform: translate(130px, 0px); }     /* Size */
+.radial-btn:nth-child(4)  { transform: translate(112px, 82px); }    /* Undo */
+.radial-btn:nth-child(5)  { transform: translate(82px, 112px); }    /* Clear */
+.radial-btn:nth-child(6)  { transform: translate(0px, 130px); }     /* Save */
+.radial-btn:nth-child(7)  { transform: translate(-82px, 112px); }   /* Tweet */
+.radial-btn:nth-child(8)  { transform: translate(-112px, 82px); }   /* Telegram */
+.radial-btn:nth-child(9)  { transform: translate(-130px, 0px); }    /* Fullscreen */
+
+/* Optional: make it even more beautiful on mobile */
+@media (max-width: 768px) {
+  .radial-menu { width: 260px; height: 260px; bottom: 90px; }
+  .radial-btn { width: 52px; height: 52px; font-size: 1.2rem; }
+}
+
+/* Color picker */
+.color-picker {
+  position: absolute;
+  bottom: 180px;
+  right: 90px;
+  background: rgba(0,0,0,0.9);
+  border: 2px solid #ff00ff;
+  border-radius: 16px;
+  padding: 14px;
+  display: none;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 0 25px #ff00ff;
+  z-index: 999999;
+}
+.color-dot {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid rgba(255,255,255,0.4);
+  transition: 0.3s;
+}
+.color-dot:hover { transform: scale(1.3); }
+
+/* Mobile fixes */
+@media (max-width: 768px) {
+  .graffiti-top-controls { flex-direction: column; top: 8px; left: 8px; right: 8px; }
+  .bg-selector { width: 100%; justify-content: center; }
+  .spray-trigger { width: 64px; height: 64px; bottom: 16px; right: 16px; }
+  .radial-menu { width: 180px; height: 180px; bottom: 90px; }
+  .radial-btn { width: 50px; height: 50px; }
+}
+
+/* === NEW PRO BACKGROUND SELECTOR – matches your MT Graffiti Wall perfectly === */
+.bg-selector-pro {
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(16px);
+  border: 2px solid #00ff99;
+  border-radius: 24px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 0 30px rgba(0,255,153,0.5);
+  z-index: 99999;
+  flex: 1;
+  max-width: 80%;
+}
+
+.bg-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  gap: 10px;
+  padding: 4px 0;
+  flex: 1;
+  scrollbar-width: none;
+}
+.bg-carousel::-webkit-scrollbar { display: none; }
+
+.bg-thumb-pro {
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  box-shadow: 0 0 15px rgba(0,0,0,0.8);
+}
+.bg-thumb-pro.active {
+  border-color: #ffcc00;
+  transform: scale(1.18);
+  box-shadow: 0 0 25px #ffcc00 !important;
+}
+.bg-thumb-pro:hover {
+  transform: scale(1.25);
+  z-index: 10;
+}
+
+.arrow {
+  background: rgba(0,255,153,0.25);
+  border: 2px solid #00ff99;
+  color: #00ff99;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+  flex-shrink: 0;
+}
+.arrow:hover {
+  background: #00ff99;
+  color: #000;
+  transform: scale(1.2);
+}
+
+.bg-info {
+  font-size: 0.95rem;
+  color: #aaa;
+  font-weight: bold;
+  white-space: nowrap;
+  min-width: 72px;
+  text-align: center;
+}
+
+.random-btn {
+  background: rgba(255,204,0,0.25);
+  border: 2px solid #ffcc00;
+  color: #ffcc00;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.4s;
+}
+.random-btn:hover {
+  background: #ffcc00;
+  color: black;
+  transform: rotate(360deg) scale(1.2);
+  box-shadow: 0 0 20px #ffcc00;
+}
+
+/* Mobile perfection */
+@media (max-width: 768px) {
+  .bg-selector-pro { 
+    padding: 8px 10px; 
+    gap: 8px;
+    max-width: 95%;
+  }
+  .bg-thumb-pro { width: 50px; height: 50px; }
+  .arrow, .random-btn { width: 38px; height: 38px; font-size: 1.3rem; }
+}
+/* Hide / Show Tools Button – always visible in top-left */
+#toggleToolsBtn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.85);
+  border: 2px solid #00ff99;
+  color: #00ff99;
+  font-size: 1.4rem;
+  cursor: pointer;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(0,255,153,0.6);
+  transition: all 0.3s ease;
+}
+#toggleToolsBtn:hover {
+  background: #00ff99;
+  color: #000;
+  transform: scale(1.15);
+}
+#toggleToolsBtn.hidden i::before { content: "\f06e"; } /* eye-slash when hidden */
+
+/* Tools container – slides up when hidden */
+.tools-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 70px; /* space for toggle button */
+  box-sizing: border-box;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 1;
+  transform: translateY(0);
+}
+.tools-container.hidden {
+  opacity: 0;
+  transform: translateY(-100px);
+  pointer-events: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  #toggleToolsBtn { width: 44px; height: 44px; top: 12px; left: 12px; }
+  .tools-container { padding: 0 60px; }
+}
+.mt-sticker-panel {
+  position: absolute;
+  bottom: 105px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  border: 2px solid #00ff99;
+  border-radius: 20px;
+  padding: 12px;
+  display: none;
+  flex-wrap: wrap;
+  gap: 10px;
+  z-index: 9999999;
+  box-shadow: 0 0 20px #00ff99;
+}
+
+.sticker-choice {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.sticker-choice:hover {
+  transform: scale(1.2);
+}
+
+.live-sticker {
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  transform-origin: center center;
+
+  /* NEW FIX: makes it size-only — does NOT create a full-screen block */
+  display: block;
+
+  /* stays ABOVE spray canvas but BELOW radial menu */
+  z-index: 5000;
+}
+
+		</style>
+	  </head>
+	  <body>
+	<div class="banner">
+	  <div class="banner-content">
+		$MT IS LIVE • P2E • NFTs • MINING • REAL UTILITY • $MT IS LIVE • NOT JUST A PUMPFUN • MOON SOON •
+	  </div>
+	</div>
+
+		<div class="status-bar" id="statusBar">
+		  <span id="auth-buttons">
+			<a id="loginBtn" class="auth-icon" onclick="openAuthModal('login')" title="Login">
+			  <i class="fas fa-wallet"></i>
+			</a>
+			<a id="registerBtn" class="auth-icon" onclick="openAuthModal('register')" title="Register">
+			  <i class="fas fa-user-plus"></i>
+			</a>
+		  </span>
+	<span id="user-info" style="display: none;">
+	  <a id="portalLink" class="auth-icon portal-icon" href="/games/portal.html" title="Back to Portal">
+		<i class="fas fa-home"></i>
+	  </a>
+	  <span class="status-item"><i class="fas fa-user-circle"></i> User: <span id="status-username">-</span></span>
+	  <span class="status-item"><i class="fas fa-clock"></i> Last Login: <span id="status-lastlogin">-</span></span>
+	  <span class="status-item"><i class="fas fa-coins"></i> $MT: <span id="status-balance">-</span></span>
+	  <a id="logoutButton" class="auth-icon" title="Logout">
+		<i class="fas fa-sign-out-alt"></i>
+	  </a>
+	</span>
+		</div>
+
+	<header class="masthead">
+	  <a href="index.html" class="brand">
+		<img src="images/memecoin.gif" alt="MemeTorrent" />
+	  </a>
+	  <div class="social-row">
+		<a href="https://discord.gg/FxT7q7fpkT" target="_blank"><i class="fab fa-discord"></i></a>
+		<a href="https://twitter.com/MemeTorrent" target="_blank"><i class="fab fa-twitter"></i></a>
+		<a href="https://t.me/MemeTorrentPortal" target="_blank"><i class="fab fa-telegram"></i></a>
+	  </div>
+	</header>
+
+	<nav class="nav-container">
+	  <div class="nav-links">
+		<a href="index.html">About</a>
+		<a href="token.html">Tokenomics</a>
+			<a href="safety.html" class="nav-shield">
+	  <img src="images/shield.png" alt="MT Shield" class="nav-shield-icon">
+	</a>
+		<a href="utility.html">Utility</a>
+	<a href="create.html" class="nav-shield">
+	  <img src="images/spray.png" alt="MT Spray" class="nav-shield-icon nav-spray-live" id="liveSprayIcon">
+	</a>
+		<a href="contact.html">Contact</a>
+	  </div></nav>
+		  <div class="modal" id="auth-modal">
+			<div class="modal-content crypto-card green-theme">
+			  <button class="close-btn" onclick="closeModal()">×</button>
+			  <h3 class="animate-charcter">🚀 Enter the MT Eco System</h3>
+			  <div class="auth-tabs">
+				<div class="auth-tab active" data-tab="login" onclick="switchAuthTab('login')" title="Login">
+				  <i class="fas fa-wallet"></i>
+				</div>
+				<div class="auth-tab" data-tab="register" onclick="switchAuthTab('register')" title="Register">
+				  <i class="fas fa-user-plus"></i>
+				</div>
+			  </div>
+			  <div class="auth-content active" id="login-content">
+				<form class="auth-form">
+				  <label>Email:</label>
+				  <input type="email" placeholder="you@memetorrent.io" required>
+				  <label>Password:</label>
+				  <input type="password" placeholder="••••••••" required>
+				  <button type="submit" class="btn-glow" title="Login"><i class="fas fa-wallet"></i></button>
+				</form>
+			  </div>
+			  <div class="auth-content" id="register-content">
+				<form class="auth-form">
+				  <label>Username:</label>
+				  <input type="text" placeholder="GreenMiner007" required>
+				  <label>Email:</label>
+				  <input type="email" placeholder="wallet@email.com" required>
+				  <label>Password:</label>
+				  <input type="password" placeholder="Choose wisely..." required>
+				  <button type="submit" class="btn-glow" title="Register"><i class="fas fa-user-plus"></i></button>
+				</form>
+			  </div>
+			</div>
+		  </div>
+		  
+		  
+	<!--<canvas id="tokenPulseCanvas"></canvas>-->
+    <center>
+	<br>
+      <h2>	<a href="https://memetorrent.futuret3ch.com.au/whitepaper.pdf" target="_blank" 
+       style="background: #00ff99; color: #000 !important; padding: 0.7rem 1.8rem; border-radius: 50px; 
+              font-weight: 900; box-shadow: 0 0 20px #00ff99; animation: pulseGreen 1.8s infinite;">
+      WHITE PAPER
+    </a></h2>
+    </center>
+	<canvas id="tokenPulseCanvas"></canvas>
+<main class="container">
+<section id="graffitiSection" class="graffiti-section">
+  <h2 class="graffiti-title">MT Graffiti Wall</h2>
+  <p class="graffiti-subtitle">Spray • Play • Create • Share • Fullscreen</p>
+
+  <div class="graffiti-master" id="graffitiMaster">
+    <canvas id="graffitiBgCanvas"></canvas>
+    <canvas id="graffitiCanvas"></canvas>
+
+    <!-- TOP CONTROLS – ONLY BACKGROUND SELECTOR + EYE BUTTON -->
+    <div class="graffiti-top-controls" id="topControls">
+      <button id="toggleToolsBtn" class="tools-toggle-btn" title="Hide / Show Tools">
+        <i class="fas fa-eye"></i>
+      </button>
+
+      <div class="tools-container" id="toolsContainer">
+        <div class="bg-selector-pro" id="bgSelectorPro">
+          <button class="arrow left" id="prevBgBtn"><b><</b></button>
+          <div class="bg-carousel" id="bgCarousel"></div>
+          <button class="arrow right" id="nextBgBtn"><b>></b></button>
+          <div class="bg-info"><span id="currentBgNum">3</span>/<span id="totalBgs">8</span></div>
+          <button class="random-btn" id="randomBgBtn"><i class="fas fa-dice"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRAY CAN BUTTON -->
+    <button id="graffitiMenuBtn" class="spray-trigger">
+      <i class="fas fa-spray-can"></i>
+    </button>
+
+    <!-- FIXED RADIAL MENU – ALL 9 ICONS NOW SHOW PERFECTLY -->
+    <div id="radialMenu" class="radial-menu">
+      <button class="radial-btn" data-tool="spray"><i class="fas fa-spray-can"></i></button>
+      <button class="radial-btn" data-tool="color"><i class="fas fa-palette"></i></button>
+	  <button class="radial-btn" data-tool="stickers"><i class="fas fa-sticky-note"></i></button>
+      <button class="radial-btn" data-tool="size"><i class="fas fa-sliders-h"></i></button>
+      <button class="radial-btn" data-tool="undo"><i class="fas fa-undo"></i></button>
+      <button class="radial-btn" data-tool="clear"><i class="fas fa-trash"></i></button>
+      <button class="radial-btn" data-tool="save"><i class="fas fa-download"></i></button>
+      <button class="radial-btn" data-tool="tweet"><i class="fab fa-twitter"></i></button>
+      <button class="radial-btn" data-tool="telegram"><i class="fab fa-telegram-plane"></i></button>
+      <button class="radial-btn" data-tool="fullscreen"><i class="fas fa-expand"></i></button>
+    </div>
+
+    <!-- COLOR PICKER -->
+    <div id="colorPicker" class="color-picker">
+      <div class="color-dot" data-color="#00ff99" style="background:#00ff99"></div>
+      <div class="color-dot" data-color="#ff00ff" style="background:#ff00ff"></div>
+      <div class="color-dot" data-color="#00ccff" style="background:#00ccff"></div>
+      <div class="color-dot" data-color="#ffcc00" style="background:#ffcc00"></div>
+      <div class="color-dot" data-color="#ffffff" style="background:#ffffff"></div>
+      <div class="color-dot" data-color="#ff3333" style="background:#ff3333"></div>
+      <div class="color-dot" data-color="#33ff33" style="background:#33ff33"></div>
+      <div class="color-dot" data-color="#ff6600" style="background:#ff6600"></div>
+      <div class="color-dot" data-color="#9933ff" style="background:#9933ff"></div>
+      <div class="color-dot" data-color="#00ffff" style="background:#00ffff"></div>
+      <div class="color-dot" data-color="#ffff33" style="background:#ffff33"></div>
+      <div class="color-dot" data-color="#ff3366" style="background:#ff3366"></div>
+      <div class="color-dot" data-color="#66ff33" style="background:#66ff33"></div>
+      <div class="color-dot" data-color="#3366ff" style="background:#3366ff"></div>
+      <div class="color-dot" data-color="#ff33cc" style="background:#ff33cc"></div>
+      <div class="color-dot" data-color="#000000" style="background:#000000"></div>
+    </div>
+	
+<div id="mtStickerPanel" class="mt-sticker-panel">
+  <img src="/images/1s.png" class="sticker-choice">
+  <img src="/images/2s.png" class="sticker-choice">
+    <img src="/images/3s.png" class="sticker-choice">
+  <img src="/images/4s.png" class="sticker-choice">
+    <img src="/images/5s.png" class="sticker-choice">
+  <img src="/images/6s.png" class="sticker-choice">
+    <img src="/images/7s.png" class="sticker-choice">
+  <img src="/images/8s.png" class="sticker-choice">
+    <img src="/images/9s.png" class="sticker-choice">
+  <img src="/images/10s.png" class="sticker-choice">
+    <img src="/images/11s.png" class="sticker-choice">
+  <img src="/images/12s.png" class="sticker-choice">
+    <img src="/images/13s.png" class="sticker-choice">
+  <img src="/images/14s.png" class="sticker-choice">
+    <img src="/images/15s.png" class="sticker-choice">
+  <img src="/images/16s.png" class="sticker-choice">
+    <img src="/images/17s.png" class="sticker-choice">
+  <img src="/images/18s.png" class="sticker-choice">
+    <img src="/images/19s.png" class="sticker-choice">
+  <img src="/images/20s.png" class="sticker-choice">
+</div>
+  </div>
+</section>
+</main>
+
+		<script>
+		  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+			anchor.addEventListener("click", function (e) {
+			  e.preventDefault();
+			  document.querySelector(this.getAttribute("href")).scrollIntoView({
+				behavior: "smooth",
+			  });
+			});
+		  });
+		</script>
+
+		<script>
+		  const canvas = document.getElementById("tokenPulseCanvas");
+		  const ctx = canvas.getContext("2d");
+		  canvas.width = canvas.offsetWidth;
+		  canvas.height = canvas.offsetHeight;
+
+		  let particles = [];
+
+		  function createParticle() {
+			const x = canvas.width / 2;
+			const y = canvas.height / 2;
+			const size = Math.random() * 3 + 2;
+			const speed = Math.random() * 2 + 1;
+			const angle = Math.random() * 2 * Math.PI;
+			particles.push({ x, y, size, speed, angle });
+		  }
+
+		  function drawParticles() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			particles.forEach((p, i) => {
+			  p.x += Math.cos(p.angle) * p.speed;
+			  p.y += Math.sin(p.angle) * p.speed;
+			  p.size *= 0.96;
+			  if (p.size < 0.5) particles.splice(i, 1);
+			  ctx.beginPath();
+			  ctx.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
+			  ctx.fillStyle = "lime";
+			  ctx.fill();
+			});
+		  }
+
+		  function animate() {
+			drawParticles();
+			requestAnimationFrame(animate);
+		  }
+
+		  setInterval(createParticle, 100);
+		  animate();
+
+		  function showGrowthFundDetails() {
+			alert("Ecosystem is Growing");
+		  }
+		</script>
+
+		<script>
+		  function openAuthModal(tab = 'login') {
+			document.getElementById("auth-modal").style.display = "flex";
+			switchAuthTab(tab);
+		  }
+		  function closeModal() {
+			document.getElementById("auth-modal").style.display = "none";
+		  }
+		  function switchAuthTab(tab) {
+			document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
+			document.querySelectorAll('.auth-content').forEach(el => el.classList.remove('active'));
+			document.querySelector(`.auth-tab[data-tab="${tab}"]`).classList.add('active');
+			document.getElementById(`${tab}-content`).classList.add('active');
+		  }
+
+		  document.addEventListener("DOMContentLoaded", () => {
+			const loginForm = document.querySelector('#login-content form');
+			const registerForm = document.querySelector('#register-content form');
+			const loginBtn = document.getElementById("loginBtn");
+			const registerBtn = document.getElementById("registerBtn");
+			const logoutButton = document.getElementById("logoutButton");
+			const statusBar = document.getElementById("statusBar");
+			const authButtons = document.getElementById("auth-buttons");
+			const userInfo = document.getElementById("user-info");
+			const usernameEl = document.getElementById("status-username");
+			const lastLoginEl = document.getElementById("status-lastlogin");
+			const balanceEl = document.getElementById("status-balance");
+
+			// Check session on load
+			if (sessionStorage.getItem("isLoggedIn") === "true") {
+			  authButtons.style.display = "none";
+			  userInfo.style.display = "flex";
+			  statusBar.style.display = "flex";
+			  usernameEl.textContent = sessionStorage.getItem("userEmail") || "Guest";
+			  lastLoginEl.textContent = localStorage.getItem("lastLogin") || new Date().toLocaleString();
+			  balanceEl.textContent = sessionStorage.getItem("mtBalance") || "0.00";
+			} else {
+			  authButtons.style.display = "flex";
+			  userInfo.style.display = "none";
+			  statusBar.style.display = "flex";
+			}
+
+			// Handle login
+			if (loginForm) {
+			  loginForm.addEventListener('submit', async e => {
+				e.preventDefault();
+				const email = e.target.querySelector('input[type="email"]').value;
+				const password = e.target.querySelector('input[type="password"]').value;
+				try {
+				  const res = await fetch('/games/api/login.php', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ email, password }),
+					credentials: 'include'
+				  });
+				  const data = await res.json();
+				  if (data.success) {
+					alert('✅ Login successful!');
+					sessionStorage.setItem('isLoggedIn', 'true');
+					sessionStorage.setItem('userEmail', email);
+					localStorage.setItem("lastLogin", new Date().toLocaleString());
+					sessionStorage.setItem("mtBalance", data.balance || "0.00");
+
+					authButtons.style.display = "none";
+					userInfo.style.display = "flex";
+					statusBar.style.display = "flex";
+					usernameEl.textContent = email;
+					lastLoginEl.textContent = new Date().toLocaleString();
+					balanceEl.textContent = data.balance || "0.00";
+
+					closeModal();
+					window.location.href = '/games/portal.html';
+				  } else {
+					alert('❌ ' + (data.message || 'Login failed'));
+				  }
+				} catch (err) {
+				  alert('❌ Error: ' + err.message);
+				}
+			  });
+			}
+
+			// Handle register
+			if (registerForm) {
+			  registerForm.addEventListener('submit', async e => {
+				e.preventDefault();
+				const username = e.target.querySelector('input[type="text"]').value;
+				const email = e.target.querySelector('input[type="email"]').value;
+				const password = e.target.querySelector('input[type="password"]').value;
+				try {
+				  const res = await fetch('/games/api/register.php', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ username, email, password }),
+					credentials: 'include'
+				  });
+				  const data = await res.json();
+				  if (data.success) {
+					alert('✅ Registration successful! Please login.');
+					switchAuthTab('login');
+				  } else {
+					alert('❌ ' + (data.message || 'Registration failed'));
+				  }
+				} catch (err) {
+				  alert('❌ Error: ' + err.message);
+				}
+			  });
+			}
+
+			// Handle logout
+			if (logoutButton) {
+			  logoutButton.addEventListener("click", async () => {
+				try {
+				  const res = await fetch("/games/api/logout.php", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					credentials: "include"
+				  });
+				  const data = await res.json();
+				  if (data.success) {
+					localStorage.clear();
+					sessionStorage.clear();
+					authButtons.style.display = "flex";
+					userInfo.style.display = "none";
+					statusBar.style.display = "flex";
+					console.log("✅ Logout successful → back to home");
+					window.location.href = "/";
+				  } else {
+					alert("❌ Logout failed: " + data.error);
+				  }
+				} catch (err) {
+				  alert("❌ Logout failed: " + err.message);
+				}
+			  });
+			}
+		  });
+		</script>
+<script>
+// ==========================================
+// MT GRAFFITI WALL – FINAL WORKING SCRIPT (2025)
+// Everything works: drawing, tools, fullscreen, mobile, export
+// ==========================================
+
+// Canvas setup
+const bgCanvas    = document.getElementById("graffitiBgCanvas");
+const sprayCanvas = document.getElementById("graffitiCanvas");
+const bgCtx       = bgCanvas.getContext("2d");
+const sprayCtx    = sprayCanvas.getContext("2d", { willReadFrequently: true });
+
+// Prevent scrolling while drawing on mobile
+sprayCanvas.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
+sprayCanvas.addEventListener("touchmove",  e => e.preventDefault(), { passive: false });
+
+// ——————————————————————————————————————
+// FIXED RESIZE – works with .graffiti-master + fullscreen + high-DPI
+// ——————————————————————————————————————
+function resizeCanvases() {
+  const container = document.getElementById("graffitiMaster");
+  const rect = container.getBoundingClientRect();
+
+  [bgCanvas, sprayCanvas].forEach(c => {
+    c.width  = rect.width  * window.devicePixelRatio;
+    c.height = rect.height * window.devicePixelRatio;
+    c.style.width  = rect.width  + "px";
+    c.style.height = rect.height + "px";
+    c.getContext("2d").scale(window.devicePixelRatio, window.devicePixelRatio);
+  });
+
+  // Redraw current background
+  const active = document.querySelector(".bg-thumb.active");
+  if (active) {
+    const bg = active.dataset.bg;
+    bg === "random" ? randomBackground() : setBackground(bg);
+  }
+}
+
+resizeCanvases();
+window.addEventListener("resize", resizeCanvases);
+document.addEventListener("fullscreenchange", resizeCanvases);
+
+// ————————————————————————————————
+// INFINITE BACKGROUND SELECTOR 2025 – NOW WITH LIVE PREVIEW
+// ————————————————————————————————
+const backgroundList = [
+  "images/bg1.jpg","images/bg2.jpg","images/bg3.jpg","images/bg4.jpg",
+  "images/bg5.jpg","images/bg6.jpg","images/bg7.jpg","images/bg8.jpg"
+];
+let currentBgIndex = 2; // default = bg3.jpg
+
+function loadBackgrounds() {
+  const carousel = document.getElementById("bgCarousel");
+  carousel.innerHTML = "";
+
+  backgroundList.forEach((src, i) => {
+    const img = document.createElement("img");
+    img.src = src + "?v=" + Date.now(); // cache buster
+    img.className = "bg-thumb-pro";
+    img.loading = "lazy";
+    img.draggable = false;
+
+    // LIVE PREVIEW on hover (desktop) or long-press/tap (mobile)
+    const showPreview = () => previewBackground(src);
+    const applyBackground = () => {
+      currentBgIndex = i;
+      setBackground(src);
+      updateActive();
+      updateCounter();
+      scrollToActive();
+    };
+
+    // Desktop hover
+    img.addEventListener("mouseenter", showPreview);
+    img.addEventListener("mouseleave", restoreCurrentBackground);
+
+    // Mobile tap = preview, double-tap or tap-hold = apply
+    let tapCount = 0;
+    img.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      tapCount++;
+      showPreview();
+      setTimeout(() => {
+        if (tapCount === 1) {
+          // Single tap → just preview
+        } else if (tapCount >= 2) {
+          // Double tap → apply
+          applyBackground();
+        }
+        tapCount = 0;
+      }, 300);
+    });
+
+    // Click = always apply (desktop + mobile fallback)
+    img.addEventListener("click", (e) => {
+      e.preventDefault();
+      applyBackground();
+    });
+
+    if (i === currentBgIndex) img.classList.add("active");
+    carousel.appendChild(img);
+  });
+
+  document.getElementById("totalBgs").textContent = backgroundList.length;
+  updateCounter();
+}
+
+// LIVE PREVIEW (shows background instantly when hovering/tapping)
+function previewBackground(url) {
+  const img = new Image();
+  img.onload = () => {
+    bgCtx.globalAlpha = 0.65; // subtle preview overlay
+    bgCtx.drawImage(img, 0, 0, bgCanvas.width, bgCanvas.height);
+    bgCtx.globalAlpha = 1.0;
+  };
+  img.src = url + "?v=" + Date.now();
+}
+
+// Restore the real current background when mouse leaves
+function restoreCurrentBackground() {
+  setBackground(backgroundList[currentBgIndex]);
+}
+
+function setBackground(url) {
+  const img = new Image();
+  img.onload = () => {
+    bgCtx.drawImage(img, 0, 0, bgCanvas.width, bgCanvas.height);
+  };
+  img.src = url + "?v=" + Date.now();
+}
+
+function updateActive() {
+  document.querySelectorAll(".bg-thumb-pro").forEach((t, i) => {
+    t.classList.toggle("active", i === currentBgIndex);
+  });
+}
+
+function updateCounter() {
+  document.getElementById("currentBgNum").textContent = currentBgIndex + 1;
+}
+
+function scrollToActive() {
+  const active = document.querySelector(".bg-thumb-pro.active");
+  if (active) {
+    document.getElementById("bgCarousel").scrollTo({
+      left: active.offsetLeft - (document.getElementById("bgCarousel").clientWidth / 2) + (active.clientWidth / 2),
+      behavior: "smooth"
+    });
+  }
+}
+
+// ARROW BUTTONS
+document.getElementById("prevBgBtn").onclick = () => {
+  currentBgIndex = (currentBgIndex - 1 + backgroundList.length) % backgroundList.length;
+  setBackground(backgroundList[currentBgIndex]);
+  updateActive(); updateCounter(); scrollToActive();
+};
+
+document.getElementById("nextBgBtn").onclick = () => {
+  currentBgIndex = (currentBgIndex + 1) % backgroundList.length;
+  setBackground(backgroundList[currentBgIndex]);
+  updateActive(); updateCounter(); scrollToActive();
+};
+
+document.getElementById("randomBgBtn").onclick = () => {
+  const rand = Math.floor(Math.random() * backgroundList.length);
+  currentBgIndex = rand;
+  setBackground(backgroundList[rand]);
+  updateActive(); updateCounter(); scrollToActive();
+};
+
+// INIT
+loadBackgrounds();
+setBackground(backgroundList[currentBgIndex]);
+// HIDE / SHOW ALL TOOLS
+const toggleToolsBtn = document.getElementById("toggleToolsBtn");
+const toolsContainer = document.getElementById("toolsContainer");
+let toolsVisible = true;
+
+toggleToolsBtn.addEventListener("click", () => {
+  toolsVisible = !toolsVisible;
+  toolsContainer.classList.toggle("hidden", !toolsVisible);
+  toggleToolsBtn.classList.toggle("hidden", !toolsVisible);
+  toggleToolsBtn.innerHTML = toolsVisible 
+    ? '<i class="fas fa-eye"></i>' 
+    : '<i class="fas fa-eye-slash"></i>';
+});
+
+// Bonus: Double-tap spray can to toggle tools
+document.getElementById("graffitiMenuBtn").addEventListener("dblclick", () => {
+  toggleToolsBtn.click();
+});
+// ——————————————————————————————————————
+// SPRAY ENGINE
+// ——————————————————————————————————————
+let sprayColor = "#00ff99";
+let spraySize  = 18;
+let spraying   = false;
+let undoStack  = [];
+
+function saveState() {
+  undoStack.push(sprayCtx.getImageData(0, 0, sprayCanvas.width, sprayCanvas.height));
+  if (undoStack.length > 20) undoStack.shift();
+}
+function undoLast() {
+  if (!undoStack.length) return;
+  const state = undoStack.pop();
+  sprayCtx.putImageData(state, 0, 0);
+}
+
+function spray(x, y) {
+  for (let i = 0; i < 18; i++) {
+    const angle  = Math.random() * Math.PI * 2;
+    const radius = Math.random() * spraySize;
+    sprayCtx.globalAlpha = Math.random() * 0.5 + 0.3;
+    sprayCtx.fillStyle = sprayColor;
+    sprayCtx.beginPath();
+    sprayCtx.arc(
+      x + Math.cos(angle) * radius,
+      y + Math.sin(angle) * radius,
+      1 + Math.random() * 3,
+      0, Math.PI * 2
+    );
+    sprayCtx.fill();
+  }
+  sprayCtx.globalAlpha = 1;
+}
+
+function getPos(e) {
+  const rect = sprayCanvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function startSpray() { spraying = true; saveState(); }
+function stopSpray()  { spraying = false; }
+function drawMove(e)  { if (spraying) spray(...Object.values(getPos(e))); }
+
+// Mouse + Touch events
+sprayCanvas.addEventListener("mousedown", startSpray);
+sprayCanvas.addEventListener("mouseup",   stopSpray);
+sprayCanvas.addEventListener("mouseleave",stopSpray);
+sprayCanvas.addEventListener("mousemove", drawMove);
+
+sprayCanvas.addEventListener("touchstart", startSpray);
+sprayCanvas.addEventListener("touchend",   stopSpray);
+sprayCanvas.addEventListener("touchmove",  e => { e.preventDefault(); drawMove(e); }, { passive: false });
+
+// ————————————————————————
+// RADIAL MENU + ALL 9 TOOLS (FINAL – 100% WORKING)
+// ————————————————————————
+// ————————————————————————
+// RADIAL MENU + ALL 9 TOOLS – FINAL MOBILE-PERFECT VERSION
+// ————————————————————————
+function renderStickersToCanvas() {
+  const renderables = document.querySelectorAll(".live-sticker");
+  const container = document.getElementById("graffitiMaster").getBoundingClientRect();
+
+  renderables.forEach(stk => {
+    const rect = stk.getBoundingClientRect();
+
+    const x = rect.left - container.left;
+    const y = rect.top - container.top;
+
+    const rotation = parseFloat(stk.dataset.rotation || 0);
+    const scale    = parseFloat(stk.dataset.scale || 1);
+
+    sprayCtx.save();
+    sprayCtx.translate(x + rect.width / 2, y + rect.height / 2);
+    sprayCtx.rotate(rotation);
+    sprayCtx.scale(scale, scale);
+
+    sprayCtx.drawImage(
+      stk,
+      -rect.width / 2,
+      -rect.height / 2,
+      rect.width,
+      rect.height
+    );
+
+    sprayCtx.restore();
+  });
+}
+
+
+
+const radialMenu   = document.getElementById("radialMenu");
+const radialBtn    = document.getElementById("graffitiMenuBtn");
+const colorPicker  = document.getElementById("colorPicker");
+let radialOpen = false;
+
+radialBtn.addEventListener("click", () => {
+  radialOpen = !radialOpen;
+  radialMenu.classList.toggle("active", radialOpen);
+  if (!radialOpen) colorPicker.style.display = "none";
+});
+
+document.querySelectorAll(".radial-btn").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const tool = btn.dataset.tool;
+
+    if (tool === "color") {
+      colorPicker.style.display = colorPicker.style.display === "flex" ? "none" : "flex";
+    }
+    if (tool === "size") {
+      spraySize = spraySize >= 36 ? 10 : spraySize + 8;
+      alert(`Spray size: ${spraySize}px`);
+    }
+    if (tool === "undo") undoLast();
+    if (tool === "clear") {
+      if (confirm("Clear the entire wall?")) {
+        sprayCtx.clearRect(0, 0, sprayCanvas.width, sprayCanvas.height);
+        undoStack = [];
+      }
+    }
+    if (tool === "save") {
+  renderStickersToCanvas();
+  const link = document.createElement("a");
+  link.download = `MT_Graffiti_${Date.now()}.png`;
+  link.href = exportGraffiti().toDataURL("image/png");
+  link.click();
+}
+	
+if (tool === "tweet") {
+  if (!confirm("Are you sure you want to tweet this graffiti image?")) return;
+
+  renderStickersToCanvas(); // <-- CRITICAL FIX
+
+  const dataUrl = exportGraffiti().toDataURL("image/png");
+  fetch("/games/api/tweet.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: dataUrl })
+  })
+  .then(r => r.json())
+  .then(json => {
+    if (json.success) {
+      alert("Tweeted successfully!");
+      window.open(json.url, "_blank");
+    } else {
+      alert("Tweet failed: " + (json.error || "Unknown error"));
+    }
+  })
+  .catch(() => alert("Network error – check console"));
+}
+
+
+if (tool === "telegram") {
+  if (!confirm("Send this graffiti image to Telegram?")) return;
+
+  renderStickersToCanvas(); // <-- CRITICAL FIX
+
+  const dataUrl = exportGraffiti().toDataURL("image/png");
+  fetch("/sendToTelegram.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: dataUrl })
+  })
+  .then(r => r.json())
+  .then(res => {
+    alert(res.success ? "Sent to Telegram!" : "Failed: " + (res.error || "Unknown"));
+  })
+  .catch(() => alert("Telegram error – check console"));
+}
+
+if (tool === "stickers") {
+  const p = document.getElementById("mtStickerPanel");
+  p.style.display = p.style.display === "flex" ? "none" : "flex";
+}
+    // FULLSCREEN – NOW 100% WORKING ON ALL MOBILE BROWSERS
+    if (tool === "fullscreen") {
+      const container = document.getElementById("graffitiMaster");
+
+      if (!document.fullscreenElement) {
+        if (container.requestFullscreen) {
+          container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) { /* Safari */
+          container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) { /* IE11 */
+          container.msRequestFullscreen();
+        } else if (container.mozRequestFullScreen) { /* Old Firefox */
+          container.mozRequestFullScreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        }
+      }
+      setTimeout(resizeCanvases, 300); // Critical for mobile redraw
+    }
+  });
+});
+
+// COLOR PICKER
+document.querySelectorAll(".color-dot").forEach(dot => {
+  dot.addEventListener("click", () => {
+    sprayColor = dot.dataset.color;
+    document.querySelectorAll(".color-dot").forEach(d => d.style.outline = "none");
+    dot.style.outline = "4px solid white";
+  });
+});
+
+// ——————————————————————————————————————
+// PERFECT EXPORT FUNCTION – FIXES BLANK IMAGES
+// ——————————————————————————————————————
+function exportGraffiti() {
+  const exportCanvas = document.createElement("canvas");
+  const ctx = exportCanvas.getContext("2d");
+
+  // Use ACTUAL canvas pixel size (HiDPI correct)
+  exportCanvas.width  = bgCanvas.width;
+  exportCanvas.height = bgCanvas.height;
+
+  // Draw background first
+  ctx.drawImage(bgCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
+  // Then draw your graffiti on top
+  ctx.drawImage(sprayCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
+
+  return exportCanvas;
+}
+
+// ——————————————————————————————————————
+// LIVE SPRAY ICON SHAKE (optional fun)
+// ——————————————————————————————————————
+const sprayIcon = document.getElementById("liveSprayIcon");
+if (sprayIcon) {
+  sprayIcon.addEventListener("click", e => {
+    e.preventDefault();
+    document.getElementById("graffitiSection").scrollIntoView({ behavior: "smooth" });
+    radialBtn.classList.add("shakePulse");
+    setTimeout(() => radialBtn.classList.remove("shakePulse"), 1000);
+  });
+}
+
+// Inject shake animation once
+if (!document.getElementById("shakeStyle")) {
+  const s = document.createElement("style");
+  s.id = "shakeStyle";
+  s.textContent = `
+    @keyframes shakePulse {
+      0%,100% { transform: translate(0,0) rotate(0deg); }
+      20% { transform: translate(-3px, -3px) rotate(-5deg); }
+      40% { transform: translate(3px, -2px) rotate(5deg); }
+      60% { transform: translate(-2px, 3px) rotate(-3deg); }
+      80% { transform: translate(2px, 2px) rotate(3deg); }
+    }
+    .shakePulse { animation: shakePulse 0.8s ease-in-out; }
+  `;
+  document.head.appendChild(s);
+}
+
+// ======================================================
+// MT STICKER ENGINE — DRAG / SCALE / ROTATE / DELETE
+// Each sticker has independent transform state
+// ======================================================
+
+function createMTSticker(src) {
+    const sticker = document.createElement("img");
+    sticker.src = src;
+    sticker.className = "live-sticker";
+
+    // Default size
+    sticker.style.width = "120px";
+    sticker.style.left = "50%";
+    sticker.style.top = "50%";
+    sticker.dataset.scale = 1;
+    sticker.dataset.rotation = 0;
+
+    document.getElementById("graffitiMaster").appendChild(sticker);
+
+    enableStickerGestures(sticker);
+}
+
+document.querySelectorAll(".sticker-choice").forEach(btn => {
+    btn.addEventListener("click", () => {
+        createMTSticker(btn.src);
+        document.getElementById("mtStickerPanel").style.display = "none";
+    });
+});
+
+function enableStickerGestures(sticker) {
+    let startX = 0, startY = 0;
+    let origX = 0, origY = 0;
+
+    let startScale = 1;
+    let startRotation = 0;
+
+    let pinchStartDist = 0;
+    let pinchStartAngle = 0;
+
+    function getTouches(e) {
+        return [...e.touches].map(t => ({ x: t.clientX, y: t.clientY }));
+    }
+
+    sticker.addEventListener("touchstart", e => {
+        e.preventDefault();
+
+        const rect = sticker.getBoundingClientRect();
+        origX = rect.left;
+        origY = rect.top;
+
+        let t = getTouches(e);
+        if (t.length === 1) {
+            startX = t[0].x;
+            startY = t[0].y;
+        }
+        else if (t.length === 2) {
+            const dx = t[1].x - t[0].x;
+            const dy = t[1].y - t[0].y;
+
+            pinchStartDist = Math.hypot(dx, dy);
+            pinchStartAngle = Math.atan2(dy, dx);
+
+            startScale = parseFloat(sticker.dataset.scale);
+            startRotation = parseFloat(sticker.dataset.rotation);
+        }
+    }, { passive: false });
+
+    sticker.addEventListener("touchmove", e => {
+        e.preventDefault();
+        let t = getTouches(e);
+
+        // DRAG MODE
+        if (t.length === 1) {
+            const dx = t[0].x - startX;
+            const dy = t[0].y - startY;
+
+            sticker.style.left = (origX + dx) + "px";
+			sticker.style.top  = (origY + dy) + "px";
+        }
+
+        // PINCH GESTURES (scale + rotate)
+        else if (t.length === 2) {
+            const dx = t[1].x - t[0].x;
+            const dy = t[1].y - t[0].y;
+
+            const newDist = Math.hypot(dx, dy);
+            const newAngle = Math.atan2(dy, dx);
+
+            const scale = startScale * (newDist / pinchStartDist);
+            const rotation = startRotation + (newAngle - pinchStartAngle);
+
+            sticker.dataset.scale = scale;
+            sticker.dataset.rotation = rotation;
+
+            sticker.style.transform = `scale(${scale}) rotate(${rotation}rad)`;
+        }
+    }, { passive: false });
+
+ let grabOffsetX = 0;
+let grabOffsetY = 0;
+
+sticker.addEventListener("mousedown", e => {
+    e.preventDefault();
+
+    const rect = sticker.getBoundingClientRect();
+
+    // True starting point
+    startX = e.clientX;
+    startY = e.clientY;
+
+    origX = rect.left;
+    origY = rect.top;
+
+    // Perfect grab offset
+    grabOffsetX = startX - origX;
+    grabOffsetY = startY - origY;
+
+    function mouseMove(ev) {
+        sticker.style.left = (ev.clientX - grabOffsetX) + "px";
+        sticker.style.top  = (ev.clientY - grabOffsetY) + "px";
+    }
+
+    function mouseUp() {
+        window.removeEventListener("mousemove", mouseMove);
+        window.removeEventListener("mouseup", mouseUp);
+    }
+
+    window.addEventListener("mousemove", mouseMove);
+    window.addEventListener("mouseup", mouseUp);
+});
+
+
+}
+
+// ======================================================
+// DELETE STICKERS WHEN CLEARING WALL
+// ======================================================
+function clearAllStickers() {
+    document.querySelectorAll(".live-sticker").forEach(s => s.remove());
+}
+
+// Hook into your existing clear function
+const _oldClear = sprayCtx.clearRect;
+sprayCtx.clearRect = function(x, y, w, h) {
+    _oldClear.call(sprayCtx, x, y, w, h);
+    clearAllStickers(); // Remove stickers too
+};
+
+
+
+</script>
+
+	  </body>
+	  <footer>
+		<center><a href="#" onclick="window.open('https://www.sitelock.com/verify.php?site=memetorrent.futuret3ch.com.au','SiteLock','width=600,height=600,left=160,top=170');" ><img class="img-fluid" alt="SiteLock" title="SiteLock" src="https://shield.sitelock.com/shield/memetorrent.futuret3ch.com.au" /></a><br><b><a href="https://futuret3ch.com.au" target="_blank" style="color: white"> FUTURET3CH 2024 - 2026 </a></b></center>
+	  </footer>
+	</html>

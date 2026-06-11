@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MemeTorrent | Futuret3ch - Updates</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --primary-color: #ffcc00;
+        --text-color: #ffffff;
+        --background-overlay: rgba(255, 255, 255, 0.1);
+      }
+
+      body {
+        font-family: 'Orbitron', Arial, sans-serif;
+        background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url("./images/bg3.png") center/cover fixed;
+        color: var(--text-color);
+        margin: 0;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      .banner {
+        background: linear-gradient(90deg, #ffcc00, #ff3300);
+        padding: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+        animation: pulseBanner 2s infinite;
+      }
+
+      .banner-content {
+        display: inline-block;
+        white-space: nowrap;
+        animation: marquee 20s linear infinite;
+        color: #000;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .banner-content:hover {
+        animation-play-state: paused;
+      }
+
+      @keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-100%); }
+      }
+
+      @keyframes pulseBanner {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.9; }
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #222, #111);
+        position: fixed;
+        width: 100%;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 15px rgba(255, 204, 0, 0.6);
+        animation: slideInNav 1s ease-out;
+      }
+
+      @keyframes slideInNav {
+        0% { transform: translateY(-100%); }
+        80% { transform: translateY(10%); }
+        100% { transform: translateY(0); }
+      }
+
+      .nav-links a {
+        color: #ffcc00;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a:hover {
+        background: #ff3300;
+        box-shadow: 0 0 12px rgba(255, 51, 0, 0.9);
+        transform: scale(1.1);
+      }
+
+      .card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.6));
+        border: 1px solid rgba(255, 204, 0, 0.5);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin: 3rem auto;
+        width: 90%;
+        max-width: 1200px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(12px);
+        animation: flipIn 1s ease-out;
+      }
+
+      @keyframes flipIn {
+        0% { transform: perspective(1000px) rotateX(-90deg); opacity: 0; }
+        100% { transform: perspective(1000px) rotateX(0); opacity: 1; }
+      }
+
+      .card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 25px rgba(255, 204, 0, 0.8);
+      }
+
+      .progress {
+        background-color: #333;
+        height: 22px;
+        border: 2px solid #ffcc00;
+        border-radius: 20px;
+        overflow: visible;
+        position: relative;
+        margin-bottom: 35px;
+      }
+
+      .progress .progress-bar {
+        background: linear-gradient(90deg, #ffcc00, #ff3300);
+        border-radius: 20px;
+        position: relative;
+        font-size: 12px;
+        line-height: 22px;
+        text-align: right;
+        padding-right: 10px;
+        color: #000;
+        font-weight: bold;
+        animation: pulseBar 1.5s infinite;
+      }
+
+      .progress.green .progress-bar { background: linear-gradient(90deg, #13D73E, #A8FEBB); }
+      .progress.blue .progress-bar { background: linear-gradient(90deg, #0D47A1, #9CF9FB); }
+      .progress.yellow .progress-bar { background: linear-gradient(90deg, #F0C808, #EFDC7C); }
+      .progress.pink .progress-bar { background: linear-gradient(90deg, #ff69b4, #ffb6c1); }
+
+      @keyframes pulseBar {
+        0%, 100% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.5); }
+        50% { box-shadow: 0 0 15px rgba(255, 204, 0, 1); }
+      }
+
+      .progress-title {
+        font-size: 18px;
+        color: #ffcc00;
+        margin: 0 0 20px;
+        font-weight: 700;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      details {
+        margin-bottom: 1rem;
+      }
+
+      details summary h5 {
+        cursor: pointer;
+        transition: color 0.3s ease;
+        padding: 0.5rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 0.5rem;
+      }
+
+      details summary:hover h5 { color: #ffcc00; }
+      details[open] summary h5 { color: #ff3300; }
+
+      .list-unstyled li {
+        padding: 0.5rem 0;
+        opacity: 0;
+        transform: translateX(-20px);
+        transition: all 0.5s ease;
+      }
+
+      details[open] .list-unstyled li {
+        opacity: 1;
+        transform: translateX(0);
+        animation: slideInLog 0.5s ease forwards;
+      }
+
+      @keyframes slideInLog {
+        0% { opacity: 0; transform: translateX(-20px); }
+        100% { opacity: 1; transform: translateX(0); }
+      }
+
+      .list-unstyled li i { color: #ffcc00; margin-right: 8px; }
+      .list-unstyled li:hover { color: #ffcc00; }
+
+      .social-icons a {
+        color: #f8f9fa;
+        margin-left: 20px;
+        font-size: 42px;
+        transition: transform 0.3s ease, color 0.3s ease;
+      }
+
+      .social-icons a:hover {
+        transform: scale(1.2) rotate(10deg);
+        color: #ffcc00;
+      }
+
+      footer {
+        background: linear-gradient(135deg, #222, #111);
+        padding: 1.5rem;
+        box-shadow: 0 -2px 15px rgba(255, 204, 0, 0.6);
+      }
+
+      footer a:hover { color: #ffcc00; }
+
+      @media (max-width: 768px) {
+        .nav-container { flex-direction: column; gap: 1rem; }
+        .banner-content { animation-duration: 25s; }
+        .card { padding: 1.5rem; margin: 1.5rem auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner" aria-label="Important announcement">
+      <div class="banner-content" aria-hidden="true">
+        ♢ $MT is live NOW! ♢ Launched on Pump.fun NOT JUST a Pump fun ♢ $MT is live NOW! ♢ Launched on Pump.fun NOT JUST a Pump fun ♢
+      </div>
+    </div>
+    <a href="index.html"><img src="images/memecoin.gif" width="50" height="50" alt="MemeTorrent Logo" style="margin: 1rem;"></a>
+    <nav class="nav-container">
+      <div class="nav-links">
+        <a href="index.html">About</a>
+        <a href="token.html">Tokenomics</a>
+        <a href="safety.html">Safety</a>
+        <a href="utility.html">Utility</a>
+        <a href="update.html">Updates</a>
+        <a href="/games">Games</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="social-icons">
+        <a href="https://twitter.com/MemeTorrent" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="https://t.me/MemeTorrentPortal" target="_blank" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
+      </div>
+    </nav>
+    <main class="container">
+      <section class="card" id="about">
+        <div class="container">
+          <div class="row">
+            <center><h1>PROGRESS CHARTS</h1></center>
+            <div class="col-md-offset-3 col-md-6">
+              <center><h3 class="progress-title">Games - 33%</h3></center>
+              <div class="progress red"><div class="progress-bar" style="width: 33%;">33%</div></div>
+              <center><h3 class="progress-title">Hardware - 15%</h3></center>
+              <div class="progress green"><div class="progress-bar" style="width: 15%;">15%</div></div>
+              <center><h3 class="progress-title">Software - 26%</h3></center>
+              <div class="progress blue"><div class="progress-bar" style="width: 26%;">26%</div></div>
+              <center><h3 class="progress-title">Integrations - 31%</h3></center>
+              <div class="progress yellow"><div class="progress-bar" style="width: 31%;">31%</div></div>
+              <center><h3 class="progress-title">A.I - 48%</h3></center>
+              <div class="progress pink"><div class="progress-bar" style="width: 48%;">48%</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-container">
+          <div>
+            <h1>DEVELOPMENT UPDATE LOGS</h1>
+            <div class="containertech">
+              <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10 col-12">
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 3.2.4</span> - 24/03/2025 - 30/03/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>TAP 2.0 Released</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>TAP 2.2 MULTIPLAYER being tested</li>
+                      <li class="text-muted ml-3"><i class="fas fa-paint-brush mr-2"></i>RACER 4.0 Released</li>
+                      <li class="text-muted ml-3"><i class="fas fa-users mr-2"></i>RACER 4.2 MULTIPLAYER being tested</li>
+                      <li class="text-muted ml-3"><i class="fas fa-link mr-2"></i>Server Exchange Update</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Gaming Platform change</li>
+                      <li class="text-muted ml-3"><i class="fas fa-shopping-cart mr-2"></i>Database Changes made</li>
+                      <li class="text-muted ml-3"><i class="fas fa-link mr-2"></i>Software Emulator Underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Telegram Bot A.I released</li>
+                      <li class="text-muted ml-3"><i class="fas fa-shopping-cart mr-2"></i>Telegram Buy Bot Tests Underway</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 3.2.4</span> - 20/03/2025 - 23/03/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Racer Update 2.0</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Racer Update 3.0 underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-paint-brush mr-2"></i>NFT AI Creations on the way</li>
+                      <li class="text-muted ml-3"><i class="fas fa-users mr-2"></i>Community Game on the way</li>
+                      <li class="text-muted ml-3"><i class="fas fa-link mr-2"></i>Exploring building options for MT chain</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Exploring Raid Bot options</li>
+                      <li class="text-muted ml-3"><i class="fas fa-shopping-cart mr-2"></i>Exploring Buy/Sell options via TG / Website</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 2.8.2</span> - 13/03/2025 - 19/03/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Gamers Lounge Underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-link mr-2"></i>Telegram / Twitter Integration Underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>P2E Game DEVELOPMENT</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Telebot updated</li>
+                      <li class="text-muted ml-3"><i class="fas fa-mobile-alt mr-2"></i>TAP DEVELOPMENT BEGAN</li>
+                      <li class="text-muted ml-3"><i class="fas fa-globe mr-2"></i>WEB 2.0 COMMENCEMENT</li>
+                      <li class="text-muted ml-3"><i class="fas fa-microchip mr-2"></i>SOURCING HARDWARE PARTS FOR TESTS</li>
+                      <li class="text-muted ml-3"><i class="fas fa-server mr-2"></i>Discord Server FINISHED and connected to website</li>
+                      <li class="text-muted ml-3"><i class="fas fa-wallet mr-2"></i>Wallet NFT infinite ON the way</li>
+                      <li class="text-muted ml-3"><i class="fas fa-comment mr-2"></i>Message count Testing underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-tools mr-2"></i>Testing new tech</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 2.0.0</span> - 09/03/2025 - 12/03/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-exchange-alt mr-2"></i>MT Dex web Integration Coming</li>
+                      <li class="text-muted ml-3"><i class="fas fa-volume-up mr-2"></i>Game Melon Final sound tests underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>P2E Game coming</li>
+                      <li class="text-muted ml-3"><i class="fas fa-language mr-2"></i>Translate Update Telegram</li>
+                      <li class="text-muted ml-3"><i class="fas fa-tag mr-2"></i>Tagging Update Telegram</li>
+                      <li class="text-muted ml-3"><i class="fas fa-database mr-2"></i>Database growth</li>
+                      <li class="text-muted ml-3"><i class="fas fa-microchip mr-2"></i>Prototypes approved on Hardware</li>
+                      <li class="text-muted ml-3"><i class="fas fa-server mr-2"></i>Discord Server Integration started</li>
+                      <li class="text-muted ml-3"><i class="fas fa-shopping-bag mr-2"></i>Ordering platform buying ingredients</li>
+                      <li class="text-muted ml-3"><i class="fas fa-comment mr-2"></i>Message count Testing underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-user-check mr-2"></i>User verification, and more coming</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.7.3</span> - 03/03/2025 - 08/03/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-exchange-alt mr-2"></i>MT Dex info available</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Game Melon Testing</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>A.I update</li>
+                      <li class="text-muted ml-3"><i class="fas fa-keyboard mr-2"></i>Shortcut command added to Telegram</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Games fullscreens being added</li>
+                      <li class="text-muted ml-3"><i class="fas fa-link mr-2"></i>Website integration started</li>
+                      <li class="text-muted ml-3"><i class="fas fa-rocket mr-2"></i>SILK / NWC / GAMING ENGINE RELEASE</li>
+                      <li class="text-muted ml-3"><i class="fas fa-chart-line mr-2"></i>DEX WEB STATS STARTED</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME INTERACTIONS STARTED</li>
+                      <li class="text-muted ml-3"><i class="fas fa-comment mr-2"></i>Message count started</li>
+                      <li class="text-muted ml-3"><i class="fas fa-language mr-2"></i>Language, tagging, mentioning started</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 2.1.5</span> - 28/02/2025 - 02/03/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-chart-line mr-2"></i>MT stats coming soon</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Telebot added welcome / exit message</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Telebot updated functionality</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Game 1 - updating commands</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Game 1 - Sound and Skin Tests underway for Beta 2.0</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 2 Beta PC - updates being done</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 1 Beta PC - updates being done</li>
+                      <li class="text-muted ml-3"><i class="fas fa-users mr-2"></i>User Interaction being designed</li>
+                      <li class="text-muted ml-3"><i class="fas fa-shopping-bag mr-2"></i>Ordering form updates</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.4.3</span> - 27/02/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-chart-line mr-2"></i>MT stats started tests</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Telebot shortcuts updated</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Game 1 - Mobile Beta Release</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Game 1 - Sound and Skin Tests underway for Beta 2.0</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 2 Beta PC - updates being done</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 1 Beta PC - updates being done</li>
+                      <li class="text-muted ml-3"><i class="fas fa-users mr-2"></i>User Interaction being designed</li>
+                      <li class="text-muted ml-3"><i class="fas fa-tools mr-2"></i>Other various Tests being conducted</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.4.2</span> - 26/02/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-chart-line mr-2"></i>MT stats in development</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Telebot update added racer / tetris shortcuts</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>AI BOT updates redevelopment continued</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>User Game Interactions on the way</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 2 released beta</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 3 in development</li>
+                      <li class="text-muted ml-3"><i class="fas fa-mobile-alt mr-2"></i>GAME Mobile developments on the way</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.3.8</span> - 25/02/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-code mr-2"></i>Latest Update Bootstrap v4.5</li>
+                      <li class="text-muted ml-3"><i class="fas fa-wallet mr-2"></i>Wallet Integration Tests</li>
+                      <li class="text-muted ml-3"><i class="fas fa-globe mr-2"></i>API webrelease on the way</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Bot prep for community release</li>
+                      <li class="text-muted ml-3"><i class="fas fa-tools mr-2"></i>NWC IDE Designs</li>
+                      <li class="text-muted ml-3"><i class="fas fa-microchip mr-2"></i>BRAIN GRAPHICS CARD HARDWARE AI design stage</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>AI BOT updates redevelopment</li>
+                      <li class="text-muted ml-3"><i class="fas fa-code mr-2"></i>Latest Update jQuery v3.5.1</li>
+                      <li class="text-muted ml-3"><i class="fas fa-code mr-2"></i>Latest Update Material Design Icons v5.3.45</li>
+                      <li class="text-muted ml-3"><i class="fas fa-align-right mr-2"></i>New <b>RTL Version</b> (Only CSS Base)</li>
+                      <li class="text-muted ml-3"><i class="fas fa-moon mr-2"></i>New <b>Dark Version</b> (Only CSS Base)</li>
+                      <li class="text-muted ml-3"><i class="fas fa-align-right mr-2"></i>New <b>Dark RTL Version</b> (Only CSS Base)</li>
+                      <li class="text-muted ml-3"><i class="fas fa-palette mr-2"></i>Added 6 Colors scheme</li>
+                      <li class="text-muted ml-3"><i class="fas fa-bug mr-2"></i>Fixed some responsive issues</li>
+                      <li class="text-muted ml-3"><i class="fas fa-tools mr-2"></i>TAP AND DS initial designs underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 2 in development</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 3 in development</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 4 in development</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>GAME 5 in development</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.3.4</span> - 24/02/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-code mr-2"></i>Latest Update Material Design Icons v5.3.45</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Telegram Bot updates (keywords added)</li>
+                      <li class="text-muted ml-3"><i class="fas fa-bug mr-2"></i>Fixed some responsive issues</li>
+                      <li class="text-muted ml-3"><i class="fas fa-mobile-alt mr-2"></i>Website Mobile Developments underway</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Corgi Developments Game</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.3.2</span> - 23/02/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-globe mr-2"></i>Website Testing / Deployments / Changes</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.3.0</span> - 22/02/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Racer Game PC Beta Version Released</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>A.I brain update</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Racer Developments</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.0 - 1.2.9</span> - 08/02/2025 - 21/02/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Racer Developments</li>
+                      <li class="text-muted ml-3"><i class="fas fa-code mr-2"></i>API Creation</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Telegram Bot updates started</li>
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>AI brain development</li>
+                      <li class="text-muted ml-3"><i class="fas fa-gamepad mr-2"></i>Game Development</li>
+                      <li class="text-muted ml-3"><i class="fas fa-microchip mr-2"></i>Hardware Development</li>
+                      <li class="text-muted ml-3"><i class="fas fa-comment mr-2"></i>Tell Talks</li>
+                      <li class="text-muted ml-3"><i class="fas fa-plane mr-2"></i>Travelx Talks</li>
+                      <li class="text-muted ml-3"><i class="fas fa-exchange-alt mr-2"></i>SocialxChange Talks</li>
+                    </ul>
+                  </details>
+                  <details>
+                    <summary><h5 class="mt-4"><span class="p-2 bg-dark shadow rounded text-success">Version 1.0.0</span> - 07/02/2025</h5></summary>
+                    <ul class="list-unstyled mt-3">
+                      <li class="text-muted ml-3"><i class="fas fa-robot mr-2"></i>Futuret3ch Bot Released</li>
+                    </ul>
+                  </details>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  <footer>
+    <center><a href="#" onclick="window.open('https://www.sitelock.com/verify.php?site=memetorrent.futuret3ch.com.au','SiteLock','width=600,height=600,left=160,top=170');" ><img class="img-fluid" alt="SiteLock" title="SiteLock" src="https://shield.sitelock.com/shield/memetorrent.futuret3ch.com.au" /></a><br><b><a href="https://futuret3ch.com.au" target="_blank" style="color: white"> FUTURET3CH 2024 - 2026 </a></b></center>
+	<script src="https://cdn.jsdelivr.net/npm/@widgetbot/crate@3" async defer>
+  new Crate({
+    server: '1348258896812310690',
+    channel: '1348281570946977822',
+  })
+  
+  
+</script>
+    </footer>
+    <script>
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function(e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute("href")).scrollIntoView({ behavior: "smooth" });
+        });
+      });
+      document.querySelector("details").setAttribute("open", "true"); // Open latest update by default
+    </script>
+  </body>
+</html>
