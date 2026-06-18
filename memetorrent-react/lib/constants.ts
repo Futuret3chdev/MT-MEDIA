@@ -6,7 +6,6 @@ export const LINKS = {
   jupiter: `https://jup.ag/swap/SOL-${MT_CONTRACT}`,
   pumpfun: `https://pump.fun/coin/${MT_CONTRACT}`,
   wallet: 'https://mt.futuret3ch.com.au/', // custom domain for the infinite-wallet vercel project; falls back to vercel.app if needed
-  whitepaper: '/whitepaper.pdf',
   // Future self-hosted
   docs: '#',
   api: '#',

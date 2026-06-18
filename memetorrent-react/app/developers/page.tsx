@@ -532,7 +532,6 @@ export default function DevelopersPage() {
             <div className="border border-white/10 rounded-2xl p-5">
               <div className="font-semibold">On-chain: Bridge / Swap / Harvest</div>
               <div className="text-xs opacity-60 mb-2">Direct program calls via INFINITE WALLET or SDK. No third-party relayers.</div>
-              <div className="mt-1 text-xs opacity-70">See whitepaper for program IDs and instruction layouts.</div>
             </div>
 
             <div className="border border-white/10 rounded-2xl p-5">
@@ -654,7 +653,7 @@ const report = await client.generateAuditReport({
           {lastApiResponse && (
             <pre className="bg-black p-3 rounded-xl text-[10px] opacity-80 overflow-auto">{lastApiResponse}</pre>
           )}
-          <p className="text-[10px] opacity-50 mt-2">Real Devnet + production MT-Connect endpoints coming soon. Use the whitepaper for program specs.</p>
+          <p className="text-[10px] opacity-50 mt-2">Real Devnet + production MT-Connect endpoints coming soon. Contact for current program specs.</p>
         </div>
 
         {/* Full Get Started / Docs / Swap / Advanced / Guides (Jupiter + Raydium style as requested) */}
@@ -703,7 +702,7 @@ const report = await client.generateAuditReport({
 
             <div>
               <h3 className="font-semibold mb-2">Resources</h3>
-              <p>Whitepaper, token info, and integration guides. See links above and the main site sections for LIVE $MT, flows, and TAP.</p>
+              <p>Token info and integration guides. See links above and the main site sections for LIVE $MT, flows, and TAP.</p>
             </div>
 
             <div>
@@ -759,9 +758,8 @@ const report = await client.generateAuditReport({
           </div>
         </div>
 
-        <div className="mt-10 pt-8 border-t border-white/10 text-sm">
-          <a href="/whitepaper" className="text-emerald-400 hover:underline">Read the $MT Whitepaper →</a>
-          <div className="mt-2 opacity-60">Core architecture, token mechanics and integration concepts are documented there.</div>
+        <div className="mt-10 pt-8 border-t border-white/10 text-sm opacity-60">
+          Core architecture, token mechanics and integration concepts are available via the main site and contact.
         </div>
       </div>
 

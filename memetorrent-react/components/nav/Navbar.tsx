@@ -168,7 +168,7 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-3 sm:gap-6 text-sm">
-          {/* Desktop nav links - use /# so they work correctly even from /contact or /whitepaper */}
+          {/* Desktop nav links - use /# so they work correctly even from /contact */}
           <div className="hidden md:flex items-center gap-6">
             <a href="/#stats" className="opacity-70 hover:opacity-100">LIVE $MT</a>
             <a href="/#tokenomics" className="opacity-70 hover:opacity-100">TOKENOMICS</a>
@@ -177,7 +177,6 @@ export default function Navbar() {
             <a href="/#tap" className="opacity-70 hover:opacity-100">P2E</a>
             <a href="/#safety" className="opacity-70 hover:opacity-100">SAFETY</a>
             <a href="/contact" className="opacity-70 hover:opacity-100">CONTACT</a>
-            <a href="/whitepaper" className="opacity-70 hover:opacity-100">WHITEPAPER</a>
             <a href="/developers" className="opacity-70 hover:opacity-100">API</a>
           </div>
 
@@ -214,7 +213,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile nav menu - use /# so anchors work from subpages like /contact /whitepaper */}
+      {/* Mobile nav menu - use /# so anchors work from subpages like /contact */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-white/10 bg-black px-4 py-3 flex flex-col gap-2 text-sm">
           <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
@@ -224,7 +223,6 @@ export default function Navbar() {
           <a href="/#tap" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">P2E</a>
           <a href="/#safety" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SAFETY</a>
           <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
-          <a href="/whitepaper" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">WHITEPAPER</a>
           <a href="/developers" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">API</a>
           <a href="/status" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">Status</a>
           <button 
