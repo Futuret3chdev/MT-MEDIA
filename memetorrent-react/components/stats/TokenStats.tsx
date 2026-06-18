@@ -158,7 +158,7 @@ export default function TokenStats() {
             {safeStats.fdv && safeStats.fdv !== safeStats.market_cap && (
               <Stat label="FDV" value={safeStats.fdv} sub="Fully diluted" />
             )}
-            <Stat label="24h Volume" value={safeStats.total_buy_volume} sub={`Buys ${safeStats.total_buys} / Sells ${safeStats.total_sells}`} />
+            <Stat label="24h Volume" value={safeStats.total_buy_volume} sub={`Buys ${safeStats.total_buys || 0} / Sells ${safeStats.total_sells || 0}`} />
             <div className="rounded-2xl border border-white/10 p-4 sm:p-5 bg-black/30">
               <div className="text-xs uppercase tracking-wide opacity-60 mb-1">Decimals</div>
               <div className="text-2xl sm:text-3xl font-semibold tabular-nums tracking-[-1px]">{safeStats.decimals ?? 6}</div>
