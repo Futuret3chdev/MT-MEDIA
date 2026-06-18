@@ -96,11 +96,12 @@ export default function TokenStats() {
   }, []);
 
   // Always render the card; use fallbacks if live data fails (e.g. network/DNS issues)
+  // No fake numbers - only real or empty
   const safeStats = stats || {
-    price: '0.000000012',
+    price: '0',
     market_cap: '$0',
-    total_supply: '1,000,000,000,000',
-    name: 'MT',
+    current_supply: '0',
+    name: 'MemeTorrent',
     symbol: '$MT',
     total_buys: '0',
     total_sells: '0',
@@ -128,9 +129,9 @@ export default function TokenStats() {
         >
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-y-3 mb-6">
             <div>
-              <div className="text-emerald-400 text-xs tracking-[3px] mb-1">LIVE ON SOLANA • PUMP.FUN</div>
+              <div className="text-emerald-400 text-xs tracking-[3px] mb-1">LIVE ON SOLANA • PUMP.FUN + RAYDIUM</div>
               <div className="text-3xl sm:text-4xl font-semibold tracking-tight">MT Token Stats</div>
-              <div className="text-xs opacity-60 mt-1">Live from DexScreener • Auto-refreshes every 15s</div>
+              <div className="text-xs opacity-60 mt-1">Live data • Auto-refreshes every 15s</div>
               {/* Contract Address - short display + copy for mobile friendliness */}
               <div className="mt-3 p-3 rounded-xl border border-emerald-400/30 bg-emerald-400/5">
                 <div className="text-[10px] opacity-70 mb-0.5 tracking-widest">CONTRACT ADDRESS (COPY)</div>
@@ -149,15 +150,39 @@ export default function TokenStats() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-            <Stat label="Price" value={`$${safeStats.price}`} sub={`~${(priceNum * 1e9).toFixed(0)} per 1B`} />
-            <Stat label="Market Cap" value={safeStats.market_cap} sub={marketCapNum > 0 ? `FDV ~${safeStats.market_cap}` : ''} />
-            <Stat label="Total Supply" value={safeStats.total_supply} sub="1T max • Burnable" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <Stat label="Price" value={`$${safeStats.price}`} sub={`~${Math.round(priceNum * 1_000_000_000).toLocaleString()} per 1B`} />
+            <Stat label="Market Cap" value={safeStats.market_cap} sub="Based on current supply" />
+            <Stat label="Current Supply" value={safeStats.current_supply} sub="Live • Pump.fun curve" />
+            <Stat label="Liquidity" value={safeStats.liquidity || '$0'} sub="Raydium pool" />
+            {safeStats.fdv && safeStats.fdv !== safeStats.market_cap && (
+              <Stat label="FDV" value={safeStats.fdv} sub="Fully diluted" />
+            )}
+            <Stat label="24h Volume" value={safeStats.total_buy_volume} sub={`Buys ${safeStats.total_buys} / Sells ${safeStats.total_sells}`} />
+            <div className="rounded-2xl border border-white/10 p-4 sm:p-5 bg-black/30">
+              <div className="text-xs uppercase tracking-wide opacity-60 mb-1">Decimals</div>
+              <div className="text-2xl sm:text-3xl font-semibold tabular-nums tracking-[-1px]">{safeStats.decimals ?? 6}</div>
+            </div>
           </div>
 
           <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-white/10 flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-xs opacity-70">
-            <div>24h Buy Vol: {safeStats.total_buy_volume}</div>
-            <div>24h Sell Vol: {safeStats.total_sell_volume}</div>
+            <a 
+              href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump" 
+              target="_blank" 
+              className="text-emerald-400 hover:underline"
+            >
+              Full on-chain profile on Solscan →
+            </a>
+          </div>
+
+          {/* Real on-chain data - no fakes, direct links */}
+          <div className="mt-3 text-[10px] opacity-50 flex flex-wrap gap-x-2">
+            <span>Live data via:</span>
+            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#analytics" target="_blank" className="underline">Analytics</a> • 
+            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#holders" target="_blank" className="underline">Holders (top 10)</a> • 
+            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#markets" target="_blank" className="underline">Markets</a> • 
+            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#transfers" target="_blank" className="underline">Transfers</a> • 
+            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#metadata" target="_blank" className="underline">Metadata</a>
           </div>
 
           {/* Pure icon logos marquee - only actual logos, no names. Very slow floating + gentle dancing bobs */}
