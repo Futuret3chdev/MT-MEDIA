@@ -94,13 +94,34 @@ export async function getTokenStats(): Promise<MTStatsRaw> {
   };
 }
 
-// Holders feature removed from the marketing UI (was causing public RPC 403/DNS errors in browser for some visitors).
-// Kept as empty for any legacy references; no more fake data or live RPC attempts from here.
-export type Holder = {
-  address: string;
-  uiAmount: number;
+// Real top holders fetched via Birdeye public API (no third-party UI links)
+export type TopHolder = {
+  owner: string;
+  amount: number;
+  percentage: number;
 };
 
-export async function getTopHolders(): Promise<Holder[]> {
-  return [];
+export async function getTopHolders(mint: string = 'ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump'): Promise<TopHolder[]> {
+  try {
+    const res = await fetch(
+      `https://public-api.birdeye.so/defi/token_holders?address=${mint}&offset=0&limit=10`,
+      { cache: 'no-store', headers: { accept: 'application/json' } }
+    );
+    if (!res.ok) return [];
+    const json = await res.json();
+    const items = json.data?.items || [];
+    const total = json.data?.total || 0;
+
+    return items.map((item: any) => {
+      const amt = parseFloat(item.amount || item.uiAmount || 0);
+      const pct = total > 0 ? (amt / total) * 100 : 0;
+      return {
+        owner: item.owner || item.address || '',
+        amount: amt,
+        percentage: Math.round(pct * 100) / 100,
+      };
+    });
+  } catch {
+    return [];
+  }
 }
