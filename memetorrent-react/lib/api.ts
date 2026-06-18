@@ -4,10 +4,10 @@ export type MTStatsRaw = {
   current_supply: string;
   name?: string;
   symbol?: string;
-  total_buys?: string;
-  total_sells?: string;
-  total_buy_volume?: string;
-  total_sell_volume?: string;
+  total_buys: string;
+  total_sells: string;
+  total_buy_volume: string;
+  total_sell_volume: string;
   liquidity?: string;
   fdv?: string;
   decimals?: number;
