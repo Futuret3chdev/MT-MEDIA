@@ -169,25 +169,7 @@ export default function TokenStats() {
             </div>
           </div>
 
-          <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-white/10 flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-xs opacity-70">
-            <a 
-              href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump" 
-              target="_blank" 
-              className="text-emerald-400 hover:underline"
-            >
-              Full on-chain profile on Solscan →
-            </a>
-          </div>
-
-          {/* Real on-chain data - no fakes, direct links */}
-          <div className="mt-3 text-[10px] opacity-50 flex flex-wrap gap-x-2">
-            <span>Live data via:</span>
-            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#analytics" target="_blank" className="underline">Analytics</a> • 
-            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#holders" target="_blank" className="underline">Holders (top 10)</a> • 
-            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#markets" target="_blank" className="underline">Markets</a> • 
-            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#transfers" target="_blank" className="underline">Transfers</a> • 
-            <a href="https://solscan.io/token/ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump#metadata" target="_blank" className="underline">Metadata</a>
-          </div>
+          {/* No external links - data is fetched live in-browser from public APIs only. */}
 
           {/* Pure icon logos marquee - only actual logos, no names. Very slow floating + gentle dancing bobs */}
           <div className="mt-8 pt-6 border-t border-white/10 overflow-hidden">
