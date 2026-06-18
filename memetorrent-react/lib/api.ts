@@ -125,3 +125,45 @@ export async function getTopHolders(mint: string = 'ELywDcVX2WumHm4xEfqF8NdEKaeG
     return [];
   }
 }
+
+export type TokenSecurity = {
+  holder_count: string;
+  total_supply: string;
+  mintable: string;
+  freezable: string;
+  closable: string;
+  metadata_mutable: string;
+  lp_holder_count?: string;
+  trusted_token?: number;
+  is_honeypot?: string;
+  buy_tax?: string;
+  sell_tax?: string;
+};
+
+export async function getTokenSecurity(mint: string = 'ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump'): Promise<TokenSecurity | null> {
+  try {
+    const res = await fetch(
+      `https://api.gopluslabs.io/api/v1/solana/token_security?contract_addresses=${mint}`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    const t = json.result?.[mint];
+    if (!t) return null;
+    return {
+      holder_count: t.holder_count || '0',
+      total_supply: t.total_supply || '0',
+      mintable: t.mintable?.status || t.mintable || '0',
+      freezable: t.freezable?.status || t.freezable || '0',
+      closable: t.closable?.status || t.closable || '0',
+      metadata_mutable: t.metadata_mutable?.status || t.metadata_mutable || '0',
+      lp_holder_count: t.lp_holder_count,
+      trusted_token: t.trusted_token,
+      is_honeypot: t.is_honeypot,
+      buy_tax: t.buy_tax,
+      sell_tax: t.sell_tax,
+    };
+  } catch {
+    return null;
+  }
+}

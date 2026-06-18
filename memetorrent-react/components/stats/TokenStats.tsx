@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { getTokenStats, MTStatsRaw, getTopHolders, TopHolder } from '@/lib/api';
+import { getTokenStats, MTStatsRaw, getTopHolders, TopHolder, getTokenSecurity, TokenSecurity } from '@/lib/api';
 
 // 100+ chains we plan to bridge with. Binance prominently included. Real images (not just names).
 const BRIDGE_CHAINS: string[] = [
@@ -80,6 +80,7 @@ function getChainLogo(chain: string): string {
 export default function TokenStats() {
   const [stats, setStats] = useState<MTStatsRaw | null>(null);
   const [topHolders, setTopHolders] = useState<TopHolder[]>([]);
+  const [security, setSecurity] = useState<TokenSecurity | null>(null);
 
   // Only chains that have actual logo images (no names at all in the UI)
   const displayChains = BRIDGE_CHAINS.filter(
@@ -90,10 +91,12 @@ export default function TokenStats() {
   useEffect(() => {
     getTokenStats().then(setStats).catch(console.error);
     getTopHolders().then(setTopHolders).catch(console.error);
+    getTokenSecurity().then(setSecurity).catch(console.error);
 
     const i = setInterval(() => {
       getTokenStats().then(setStats).catch(console.error);
       getTopHolders().then(setTopHolders).catch(console.error);
+      getTokenSecurity().then(setSecurity).catch(console.error);
     }, 15000);
 
     return () => clearInterval(i);
@@ -173,11 +176,28 @@ export default function TokenStats() {
             </div>
           </div>
 
-          {/* On-chain data rendered directly here using public APIs — no external links or third-party sites */}
+          {/* On-chain data rendered directly here using public APIs (GoPlus for security, Birdeye/DexScreener for others) — no external links */}
+
+          {security && (
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="text-xs uppercase tracking-[3px] opacity-60 mb-2">Token Security (GoPlus)</div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                <div>Mintable: <span className={security.mintable === '0' ? 'text-emerald-400' : 'text-red-400'}>{security.mintable === '0' ? 'No' : 'Yes'}</span></div>
+                <div>Freezable: <span className={security.freezable === '0' ? 'text-emerald-400' : 'text-red-400'}>{security.freezable === '0' ? 'No' : 'Yes'}</span></div>
+                <div>Closable: <span className={security.closable === '0' ? 'text-emerald-400' : 'text-red-400'}>{security.closable === '0' ? 'No' : 'Yes'}</span></div>
+                <div>Metadata Mutable: <span className={security.metadata_mutable === '0' ? 'text-emerald-400' : 'text-red-400'}>{security.metadata_mutable === '0' ? 'No' : 'Yes'}</span></div>
+                <div>Holders: {security.holder_count}</div>
+                {security.lp_holder_count && <div>LP Holders: {security.lp_holder_count}</div>}
+                {security.buy_tax && <div>Buy Tax: {security.buy_tax}</div>}
+                {security.sell_tax && <div>Sell Tax: {security.sell_tax}</div>}
+                {security.trusted_token !== undefined && <div>Trusted: {security.trusted_token ? 'Yes' : 'No'}</div>}
+              </div>
+            </div>
+          )}
 
           {topHolders.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-white/10">
-              <div className="text-xs uppercase tracking-[3px] opacity-60 mb-2">Top Holders (live)</div>
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="text-xs uppercase tracking-[3px] opacity-60 mb-2">Top Holders (Birdeye)</div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
@@ -200,25 +220,28 @@ export default function TokenStats() {
                   </tbody>
                 </table>
               </div>
-              <div className="text-[10px] opacity-50 mt-1">Top holders concentration shown live from on-chain data.</div>
             </div>
           )}
 
-          <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <div className="uppercase tracking-[3px] opacity-60 mb-1">Token Metadata</div>
+              <div>Name: {safeStats.name}</div>
+              <div>Symbol: {safeStats.symbol}</div>
               <div>Decimals: {safeStats.decimals ?? 6}</div>
+              <div>Total Supply: {safeStats.current_supply}</div>
               <div>Authority: Pump.fun Token Mint Authority</div>
-              <div>First Mint: Feb 07, 2025 (UTC)</div>
+              <div>First Mint: 08:51:57 Feb 07, 2025 (UTC)</div>
               <div>Tags: Meme, Pump.fun</div>
-              <div>Token Extensions: No</div>
+              <div>Token Extensions: False</div>
             </div>
             <div>
-              <div className="uppercase tracking-[3px] opacity-60 mb-1">Current Markets</div>
+              <div className="uppercase tracking-[3px] opacity-60 mb-1">Markets</div>
               <div>Primary: Raydium (WSOL-$MT) Pool</div>
               <div>Liquidity: {safeStats.liquidity || '$0'}</div>
               <div>FDV: {safeStats.fdv || '$0'}</div>
-              <div className="mt-1 text-[10px] opacity-50">All values live from public on-chain indexers.</div>
+              <div>Market Cap: {safeStats.market_cap}</div>
+              <div className="mt-1 text-[10px] opacity-50">Live from public on-chain indexers (DexScreener, Birdeye, GoPlus). No external site links.</div>
             </div>
           </div>
 
