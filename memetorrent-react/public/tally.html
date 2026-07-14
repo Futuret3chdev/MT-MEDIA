@@ -565,20 +565,54 @@
     })();
     </script>
     <script type="module">
-    import { Connection, PublicKey, Transaction } from 'https://esm.sh/@solana/web3.js@1.98.4';
+    import { PublicKey, Transaction } from 'https://esm.sh/@solana/web3.js@1.98.4';
     import {
         getAssociatedTokenAddress,
         createAssociatedTokenAccountInstruction,
         createTransferInstruction,
-        getAccount,
         TOKEN_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
     } from 'https://esm.sh/@solana/spl-token@0.4.13';
 
     const MT_MINT = new PublicKey('ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump');
     const MT_DECIMALS = 6;
-    const RPC = 'https://api.mainnet-beta.solana.com';
-    const connection = new Connection(RPC, 'confirmed');
+
+    function bytesToBase64(bytes) {
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+    }
+
+    async function accountExists(address) {
+        const res = await fetch('/api/solana/account-info?address=' + encodeURIComponent(address));
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not check token account');
+        return !!data.exists;
+    }
+
+    async function sendTransactionViaApi(serializedTx) {
+        const res = await fetch('/api/solana/send-transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transaction: bytesToBase64(serializedTx) })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Transaction send failed');
+        return data.signature;
+    }
+
+    async function waitForConfirmation(signature) {
+        const deadline = Date.now() + 90000;
+        while (Date.now() < deadline) {
+            const res = await fetch('/api/solana/signature-status?signature=' + encodeURIComponent(signature));
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Could not confirm transaction');
+            if (data.err) throw new Error('Transaction failed on-chain');
+            if (data.confirmed) return;
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        throw new Error('Confirmation timed out — check Solscan for tx ' + signature);
+    }
 
     let pendingReward = null;
     let walletProvider = null;
@@ -654,9 +688,8 @@
         const senderAta = await getAssociatedTokenAddress(MT_MINT, sender, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
         const recipientAta = await getAssociatedTokenAddress(MT_MINT, recipient, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 
-        try {
-            await getAccount(connection, recipientAta);
-        } catch {
+        const recipientAtaStr = recipientAta.toBase58();
+        if (!(await accountExists(recipientAtaStr))) {
             transaction.add(
                 createAssociatedTokenAccountInstruction(
                     sender, recipientAta, recipient, MT_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID
@@ -679,23 +712,12 @@
 
         setStatus('Approve the transaction in your wallet…');
         const signed = await walletProvider.signTransaction(transaction);
-        const sig = await connection.sendRawTransaction(signed.serialize(), {
-            skipPreflight: false,
-            preflightCommitment: 'confirmed'
-        });
+
+        setStatus('Submitting transaction…');
+        const sig = await sendTransactionViaApi(signed.serialize());
 
         setStatus('Confirming on-chain…');
-        try {
-            await connection.confirmTransaction({
-                blockhash: bhData.blockhash,
-                lastValidBlockHeight: bhData.lastValidBlockHeight,
-                signature: sig
-            }, 'confirmed');
-        } catch (confErr) {
-            const st = await connection.getSignatureStatus(sig);
-            const ok = st.value?.confirmationStatus === 'confirmed' || st.value?.confirmationStatus === 'finalized';
-            if (!ok) throw confErr;
-        }
+        await waitForConfirmation(sig);
 
         return sig;
     }
