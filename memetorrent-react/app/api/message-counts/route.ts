@@ -30,6 +30,10 @@ function getMelbourneYesterdayStr(): string {
   return `${yy}-${mm}-${dd}`;
 }
 
+function getMelbourneMonthStr(): string {
+  return getMelbourneDateStr().slice(0, 7); // YYYY-MM
+}
+
 async function queryTelegram(conn: any, startDate: string, endDate: string, forRange: boolean) {
   // daily_message_counts likely has rows per user per date: date, user_id, username, message_count
   // monthly_message_totals: user_id, username, total_message_count (for current month or maintained)
@@ -114,41 +118,22 @@ async function queryTelegram(conn: any, startDate: string, endDate: string, forR
       }
     }
 
-    // MONTHLY champions (use monthly table; if it has month filter use current month)
-    const monthStart = getMelbourneDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    // Try monthly_message_totals first (may be pre-aggregated)
-    try {
-      const [monthly] = await conn.execute(
-        `SELECT user_id, username, total_message_count
-         FROM monthly_message_totals
-         ORDER BY total_message_count DESC
-         LIMIT 100`
-      );
-      for (const r of monthly as any[]) {
-        monthlyRows.push({
-          user_id: r.user_id,
-          username: r.username,
-          total_message_count: Number(r.total_message_count)
-        });
-      }
-    } catch {
-      // Fallback: sum for current month from daily
-      const [monthly] = await conn.execute(
-        `SELECT user_id, username, SUM(message_count) as total_message_count
-         FROM daily_message_counts
-         WHERE date >= ?
-         GROUP BY user_id, username
-         ORDER BY total_message_count DESC
-         LIMIT 100`,
-        [monthStart]
-      );
-      for (const r of monthly as any[]) {
-        monthlyRows.push({
-          user_id: r.user_id,
-          username: r.username,
-          total_message_count: Number(r.total_message_count)
-        });
-      }
+    // MONTHLY champions (current month in Melbourne)
+    const month = getMelbourneMonthStr();
+    const [monthly] = await conn.execute(
+      `SELECT user_id, username, total_message_count
+       FROM monthly_message_totals
+       WHERE month = ?
+       ORDER BY total_message_count DESC
+       LIMIT 100`,
+      [month]
+    );
+    for (const r of monthly as any[]) {
+      monthlyRows.push({
+        user_id: r.user_id,
+        username: r.username,
+        total_message_count: Number(r.total_message_count)
+      });
     }
   } catch (e) {
     // leave arrays empty on error; caller will still return timestamp
@@ -163,24 +148,44 @@ async function queryDiscord(conn: any, startDate: string, endDate: string, forRa
   const dailyPreviousRows: any[] = [];
   const monthlyRows: any[] = [];
 
-  // Discord data is in a different schema per original: likely tcvkxete_discord_members.messages or similar
-  // We attempt common patterns; if tables differ the arrays stay empty for that section.
+  // Match legacy message_counts.php: author_id, author_username, timestamp
   try {
-    // Try a messages table with created_at or date column + user_id/username
-    // For simplicity we query a plausible structure; production may vary slightly.
     const today = getMelbourneDateStr();
+    const month = getMelbourneMonthStr();
+    const rangeStart = forRange && startDate ? startDate : today;
+    const rangeEnd = forRange && endDate ? endDate : today;
 
-    // DAILY
-    const [daily] = await conn.execute(
-      `SELECT user_id, username, COUNT(*) as message_count
+    const [range] = await conn.execute(
+      `SELECT author_id AS user_id,
+              COALESCE(author_username, 'Unknown') AS username,
+              COUNT(*) AS message_count
        FROM messages
-       WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+10:00')) = ?
-       GROUP BY user_id, username
+       WHERE DATE(CONVERT_TZ(timestamp, '+00:00', '+10:00')) BETWEEN ? AND ?
+       GROUP BY author_id, author_username
        ORDER BY message_count DESC
-       LIMIT 50`,
+       LIMIT 100`,
+      [rangeStart, rangeEnd]
+    );
+    for (const r of range as any[]) {
+      rangeRows.push({
+        user_id: String(r.user_id),
+        username: r.username,
+        message_count: Number(r.message_count)
+      });
+    }
+
+    const [daily] = await conn.execute(
+      `SELECT author_id AS user_id,
+              COALESCE(author_username, 'Unknown') AS username,
+              COUNT(*) AS message_count
+       FROM messages
+       WHERE DATE(CONVERT_TZ(timestamp, '+00:00', '+10:00')) = ?
+       GROUP BY author_id, author_username
+       ORDER BY message_count DESC
+       LIMIT 100`,
       [today]
-    ).catch(() => [[]]);
-    for (const r of (daily as any[])) {
+    );
+    for (const r of daily as any[]) {
       dailyRows.push({
         user_id: String(r.user_id),
         username: r.username,
@@ -191,15 +196,17 @@ async function queryDiscord(conn: any, startDate: string, endDate: string, forRa
     if (!forRange) {
       const yesterday = getMelbourneYesterdayStr();
       const [dailyPrev] = await conn.execute(
-        `SELECT user_id, username, COUNT(*) as message_count
+        `SELECT author_id AS user_id,
+                COALESCE(author_username, 'Unknown') AS username,
+                COUNT(*) AS message_count
          FROM messages
-         WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+10:00')) = ?
-         GROUP BY user_id, username
+         WHERE DATE(CONVERT_TZ(timestamp, '+00:00', '+10:00')) = ?
+         GROUP BY author_id, author_username
          ORDER BY message_count DESC
-         LIMIT 50`,
+         LIMIT 100`,
         [yesterday]
-      ).catch(() => [[]]);
-      for (const r of (dailyPrev as any[])) {
+      );
+      for (const r of dailyPrev as any[]) {
         dailyPreviousRows.push({
           user_id: String(r.user_id),
           username: r.username,
@@ -208,40 +215,18 @@ async function queryDiscord(conn: any, startDate: string, endDate: string, forRa
       }
     }
 
-    // RANGE aggregate
-    if (forRange && startDate && endDate) {
-      const [rows] = await conn.execute(
-        `SELECT user_id, username, COUNT(*) as message_count
-         FROM messages
-         WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+10:00')) BETWEEN ? AND ?
-         GROUP BY user_id, username
-         ORDER BY message_count DESC
-         LIMIT 50`,
-        [startDate, endDate]
-      ).catch(() => [[]]);
-      for (const r of (rows as any[])) {
-        rangeRows.push({
-          user_id: String(r.user_id),
-          username: r.username,
-          message_count: Number(r.message_count)
-        });
-      }
-    } else {
-      rangeRows.push(...dailyRows);
-    }
-
-    // MONTHLY (current month approx)
-    const monthStart = getMelbourneDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     const [monthly] = await conn.execute(
-      `SELECT user_id, username, COUNT(*) as total_message_count
+      `SELECT author_id AS user_id,
+              COALESCE(author_username, 'Unknown') AS username,
+              COUNT(*) AS total_message_count
        FROM messages
-       WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+10:00')) >= ?
-       GROUP BY user_id, username
+       WHERE DATE_FORMAT(CONVERT_TZ(timestamp, '+00:00', '+10:00'), '%Y-%m') = ?
+       GROUP BY author_id, author_username
        ORDER BY total_message_count DESC
-       LIMIT 50`,
-      [monthStart]
-    ).catch(() => [[]]);
-    for (const r of (monthly as any[])) {
+       LIMIT 100`,
+      [month]
+    );
+    for (const r of monthly as any[]) {
       monthlyRows.push({
         user_id: String(r.user_id),
         username: r.username,
