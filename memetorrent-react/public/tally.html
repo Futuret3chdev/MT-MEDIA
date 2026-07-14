@@ -56,8 +56,19 @@
         .btn-reward { background: linear-gradient(45deg, #7c3aed, #a855f7); color: #fff; padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 11px; font-weight: 600; white-space: nowrap; }
         .btn-reward:disabled { opacity: 0.45; cursor: not-allowed; }
         .btn-reward.no-wallet { background: #4b5563; }
-        .staff-wallet { font-size: 12px; color: #a7f3d0; font-family: 'Courier New', monospace; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .staff-wallet { font-size: 12px; color: #a7f3d0; font-family: 'Courier New', monospace; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .staff-locked-hint { font-size: 12px; color: #9ca3af; }
+        .wallet-panel { display: none; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; width: 100%; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 4px; }
+        .wallet-panel.open { display: flex; }
+        .wallet-panel-label { font-size: 12px; color: #9ca3af; width: 100%; text-align: center; margin-bottom: 2px; }
+        .wallet-opt { padding: 8px 12px; border-radius: 8px; border: 1px solid #4b5563; background: #1f2937; color: #e5e7eb; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .wallet-opt:hover { background: #374151; }
+        .wallet-opt.active { border-color: #28a745; background: rgba(40,167,69,0.2); color: #86efac; }
+        .wallet-opt.recommended::after { content: ' ★'; color: #fbbf24; font-size: 10px; }
+        .wallet-hint { width: 100%; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.4; }
+        .wallet-hint.warn { color: #fcd34d; }
+        .treasury-pick { width: 100%; max-width: 360px; padding: 8px 10px; border-radius: 8px; border: 1px solid #4b5563; background: #fff; color: #111827; font-size: 13px; }
+        .wallet-connected-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; width: 100%; }
         .reward-col { width: 88px; text-align: center; }
         .reward-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.72); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
         .reward-modal.open { display: flex; }
@@ -95,9 +106,25 @@
         <button class="btn btn-secondary" id="btnRefresh" type="button">Refresh</button>
         <button class="btn btn-primary" id="btnExportCsv" type="button">Export CSV (this tab)</button>
         <button class="btn btn-secondary" id="btnStaffUnlock" type="button">Unlock rewards</button>
-        <button class="btn btn-primary" id="btnConnectWallet" type="button" style="display:none">Connect wallet</button>
-        <span class="staff-wallet" id="staffWalletLabel" style="display:none"></span>
         <span class="staff-locked-hint" id="staffHint">Staff: unlock to send $MT rewards</span>
+        <div id="walletPanel" class="wallet-panel">
+            <div class="wallet-panel-label">Pay rewards from — pick your wallet app, then connect</div>
+            <button type="button" class="wallet-opt recommended" data-provider="solflare">Solflare</button>
+            <button type="button" class="wallet-opt recommended" data-provider="backpack">Backpack</button>
+            <button type="button" class="wallet-opt" data-provider="phantom">Phantom</button>
+            <a class="wallet-opt" data-provider="infinite" href="https://mt.futuret3ch.com.au/" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">Infinite Wallet</a>
+            <select id="treasuryPick" class="treasury-pick" title="Which team treasury are you paying from?">
+                <option value="">Team treasury (optional label)…</option>
+            </select>
+            <button class="btn btn-primary" id="btnConnectWallet" type="button">Connect selected wallet</button>
+            <button class="btn btn-secondary" id="btnDisconnectWallet" type="button" style="display:none">Switch wallet</button>
+            <div class="wallet-connected-row" id="walletConnectedRow" style="display:none">
+                <span class="staff-wallet" id="staffWalletLabel"></span>
+                <span class="staff-wallet" id="staffProviderLabel" style="color:#c4b5fd"></span>
+            </div>
+            <div class="wallet-hint" id="walletHelp">Phantom blocking this site? Use <strong>Solflare</strong> or <strong>Backpack</strong>, or open this tally page inside your wallet app’s browser.</div>
+            <div class="wallet-hint warn" id="walletDeeplinkHint" style="display:none"></div>
+        </div>
     </div>
 
     <div id="rewardModal" class="reward-modal" aria-hidden="true">
@@ -515,29 +542,54 @@
             openTab('Custom');
         });
 
-        window.mtStaff = window.mtStaff || { unlocked: false, staffKey: null, wallet: null };
+        window.mtStaff = window.mtStaff || { unlocked: false, staffKey: null, wallet: null, provider: 'solflare', treasuryId: '' };
         try {
             const saved = sessionStorage.getItem('mt_tally_staff_key');
             if (saved) {
                 window.mtStaff.unlocked = true;
                 window.mtStaff.staffKey = saved;
             }
+            const prov = sessionStorage.getItem('mt_tally_wallet_provider');
+            if (prov) window.mtStaff.provider = prov;
         } catch (e) {}
 
         function refreshStaffChrome() {
             const s = window.mtStaff;
             const unlocked = !!s.unlocked;
+            const connected = !!(unlocked && s.wallet);
             $('#btnStaffUnlock').text(unlocked ? 'Staff unlocked' : 'Unlock rewards');
-            $('#btnConnectWallet').toggle(unlocked);
             $('#staffHint').toggle(!unlocked);
-            if (unlocked && s.wallet) {
-                $('#staffWalletLabel').show().text('Wallet: ' + s.wallet.slice(0, 4) + '…' + s.wallet.slice(-4));
-            } else {
-                $('#staffWalletLabel').toggle(unlocked && !!s.wallet);
+            $('#walletPanel').toggleClass('open', unlocked);
+            $('#btnConnectWallet').toggle(unlocked && !connected);
+            $('#btnDisconnectWallet').toggle(unlocked && connected);
+            $('#walletConnectedRow').toggle(unlocked && connected);
+            $('.wallet-opt[data-provider]').removeClass('active');
+            $('.wallet-opt[data-provider="' + (s.provider || 'solflare') + '"]').addClass('active');
+            if (connected) {
+                $('#staffWalletLabel').text('Connected: ' + s.wallet.slice(0, 4) + '…' + s.wallet.slice(-4));
+                $('#staffProviderLabel').text('via ' + (s.provider || 'wallet'));
+            }
+            if (unlocked && window.mtReward && window.mtReward.loadTreasuryList) {
+                window.mtReward.loadTreasuryList();
             }
             if (window.mtReward && window.mtReward.onStaffChange) window.mtReward.onStaffChange();
             rerenderAll();
         }
+
+        $(document).on('click', '.wallet-opt[data-provider]', function (e) {
+            if ($(this).attr('href')) return;
+            e.preventDefault();
+            const p = $(this).data('provider');
+            window.mtStaff.provider = p;
+            try { sessionStorage.setItem('mt_tally_wallet_provider', p); } catch (err) {}
+            $('.wallet-opt[data-provider]').removeClass('active');
+            $(this).addClass('active');
+            if (window.mtReward && window.mtReward.onProviderSelected) window.mtReward.onProviderSelected(p);
+        });
+
+        $('#treasuryPick').on('change', function () {
+            window.mtStaff.treasuryId = $(this).val() || '';
+        });
 
         $('#btnStaffUnlock').on('click', function () {
             if (window.mtStaff.unlocked) {
@@ -574,6 +626,7 @@
             });
         });
 
+        window.refreshStaffChrome = refreshStaffChrome;
         refreshStaffChrome();
 
         const today = melbourneToday();
@@ -635,36 +688,184 @@
 
     let pendingReward = null;
     let walletProvider = null;
+    let selectedProviderName = 'solflare';
+
+    const PROVIDER_DEEPLINKS = {
+        phantom: url => 'https://phantom.app/ul/browse/' + encodeURIComponent(url) + '?ref=mt-tally',
+        solflare: url => 'https://solflare.com/ul/browse/' + encodeURIComponent(url),
+        backpack: url => 'https://backpack.app/ul/browse/' + encodeURIComponent(url)
+    };
 
     function staffKey() {
         return window.mtStaff?.staffKey || null;
     }
 
-    function getProvider() {
-        if (window.solana?.isPhantom) return { name: 'phantom', provider: window.solana };
-        if (window.solflare?.isSolflare) return { name: 'solflare', provider: window.solflare };
+    function getProviderByName(name) {
+        const w = window;
+        if (name === 'phantom') {
+            const p = w.phantom?.solana || (w.solana?.isPhantom ? w.solana : null);
+            return p ? { name: 'phantom', provider: p } : null;
+        }
+        if (name === 'solflare' && w.solflare) {
+            return { name: 'solflare', provider: w.solflare };
+        }
+        if (name === 'backpack') {
+            const p = w.backpack?.solana || w.backpack;
+            return p ? { name: 'backpack', provider: p } : null;
+        }
         return null;
     }
 
-    async function connectWallet() {
-        const p = getProvider();
-        if (!p) {
-            alert('Install Phantom or Solflare, then refresh this page.');
-            return false;
+    function pubkeyToString(pk) {
+        if (!pk) return null;
+        if (typeof pk === 'string') return pk;
+        if (pk.toString) return pk.toString();
+        if (pk.toBase58) return pk.toBase58();
+        return null;
+    }
+
+    function showDeeplinkHint(name) {
+        const el = document.getElementById('walletDeeplinkHint');
+        const url = window.location.href;
+        const link = PROVIDER_DEEPLINKS[name];
+        if (!link) {
+            el.style.display = 'none';
+            return;
         }
+        el.style.display = 'block';
+        el.innerHTML = 'No ' + name + ' extension detected. <a href="' + link(url) + '" target="_blank" rel="noopener" style="color:#86efac">Open this page inside ' + name + '</a>, then click Connect again.';
+    }
+
+    function onProviderSelected(name) {
+        selectedProviderName = name;
+        document.getElementById('walletDeeplinkHint').style.display = 'none';
+        const help = document.getElementById('walletHelp');
+        if (name === 'phantom') {
+            help.className = 'wallet-hint warn';
+            help.innerHTML = 'Phantom often blocks dApps. If connect fails, switch to <strong>Solflare</strong> or <strong>Backpack</strong>, or open this page in the wallet in-app browser.';
+        } else if (name === 'infinite') {
+            help.className = 'wallet-hint';
+            help.innerHTML = 'Open <strong>Infinite Wallet</strong>, use its browser to visit this tally page, then connect with Solflare/Backpack inside that session if needed.';
+        } else {
+            help.className = 'wallet-hint';
+            help.innerHTML = 'Using <strong>' + name + '</strong>. On mobile, open the deeplink if the extension is not detected.';
+        }
+    }
+
+    async function loadTreasuryList() {
+        const key = staffKey();
+        const sel = document.getElementById('treasuryPick');
+        if (!key || !sel) return;
         try {
-            const resp = await p.provider.connect();
-            const addr = resp.publicKey.toString();
-            window.mtStaff.wallet = addr;
-            walletProvider = p.provider;
-            document.getElementById('btnConnectWallet').textContent = 'Connected';
-            document.getElementById('staffWalletLabel').style.display = 'inline';
-            document.getElementById('staffWalletLabel').textContent = 'Wallet: ' + addr.slice(0, 4) + '…' + addr.slice(-4);
-            return true;
-        } catch (e) {
-            if (e?.code !== 4001) alert('Wallet connect failed: ' + (e?.message || e));
+            const res = await fetch('/api/staff-wallets?staff_key=' + encodeURIComponent(key));
+            const data = await res.json();
+            if (!res.ok) return;
+            const current = sel.value;
+            sel.innerHTML = '<option value="">Team treasury (optional label)…</option>';
+            (data.wallets || []).forEach(w => {
+                const opt = document.createElement('option');
+                opt.value = w.id || w.address;
+                opt.textContent = (w.label || 'Treasury') + ' — ' + (w.address || '').slice(0, 6) + '…';
+                opt.dataset.address = w.address || '';
+                sel.appendChild(opt);
+            });
+            if (current) sel.value = current;
+        } catch (e) {}
+    }
+
+    function disconnectWallet() {
+        const p = walletProvider;
+        if (p && p.disconnect) {
+            try { p.disconnect(); } catch (e) {}
+        }
+        walletProvider = null;
+        window.mtStaff.wallet = null;
+        if (typeof window.refreshStaffChrome === 'function') window.refreshStaffChrome();
+        else {
+            document.getElementById('btnConnectWallet').style.display = '';
+            document.getElementById('btnDisconnectWallet').style.display = 'none';
+            document.getElementById('walletConnectedRow').style.display = 'none';
+        }
+    }
+
+    async function connectWallet(forcedName) {
+        const name = forcedName || window.mtStaff?.provider || selectedProviderName || 'solflare';
+        selectedProviderName = name;
+        window.mtStaff.provider = name;
+        onProviderSelected(name);
+
+        const injected = getProviderByName(name);
+        if (!injected) {
+            showDeeplinkHint(name);
+            if (name === 'infinite') {
+                window.open('https://mt.futuret3ch.com.au/', '_blank');
+            }
             return false;
         }
+
+        try {
+            const resp = await injected.provider.connect();
+            const addr = pubkeyToString(resp?.publicKey || injected.provider.publicKey);
+            if (!addr) throw new Error('No public key returned from ' + name);
+
+            const treasurySel = document.getElementById('treasuryPick');
+            const expected = treasurySel?.selectedOptions?.[0]?.dataset?.address;
+            if (expected && expected !== addr) {
+                const ok = confirm(
+                    'Connected wallet ' + addr.slice(0, 6) + '… does not match the selected treasury ' +
+                    expected.slice(0, 6) + '…. Send anyway?'
+                );
+                if (!ok) {
+                    if (injected.provider.disconnect) try { await injected.provider.disconnect(); } catch (e) {}
+                    return false;
+                }
+            }
+
+            window.mtStaff.wallet = addr;
+            window.mtStaff.provider = name;
+            walletProvider = injected.provider;
+            try { sessionStorage.setItem('mt_tally_wallet_provider', name); } catch (e) {}
+            document.getElementById('walletDeeplinkHint').style.display = 'none';
+        if (typeof window.refreshStaffChrome === 'function') window.refreshStaffChrome();
+        return true;
+        } catch (e) {
+            if (e?.code === 4001 || String(e?.message || '').includes('User rejected')) {
+                showDeeplinkHint(name);
+            } else {
+                showDeeplinkHint(name);
+                alert(name + ' connect failed: ' + (e?.message || e) + '\n\nTry Solflare or Backpack, or open this page inside the wallet app browser.');
+            }
+            return false;
+        }
+    }
+
+    async function submitTransaction(transaction) {
+        setStatus('Approve the transaction in your wallet…');
+
+        if (walletProvider?.signAndSendTransaction) {
+            try {
+                const outcome = await walletProvider.signAndSendTransaction(transaction, { skipPreflight: false });
+                const sig = typeof outcome === 'string' ? outcome : (outcome?.signature || outcome?.txid);
+                if (sig) {
+                    setStatus('Confirming on-chain…');
+                    await waitForConfirmation(sig);
+                    return sig;
+                }
+            } catch (e) {
+                if (e?.code === 4001 || String(e?.message || '').includes('User rejected')) throw e;
+            }
+        }
+
+        if (!walletProvider?.signTransaction) {
+            throw new Error('This wallet cannot sign transactions. Try Solflare or Backpack.');
+        }
+
+        const signed = await walletProvider.signTransaction(transaction);
+        setStatus('Submitting transaction…');
+        const sig = await sendTransactionViaApi(signed.serialize());
+        setStatus('Confirming on-chain…');
+        await waitForConfirmation(sig);
+        return sig;
     }
 
     let lastTxSignature = null;
@@ -756,16 +957,7 @@
         transaction.recentBlockhash = bhData.blockhash;
         transaction.feePayer = sender;
 
-        setStatus('Approve the transaction in your wallet…');
-        const signed = await walletProvider.signTransaction(transaction);
-
-        setStatus('Submitting transaction…');
-        const sig = await sendTransactionViaApi(signed.serialize());
-
-        setStatus('Confirming on-chain…');
-        await waitForConfirmation(sig);
-
-        return sig;
+        return await submitTransaction(transaction);
     }
 
     async function logReward(payload) {
@@ -825,7 +1017,8 @@
         }
     }
 
-    document.getElementById('btnConnectWallet').addEventListener('click', connectWallet);
+    document.getElementById('btnConnectWallet').addEventListener('click', () => connectWallet());
+    document.getElementById('btnDisconnectWallet').addEventListener('click', disconnectWallet);
     document.getElementById('rewardCancel').addEventListener('click', closeModal);
     document.getElementById('rewardDone').addEventListener('click', closeModal);
     document.getElementById('rewardCopyTx').addEventListener('click', async () => {
@@ -885,11 +1078,18 @@
     window.mtReward = {
         openForRow,
         onStaffChange() {},
-        connectWallet
+        connectWallet,
+        loadTreasuryList,
+        onProviderSelected,
+        disconnectWallet
     };
 
+    selectedProviderName = window.mtStaff?.provider || 'solflare';
+    onProviderSelected(selectedProviderName);
+    if (window.mtStaff?.unlocked) loadTreasuryList();
     if (window.mtStaff?.unlocked && window.mtStaff?.wallet) {
-        walletProvider = getProvider()?.provider || null;
+        const p = getProviderByName(window.mtStaff.provider || 'solflare');
+        walletProvider = p?.provider || null;
     }
     </script>
 </body>
