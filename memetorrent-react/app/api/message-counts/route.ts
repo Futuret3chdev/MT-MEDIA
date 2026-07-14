@@ -20,11 +20,22 @@ function getMelbourneTimestamp(): string {
   return `${datePart} ${timePart} AEST`;
 }
 
+function getMelbourneYesterdayStr(): string {
+  const today = getMelbourneDateStr();
+  const [y, m, d] = today.split('-').map(Number);
+  const utc = new Date(Date.UTC(y, m - 1, d - 1));
+  const yy = utc.getUTCFullYear();
+  const mm = String(utc.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(utc.getUTCDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
 async function queryTelegram(conn: any, startDate: string, endDate: string, forRange: boolean) {
   // daily_message_counts likely has rows per user per date: date, user_id, username, message_count
   // monthly_message_totals: user_id, username, total_message_count (for current month or maintained)
   const rangeRows: any[] = [];
   const dailyRows: any[] = [];
+  const dailyPreviousRows: any[] = [];
   const monthlyRows: any[] = [];
 
   try {
@@ -84,6 +95,25 @@ async function queryTelegram(conn: any, startDate: string, endDate: string, forR
       });
     }
 
+    if (!forRange) {
+      const yesterday = getMelbourneYesterdayStr();
+      const [dailyPrev] = await conn.execute(
+        `SELECT user_id, username, message_count
+         FROM daily_message_counts
+         WHERE date = ?
+         ORDER BY message_count DESC
+         LIMIT 100`,
+        [yesterday]
+      );
+      for (const r of dailyPrev as any[]) {
+        dailyPreviousRows.push({
+          user_id: r.user_id,
+          username: r.username,
+          message_count: Number(r.message_count)
+        });
+      }
+    }
+
     // MONTHLY champions (use monthly table; if it has month filter use current month)
     const monthStart = getMelbourneDateStr(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     // Try monthly_message_totals first (may be pre-aggregated)
@@ -124,12 +154,13 @@ async function queryTelegram(conn: any, startDate: string, endDate: string, forR
     // leave arrays empty on error; caller will still return timestamp
   }
 
-  return { range: rangeRows, daily: dailyRows, monthly: monthlyRows };
+  return { range: rangeRows, daily: dailyRows, daily_previous: dailyPreviousRows, monthly: monthlyRows };
 }
 
 async function queryDiscord(conn: any, startDate: string, endDate: string, forRange: boolean) {
   const rangeRows: any[] = [];
   const dailyRows: any[] = [];
+  const dailyPreviousRows: any[] = [];
   const monthlyRows: any[] = [];
 
   // Discord data is in a different schema per original: likely tcvkxete_discord_members.messages or similar
@@ -155,6 +186,26 @@ async function queryDiscord(conn: any, startDate: string, endDate: string, forRa
         username: r.username,
         message_count: Number(r.message_count)
       });
+    }
+
+    if (!forRange) {
+      const yesterday = getMelbourneYesterdayStr();
+      const [dailyPrev] = await conn.execute(
+        `SELECT user_id, username, COUNT(*) as message_count
+         FROM messages
+         WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+10:00')) = ?
+         GROUP BY user_id, username
+         ORDER BY message_count DESC
+         LIMIT 50`,
+        [yesterday]
+      ).catch(() => [[]]);
+      for (const r of (dailyPrev as any[])) {
+        dailyPreviousRows.push({
+          user_id: String(r.user_id),
+          username: r.username,
+          message_count: Number(r.message_count)
+        });
+      }
     }
 
     // RANGE aggregate
@@ -201,7 +252,7 @@ async function queryDiscord(conn: any, startDate: string, endDate: string, forRa
     // empty is ok
   }
 
-  return { range: rangeRows, daily: dailyRows, monthly: monthlyRows };
+  return { range: rangeRows, daily: dailyRows, daily_previous: dailyPreviousRows, monthly: monthlyRows };
 }
 
 export async function GET(request: NextRequest) {
@@ -214,12 +265,19 @@ export async function GET(request: NextRequest) {
 
   const response: any = {
     timestamp,
-    telegram: { range: [], daily: [], monthly: [] },
-    discord: { range: [], daily: [], monthly: [] }
+    meta: {
+      today: getMelbourneDateStr(),
+      yesterday: getMelbourneYesterdayStr(),
+      range_start: useRange ? startDate : null,
+      range_end: useRange ? endDate : null,
+    },
+    telegram: { range: [], daily: [], daily_previous: [], monthly: [] },
+    discord: { range: [], daily: [], daily_previous: [], monthly: [] }
   };
 
   let tgConn: any = null;
   let dcConn: any = null;
+  let apiError: string | null = null;
 
   try {
     tgConn = await mysql.createConnection({
@@ -251,13 +309,16 @@ export async function GET(request: NextRequest) {
     const dc = await queryDiscord(dcConn, startDate, endDate, useRange);
     response.discord = dc;
   } catch (err: any) {
-    // On hard failure still return the envelope with empty lists + timestamp so UI doesn't 500
-    // (original PHP would have errored too but we keep endpoint responsive)
-    console.error('message-counts error', err?.message || err);
+    apiError = err?.message || 'database_error';
+    console.error('message-counts error', apiError);
   } finally {
     if (tgConn && tgConn.end) { try { await tgConn.end(); } catch {} }
     if (dcConn && dcConn !== tgConn && dcConn.end) { try { await dcConn.end(); } catch {} }
   }
+
+  if (apiError) response.meta.api_error = apiError;
+  response.meta.telegram_rows = (response.telegram.daily?.length || 0) + (response.telegram.monthly?.length || 0);
+  response.meta.discord_rows = (response.discord.daily?.length || 0) + (response.discord.monthly?.length || 0);
 
   return Response.json(response, {
     headers: {
