@@ -53,6 +53,26 @@
         .state-error { background: rgba(220,38,38,0.15); color: #fecaca; border: 1px solid rgba(248,113,113,0.4); }
         .state-filtered { background: rgba(59,130,246,0.12); color: #bfdbfe; }
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.5} }
+        .btn-reward { background: linear-gradient(45deg, #7c3aed, #a855f7); color: #fff; padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .btn-reward:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-reward.no-wallet { background: #4b5563; }
+        .staff-wallet { font-size: 12px; color: #a7f3d0; font-family: 'Courier New', monospace; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .staff-locked-hint { font-size: 12px; color: #9ca3af; }
+        .reward-col { width: 88px; text-align: center; }
+        .reward-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.72); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+        .reward-modal.open { display: flex; }
+        .reward-modal-inner { background: #1f2937; border: 1px solid #4b5563; border-radius: 14px; padding: 22px; max-width: 420px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.45); }
+        .reward-modal-inner h3 { margin: 0 0 8px; color: #a78bfa; }
+        .reward-modal-inner p { margin: 0 0 12px; font-size: 13px; color: #d1d5db; line-height: 1.45; }
+        .reward-modal-inner label { display: block; font-size: 12px; color: #9ca3af; margin-bottom: 4px; }
+        .reward-modal-inner input[type="number"], .reward-modal-inner input[type="text"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #4b5563; background: #fff; color: #111827; margin-bottom: 10px; font-size: 14px; }
+        .reward-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+        .reward-presets button { padding: 6px 12px; border-radius: 6px; border: 1px solid #6b7280; background: #374151; color: #e5e7eb; cursor: pointer; font-size: 12px; }
+        .reward-presets button:hover { background: #4b5563; }
+        .reward-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .reward-actions .btn { flex: 1; }
+        .reward-status { margin-top: 12px; font-size: 13px; min-height: 1.2em; color: #86efac; word-break: break-all; }
+        .reward-status.err { color: #fca5a5; }
         @media (max-width: 640px) { .tabs { flex-direction: column; } .staff-toolbar { flex-direction: column; } table { font-size: 0.85em; } }
     </style>
 </head>
@@ -67,6 +87,33 @@
         <input type="text" id="userSearch" placeholder="Search @username or user ID…" autocomplete="off">
         <button class="btn btn-secondary" id="btnRefresh" type="button">Refresh</button>
         <button class="btn btn-primary" id="btnExportCsv" type="button">Export CSV (this tab)</button>
+        <button class="btn btn-secondary" id="btnStaffUnlock" type="button">Unlock rewards</button>
+        <button class="btn btn-primary" id="btnConnectWallet" type="button" style="display:none">Connect wallet</button>
+        <span class="staff-wallet" id="staffWalletLabel" style="display:none"></span>
+        <span class="staff-locked-hint" id="staffHint">Staff: unlock to send $MT rewards</span>
+    </div>
+
+    <div id="rewardModal" class="reward-modal" aria-hidden="true">
+        <div class="reward-modal-inner">
+            <h3 id="rewardModalTitle">Reward member</h3>
+            <p id="rewardModalMeta"></p>
+            <label for="rewardAmount">Amount ($MT)</label>
+            <input type="number" id="rewardAmount" min="0.000001" step="0.000001" placeholder="e.g. 500">
+            <div class="reward-presets">
+                <button type="button" data-amt="100">100</button>
+                <button type="button" data-amt="500">500</button>
+                <button type="button" data-amt="1000">1,000</button>
+                <button type="button" data-amt="5000">5,000</button>
+                <button type="button" data-amt="10000">10,000</button>
+            </div>
+            <label for="rewardNote">Note (optional)</label>
+            <input type="text" id="rewardNote" maxlength="200" placeholder="e.g. Daily top talker">
+            <div class="reward-actions">
+                <button class="btn btn-secondary" id="rewardCancel" type="button">Cancel</button>
+                <button class="btn btn-primary" id="rewardConfirm" type="button">Send $MT</button>
+            </div>
+            <div class="reward-status" id="rewardStatus"></div>
+        </div>
     </div>
 
     <div class="tabs">
@@ -221,9 +268,12 @@
             }
 
             const showTrend = period === 'daily' && prevMap && Object.keys(prevMap).length > 0;
+            const showReward = window.mtStaff && window.mtStaff.unlocked;
             let html = '<table><thead><tr><th>#</th><th>ID</th><th>Username</th>';
             if (showTrend) html += '<th>Trend</th>';
-            html += '<th>Messages</th></tr></thead><tbody>';
+            html += '<th>Messages</th>';
+            if (showReward) html += '<th class="reward-col">Reward</th>';
+            html += '</tr></thead><tbody>';
 
             rows.forEach((row, i) => {
                 const cnt = row.message_count ?? row.total_message_count;
@@ -235,7 +285,13 @@
                     <td class="user-id">${row.user_id}</td>
                     <td class="username" title="${esc(row.username)}">${esc(row.username)}${wasFirst ? '<span class="badge-yesterday" title="#1 yesterday">★ was #1</span>' : ''}</td>`;
                 if (showTrend) html += `<td>${trendHtml(rank, row.user_id, prevMap)}</td>`;
-                html += `<td class="message-count"><span style="color:${color}">${cnt}</span>${rank <= 3 ? ` <span style="color:${color};font-size:0.8em">${medal(rank)}</span>` : ''}</td></tr>`;
+                html += `<td class="message-count"><span style="color:${color}">${cnt}</span>${rank <= 3 ? ` <span style="color:${color};font-size:0.8em">${medal(rank)}</span>` : ''}</td>`;
+                if (showReward) {
+                    const plat = platform === 'discord' ? 'discord' : 'telegram';
+                    const encUser = encodeURIComponent(row.username || '');
+                    html += `<td class="reward-col"><button type="button" class="btn-reward" data-platform="${plat}" data-user-id="${esc(String(row.user_id))}" data-username="${encUser}">Reward</button></td>`;
+                }
+                html += '</tr>';
             });
             html += '</tbody></table>';
             $(container).html(html);
@@ -440,12 +496,316 @@
             openTab('Custom');
         });
 
+        window.mtStaff = window.mtStaff || { unlocked: false, staffKey: null, wallet: null };
+        try {
+            const saved = sessionStorage.getItem('mt_tally_staff_key');
+            if (saved) {
+                window.mtStaff.unlocked = true;
+                window.mtStaff.staffKey = saved;
+            }
+        } catch (e) {}
+
+        function refreshStaffChrome() {
+            const s = window.mtStaff;
+            const unlocked = !!s.unlocked;
+            $('#btnStaffUnlock').text(unlocked ? 'Staff unlocked' : 'Unlock rewards');
+            $('#btnConnectWallet').toggle(unlocked);
+            $('#staffHint').toggle(!unlocked);
+            if (unlocked && s.wallet) {
+                $('#staffWalletLabel').show().text('Wallet: ' + s.wallet.slice(0, 4) + '…' + s.wallet.slice(-4));
+            } else {
+                $('#staffWalletLabel').toggle(unlocked && !!s.wallet);
+            }
+            if (window.mtReward && window.mtReward.onStaffChange) window.mtReward.onStaffChange();
+            rerenderAll();
+        }
+
+        $('#btnStaffUnlock').on('click', function () {
+            if (window.mtStaff.unlocked) {
+                if (!confirm('Lock staff reward tools?')) return;
+                window.mtStaff.unlocked = false;
+                window.mtStaff.staffKey = null;
+                try { sessionStorage.removeItem('mt_tally_staff_key'); } catch (e) {}
+                refreshStaffChrome();
+                return;
+            }
+            const key = prompt('Staff key (mods / admins / managers):');
+            if (!key) return;
+            fetch('/api/wallet-lookup?platform=telegram&user_id=1&staff_key=' + encodeURIComponent(key))
+                .then(r => r.status === 401 ? Promise.reject() : r.json())
+                .then(() => {
+                    window.mtStaff.unlocked = true;
+                    window.mtStaff.staffKey = key;
+                    try { sessionStorage.setItem('mt_tally_staff_key', key); } catch (e) {}
+                    refreshStaffChrome();
+                })
+                .catch(() => alert('Invalid staff key.'));
+        });
+
+        $(document).on('click', '.btn-reward', function () {
+            if (!window.mtStaff.unlocked) return alert('Unlock staff rewards first.');
+            if (!window.mtReward) return alert('Reward module still loading — try again in a moment.');
+            const $btn = $(this);
+            let uname = '';
+            try { uname = decodeURIComponent($btn.attr('data-username') || ''); } catch (e) { uname = $btn.attr('data-username') || ''; }
+            window.mtReward.openForRow({
+                platform: $btn.data('platform'),
+                userId: String($btn.data('user-id')),
+                username: uname
+            });
+        });
+
+        refreshStaffChrome();
+
         const today = melbourneToday();
         fpStart.setDate(today);
         fpEnd.setDate(today);
         updateAll();
         setInterval(updateAll, 300000);
     })();
+    </script>
+    <script type="module">
+    import { Connection, PublicKey, Transaction } from 'https://esm.sh/@solana/web3.js@1.98.4';
+    import {
+        getAssociatedTokenAddress,
+        createAssociatedTokenAccountInstruction,
+        createTransferInstruction,
+        getAccount,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    } from 'https://esm.sh/@solana/spl-token@0.4.13';
+
+    const MT_MINT = new PublicKey('ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump');
+    const MT_DECIMALS = 6;
+    const RPC = 'https://api.mainnet-beta.solana.com';
+    const connection = new Connection(RPC, 'confirmed');
+
+    let pendingReward = null;
+    let walletProvider = null;
+
+    function staffKey() {
+        return window.mtStaff?.staffKey || null;
+    }
+
+    function getProvider() {
+        if (window.solana?.isPhantom) return { name: 'phantom', provider: window.solana };
+        if (window.solflare?.isSolflare) return { name: 'solflare', provider: window.solflare };
+        return null;
+    }
+
+    async function connectWallet() {
+        const p = getProvider();
+        if (!p) {
+            alert('Install Phantom or Solflare, then refresh this page.');
+            return false;
+        }
+        try {
+            const resp = await p.provider.connect();
+            const addr = resp.publicKey.toString();
+            window.mtStaff.wallet = addr;
+            walletProvider = p.provider;
+            document.getElementById('btnConnectWallet').textContent = 'Connected';
+            document.getElementById('staffWalletLabel').style.display = 'inline';
+            document.getElementById('staffWalletLabel').textContent = 'Wallet: ' + addr.slice(0, 4) + '…' + addr.slice(-4);
+            return true;
+        } catch (e) {
+            if (e?.code !== 4001) alert('Wallet connect failed: ' + (e?.message || e));
+            return false;
+        }
+    }
+
+    function closeModal() {
+        const m = document.getElementById('rewardModal');
+        m.classList.remove('open');
+        m.setAttribute('aria-hidden', 'true');
+        pendingReward = null;
+        document.getElementById('rewardStatus').textContent = '';
+        document.getElementById('rewardStatus').classList.remove('err');
+    }
+
+    function setStatus(msg, isErr) {
+        const el = document.getElementById('rewardStatus');
+        el.textContent = msg;
+        el.classList.toggle('err', !!isErr);
+    }
+
+    async function lookupWallet(platform, userId) {
+        const key = staffKey();
+        if (!key) throw new Error('Staff session expired — unlock again.');
+        const res = await fetch(
+            '/api/wallet-lookup?platform=' + encodeURIComponent(platform) +
+            '&user_id=' + encodeURIComponent(userId) +
+            '&staff_key=' + encodeURIComponent(key)
+        );
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Lookup failed');
+        return data;
+    }
+
+    async function sendMtReward(recipientWallet, amountMt, note) {
+        if (!walletProvider || !window.mtStaff.wallet) {
+            const ok = await connectWallet();
+            if (!ok) throw new Error('Connect your rewards wallet first.');
+        }
+        const sender = new PublicKey(window.mtStaff.wallet);
+        const recipient = new PublicKey(recipientWallet);
+        const transaction = new Transaction();
+
+        const senderAta = await getAssociatedTokenAddress(MT_MINT, sender, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+        const recipientAta = await getAssociatedTokenAddress(MT_MINT, recipient, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+
+        try {
+            await getAccount(connection, recipientAta);
+        } catch {
+            transaction.add(
+                createAssociatedTokenAccountInstruction(
+                    sender, recipientAta, recipient, MT_MINT, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID
+                )
+            );
+        }
+
+        const raw = BigInt(Math.round(amountMt * Math.pow(10, MT_DECIMALS)));
+        if (raw <= 0n) throw new Error('Enter a valid $MT amount.');
+
+        transaction.add(
+            createTransferInstruction(senderAta, recipientAta, sender, raw, [], TOKEN_PROGRAM_ID)
+        );
+
+        const bhRes = await fetch('/api/solana/blockhash');
+        const bhData = await bhRes.json();
+        if (bhData.error) throw new Error(bhData.error);
+        transaction.recentBlockhash = bhData.blockhash;
+        transaction.feePayer = sender;
+
+        setStatus('Approve the transaction in your wallet…');
+        const signed = await walletProvider.signTransaction(transaction);
+        const sig = await connection.sendRawTransaction(signed.serialize(), {
+            skipPreflight: false,
+            preflightCommitment: 'confirmed'
+        });
+
+        setStatus('Confirming on-chain…');
+        try {
+            await connection.confirmTransaction({
+                blockhash: bhData.blockhash,
+                lastValidBlockHeight: bhData.lastValidBlockHeight,
+                signature: sig
+            }, 'confirmed');
+        } catch (confErr) {
+            const st = await connection.getSignatureStatus(sig);
+            const ok = st.value?.confirmationStatus === 'confirmed' || st.value?.confirmationStatus === 'finalized';
+            if (!ok) throw confErr;
+        }
+
+        return sig;
+    }
+
+    async function logReward(payload) {
+        const key = staffKey();
+        if (!key) return;
+        await fetch('/api/reward-log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Staff-Key': key },
+            body: JSON.stringify(payload)
+        });
+    }
+
+    async function openForRow({ platform, userId, username }) {
+        if (!window.mtStaff?.unlocked) return alert('Unlock staff rewards first.');
+        if (!walletProvider && !window.mtStaff.wallet) {
+            const ok = await connectWallet();
+            if (!ok) return;
+        }
+
+        setStatus('Looking up linked wallet…', false);
+        document.getElementById('rewardModal').classList.add('open');
+        document.getElementById('rewardModal').setAttribute('aria-hidden', 'false');
+        document.getElementById('rewardModalTitle').textContent = 'Reward ' + (username ? '@' + username : 'member');
+        document.getElementById('rewardAmount').value = '';
+        document.getElementById('rewardNote').value = platform === 'discord' ? 'Discord leaderboard reward' : 'Telegram leaderboard reward';
+
+        try {
+            const info = await lookupWallet(platform, userId);
+            if (!info.linked || !info.wallet_address) {
+                document.getElementById('rewardModalMeta').innerHTML =
+                    '<strong>No wallet on file</strong> for this ' + platform + ' user (ID ' + userId + '). They need to link via the portal / bot first.';
+                document.getElementById('rewardConfirm').disabled = true;
+                pendingReward = null;
+                setStatus('', false);
+                return;
+            }
+            document.getElementById('rewardConfirm').disabled = false;
+            document.getElementById('rewardModalMeta').innerHTML =
+                'Send <strong>$MT</strong> from your connected wallet to:<br>' +
+                '<span style="font-family:monospace;font-size:12px">' + info.wallet_address + '</span><br>' +
+                (info.verified ? '✓ Verified member' : 'Member not verified in DB');
+            pendingReward = {
+                platform,
+                userId,
+                username: info.username || username,
+                wallet: info.wallet_address
+            };
+            setStatus('', false);
+        } catch (e) {
+            document.getElementById('rewardModalMeta').textContent = '';
+            setStatus(e.message || 'Could not load wallet', true);
+            document.getElementById('rewardConfirm').disabled = true;
+            pendingReward = null;
+        }
+    }
+
+    document.getElementById('btnConnectWallet').addEventListener('click', connectWallet);
+    document.getElementById('rewardCancel').addEventListener('click', closeModal);
+    document.getElementById('rewardModal').addEventListener('click', e => {
+        if (e.target.id === 'rewardModal') closeModal();
+    });
+    document.querySelectorAll('.reward-presets button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('rewardAmount').value = btn.getAttribute('data-amt');
+        });
+    });
+
+    document.getElementById('rewardConfirm').addEventListener('click', async () => {
+        if (!pendingReward) return;
+        const amount = parseFloat(document.getElementById('rewardAmount').value);
+        if (!amount || amount <= 0) return setStatus('Enter a valid $MT amount.', true);
+        const note = document.getElementById('rewardNote').value.trim();
+        const btn = document.getElementById('rewardConfirm');
+        btn.disabled = true;
+        try {
+            const sig = await sendMtReward(pendingReward.wallet, amount, note);
+            await logReward({
+                platform: pendingReward.platform,
+                user_id: pendingReward.userId,
+                username: pendingReward.username,
+                recipient_wallet: pendingReward.wallet,
+                amount_mt: amount,
+                tx_signature: sig,
+                sender_wallet: window.mtStaff.wallet,
+                note: note || null
+            });
+            setStatus('Sent! Tx: ' + sig, false);
+            setTimeout(closeModal, 3500);
+        } catch (e) {
+            if (e?.code === 4001 || String(e?.message || '').includes('User rejected')) {
+                setStatus('Transaction cancelled in wallet.', true);
+            } else {
+                setStatus('Failed: ' + (e?.message || e), true);
+            }
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    window.mtReward = {
+        openForRow,
+        onStaffChange() {},
+        connectWallet
+    };
+
+    if (window.mtStaff?.unlocked && window.mtStaff?.wallet) {
+        walletProvider = getProvider()?.provider || null;
+    }
     </script>
 </body>
 </html>
