@@ -45,6 +45,22 @@ async function getConnection(): Promise<Connection> {
 }
 
 let cachedKeypair: Keypair | null | undefined;
+let cachedEnabled: boolean | undefined;
+
+async function isTreasuryEnabled(): Promise<boolean> {
+  if (cachedEnabled !== undefined) return cachedEnabled;
+  if (process.env.REWARDS_TREASURY_DISABLED === 'true') {
+    cachedEnabled = false;
+    return false;
+  }
+  const dbFlag = await getSettingValue('rewards_treasury_enabled');
+  if (dbFlag === 'false') {
+    cachedEnabled = false;
+    return false;
+  }
+  cachedEnabled = true;
+  return true;
+}
 
 function keypairFromRaw(raw: string): Keypair | null {
   const trimmed = raw.trim();
@@ -64,6 +80,11 @@ function keypairFromRaw(raw: string): Keypair | null {
 export async function getTreasuryKeypair(): Promise<Keypair | null> {
   if (cachedKeypair !== undefined) return cachedKeypair;
 
+  if (!(await isTreasuryEnabled())) {
+    cachedKeypair = null;
+    return null;
+  }
+
   const envRaw =
     process.env.REWARDS_TREASURY_PRIVATE_KEY ||
     process.env.REWARDS_TREASURY_SECRET_KEY ||
@@ -79,8 +100,14 @@ export async function getTreasuryKeypair(): Promise<Keypair | null> {
 }
 
 export async function treasuryConfigured(): Promise<boolean> {
+  if (!(await isTreasuryEnabled())) return false;
   const kp = await getTreasuryKeypair();
   return kp !== null;
+}
+
+export async function treasuryPauseMessage(): Promise<string | null> {
+  if (await isTreasuryEnabled()) return null;
+  return 'On-chain claims are temporarily paused while the rewards wallet is being rotated. Your balance is saved.';
 }
 
 export async function getTreasurySolBalance(): Promise<number> {

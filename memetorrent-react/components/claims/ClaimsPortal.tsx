@@ -32,7 +32,7 @@ export default function ClaimsPortal() {
   const [claiming, setClaiming] = useState(false);
   const [success, setSuccess] = useState<{ amount: number; tx: string; solscan: string } | null>(null);
   const [summary, setSummary] = useState({ pending: 0, withBalance: 0, total: 0 });
-  const [treasuryReady, setTreasuryReady] = useState(true);
+  const [treasuryReady, setTreasuryReady] = useState(false);
   const [feeHint, setFeeHint] = useState<string | null>(null);
   const [selectedWallet, setSelectedWallet] = useState('Phantom');
   const [showAllMembers, setShowAllMembers] = useState(false);
@@ -84,7 +84,10 @@ export default function ClaimsPortal() {
       total: data.summary?.total_users || 0,
     });
     if (!data.treasury_configured) {
-      setStatus('Rewards wallet is being set up — balances show below; claims open once treasury is live.');
+      setStatus(
+        data.treasury_message ||
+          'On-chain claims are temporarily paused. Your $MT balance is saved — check back soon.'
+      );
       setStatusErr(false);
       setTreasuryReady(false);
     } else {
@@ -379,7 +382,9 @@ export default function ClaimsPortal() {
         </h1>
         <p className="mt-3 text-sm sm:text-base opacity-70 max-w-xl mx-auto leading-relaxed px-1">
           Connect the wallet you set with <code className="text-emerald-400">/setwallet</code> in Telegram.
-          You approve the claim in your wallet — you pay the small SOL fee, not our treasury.
+          {treasuryReady
+            ? ' You approve the claim in your wallet — you pay the small SOL fee, not our treasury.'
+            : ' On-chain claims are paused briefly while we rotate the rewards wallet — balances below are still yours.'}
         </p>
         <div className="mt-4 flex flex-col sm:flex-row flex-wrap justify-center gap-2 sm:gap-4 text-sm">
           <Link href="/tally.html" className="text-sky-400 hover:underline py-1">Leaderboard</Link>

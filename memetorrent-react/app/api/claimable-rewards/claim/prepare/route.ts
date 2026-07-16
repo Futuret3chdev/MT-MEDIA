@@ -1,11 +1,15 @@
 import { NextRequest } from 'next/server';
 import { getTrackingDb, getUserDb, WALLET_RE } from '@/lib/rewards-db';
-import { buildUserPaidClaimTransaction, treasuryConfigured } from '@/lib/treasury-send';
+import { buildUserPaidClaimTransaction, treasuryConfigured, treasuryPauseMessage } from '@/lib/treasury-send';
 
 export async function POST(request: NextRequest) {
-  if (!(await treasuryConfigured())) {
+  const paused = await treasuryPauseMessage();
+  if (paused || !(await treasuryConfigured())) {
     return Response.json(
-      { error: 'treasury_not_configured', message: 'Rewards wallet not set up yet. Try again soon.' },
+      {
+        error: paused ? 'treasury_paused' : 'treasury_not_configured',
+        message: paused || 'Rewards wallet not set up yet. Try again soon.',
+      },
       { status: 503 }
     );
   }

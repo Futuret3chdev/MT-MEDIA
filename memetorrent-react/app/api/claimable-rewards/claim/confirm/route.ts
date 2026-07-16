@@ -5,11 +5,15 @@ import {
   logReward,
   WALLET_RE,
 } from '@/lib/rewards-db';
-import { treasuryConfigured, verifyClaimTransaction } from '@/lib/treasury-send';
+import { treasuryConfigured, treasuryPauseMessage, verifyClaimTransaction } from '@/lib/treasury-send';
 
 export async function POST(request: NextRequest) {
-  if (!(await treasuryConfigured())) {
-    return Response.json({ error: 'treasury_not_configured' }, { status: 503 });
+  const paused = await treasuryPauseMessage();
+  if (paused || !(await treasuryConfigured())) {
+    return Response.json(
+      { error: paused ? 'treasury_paused' : 'treasury_not_configured', message: paused || undefined },
+      { status: 503 }
+    );
   }
 
   let body: any;

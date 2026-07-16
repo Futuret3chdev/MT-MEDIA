@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { geoBlockedResponse, isAdminAuthorized, isAustralianRequest } from '@/lib/admin-security';
 import { fetchAllClaimableUsers } from '@/lib/rewards-db';
-import { treasuryConfigured } from '@/lib/treasury-send';
+import { treasuryConfigured, treasuryPauseMessage } from '@/lib/treasury-send';
 
 export async function GET(request: NextRequest) {
   const isStaff = await isAdminAuthorized(request);
@@ -15,11 +15,14 @@ export async function GET(request: NextRequest) {
     const pendingTotal = withBalance.reduce((s, u) => s + u.claimable_mt, 0);
 
     const treasuryReady = await treasuryConfigured();
+    const treasuryPaused = await treasuryPauseMessage();
 
     const payload = {
       updated_at: new Date().toISOString(),
       treasury_configured: treasuryReady,
       treasury_can_send: treasuryReady,
+      treasury_paused: !!treasuryPaused,
+      treasury_message: treasuryPaused,
       user_pays_sol_fees: true,
       summary: {
         total_users: users.length,
