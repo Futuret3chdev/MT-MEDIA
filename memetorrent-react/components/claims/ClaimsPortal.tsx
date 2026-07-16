@@ -259,6 +259,61 @@ export default function ClaimsPortal() {
   );
   const memberPages = Math.max(1, Math.ceil(filteredMembers.length / MEMBERS_PER_PAGE));
 
+  const tableHead = (
+    <thead>
+      <tr className="text-left text-[11px] uppercase opacity-60 border-b border-white/10">
+        <th className="pb-2 pr-2">User</th>
+        <th className="pb-2 pr-2">Streak</th>
+        <th className="pb-2 pr-2">Check-ins</th>
+        <th className="pb-2 pr-2">Wallet</th>
+        <th className="pb-2 text-right">Claimable $MT</th>
+      </tr>
+    </thead>
+  );
+
+  function UserCard({ u, highlightYou }: { u: ClaimUser; highlightYou?: boolean }) {
+    const isYou = highlightYou && myRow?.user_id === u.user_id;
+    return (
+      <div
+        className={`rounded-xl border p-3.5 space-y-2 md:hidden ${
+          isYou ? 'border-emerald-400/40 bg-emerald-400/10' : 'border-white/10 bg-black/20'
+        } ${u.claimable_mt > 0 ? '' : 'opacity-80'}`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-medium truncate">@{u.username || 'user'}</div>
+            <div className="text-[11px] opacity-50">{u.user_id}</div>
+          </div>
+          <div className={`text-right font-semibold shrink-0 ${u.claimable_mt > 0 ? 'text-emerald-400' : 'opacity-50'}`}>
+            {u.claimable_mt > 0
+              ? `${u.claimable_mt.toLocaleString(undefined, { maximumFractionDigits: 2 })} $MT`
+              : '—'}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs opacity-80">
+          <div>
+            <span className="block opacity-50 uppercase tracking-wide text-[10px]">Streak</span>
+            {u.current_streak}d (max {u.max_streak})
+          </div>
+          <div>
+            <span className="block opacity-50 uppercase tracking-wide text-[10px]">Check-ins</span>
+            {u.total_checkins}
+          </div>
+          <div className="col-span-2">
+            <span className="block opacity-50 uppercase tracking-wide text-[10px]">Wallet</span>
+            {u.wallet_linked ? (
+              <span>
+                <span className="text-emerald-400">Linked</span> {u.wallet_short}
+              </span>
+            ) : (
+              <span className="opacity-50">None</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function UserRow({ u, highlightYou }: { u: ClaimUser; highlightYou?: boolean }) {
     const isYou = highlightYou && myRow?.user_id === u.user_id;
     return (
@@ -291,91 +346,112 @@ export default function ClaimsPortal() {
     );
   }
 
-  const tableHead = (
-    <thead>
-      <tr className="text-left text-[11px] uppercase opacity-60 border-b border-white/10">
-        <th className="pb-2 pr-2">User</th>
-        <th className="pb-2 pr-2">Streak</th>
-        <th className="pb-2 pr-2">Check-ins</th>
-        <th className="pb-2 pr-2">Wallet</th>
-        <th className="pb-2 text-right">Claimable $MT</th>
-      </tr>
-    </thead>
-  );
+  function MemberList({ users, highlightYou }: { users: ClaimUser[]; highlightYou?: boolean }) {
+    if (!users.length) {
+      return <p className="py-8 text-center opacity-50 text-sm">No matches</p>;
+    }
+    return (
+      <>
+        <div className="space-y-3 md:hidden">
+          {users.map((u) => (
+            <UserCard key={u.user_id} u={u} highlightYou={highlightYou} />
+          ))}
+        </div>
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm">
+            {tableHead}
+            <tbody>
+              {users.map((u) => (
+                <UserRow key={u.user_id} u={u} highlightYou={highlightYou} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    );
+  }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-14 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-4xl font-semibold tracking-tight bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
           Claim Your $MT Rewards
         </h1>
-        <p className="mt-3 text-sm sm:text-base opacity-70 max-w-xl mx-auto">
+        <p className="mt-3 text-sm sm:text-base opacity-70 max-w-xl mx-auto leading-relaxed px-1">
           Connect the wallet you set with <code className="text-emerald-400">/setwallet</code> in Telegram.
           You approve the claim in your wallet — you pay the small SOL fee, not our treasury.
         </p>
-        <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm">
-          <Link href="/tally.html" className="text-sky-400 hover:underline">Leaderboard</Link>
-          <a href="https://t.me/mod_futuret3ch_bot" className="text-sky-400 hover:underline" target="_blank" rel="noopener">Telegram Bot</a>
+        <div className="mt-4 flex flex-col sm:flex-row flex-wrap justify-center gap-2 sm:gap-4 text-sm">
+          <Link href="/tally.html" className="text-sky-400 hover:underline py-1">Leaderboard</Link>
+          <a href="https://t.me/mod_futuret3ch_bot" className="text-sky-400 hover:underline py-1" target="_blank" rel="noopener">Telegram Bot</a>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
         {[
           { label: 'Pending $MT', value: summary.pending.toLocaleString() },
           { label: 'With rewards', value: summary.withBalance },
           { label: 'Members', value: summary.total },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
-            <div className="text-xl sm:text-2xl font-semibold text-emerald-400">{s.value}</div>
-            <div className="text-[10px] sm:text-xs uppercase tracking-wide opacity-50 mt-1">{s.label}</div>
+          <div key={s.label} className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-semibold text-emerald-400">{s.value}</div>
+            <div className="text-[9px] sm:text-xs uppercase tracking-wide opacity-50 mt-1 leading-tight">{s.label}</div>
           </div>
         ))}
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-6 mb-6">
-        <div className="flex flex-wrap gap-2 items-center justify-center">
-          {wallets.map((w) => (
-            <button
-              key={w.adapter.name}
-              type="button"
-              onClick={() => setSelectedWallet(w.adapter.name)}
-              className={`px-3 py-1.5 rounded-lg text-xs border ${
-                selectedWallet === w.adapter.name
-                  ? 'border-emerald-400/60 bg-emerald-400/10'
-                  : 'border-white/20 hover:bg-white/5'
-              }`}
-            >
-              {w.adapter.name}
-            </button>
-          ))}
-          {!connected ? (
-            <button
-              type="button"
-              onClick={handleConnect}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 font-semibold text-sm"
-            >
-              Connect wallet
-            </button>
-          ) : (
-            <>
-              <span className="font-mono text-xs text-emerald-300">
-                {walletAddress?.slice(0, 4)}…{walletAddress?.slice(-4)}
-              </span>
-              <button type="button" onClick={() => disconnect()} className="px-3 py-1.5 rounded-lg text-xs border border-white/20">
-                Disconnect
+        <div className="flex flex-col gap-3 sm:gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {wallets.map((w) => (
+              <button
+                key={w.adapter.name}
+                type="button"
+                onClick={() => setSelectedWallet(w.adapter.name)}
+                className={`min-h-[44px] px-4 py-2 rounded-xl text-sm border touch-manipulation ${
+                  selectedWallet === w.adapter.name
+                    ? 'border-emerald-400/60 bg-emerald-400/10'
+                    : 'border-white/20 hover:bg-white/5 active:bg-white/10'
+                }`}
+              >
+                {w.adapter.name}
               </button>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={handleClaim}
-            disabled={!connected || !myRow || myRow.claimable_mt <= 0 || claiming || !treasuryReady}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 font-semibold text-sm disabled:opacity-40"
-          >
-            {myRow && myRow.claimable_mt > 0
-              ? `Claim ${myRow.claimable_mt.toLocaleString()} $MT`
-              : 'Claim my $MT'}
-          </button>
+            ))}
+          </div>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center justify-center">
+            {!connected ? (
+              <button
+                type="button"
+                onClick={handleConnect}
+                className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 font-semibold text-base touch-manipulation"
+              >
+                Connect wallet
+              </button>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-stretch sm:items-center">
+                <span className="font-mono text-sm text-emerald-300 text-center sm:text-left py-2">
+                  {walletAddress?.slice(0, 4)}…{walletAddress?.slice(-4)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => disconnect()}
+                  className="min-h-[44px] px-4 py-2 rounded-xl text-sm border border-white/20 touch-manipulation"
+                >
+                  Disconnect
+                </button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleClaim}
+              disabled={!connected || !myRow || myRow.claimable_mt <= 0 || claiming || !treasuryReady}
+              className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 font-semibold text-base disabled:opacity-40 touch-manipulation"
+            >
+              {myRow && myRow.claimable_mt > 0
+                ? `Claim ${myRow.claimable_mt.toLocaleString()} $MT`
+                : 'Claim my $MT'}
+            </button>
+          </div>
         </div>
         {feeHint && !statusErr && (
           <p className="mt-3 text-center text-xs opacity-60">{feeHint}</p>
@@ -400,16 +476,7 @@ export default function ClaimsPortal() {
           <h2 className="text-sm font-semibold text-emerald-300 mb-3">
             Members with rewards to claim ({withRewards.length})
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              {tableHead}
-              <tbody>
-                {withRewards.map((u) => (
-                  <UserRow key={u.user_id} u={u} highlightYou />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <MemberList users={withRewards} highlightYou />
         </div>
       )}
 
@@ -420,10 +487,10 @@ export default function ClaimsPortal() {
             setShowAllMembers((v) => !v);
             setMemberPage(0);
           }}
-          className="w-full flex items-center justify-between text-left text-sm font-medium opacity-80 hover:opacity-100 py-1"
+          className="w-full flex items-center justify-between gap-3 text-left text-sm font-medium opacity-80 hover:opacity-100 py-2 min-h-[44px] touch-manipulation"
         >
-          <span>All members ({(summary.total - withRewards.length).toLocaleString()}) — blank accounts last</span>
-          <span className="text-xs opacity-60">{showAllMembers ? 'Hide ▲' : 'Show ▼'}</span>
+          <span className="leading-snug">All members ({(summary.total - withRewards.length).toLocaleString()}) — blank accounts last</span>
+          <span className="text-xs opacity-60 shrink-0">{showAllMembers ? 'Hide ▲' : 'Show ▼'}</span>
         </button>
 
         {showAllMembers && (
@@ -436,38 +503,29 @@ export default function ClaimsPortal() {
                 setMemberPage(0);
               }}
               placeholder="Search @username or user ID…"
-              className="w-full mt-4 mb-4 px-4 py-2.5 rounded-xl border border-white/15 bg-black/40 text-sm focus:outline-none focus:border-violet-400/50"
+              className="w-full mt-4 mb-4 px-4 py-3 min-h-[48px] rounded-xl border border-white/15 bg-black/40 text-base sm:text-sm focus:outline-none focus:border-violet-400/50"
             />
-            <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
-              <table className="w-full text-sm">
-                {tableHead}
-                <tbody>
-                  {memberSlice.length === 0 ? (
-                    <tr><td colSpan={5} className="py-8 text-center opacity-50">No matches</td></tr>
-                  ) : (
-                    memberSlice.map((u) => <UserRow key={u.user_id} u={u} highlightYou />)
-                  )}
-                </tbody>
-              </table>
+            <div className="max-h-[min(70vh,420px)] overflow-y-auto -mx-1 px-1">
+              <MemberList users={memberSlice} highlightYou />
             </div>
             {memberPages > 1 && (
-              <div className="flex items-center justify-center gap-3 mt-4 text-xs opacity-70">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 mt-4 text-xs opacity-70">
                 <button
                   type="button"
                   disabled={memberPage === 0}
                   onClick={() => setMemberPage((p) => Math.max(0, p - 1))}
-                  className="px-3 py-1 rounded-lg border border-white/15 disabled:opacity-30"
+                  className="min-h-[44px] px-4 py-2 rounded-xl border border-white/15 disabled:opacity-30 touch-manipulation"
                 >
                   Prev
                 </button>
-                <span>
+                <span className="text-center py-2">
                   Page {memberPage + 1} of {memberPages}
                 </span>
                 <button
                   type="button"
                   disabled={memberPage >= memberPages - 1}
                   onClick={() => setMemberPage((p) => Math.min(memberPages - 1, p + 1))}
-                  className="px-3 py-1 rounded-lg border border-white/15 disabled:opacity-30"
+                  className="min-h-[44px] px-4 py-2 rounded-xl border border-white/15 disabled:opacity-30 touch-manipulation"
                 >
                   Next
                 </button>
