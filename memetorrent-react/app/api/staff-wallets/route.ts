@@ -5,10 +5,15 @@ const STAFF_KEY = process.env.STAFF_REWARD_KEY || 'Hiptonic1@@';
 /** Team treasury pubkeys staff may pay rewards from (configure in Vercel env). */
 const DEFAULT_WALLETS = [
   {
+    id: 'rewards',
+    label: 'Rewards treasury ($MT claims)',
+    address: '35hMAzLD99oag1RUjBTNUoJuwqso4xvKEYsWHsvjskqD',
+  },
+  {
     id: 'community',
     label: 'Community / donations pool',
-    address: '2apinmLPU1myd4aeM6ZdZNLkhqBBUfGSMrxy7xkRBsZu'
-  }
+    address: '2apinmLPU1myd4aeM6ZdZNLkhqBBUfGSMrxy7xkRBsZu',
+  },
 ];
 
 function verifyStaffKey(request: NextRequest): boolean {
