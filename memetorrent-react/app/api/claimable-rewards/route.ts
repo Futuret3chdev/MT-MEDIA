@@ -4,7 +4,7 @@ import { fetchAllClaimableUsers } from '@/lib/rewards-db';
 import { treasuryConfigured } from '@/lib/treasury-send';
 
 export async function GET(request: NextRequest) {
-  const isStaff = isAdminAuthorized(request);
+  const isStaff = await isAdminAuthorized(request);
   if (isStaff && !isAustralianRequest(request)) {
     return geoBlockedResponse();
   }

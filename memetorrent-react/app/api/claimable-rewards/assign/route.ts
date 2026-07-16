@@ -3,7 +3,7 @@ import { requireAdminApiAccess } from '@/lib/admin-security';
 import { getTrackingDb, getUserDb, logReward, WALLET_RE } from '@/lib/rewards-db';
 
 export async function POST(request: NextRequest) {
-  const denied = requireAdminApiAccess(request);
+  const denied = await requireAdminApiAccess(request);
   if (denied) return denied;
 
   let body: any;
