@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { Transaction } from '@solana/web3.js';
 import Link from 'next/link';
 
 type ClaimUser = {
@@ -22,7 +23,9 @@ type MyRow = {
 };
 
 export default function ClaimsPortal() {
-  const { publicKey, connected, connect, disconnect, select, wallets } = useWallet();
+  const { connection } = useConnection();
+  const { publicKey, connected, connect, disconnect, select, wallets, signTransaction, sendTransaction } =
+    useWallet();
   const [allUsers, setAllUsers] = useState<ClaimUser[]>([]);
   const [myRow, setMyRow] = useState<MyRow | null>(null);
   const [search, setSearch] = useState('');
@@ -32,6 +35,7 @@ export default function ClaimsPortal() {
   const [success, setSuccess] = useState<{ amount: number; tx: string; solscan: string } | null>(null);
   const [summary, setSummary] = useState({ pending: 0, withBalance: 0, total: 0 });
   const [treasuryReady, setTreasuryReady] = useState(true);
+  const [feeHint, setFeeHint] = useState<string | null>(null);
   const [selectedWallet, setSelectedWallet] = useState('Phantom');
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [memberPage, setMemberPage] = useState(0);
@@ -87,6 +91,11 @@ export default function ClaimsPortal() {
       setTreasuryReady(false);
     } else {
       setTreasuryReady(true);
+      setFeeHint(
+        data.user_pays_sol_fees
+          ? 'You pay a small SOL network fee when claiming (~0.00001 SOL, or ~0.002 SOL first time to open your $MT token account).'
+          : null
+      );
     }
   }, []);
 
@@ -140,29 +149,90 @@ export default function ClaimsPortal() {
 
   async function handleClaim() {
     if (!walletAddress || !myRow || myRow.claimable_mt <= 0) return;
+    if (!signTransaction && !sendTransaction) {
+      setStatus('Your wallet does not support signing — try Phantom, Solflare, or Backpack.');
+      setStatusErr(true);
+      return;
+    }
     setClaiming(true);
     setSuccess(null);
-    setStatus('Sending $MT to your wallet…');
+    setStatus('Preparing claim — approve in your wallet…');
     setStatusErr(false);
     try {
-      const res = await fetch('/api/claimable-rewards/claim', {
+      const prepRes = await fetch('/api/claimable-rewards/claim/prepare', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ wallet_address: walletAddress }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || data.error || 'Claim failed');
+      const prep = await prepRes.json();
+      if (!prepRes.ok) {
+        if (prep.error === 'use_prepare_confirm' || prepRes.status === 404) {
+          throw new Error(
+            'Claims are updating — refresh in a minute, then connect your wallet and approve the popup.'
+          );
+        }
+        throw new Error(prep.message || prep.error || 'Prepare failed');
+      }
+
+      if (prep.fee_note) setFeeHint(prep.fee_note);
+
+      const tx = Transaction.from(Buffer.from(prep.transaction_base64, 'base64'));
+      setStatus('Approve the transaction in your wallet…');
+
+      let sig: string;
+      if (sendTransaction) {
+        sig = await sendTransaction(tx, connection, {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+          maxRetries: 3,
+        });
+      } else {
+        const signed = await signTransaction!(tx);
+        setStatus('Submitting transaction…');
+        sig = await connection.sendRawTransaction(signed.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+          maxRetries: 3,
+        });
+      }
+
+      await connection.confirmTransaction(
+        {
+          signature: sig,
+          blockhash: prep.blockhash,
+          lastValidBlockHeight: prep.last_valid_block_height,
+        },
+        'confirmed'
+      );
+
+      const confirmRes = await fetch('/api/claimable-rewards/claim/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wallet_address: walletAddress,
+          tx_signature: sig,
+          sender_wallet: prep.sender_wallet,
+        }),
+      });
+      const data = await confirmRes.json();
+      if (!confirmRes.ok) throw new Error(data.message || data.error || 'Confirm failed');
+
       setSuccess({
         amount: data.amount_mt,
         tx: data.tx_signature,
         solscan: data.solscan_url,
       });
-      setStatus('Success! Balance updated on-chain.');
+      setStatus('Success! $MT sent — you paid the SOL network fee.');
       setStatusErr(false);
       await loadList();
       await matchWallet(walletAddress);
     } catch (e: any) {
-      setStatus(e.message || 'Claim failed');
+      const msg = e?.message || 'Claim failed';
+      if (msg.includes('User rejected') || msg.includes('rejected')) {
+        setStatus('Claim cancelled — no SOL charged, balance unchanged.');
+      } else {
+        setStatus(msg);
+      }
       setStatusErr(true);
     } finally {
       setClaiming(false);
@@ -234,7 +304,8 @@ export default function ClaimsPortal() {
           Claim Your $MT Rewards
         </h1>
         <p className="mt-3 text-sm sm:text-base opacity-70 max-w-xl mx-auto">
-          Connect the wallet you set with <code className="text-emerald-400">/setwallet</code> in Telegram — claim straight to your wallet.
+          Connect the wallet you set with <code className="text-emerald-400">/setwallet</code> in Telegram.
+          You approve the claim in your wallet — you pay the small SOL fee, not our treasury.
         </p>
         <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm">
           <Link href="/tally.html" className="text-sky-400 hover:underline">Leaderboard</Link>
@@ -300,6 +371,9 @@ export default function ClaimsPortal() {
               : 'Claim my $MT'}
           </button>
         </div>
+        {feeHint && !statusErr && (
+          <p className="mt-3 text-center text-xs opacity-60">{feeHint}</p>
+        )}
         {status && (
           <p className={`mt-3 text-center text-sm ${statusErr ? 'text-red-300' : 'text-emerald-300'}`}>{status}</p>
         )}

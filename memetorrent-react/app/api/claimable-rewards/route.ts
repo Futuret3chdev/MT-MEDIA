@@ -16,9 +16,13 @@ export async function GET(request: NextRequest) {
     const withBalance = users.filter((u) => u.claimable_mt > 0);
     const pendingTotal = withBalance.reduce((s, u) => s + u.claimable_mt, 0);
 
+    const treasuryReady = await treasuryConfigured();
+
     const payload = {
       updated_at: new Date().toISOString(),
-      treasury_configured: await treasuryConfigured(),
+      treasury_configured: treasuryReady,
+      treasury_can_send: treasuryReady,
+      user_pays_sol_fees: true,
       summary: {
         total_users: users.length,
         users_with_balance: withBalance.length,
