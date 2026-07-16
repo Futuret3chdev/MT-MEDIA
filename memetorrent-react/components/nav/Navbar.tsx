@@ -244,7 +244,7 @@ export default function Navbar() {
           <a href="https://twitter.com/MemeTorrent" target="_blank" rel="noopener" title="X / Twitter" style={{ color: '#1DA1F2' }}>
             <i className="fab fa-twitter text-lg sm:text-xl"></i>
           </a>
-          <a href="https://t.me/MemeTorrentPortal" target="_blank" rel="noopener" title="Telegram" style={{ color: '#26A5E4' }}>
+          <a href="https://t.me/+hxWzh5DZbfhiYWM9" target="_blank" rel="noopener" title="Telegram Portal" style={{ color: '#26A5E4' }}>
             <i className="fab fa-telegram text-lg sm:text-xl"></i>
           </a>
 
