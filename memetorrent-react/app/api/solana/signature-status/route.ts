@@ -1,8 +1,5 @@
 import { Connection } from '@solana/web3.js';
-
-function rpcUrl() {
-  return process.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-}
+import { getSolanaRpcUrl } from '@/lib/solana-rpc';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -11,7 +8,7 @@ export async function GET(request: Request) {
     return Response.json({ error: 'signature required' }, { status: 400 });
   }
 
-  const connection = new Connection(rpcUrl(), 'confirmed');
+  const connection = new Connection(getSolanaRpcUrl(), 'confirmed');
   try {
     const status = await connection.getSignatureStatus(signature);
     const value = status.value;

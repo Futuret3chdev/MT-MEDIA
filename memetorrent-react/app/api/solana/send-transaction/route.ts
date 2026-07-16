@@ -1,8 +1,5 @@
 import { Connection } from '@solana/web3.js';
-
-function rpcUrl() {
-  return process.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-}
+import { getSolanaRpcUrl } from '@/lib/solana-rpc';
 
 export async function POST(request: Request) {
   let body: { transaction?: string };
@@ -17,7 +14,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'transaction (base64) required' }, { status: 400 });
   }
 
-  const connection = new Connection(rpcUrl(), 'confirmed');
+  const connection = new Connection(getSolanaRpcUrl(), 'confirmed');
   try {
     const bytes = Buffer.from(raw, 'base64');
     const signature = await connection.sendRawTransaction(bytes, {
