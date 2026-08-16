@@ -81,7 +81,7 @@ export default function StudioPage() {
         <a href="/downloads/MTStudio-macos.zip" className="rounded-2xl p-4 border border-white/10">
           <div className="text-[11px] text-emerald-400 uppercase">Now</div>
           <div className="font-semibold">macOS</div>
-          <p className="text-xs opacity-70 mt-1">Apple Silicon zip. Right-click → Open first time.</p>
+          <p className="text-xs opacity-70 mt-1">Zip opens this page in your browser. If the .app errors, stay here — this is the studio.</p>
         </a>
         <a href="/downloads/MTStudio-macos-intel.zip" className="rounded-2xl p-4 border border-white/10">
           <div className="text-[11px] text-emerald-400 uppercase">Now</div>

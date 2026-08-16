@@ -1,63 +1,88 @@
 #!/usr/bin/env python3
-import shutil
+"""Pack MT Studio.app that only opens the web studio URL."""
 import tempfile
 import zipfile
 from pathlib import Path
 
+OUT = Path("/opt/mt-media/memetorrent-react/public/downloads")
+URL = "https://memetorrent.futuret3ch.com.au/studio"
+
+LAUNCHER = f"""#!/bin/bash
+open "{URL}"
+"""
+
 PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict>
-  <key>CFBundleName</key><string>MT Studio</string>
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
   <key>CFBundleDisplayName</key><string>MT Studio</string>
-  <key>CFBundleIdentifier</key><string>au.com.futuret3ch.mtstudio</string>
   <key>CFBundleExecutable</key><string>mtstudio</string>
+  <key>CFBundleIdentifier</key><string>au.com.futuret3ch.mtstudio</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleName</key><string>MT Studio</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>1.0.1</string>
+  <key>CFBundleVersion</key><string>2</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
-</dict></plist>
+  <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
 """
 
-HELPER = """#!/bin/bash
+COMMAND = f"""#!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
 APP="$DIR/MT Studio.app"
-xattr -dr com.apple.quarantine "$APP" "$DIR" 2>/dev/null || true
-open "$APP"
+BIN="$APP/Contents/MacOS/mtstudio"
+chmod +x "$BIN" "$DIR/Open MT Studio.command" 2>/dev/null
+xattr -dr com.apple.quarantine "$DIR" 2>/dev/null
+# Prefer opening the site directly — the .app is a convenience.
+open "{URL}"
 """
 
-HOWTO = """If macOS says the developer cannot be verified:
-Right-click MT Studio, Open.
-Or run Open MT Studio.command
-Or: xattr -dr com.apple.quarantine "MT Studio.app" && open "MT Studio.app"
+HOWTO = f"""MT Studio on Mac
+================
+The web studio is the real app:
+
+  {URL}
+
+If the .app fails (error -10661), double-click
+"Open MT Studio.command" — it opens Safari/Chrome to that URL.
+
+Or paste the URL in your browser. Sign in with the site account icon.
 """
 
 
-def pack(bin_path: str, zip_path: str) -> None:
+def write_zip(zip_path: Path) -> None:
     stage = Path(tempfile.mkdtemp())
     app = stage / "MT Studio.app"
-    (app / "Contents" / "MacOS").mkdir(parents=True)
-    (app / "Contents" / "Resources").mkdir(parents=True)
+    macos = app / "Contents" / "MacOS"
+    macos.mkdir(parents=True)
+    (app / "Contents" / "Resources").mkdir()
     (app / "Contents" / "Info.plist").write_text(PLIST)
-    dest = app / "Contents" / "MacOS" / "mtstudio"
-    shutil.copy(bin_path, dest)
-    dest.chmod(0o755)
     (app / "Contents" / "PkgInfo").write_bytes(b"APPL????")
+    exe = macos / "mtstudio"
+    exe.write_text(LAUNCHER)
+    exe.chmod(0o755)
     helper = stage / "Open MT Studio.command"
-    helper.write_text(HELPER)
+    helper.write_text(COMMAND)
     helper.chmod(0o755)
     (stage / "HOW-TO-OPEN.txt").write_text(HOWTO)
-    zpath = Path(zip_path)
-    with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
+    (stage / "Open Studio in Browser.txt").write_text(URL + "\n")
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for p in stage.rglob("*"):
             if not p.is_file():
                 continue
-            mode = 0o100755 if p.suffix == ".command" or p.name == "mtstudio" else 0o100644
-            zi = zipfile.ZipInfo.from_file(p, str(p.relative_to(stage)))
-            zi.external_attr = mode << 16
-            z.writestr(zi, p.read_bytes())
-    shutil.rmtree(stage)
-    print(zpath, zpath.stat().st_size)
+            rel = str(p.relative_to(stage))
+            mode = 0o100755 if p.name in {"mtstudio", "Open MT Studio.command"} else 0o100644
+            info = zipfile.ZipInfo(rel)
+            info.external_attr = mode << 16
+            info.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(info, p.read_bytes())
+    print(zip_path, zip_path.stat().st_size)
 
 
 if __name__ == "__main__":
-    pack("/tmp/mtstudio-arm64", "/opt/mt-media/memetorrent-react/public/downloads/MTStudio-macos.zip")
-    pack("/tmp/mtstudio-amd64", "/opt/mt-media/memetorrent-react/public/downloads/MTStudio-macos-intel.zip")
+    write_zip(OUT / "MTStudio-macos.zip")
+    write_zip(OUT / "MTStudio-macos-intel.zip")
