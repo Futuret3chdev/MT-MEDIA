@@ -66,7 +66,7 @@ export const CATALOG: CatalogGame[] = [
     name: 'Pocket',
     kind: 'multiplayer',
     status: 'live',
-    play: 'https://admin.futuret3ch.com.au/play/pocket/',
+    play: 'https://memetorrent.futuret3ch.com.au/games/pocket',
     img: '/games/covers/pocket.jpg',
     blurb: 'Live multiplayer pocket arena on our servers.',
   },
