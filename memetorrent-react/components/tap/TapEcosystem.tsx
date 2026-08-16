@@ -24,7 +24,7 @@ export default function TapEcosystem() {
           Games. Cover. Play.
         </div>
         <p className="max-w-2xl opacity-70 mb-8 sm:mb-10 text-sm sm:text-base">
-          Soccer Pro, Metro Vice, Starfleet and the rest of the library — image, name, play button.
+          Soccer Pro, Metro Vice, Starfleet and the rest of the library.
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-16">

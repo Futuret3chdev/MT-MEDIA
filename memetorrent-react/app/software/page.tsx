@@ -9,12 +9,12 @@ const sections = [
   {
     href: '/studio',
     title: 'Game Studio',
-    desc: 'Web publisher now. Android beta. Windows later. List titles into P2E and the portal library.',
+    desc: 'Login, catalog, $MT checkout and inventory for your titles.',
   },
   {
     href: '/chat',
     title: 'Crypto chat',
-    desc: 'Trades, general and support. Portal login. Not Telegram — our rooms, our account.',
+    desc: 'Trades, general and support rooms. Sign in with your portal account.',
   },
   {
     href: '/software/developers',
@@ -24,7 +24,7 @@ const sections = [
   {
     href: '/software/security',
     title: 'Security',
-    desc: 'Our own security software. Released here when ready — not through the community bot.',
+    desc: 'Security tools and downloads for the MT-ECO SYSTEM.',
   },
 ];
 

@@ -9,7 +9,7 @@ export default function GamesCatalogPage() {
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mt-4 mb-2">Catalog</div>
       <h1 className="text-4xl sm:text-5xl font-semibold tracking-[-1.6px] mb-3">All games</h1>
       <p className="opacity-70 max-w-2xl mb-8 text-sm">
-        Cover, name, play. Same shelf as TAP, P2E and the portal library.
+        The full MT game library.
       </p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {CATALOG.map((g) => (

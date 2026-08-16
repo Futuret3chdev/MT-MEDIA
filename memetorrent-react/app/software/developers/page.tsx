@@ -30,8 +30,7 @@ export default function SoftwareDevelopersPage() {
         One account. One license. Every MT site.
       </h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        Register or log in with the account icon. The free builder license is saved on
-        your portal profile — so another site does not ask you to sign up again.
+        Sign in to receive a free builder license on your portal profile. One account works across MT sites.
       </p>
 
       <div className="grid md:grid-cols-2 gap-4 mb-12">

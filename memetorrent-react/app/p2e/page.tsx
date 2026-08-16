@@ -18,7 +18,7 @@ export default function P2EPage() {
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mb-2">Play to earn</div>
       <h1 className="text-4xl sm:text-5xl font-semibold tracking-[-1.6px] mb-3">One library. Real games.</h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        MT WORLD is first. Then the rest of the shelf — cover, name, Play.
+        MT WORLD and the rest of the playable library.
       </p>
 
       <h2 className="text-xl font-semibold mb-4">MT WORLD</h2>

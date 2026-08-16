@@ -198,7 +198,7 @@ export default function PortalPage() {
                     Telegram {user.telegram_username ? `@${user.telegram_username}` : user.telegram_id || '—'}
                   </div>
                 </div>
-                <p className="text-xs opacity-50">Wallets live on the Wallet tab — Phantom now, Infinite Wallet when they sign up.</p>
+                <p className="text-xs opacity-50">Manage linked wallets on the Wallet tab.</p>
                 <button
                   onClick={saveProfile}
                   className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm"
@@ -247,8 +247,7 @@ export default function PortalPage() {
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Wallets</h2>
                 <p className="text-sm opacity-70">
-                  We already hold the wallet, Telegram and Discord on this profile.
-                  People can link more than one — Phantom now, Infinite Wallet when they create it.
+                  Link Phantom, Infinite Wallet, or another address to this account. Telegram and Discord stay on the profile.
                 </p>
                 <div className="grid sm:grid-cols-2 gap-3 text-sm">
                   <div className="rounded-xl border border-white/10 p-3">
@@ -368,7 +367,7 @@ export default function PortalPage() {
               {user.license_key || 'Issuing…'}
             </div>
             <p className="text-sm opacity-70">
-              Only people who switch to Developers need this. Regular users can ignore it.
+              Your builder license for Studio and game downloads.
             </p>
           </div>
           <div className="rounded-2xl p-6 border border-white/10" style={{ background: 'var(--card)' }}>
@@ -392,8 +391,7 @@ export default function PortalPage() {
         <div className="rounded-2xl p-6 border border-white/10 max-w-2xl" style={{ background: 'var(--card)' }}>
           <h2 className="text-xl font-semibold mb-2">Business portal</h2>
           <p className="text-sm opacity-70 mb-4">
-            For shops, partners and studios — listings, $MT checkout and staff seats. Same
-            login as users. This desk is opening next.
+            For shops, partners and studios — listings, $MT checkout and staff seats.
           </p>
           <a href="/contact" className="text-emerald-400 text-sm">
             Talk to us →

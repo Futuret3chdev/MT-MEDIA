@@ -7,15 +7,14 @@ export default function SoftwareSecurityPage() {
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mt-4 mb-2">Software · Security</div>
       <h1 className="text-4xl font-semibold tracking-tight mb-4">Security software.</h1>
       <p className="opacity-70 mb-8">
-        This is where Futuret3ch / MemeTorrent security products will be published.
-        Not through the group bot. Not as a one-off download page off to the side.
+        Security products from Futuret3ch and MemeTorrent.
       </p>
       <ul className="space-y-3 text-sm opacity-80 mb-8">
         <li>• Our own client and server security tools</li>
         <li>• Network protection we operate and sign</li>
         <li>• Downloads and docs when a release is ready</li>
       </ul>
-      <p className="text-sm opacity-70">Nothing to install yet. When a build is ready, it lands here.</p>
+      <p className="text-sm opacity-70">Releases will appear here.</p>
     </div>
   );
 }

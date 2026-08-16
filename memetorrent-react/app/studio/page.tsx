@@ -70,9 +70,9 @@ export default function StudioPage() {
         Monetize the game.<br />We handle login, catalog, pay, deliver.
       </h1>
       <p className="opacity-70 max-w-2xl mb-8 text-sm sm:text-base">
-        Like Xsolla — for this ecosystem. Players use the portal account and $MT.
-        Four API calls. No second backend. Infinite Wallet checkout is{' '}
-        <a href="https://mt.futuret3ch.com.au/" className="text-emerald-400">mt.futuret3ch.com.au</a>.
+        Players sign in with their portal account and pay in $MT. Four API calls cover
+        login, catalog, purchase and delivery. Checkout runs through{' '}
+        <a href="https://mt.futuret3ch.com.au/" className="text-emerald-400">Infinite Wallet</a>.
       </p>
 
       <div className="grid sm:grid-cols-4 gap-3 mb-10">
@@ -93,7 +93,7 @@ export default function StudioPage() {
         <div className="rounded-2xl border border-white/10 p-5">
           <h2 className="font-semibold text-xl mb-2">Live explorer</h2>
           <p className="text-xs opacity-60 mb-3">
-            {user ? `Signed in as ${user}` : 'Sign in with 👤 — same as the rest of the site.'}
+            {user ? `Signed in as ${user}` : 'Sign in to create a project and test checkout.'}
           </p>
           <pre className="text-[11px] bg-black/50 rounded-xl p-3 overflow-auto mb-3 whitespace-pre-wrap">{SNIPPET}</pre>
           <div className="flex flex-wrap gap-2 mb-3">
@@ -176,11 +176,11 @@ export default function StudioPage() {
         </div>
         <div className="rounded-2xl border border-white/10 p-4">
           <div className="font-semibold mb-1">$MT checkout</div>
-          <p className="opacity-60">Price in $MT. Orders stored. Chain settle comes next on Infinite Wallet.</p>
+          <p className="opacity-60">Items are priced in $MT. Orders and inventory are recorded on the account.</p>
         </div>
         <div className="rounded-2xl border border-white/10 p-4">
           <div className="font-semibold mb-1">Prototype kit</div>
-          <p className="opacity-60 mb-2">Need a playable mock? The level editor is still here.</p>
+          <p className="opacity-60 mb-2">Build and playtest a prototype level.</p>
           <Link href="/studio/maker" className="text-emerald-400">Open maker →</Link>
         </div>
       </div>

@@ -16,8 +16,7 @@ export default function CasinoPage() {
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mb-2">Casino</div>
       <h1 className="text-4xl font-semibold tracking-tight mb-3">Our house. Our tables.</h1>
       <p className="opacity-70 max-w-2xl mb-8 text-sm">
-        Third-party tables are out. Casino games we build will land here. Until then,
-        play our P2E titles — cover, name, Play.
+        House tables and the playable library. Same catalog as Games.
       </p>
       <h2 className="font-semibold mb-4">Playable now</h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

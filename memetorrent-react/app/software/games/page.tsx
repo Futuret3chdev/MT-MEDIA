@@ -29,8 +29,7 @@ export default function SoftwareGamesPage() {
         Game software you can download.
       </h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        Android is live for licensed developers. Allow installs from this browser,
-        then open the APK. iOS, Windows and Mac stay later.
+        Download the Android client with a developer license. iOS, Windows and macOS builds follow.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -42,7 +41,7 @@ export default function SoftwareGamesPage() {
             </span>
           </div>
           <p className="text-sm opacity-70 mb-5">
-            MT Games 0.1 — tap-orb demo client. Sideload the APK after you have a free license.
+            MT Games for Android. Requires a developer license.
           </p>
           {licensed ? (
             <div className="space-y-3">
@@ -66,9 +65,9 @@ export default function SoftwareGamesPage() {
         </div>
 
         {[
-          ['iOS', 'App Store build after Android is stable.'],
-          ['Windows', 'Desktop client once the Android loop is proven.'],
-          ['macOS', 'Signed Mac build comes after Windows.'],
+          ['iOS', 'App Store client.'],
+          ['Windows', 'Desktop client.'],
+          ['macOS', 'Mac client.'],
         ].map(([name, note]) => (
           <div key={name} className="rounded-2xl p-6 border border-white/10" style={{ background: 'var(--card)' }}>
             <div className="flex items-center justify-between gap-3 mb-2">
