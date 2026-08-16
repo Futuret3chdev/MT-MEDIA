@@ -26,7 +26,7 @@ export const CATALOG: CatalogGame[] = [
     name: 'MT WORLD — Gallery',
     kind: 'multiplayer',
     status: 'live',
-    play: 'https://admin.futuret3ch.com.au/play/gallery/',
+    play: 'https://futuret3ch.com.au/software/gallery/',
     img: '/games/covers/gallery.jpg',
     blurb: 'Walk the gallery with other players. Hang art. Live room.',
   },
