@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         'SELECT id FROM mt_studio_projects WHERE email = ? ORDER BY id DESC LIMIT 1',
         [user.email]
       );
-      const project = (proj as { id: unknown }[])[0];
+      const project = (proj as { id: string | number }[])[0];
       if (!project) return Response.json({ ok: false, error: 'Create a project first' }, { status: 400 });
       const sku = String(body.sku || '').trim().slice(0, 64);
       const name = String(body.name || '').trim().slice(0, 80);
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       if (!sku || !name) return Response.json({ ok: false, error: 'SKU and name required' }, { status: 400 });
       await conn.execute(
         'INSERT INTO mt_studio_items (project_id, sku, name, price_mt, kind) VALUES (?,?,?,?,?)',
-        [project.id, sku, name, price, String(body.kind || 'item').slice(0, 24)]
+        [String(project.id), sku, name, price, String(body.kind || 'item').slice(0, 24)]
       );
       return Response.json({ ok: true });
     }
@@ -79,11 +79,11 @@ export async function POST(request: NextRequest) {
         'SELECT i.sku, i.name, i.price_mt, i.project_id FROM mt_studio_items i WHERE i.sku = ? LIMIT 1',
         [sku]
       );
-      const item = (found as { sku: string; price_mt: number; project_id: unknown }[])[0];
+      const item = (found as { sku: string; price_mt: number; project_id: string | number }[])[0];
       if (!item) return Response.json({ ok: false, error: 'Unknown SKU' }, { status: 404 });
       await conn.execute(
         'INSERT INTO mt_studio_orders (project_id, buyer_email, sku, price_mt, status) VALUES (?,?,?,?,?)',
-        [item.project_id, user.email, item.sku, item.price_mt, 'paid']
+        [String(item.project_id), user.email, item.sku, item.price_mt, 'paid']
       );
       await conn.execute(
         `INSERT INTO mt_studio_inventory (buyer_email, sku, qty) VALUES (?,?,1)
