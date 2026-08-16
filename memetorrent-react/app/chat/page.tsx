@@ -17,7 +17,17 @@ type Msg = {
 };
 type Chan = { slug: string; name: string; kind: string; gate_note: string | null };
 
-function UserTip({ name }: { name: string }) {
+function UserTip({
+  name,
+  me,
+  isFriend,
+  onAdded,
+}: {
+  name: string;
+  me?: string;
+  isFriend?: boolean;
+  onAdded?: () => void;
+}) {
   const [card, setCard] = useState<null | {
     username: string;
     bio: string | null;
@@ -27,6 +37,38 @@ function UserTip({ name }: { name: string }) {
     wallets: { kind: string; address: string }[];
   }>(null);
   const [on, setOn] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(!!isFriend);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const wrapRef = useRef<HTMLSpanElement>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const place = () => {
+    const r = wrapRef.current?.getBoundingClientRect();
+    if (!r) return;
+    setPos({
+      top: r.bottom - 2,
+      left: Math.max(8, Math.min(r.left, window.innerWidth - 280)),
+    });
+  };
+
+  const show = () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    place();
+    setOn(true);
+  };
+
+  const hideSoon = () => {
+    if (pinned) return;
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setOn(false), 320);
+  };
+
+  useEffect(() => {
+    setAdded(!!isFriend);
+  }, [isFriend]);
+
   useEffect(() => {
     if (!on || name.startsWith('0xStealth') || name === 'sdk') return;
     fetch(`/api/chat/profile?username=${encodeURIComponent(name)}`)
@@ -34,13 +76,61 @@ function UserTip({ name }: { name: string }) {
       .then((d) => d.ok && setCard(d.profile))
       .catch(() => {});
   }, [on, name]);
+
+  useEffect(() => () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+  }, []);
+
+  const add = async () => {
+    setAdding(true);
+    try {
+      const res = await fetch('/api/chat/friends', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: name }),
+      });
+      const d = await res.json();
+      if (d.ok) {
+        setAdded(true);
+        onAdded?.();
+      }
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const self = !!me && name === me;
+
   return (
-    <span className="relative inline-block" onMouseEnter={() => setOn(true)} onMouseLeave={() => setOn(false)}>
-      <button type="button" className="text-emerald-400" onClick={() => setOn((v) => !v)}>
+    <span
+      ref={wrapRef}
+      className="relative inline-block"
+      onMouseEnter={show}
+      onMouseLeave={hideSoon}
+    >
+      <button
+        type="button"
+        className="text-emerald-400"
+        onClick={() => {
+          if (on && pinned) {
+            setPinned(false);
+            setOn(false);
+            return;
+          }
+          setPinned(true);
+          show();
+        }}
+      >
         {name}
       </button>
       {on && (
-        <div className="absolute z-30 left-0 top-5 w-64 rounded-2xl border border-white/15 bg-[#12141c] p-3 text-left shadow-xl">
+        <div
+          className="fixed z-[80] w-64 rounded-2xl border border-white/15 bg-[#12141c] p-3 text-left shadow-xl"
+          style={{ top: pos.top, left: pos.left }}
+          onMouseEnter={show}
+          onMouseLeave={hideSoon}
+        >
           {!card ? (
             <div className="text-xs opacity-50">Loading…</div>
           ) : (
@@ -63,6 +153,16 @@ function UserTip({ name }: { name: string }) {
                   </div>
                 ))}
               </div>
+              {!self && !name.startsWith('0xStealth') && (
+                <button
+                  type="button"
+                  disabled={adding || added}
+                  onClick={add}
+                  className="mt-3 w-full py-2 rounded-xl bg-emerald-400 text-black text-xs font-semibold disabled:opacity-50"
+                >
+                  {added ? 'Added' : adding ? 'Adding…' : 'Add'}
+                </button>
+              )}
             </>
           )}
         </div>
@@ -439,7 +539,16 @@ function ChatInner() {
                   {m.avatar_url && (
                     <img src={m.avatar_url} alt="" className="w-5 h-5 rounded-md object-cover" />
                   )}
-                  <UserTip name={m.username} />
+                  <UserTip
+                    name={m.username}
+                    me={who}
+                    isFriend={friends.some((f) => f.username === m.username)}
+                    onAdded={() => {
+                      fetch('/api/chat/friends', { credentials: 'include' })
+                        .then((r) => r.json())
+                        .then((d) => setFriends(d.friends || []));
+                    }}
+                  />
                   {m.no_forward ? ' · no forward' : ''}
                   {m.burn_at ? ' · burns' : ''}{' '}
                   <span className="opacity-40">{new Date(m.created_at).toLocaleTimeString()}</span>
