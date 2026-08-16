@@ -182,7 +182,6 @@ export default function Navbar() {
               CLAIM $MT
             </a>
             <a href="/software" className="opacity-70 hover:opacity-100">SOFTWARE</a>
-            <a href="/contact" className="opacity-70 hover:opacity-100">CONTACT</a>
           </div>
 
           {/* Status icon (replaces Launch) — pulls live summary from /status services.json */}
@@ -234,8 +233,8 @@ export default function Navbar() {
             CLAIM $MT
           </a>
           <a href="/software" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SOFTWARE</a>
-          <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
           <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
+          <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
           <a href="/status" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">Status</a>
           <button 
             onClick={() => { setMobileMenuOpen(false); setShowBuyPanel(true); }}
