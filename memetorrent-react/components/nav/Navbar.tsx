@@ -223,19 +223,6 @@ export default function Navbar() {
             <span>Status <span className="text-[#19d37e]">{servicesData.services.length}/7</span></span>
           </a>
 
-          {/* Unified account icon (replaces separate Login + Register) */}
-          <button 
-            onClick={() => (portalUser ? (window.location.href = '/portal') : openAuth('login'))} 
-            className="opacity-70 hover:opacity-100 p-1 text-base flex items-center gap-2" 
-            title={portalUser ? 'Open portal' : 'Account'}
-            aria-label="Account"
-          >
-            <span>👤</span>
-            {portalUser && <span className="hidden sm:inline text-xs opacity-80">{portalUser.username}</span>}
-          </button>
-
-          <ThemeToggle />
-
           {/* Mobile hamburger */}
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
@@ -303,9 +290,11 @@ export default function Navbar() {
           </a>
           <a
             href={portalUser ? '/chat' : '/login?next=/chat'}
-            className="text-[11px] sm:text-xs font-medium opacity-80 hover:opacity-100 whitespace-nowrap"
+            title="MT Chat"
+            aria-label="MT Chat"
+            className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-400 text-black font-bold text-[10px] leading-none"
           >
-            CHAT
+            MT
           </a>
 
           <div className="ml-1 sm:ml-3 pl-2 sm:pl-3 border-l border-white/20 flex items-center gap-1.5 text-[10px] sm:text-xs min-w-0 flex-1">
@@ -331,7 +320,19 @@ export default function Navbar() {
           >
             BUY $MT NOW
           </button>
-        </div>
+
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => (portalUser ? (window.location.href = '/portal') : openAuth('login'))}
+              className="opacity-80 hover:opacity-100 p-1 text-sm flex items-center gap-1.5 max-w-[7.5rem]"
+              title={portalUser ? 'Open portal' : 'Account'}
+              aria-label="Account"
+            >
+              <span>👤</span>
+              {portalUser && <span className="truncate text-xs">{portalUser.username}</span>}
+            </button>
+            <ThemeToggle />
+          </div>
       </div>
 
       {/* Compact buy form panel - shows just below BUY $MT NOW, hides on click off.

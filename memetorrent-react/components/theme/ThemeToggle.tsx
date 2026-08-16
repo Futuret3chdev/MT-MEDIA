@@ -26,17 +26,14 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition"
+      className="flex items-center justify-center w-9 h-9 rounded-full text-sm transition shrink-0"
       style={{
         background: 'var(--card)',
         border: '1px solid var(--border)',
       }}
     >
-      <span className="text-base">
+      <span className="text-base" title={theme === 'dark' ? 'Dark' : 'Light'}>
         {theme === 'dark' ? '🌙' : '☀️'}
-      </span>
-      <span className="opacity-80">
-        {theme === 'dark' ? 'Dark' : 'Light'}
       </span>
     </button>
   );
