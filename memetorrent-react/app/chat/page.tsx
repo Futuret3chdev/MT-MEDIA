@@ -6,6 +6,8 @@ import BackBar from '@/components/ui/BackBar';
 import RequireLogin from '@/components/auth/RequireLogin';
 import RoomStudio, { youtubeId, type RoomExtra } from '@/components/chat/RoomStudio';
 import MtMiniChart from '@/components/chat/MtMiniChart';
+import RoomGame, { type GameState } from '@/components/chat/RoomGame';
+import CallDock, { type CallTarget } from '@/components/chat/CallDock';
 
 type Msg = {
   id: number;
@@ -27,6 +29,7 @@ function UserTip({
   alignRight,
   onAdded,
   onMessage,
+  onCall,
 }: {
   name: string;
   me?: string;
@@ -34,6 +37,7 @@ function UserTip({
   alignRight?: boolean;
   onAdded?: () => void;
   onMessage?: (name: string) => void;
+  onCall?: (name: string) => void;
 }) {
   const [card, setCard] = useState<null | {
     username: string;
@@ -186,7 +190,7 @@ function UserTip({
                 ))}
               </div>
               {!self && !name.startsWith('0xStealth') && (
-                <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="mt-3 grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     disabled={adding || added}
@@ -205,6 +209,17 @@ function UserTip({
                     className="py-2 rounded-xl bg-emerald-400 text-black text-xs font-semibold"
                   >
                     Message
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPinned(false);
+                      setOn(false);
+                      onCall?.(name);
+                    }}
+                    className="py-2 rounded-xl border border-emerald-400/40 text-emerald-400 text-xs font-semibold"
+                  >
+                    Call
                   </button>
                 </div>
               )}
@@ -500,6 +515,7 @@ function ChatInner() {
   const [peer, setPeer] = useState<{ username: string; email: string } | null>(null);
   const [studio, setStudio] = useState(false);
   const [extra, setExtra] = useState<RoomExtra | null>(null);
+  const [callTo, setCallTo] = useState<CallTarget | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
 
@@ -541,7 +557,9 @@ function ChatInner() {
               prev.slug === d.channel.slug &&
               prev.music_url === d.channel.music_url &&
               !!prev.media_playing === !!d.channel.media_playing &&
-              String(prev.media_started || '') === String(d.channel.media_started || '')
+              String(prev.media_started || '') === String(d.channel.media_started || '') &&
+              prev.game_id === d.channel.game_id &&
+              prev.game_state === d.channel.game_state
             ) {
               return prev;
             }
@@ -848,6 +866,13 @@ function ChatInner() {
                     <button type="button" className="text-emerald-400" onClick={() => openDm(h.username, h.email)}>
                       Message
                     </button>
+                    <button
+                      type="button"
+                      className="text-emerald-400"
+                      onClick={() => setCallTo({ username: h.username, email: h.email, n: Date.now() })}
+                    >
+                      Call
+                    </button>
                   </span>
                 )}
               </div>
@@ -891,6 +916,15 @@ function ChatInner() {
                   onClick={() => openDm(f.username || '', f.friend_email)}
                 >
                   @{f.username || f.friend_email}
+                </button>
+                <button
+                  type="button"
+                  className="text-emerald-400 shrink-0"
+                  onClick={() =>
+                    setCallTo({ username: f.username || '', email: f.friend_email, n: Date.now() })
+                  }
+                >
+                  Call
                 </button>
                 <button
                   type="button"
@@ -992,6 +1026,15 @@ function ChatInner() {
                 {peer ? 'Direct message' : current?.kind || 'public'}
               </div>
             </div>
+            {peer && (
+              <button
+                type="button"
+                className="text-[11px] text-emerald-400"
+                onClick={() => setCallTo({ username: peer.username, email: peer.email, n: Date.now() })}
+              >
+                Call
+              </button>
+            )}
             <button type="button" className="text-[11px] text-emerald-400" onClick={() => setStudio((v) => !v)}>
               {studio ? 'Close settings' : 'Settings'}
             </button>
@@ -1024,6 +1067,24 @@ function ChatInner() {
           {current?.topic && (
             <div className="px-3 py-2 border-b border-white/5 text-xs opacity-70">{current.topic}</div>
           )}
+          <RoomGame
+            room={room}
+            gameId={current?.game_id}
+            state={(() => {
+              try {
+                return current?.game_state ? (JSON.parse(current.game_state) as GameState) : null;
+              } catch {
+                return null;
+              }
+            })()}
+            me={email}
+            canEdit={canEditRoom}
+            onChange={(game_id, state) =>
+              setExtra((e) =>
+                e ? { ...e, game_id, game_state: state ? JSON.stringify(state) : null } : e
+              )
+            }
+          />
           {current?.music_url && (
             <RoomLiveMedia
               url={current.music_url}
@@ -1070,6 +1131,7 @@ function ChatInner() {
                         .then((d) => setFriends(d.friends || []));
                     }}
                     onMessage={(n) => openDm(n)}
+                    onCall={(n) => setCallTo({ username: n, n: Date.now() })}
                   />
                   {m.no_forward ? ' · no forward' : ''}
                   {m.burn_at ? ' · burns' : ''}{' '}
@@ -1288,6 +1350,7 @@ function ChatInner() {
           </form>
         </section>
       </div>
+      {email && <CallDock me={email} room={room} start={callTo} />}
     </div>
   );
 }

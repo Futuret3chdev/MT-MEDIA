@@ -73,6 +73,8 @@ export async function ensureChat(conn: mysql.Connection) {
     'ALTER TABLE mt_chat_channels ADD COLUMN topic VARCHAR(200) NULL',
     'ALTER TABLE mt_chat_channels ADD COLUMN media_playing TINYINT(1) NOT NULL DEFAULT 0',
     'ALTER TABLE mt_chat_channels ADD COLUMN media_started DATETIME NULL',
+    'ALTER TABLE mt_chat_channels ADD COLUMN game_id VARCHAR(64) NULL',
+    'ALTER TABLE mt_chat_channels ADD COLUMN game_state MEDIUMTEXT NULL',
     'ALTER TABLE mt_chat_media ADD COLUMN filename VARCHAR(160) NULL',
   ]) {
     try {
@@ -81,6 +83,20 @@ export async function ensureChat(conn: mysql.Connection) {
       /* exists */
     }
   }
+  await conn.execute(`
+    CREATE TABLE IF NOT EXISTS mt_chat_signals (
+      id BIGINT NOT NULL AUTO_INCREMENT,
+      room VARCHAR(48) NULL,
+      from_email VARCHAR(190) NOT NULL,
+      to_email VARCHAR(190) NOT NULL,
+      kind VARCHAR(24) NOT NULL,
+      payload MEDIUMTEXT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY to_since (to_email, id),
+      KEY from_since (from_email, id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
   await conn.execute(`
     CREATE TABLE IF NOT EXISTS mt_chat_members (
       slug VARCHAR(48) NOT NULL,

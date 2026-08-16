@@ -14,7 +14,7 @@ import {
 } from '@/lib/chat-core';
 
 const EXTRAS =
-  'slug, name, kind, gate_note, owner_email, invite_code, background, music_url, show_chart, collab_note, topic, media_playing, media_started';
+  'slug, name, kind, gate_note, owner_email, invite_code, background, music_url, show_chart, collab_note, topic, media_playing, media_started, game_id, game_state';
 
 export async function GET() {
   const me = await userBySession(await readSessionToken());
@@ -100,6 +100,8 @@ export async function PATCH(request: NextRequest) {
     show_chart?: boolean;
     collab_note?: string;
     media_playing?: boolean;
+    game_id?: string | null;
+    game_state?: string | null;
   };
   try {
     body = await request.json();
@@ -166,6 +168,14 @@ export async function PATCH(request: NextRequest) {
       vals.push(body.media_playing ? 1 : 0);
       sets.push('media_started = ?');
       vals.push(body.media_playing ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null);
+    }
+    if (body.game_id !== undefined) {
+      sets.push('game_id = ?');
+      vals.push(body.game_id ? String(body.game_id).slice(0, 64) : null);
+    }
+    if (body.game_state !== undefined) {
+      sets.push('game_state = ?');
+      vals.push(body.game_state);
     }
     if (!sets.length) return Response.json({ ok: false, error: 'Nothing to update' }, { status: 400 });
     vals.push(slug);

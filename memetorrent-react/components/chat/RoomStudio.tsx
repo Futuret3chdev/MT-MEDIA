@@ -15,6 +15,8 @@ export type RoomExtra = {
   invite_code?: string | null;
   media_playing?: boolean;
   media_started?: string | null;
+  game_id?: string | null;
+  game_state?: string | null;
   my_role?: 'owner' | 'admin' | 'mod' | 'member' | null;
 };
 

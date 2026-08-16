@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       [room]
     );
     const [ch] = await conn.execute(
-      `SELECT slug, name, kind, owner_email, topic, background, music_url, show_chart, collab_note, media_playing, media_started
+      `SELECT slug, name, kind, owner_email, topic, background, music_url, show_chart, collab_note, media_playing, media_started, game_id, game_state
        FROM mt_chat_channels WHERE slug = ? LIMIT 1`,
       [room]
     );
