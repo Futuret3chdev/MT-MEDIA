@@ -13,6 +13,7 @@ type Msg = {
   no_forward?: number;
   kind?: string;
   owner_email?: string;
+  avatar_url?: string | null;
 };
 type Chan = { slug: string; name: string; kind: string; gate_note: string | null };
 
@@ -134,7 +135,6 @@ function ChatInner() {
   const [sell, setSell] = useState('$MT');
   const [buy, setBuy] = useState('USDC');
   const [amt, setAmt] = useState('100');
-  const [photo, setPhoto] = useState('');
   const [nftMint, setNftMint] = useState('');
   const [nftOn, setNftOn] = useState(false);
   const end = useRef<HTMLDivElement>(null);
@@ -165,7 +165,6 @@ function ChatInner() {
         setWho(d.user?.username || '');
         setWallet(d.user?.wallet_address || '');
         setEmail(d.user?.email || '');
-        setPhoto(d.user?.avatar_url || '');
       });
     loadChans();
     fetch('/api/chat/friends', { credentials: 'include' })
@@ -262,33 +261,13 @@ function ChatInner() {
     load();
   };
 
-  const savePic = async () => {
-    if (!photo) return;
-    await fetch('/api/portal/profile', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ avatar_url: photo }),
-    });
-  };
-
-  const uploadFile = async (file: File, as: 'avatar' | 'chat') => {
+  const uploadFile = async (file: File, as: 'chat') => {
     const fd = new FormData();
     fd.append('file', file);
     const res = await fetch('/api/chat/media', { method: 'POST', credentials: 'include', body: fd });
     const data = await res.json();
     if (!data.ok) {
       setErr(data.error || 'Upload failed');
-      return;
-    }
-    if (as === 'avatar') {
-      setPhoto(data.url);
-      await fetch('/api/portal/profile', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatar_url: data.url }),
-      });
       return;
     }
     await fetch('/api/chat', {
@@ -456,7 +435,10 @@ function ChatInner() {
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
             {msgs.map((m) => (
               <div key={m.id} className={m.username === who || m.username.startsWith('0xStealth') ? 'text-right' : ''}>
-                <div className="text-[11px] text-emerald-400">
+                <div className="text-[11px] text-emerald-400 inline-flex items-center gap-1.5">
+                  {m.avatar_url && (
+                    <img src={m.avatar_url} alt="" className="w-5 h-5 rounded-md object-cover" />
+                  )}
                   <UserTip name={m.username} />
                   {m.no_forward ? ' · no forward' : ''}
                   {m.burn_at ? ' · burns' : ''}{' '}
@@ -591,32 +573,7 @@ function ChatInner() {
                 </button>
               </div>
             )}
-            {authed && (
-              <div className="flex flex-wrap gap-2 text-xs items-center">
-                {photo && <img src={photo} alt="" className="w-8 h-8 rounded-lg object-cover" />}
-                <input
-                  value={photo}
-                  onChange={(e) => setPhoto(e.target.value)}
-                  placeholder="Profile picture URL"
-                  className="flex-1 min-w-[120px] px-2 py-1 rounded-xl bg-black/40 border border-white/15"
-                />
-                <label className="px-3 py-1 rounded-xl border border-white/15 cursor-pointer">
-                  Upload
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) uploadFile(f, 'avatar');
-                    }}
-                  />
-                </label>
-                <button type="button" onClick={savePic} className="opacity-70">
-                  Set picture
-                </button>
-              </div>
-            )}
+
             {err && <div className="text-sm text-red-400">{err}</div>}
           </form>
         </section>

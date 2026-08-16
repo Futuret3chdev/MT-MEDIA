@@ -187,6 +187,43 @@ export default function PortalPage() {
                     <div className="text-sm opacity-60">{user.email}</div>
                   </div>
                 </div>
+                <div className="flex flex-wrap gap-2 text-sm items-center">
+                  <input
+                    value={avatar}
+                    onChange={(e) => setAvatar(e.target.value)}
+                    placeholder="Picture URL"
+                    className="flex-1 min-w-[160px] px-3 py-2 rounded-xl bg-black/40 border border-white/15"
+                  />
+                  <label className="px-3 py-2 rounded-xl border border-white/15 cursor-pointer">
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        const fd = new FormData();
+                        fd.append('file', f);
+                        const res = await fetch('/api/chat/media', { method: 'POST', credentials: 'include', body: fd });
+                        const d = await res.json();
+                        if (!d.ok) {
+                          setSaved(d.error || 'Upload failed');
+                          return;
+                        }
+                        setAvatar(d.url);
+                        const p = await fetch('/api/portal/profile', {
+                          method: 'POST',
+                          credentials: 'include',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ avatar_url: d.url, bio, wallet_address: wallet }),
+                        }).then((r) => r.json());
+                        if (p.user) setUser(p.user);
+                        setSaved('Picture saved');
+                      }}
+                    />
+                  </label>
+                </div>
                 <label className="block text-sm">
                   <span className="opacity-60">About</span>
                   <textarea

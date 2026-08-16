@@ -11,7 +11,12 @@ export async function GET(request: NextRequest) {
     await ensureChat(conn);
     await conn.execute('DELETE FROM mt_crypto_chat WHERE burn_at IS NOT NULL AND burn_at < NOW()');
     const [rows] = await conn.execute(
-      'SELECT id, room, username, body, burn_at, no_forward, kind, owner_email, created_at FROM mt_crypto_chat WHERE room = ? ORDER BY id DESC LIMIT 100',
+      `SELECT m.id, m.room, m.username, m.body, m.burn_at, m.no_forward, m.kind, m.owner_email, m.created_at,
+              u.avatar_url
+       FROM mt_crypto_chat m
+       LEFT JOIN portal_users u ON u.email = m.owner_email
+       WHERE m.room = ?
+       ORDER BY m.id DESC LIMIT 100`,
       [room]
     );
     return Response.json({ ok: true, room, messages: (rows as object[]).reverse() });

@@ -20,7 +20,7 @@ export default function Navbar() {
   });
   const [authError, setAuthError] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
-  const [portalUser, setPortalUser] = useState<{ username: string; license_key?: string | null } | null>(null);
+  const [portalUser, setPortalUser] = useState<{ username: string; license_key?: string | null; avatar_url?: string | null } | null>(null);
 
   useEffect(() => {
     fetch('/api/portal/me', { credentials: 'include' })
@@ -329,7 +329,11 @@ export default function Navbar() {
               title={portalUser ? 'Open portal' : 'Account'}
               aria-label="Account"
             >
-              <span>👤</span>
+              {portalUser?.avatar_url ? (
+                <img src={portalUser.avatar_url} alt="" className="w-6 h-6 rounded-md object-cover" />
+              ) : (
+                <span>👤</span>
+              )}
               {portalUser && <span className="truncate text-xs">{portalUser.username}</span>}
             </button>
             <ThemeToggle />
