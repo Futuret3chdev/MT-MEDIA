@@ -44,6 +44,14 @@ export default function PortalPage() {
   const [newKind, setNewKind] = useState('phantom');
   const [newAddr, setNewAddr] = useState('');
   const [walletMsg, setWalletMsg] = useState('');
+  const [friends, setFriends] = useState<
+    { username: string | null; friend_email: string; avatar_url?: string | null }[]
+  >([]);
+  const [friendQ, setFriendQ] = useState('');
+  const [friendHits, setFriendHits] = useState<{ username: string; email: string; self?: boolean }[]>([]);
+  const [friendMsg, setFriendMsg] = useState('');
+  const [licBusy, setLicBusy] = useState(false);
+  const [licMsg, setLicMsg] = useState('');
 
   useEffect(() => {
     const stored = localStorage.getItem('mt_portal_mode');
@@ -59,6 +67,10 @@ export default function PortalPage() {
           fetch('/api/scores?mine=1', { credentials: 'include' })
             .then((r) => r.json())
             .then((s) => setScores(s.scores || []))
+            .catch(() => {});
+          fetch('/api/chat/friends', { credentials: 'include' })
+            .then((r) => r.json())
+            .then((f) => setFriends(f.friends || []))
             .catch(() => {});
           fetch('/api/portal/wallets', { credentials: 'include' })
             .then((r) => r.json())
@@ -105,6 +117,79 @@ export default function PortalPage() {
       setUser(data.user);
       setSaved('Saved');
     } else setSaved(data.error || 'Could not save');
+  };
+
+  const refreshFriends = async () => {
+    const d = await fetch('/api/chat/friends', { credentials: 'include' }).then((r) => r.json());
+    setFriends(d.friends || []);
+  };
+
+  const searchFriends = async (v: string) => {
+    setFriendQ(v);
+    if (v.trim().length < 2) {
+      setFriendHits([]);
+      return;
+    }
+    const d = await fetch(`/api/chat/users?q=${encodeURIComponent(v)}`, { credentials: 'include' }).then((r) =>
+      r.json()
+    );
+    setFriendHits(d.users || []);
+  };
+
+  const addPortalFriend = async (username: string, email: string) => {
+    setFriendMsg('');
+    const res = await fetch('/api/chat/friends', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email }),
+    });
+    const d = await res.json();
+    if (!d.ok) {
+      setFriendMsg(d.error || 'Could not add');
+      return;
+    }
+    setFriendHits([]);
+    setFriendQ('');
+    setFriendMsg(`Added ${username}`);
+    await refreshFriends();
+  };
+
+  const removeFriend = async (friend_email: string) => {
+    await fetch('/api/chat/friends', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: friend_email }),
+    });
+    await refreshFriends();
+  };
+
+  const upgradePro = async () => {
+    setLicBusy(true);
+    setLicMsg('');
+    try {
+      const res = await fetch('/api/portal/license', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'upgrade' }),
+      });
+      const d = await res.json();
+      if (!d.ok) {
+        setLicMsg(d.error || 'Could not upgrade');
+        return;
+      }
+      if (d.user) setUser((u) => (u ? { ...u, ...d.user } : u));
+      else {
+        setUser((u) =>
+          u ? { ...u, license_key: d.license_key, license_tier: d.license_tier } : u
+        );
+      }
+      setLicMsg('You are on Pro. New key is on this profile.');
+    } finally {
+      setLicBusy(false);
+    }
   };
 
   if (loading) {
@@ -384,7 +469,67 @@ export default function PortalPage() {
             )}
 
             {tab === 'friends' && (
-              <Empty title="Friends" body="Add people from this profile. Chat is the live room; friends is the list." />
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Friends</h2>
+                <p className="text-sm opacity-70">
+                  Same list as MT Chat. Search a username, add them, then they show here and in chat.
+                </p>
+                <input
+                  value={friendQ}
+                  onChange={(e) => searchFriends(e.target.value)}
+                  placeholder="Find people by username"
+                  className="w-full max-w-md px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
+                />
+                {friendHits.map((h) => (
+                  <div key={h.email} className="flex items-center justify-between max-w-md text-sm py-1">
+                    <span>@{h.username}</span>
+                    {!h.self && (
+                      <button
+                        type="button"
+                        className="text-emerald-400"
+                        onClick={() => addPortalFriend(h.username, h.email)}
+                      >
+                        Add
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {friendMsg && <div className="text-sm text-emerald-400">{friendMsg}</div>}
+                {!friends.length ? (
+                  <p className="text-sm opacity-50">
+                    No friends yet. Add someone here or hover a name in chat and tap Add.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {friends.map((f) => (
+                      <li
+                        key={f.friend_email}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-white/10 p-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={f.avatar_url || '/games/default-avatar.png'}
+                            alt=""
+                            className="w-9 h-9 rounded-xl object-cover"
+                          />
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">@{f.username || f.friend_email}</div>
+                            <div className="text-[11px] opacity-50 truncate">{f.friend_email}</div>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 text-xs shrink-0">
+                          <Link href="/chat" className="text-emerald-400">
+                            Chat
+                          </Link>
+                          <button type="button" className="opacity-60" onClick={() => removeFriend(f.friend_email)}>
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
             {tab === 'chat' && (
               <div>
@@ -400,7 +545,7 @@ export default function PortalPage() {
       )}
 
       {mode === 'developers' && (
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div className="rounded-2xl p-6 border border-emerald-400/30" style={{ background: 'var(--card)' }}>
             <div className="text-xs tracking-[2px] text-emerald-400 mb-2">
               {(user.license_tier || 'free').toUpperCase()} LICENSE
@@ -409,8 +554,44 @@ export default function PortalPage() {
               {user.license_key || 'Issuing…'}
             </div>
             <p className="text-sm opacity-70">
-              Your builder license for Studio and game downloads.
+              This key lives on your account. Use it for Studio and the Android client. Same login on every MT site.
             </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="rounded-2xl p-6 border border-white/10" style={{ background: 'var(--card)' }}>
+              <div className="text-xs tracking-[2px] opacity-50 mb-1">FREE</div>
+              <h2 className="font-semibold text-xl mb-2">Builder</h2>
+              <ul className="text-sm opacity-70 space-y-1 mb-4">
+                <li>• Issued on first sign-in</li>
+                <li>• Android MT Games download</li>
+                <li>• Studio demo and editor</li>
+              </ul>
+              {(user.license_tier || 'free') === 'free' && (
+                <div className="text-xs text-emerald-400">You are on Free</div>
+              )}
+            </div>
+            <div className="rounded-2xl p-6 border border-emerald-400/30" style={{ background: 'var(--card)' }}>
+              <div className="text-xs tracking-[2px] text-emerald-400 mb-1">PRO</div>
+              <h2 className="font-semibold text-xl mb-2">Ecosystem</h2>
+              <ul className="text-sm opacity-70 space-y-1 mb-4">
+                <li>• Publish into TAP / P2E / catalog</li>
+                <li>• $MT and Rockets hooks</li>
+                <li>• Desktop / iOS clients when they ship</li>
+              </ul>
+              {(user.license_tier || 'free') === 'pro' ? (
+                <div className="text-sm text-emerald-400">You are on Pro</div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={licBusy}
+                  onClick={upgradePro}
+                  className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm disabled:opacity-50"
+                >
+                  {licBusy ? 'Upgrading…' : 'Upgrade to Pro'}
+                </button>
+              )}
+              {licMsg && <p className="text-sm opacity-70 mt-3">{licMsg}</p>}
+            </div>
           </div>
           <div className="rounded-2xl p-6 border border-white/10" style={{ background: 'var(--card)' }}>
             <h2 className="font-semibold text-xl mb-2">Downloads</h2>
@@ -421,10 +602,6 @@ export default function PortalPage() {
             >
               Get Android APK
             </Link>
-          </div>
-          <div className="rounded-2xl p-6 border border-white/10 sm:col-span-2" style={{ background: 'var(--card)' }}>
-            <h2 className="font-semibold text-xl mb-2">Pro</h2>
-            <p className="text-sm opacity-70">Publish into TAP / P2E when you are ready to ship on the ecosystem.</p>
           </div>
         </div>
       )}
@@ -440,15 +617,6 @@ export default function PortalPage() {
           </a>
         </div>
       )}
-    </div>
-  );
-}
-
-function Empty({ title, body }: { title: string; body: string }) {
-  return (
-    <div>
-      <h2 className="text-xl font-semibold mb-2">{title}</h2>
-      <p className="text-sm opacity-70">{body}</p>
     </div>
   );
 }

@@ -66,3 +66,45 @@ export async function issueFreeLicense(input: {
     await conn.end();
   }
 }
+
+export async function upgradeToPro(email: string, name?: string): Promise<{ license_key: string; license_tier: 'pro' }> {
+  const conn = await getUserDb();
+  try {
+    await ensureDevLicenseTable(conn);
+    const addr = email.trim().toLowerCase();
+    const [rows] = await conn.execute(
+      'SELECT license_key, tier FROM mt_dev_licenses WHERE email = ? LIMIT 1',
+      [addr]
+    );
+    const cur = (rows as { license_key: string; tier: string }[])[0];
+    if (cur?.tier === 'pro' && String(cur.license_key || '').includes('PRO')) {
+      await conn.execute('UPDATE portal_users SET license_key = ?, license_tier = ? WHERE email = ?', [
+        cur.license_key,
+        'pro',
+        addr,
+      ]);
+      return { license_key: cur.license_key, license_tier: 'pro' };
+    }
+    const license_key = makeLicenseKey('pro');
+    if (cur) {
+      await conn.execute('UPDATE mt_dev_licenses SET license_key = ?, tier = ? WHERE email = ?', [
+        license_key,
+        'pro',
+        addr,
+      ]);
+    } else {
+      await conn.execute(
+        'INSERT INTO mt_dev_licenses (name, email, handle, license_key, tier) VALUES (?,?,?,?,?)',
+        [(name || addr).slice(0, 120), addr, null, license_key, 'pro']
+      );
+    }
+    await conn.execute('UPDATE portal_users SET license_key = ?, license_tier = ? WHERE email = ?', [
+      license_key,
+      'pro',
+      addr,
+    ]);
+    return { license_key, license_tier: 'pro' };
+  } finally {
+    await conn.end();
+  }
+}

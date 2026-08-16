@@ -69,3 +69,31 @@ export async function POST(request: NextRequest) {
     await conn.end();
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const me = await userBySession(await readSessionToken());
+  if (!me) return Response.json({ ok: false, error: 'Sign in' }, { status: 401 });
+  let body: { email?: string; username?: string } = {};
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
+  }
+  const conn = await getUserDb();
+  try {
+    await ensure(conn);
+    let email = String(body.email || '').trim().toLowerCase();
+    if (!email && body.username) {
+      const [found] = await conn.execute(
+        'SELECT email FROM portal_users WHERE username = ? LIMIT 1',
+        [String(body.username)]
+      );
+      email = String((found as { email: string }[])[0]?.email || '');
+    }
+    if (!email) return Response.json({ ok: false, error: 'User not found.' }, { status: 400 });
+    await conn.execute('DELETE FROM mt_chat_friends WHERE email = ? AND friend_email = ?', [me.email, email]);
+    return Response.json({ ok: true });
+  } finally {
+    await conn.end();
+  }
+}

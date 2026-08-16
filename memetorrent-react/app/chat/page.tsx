@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import BackBar from '@/components/ui/BackBar';
 import RequireLogin from '@/components/auth/RequireLogin';
 
@@ -21,11 +22,13 @@ function UserTip({
   name,
   me,
   isFriend,
+  alignRight,
   onAdded,
 }: {
   name: string;
   me?: string;
   isFriend?: boolean;
+  alignRight?: boolean;
   onAdded?: () => void;
 }) {
   const [card, setCard] = useState<null | {
@@ -40,17 +43,25 @@ function UserTip({
   const [pinned, setPinned] = useState(false);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(!!isFriend);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const [pos, setPos] = useState({ top: 8, left: 8 });
   const wrapRef = useRef<HTMLSpanElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const place = () => {
     const r = wrapRef.current?.getBoundingClientRect();
     if (!r) return;
-    setPos({
-      top: r.bottom - 2,
-      left: Math.max(8, Math.min(r.left, window.innerWidth - 280)),
-    });
+    const w = 256;
+    const h = cardRef.current?.offsetHeight || 230;
+    const composer = 180;
+    const spaceBelow = window.innerHeight - r.bottom - composer;
+    const above = spaceBelow < h;
+    let top = above ? r.top - h - 8 : r.bottom + 8;
+    top = Math.max(8, Math.min(top, window.innerHeight - h - 12));
+    const preferRight = !!alignRight || r.left > window.innerWidth / 2;
+    let left = preferRight ? r.right - w : r.left;
+    left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+    setPos({ top, left });
   };
 
   const show = () => {
@@ -76,6 +87,20 @@ function UserTip({
       .then((d) => d.ok && setCard(d.profile))
       .catch(() => {});
   }, [on, name]);
+
+  useEffect(() => {
+    if (!on) return;
+    place();
+    const id = requestAnimationFrame(place);
+    const onWin = () => place();
+    window.addEventListener('resize', onWin);
+    window.addEventListener('scroll', onWin, true);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener('resize', onWin);
+      window.removeEventListener('scroll', onWin, true);
+    };
+  }, [on, card, alignRight]);
 
   useEffect(() => () => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -124,9 +149,12 @@ function UserTip({
       >
         {name}
       </button>
-      {on && (
+      {on &&
+        typeof document !== 'undefined' &&
+        createPortal(
         <div
-          className="fixed z-[80] w-64 rounded-2xl border border-white/15 bg-[#12141c] p-3 text-left shadow-xl"
+          ref={cardRef}
+          className="fixed z-[200] w-64 rounded-2xl border border-white/15 bg-[#12141c] p-3 text-left shadow-2xl"
           style={{ top: pos.top, left: pos.left }}
           onMouseEnter={show}
           onMouseLeave={hideSoon}
@@ -165,7 +193,8 @@ function UserTip({
               )}
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </span>
   );
@@ -453,7 +482,7 @@ function ChatInner() {
             />
             {hits.map((h) => (
               <div key={h.email} className="flex justify-between items-center text-xs py-1">
-                <span>{h.username}</span>
+                <span>@{h.username}</span>
                 {!h.self && (
                   <button type="button" className="text-emerald-400" onClick={() => addFriend(h.username, h.email)}>
                     Add
@@ -461,12 +490,31 @@ function ChatInner() {
                 )}
               </div>
             ))}
-            {!!friends.length && (
-              <div className="mt-2 text-[10px] uppercase opacity-40">Friends</div>
+            <div className="mt-3 text-[10px] uppercase tracking-wider opacity-40">Friends</div>
+            {!friends.length && (
+              <p className="text-[11px] opacity-40 py-1">
+                Hover a name in the room and tap Add, or search above.
+              </p>
             )}
             {friends.map((f) => (
-              <div key={f.friend_email} className="text-xs py-0.5 opacity-80">
-                {f.username || f.friend_email}
+              <div key={f.friend_email} className="flex items-center justify-between gap-2 text-xs py-1.5">
+                <span className="truncate">@{f.username || f.friend_email}</span>
+                <button
+                  type="button"
+                  className="opacity-40 hover:opacity-100 shrink-0"
+                  onClick={async () => {
+                    await fetch('/api/chat/friends', {
+                      method: 'DELETE',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: f.friend_email }),
+                    });
+                    const d = await fetch('/api/chat/friends', { credentials: 'include' }).then((r) => r.json());
+                    setFriends(d.friends || []);
+                  }}
+                >
+                  Remove
+                </button>
               </div>
             ))}
           </div>
@@ -542,6 +590,7 @@ function ChatInner() {
                   <UserTip
                     name={m.username}
                     me={who}
+                    alignRight={m.username === who || m.username.startsWith('0xStealth')}
                     isFriend={friends.some((f) => f.username === m.username)}
                     onAdded={() => {
                       fetch('/api/chat/friends', { credentials: 'include' })
