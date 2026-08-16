@@ -2,20 +2,10 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { liveGames } from '@/lib/mt-catalog';
 
 type Mode = 'users' | 'developers' | 'businesses';
-type UserTab =
-  | 'me'
-  | 'messages'
-  | 'friends'
-  | 'chat'
-  | 'wallet'
-  | 'avatar'
-  | 'games'
-  | 'nft'
-  | 'leaderboard'
-  | 'intel'
-  | 'skins';
+type UserTab = 'me' | 'games' | 'wallet' | 'chat' | 'friends';
 
 type User = {
   username: string;
@@ -29,29 +19,12 @@ type User = {
   discord_id: string | null;
 };
 
-const GAMES = [
-  { name: 'Tetris', href: '/games/2', img: '/games/tetris.jpg', tag: 'Beta' },
-  { name: 'Pac-Man', href: '/games/unix/1/', img: '/games/unix/1/shots/level-1.png', tag: 'Live' },
-  { name: 'Tap Tap', href: '/games/unix/tap/', img: '/games/taptap.jpg', tag: 'Live' },
-  { name: 'Fruit Ninja', href: '/games/unix/fruitninja/', img: '/games/fruitninja.jpg', tag: 'Live' },
-  { name: 'Dash', href: '/games/unix/dash/', img: '/games/dash.jpg', tag: 'Live' },
-  { name: 'Chicken', href: '/games/unix/chicken/', img: '/games/chicken.jpg', tag: 'Live' },
-  { name: 'Racer', href: '/games/racer/', img: '/games/racer.jpg', tag: 'Live' },
-  { name: 'Android client', href: '/software/games', img: '/games/sub.png', tag: 'Dev' },
-];
-
 const USER_NAV: { id: UserTab; label: string }[] = [
-  { id: 'me', label: 'My Portal' },
-  { id: 'games', label: 'Gameverse' },
+  { id: 'me', label: 'Profile' },
+  { id: 'games', label: 'Library' },
   { id: 'wallet', label: 'Wallet' },
-  { id: 'messages', label: 'Messages' },
+  { id: 'chat', label: 'Chat' },
   { id: 'friends', label: 'Friends' },
-  { id: 'chat', label: 'Live Chat' },
-  { id: 'avatar', label: 'Avatar' },
-  { id: 'nft', label: 'NFTs' },
-  { id: 'leaderboard', label: 'Leaderboard' },
-  { id: 'intel', label: 'Intel' },
-  { id: 'skins', label: 'Skins' },
 ];
 
 export default function PortalPage() {
@@ -217,21 +190,24 @@ export default function PortalPage() {
 
             {tab === 'games' && (
               <div>
-                <h2 className="text-xl font-semibold mb-2">Gameverse</h2>
-                <p className="text-sm opacity-60 mb-4">Play in the browser. P2E payouts come next.</p>
+                <h2 className="text-xl font-semibold mb-2">Library</h2>
+                <p className="text-sm opacity-60 mb-4">
+                  Steam-style shelf — same titles as <Link href="/p2e" className="text-emerald-400">P2E</Link> and{' '}
+                  <Link href="/casino" className="text-emerald-400">Casino</Link>.
+                </p>
                 <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {GAMES.map((g) => (
+                  {liveGames().map((g) => (
                     <a
-                      key={g.name}
-                      href={g.href}
+                      key={g.id}
+                      href={g.play}
                       className="rounded-xl overflow-hidden border border-white/10 hover:border-emerald-400/40"
                     >
                       <div className="h-28 bg-black/40 overflow-hidden">
-                        <img src={g.img} alt="" className="w-full h-full object-cover" />
+                        {g.img && <img src={g.img} alt="" className="w-full h-full object-cover" />}
                       </div>
                       <div className="p-3 flex justify-between text-sm">
                         <span>{g.name}</span>
-                        <span className="text-emerald-400 text-xs">{g.tag}</span>
+                        <span className="text-emerald-400 text-xs uppercase">{g.kind}</span>
                       </div>
                     </a>
                   ))}
@@ -249,45 +225,18 @@ export default function PortalPage() {
               </div>
             )}
 
-            {tab === 'messages' && (
-              <Empty title="Messages" body="Inbox, sent and replies are coming back here — same account, cleaner layout than the old portal." />
-            )}
             {tab === 'friends' && (
-              <Empty title="Friends" body="Add, accept and message friends from this profile. The old lists will plug into this view." />
+              <Empty title="Friends" body="Add people from this profile. Chat is the live room; friends is the list." />
             )}
             {tab === 'chat' && (
-              <Empty title="Live Chat" body="Group and private chat stay on your account. We are wiring the old rooms into this shell." />
-            )}
-            {tab === 'avatar' && (
-              <div className="space-y-3">
-                <h2 className="text-xl font-semibold">Avatar</h2>
-                <input
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  placeholder="Image URL"
-                  className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
-                />
-                <button onClick={saveProfile} className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm">
-                  Save avatar
-                </button>
-              </div>
-            )}
-            {tab === 'nft' && <Empty title="NFT Multiverse" body="Pets, drops and on-chain items will list here against this wallet." />}
-            {tab === 'leaderboard' && <Empty title="Leaderboard" body="Ranks from TAP games and arcade scores will land on this profile." />}
-            {tab === 'intel' && (
               <div>
-                <h2 className="text-xl font-semibold mb-3">Intel Feed</h2>
-                <ul className="text-sm opacity-70 space-y-2">
-                  <li>• Android game client is live for licensed developers</li>
-                  <li>• Portal login is the same account across Futuret3ch sites</li>
-                  <li>• P2E payouts and Pro licenses are next</li>
-                </ul>
-                <Link href="/updates" className="inline-block mt-4 text-emerald-400 text-sm">
-                  Site updates →
+                <h2 className="text-xl font-semibold mb-2">Crypto chat</h2>
+                <p className="text-sm opacity-70 mb-3">Trades, general and support. Same login as this portal.</p>
+                <Link href="/chat" className="text-emerald-400 text-sm">
+                  Open chat →
                 </Link>
               </div>
             )}
-            {tab === 'skins' && <Empty title="Portal skins" body="Light/dark already follow the main site. Extra skins will attach to this profile." />}
           </div>
         </div>
       )}

@@ -8,6 +8,10 @@ export default function Footer() {
           <a href="/claims" className="hover:text-white">Claim $MT</a>
           <a href="/status" className="hover:text-white">Status</a>
           <a href="/portal" className="hover:text-white">Portal</a>
+          <a href="/p2e" className="hover:text-white">P2E</a>
+          <a href="/studio" className="hover:text-white">Studio</a>
+          <a href="/chat" className="hover:text-white">Chat</a>
+          <a href="/casino" className="hover:text-white">Casino</a>
           <a href="/software" className="hover:text-white">Software</a>
           <a href="/developers" className="hover:text-white">Developers</a>
           <a href="/media" className="hover:text-white">Media</a>

@@ -7,6 +7,16 @@ const sections = [
     desc: 'Download the MT game client. Android first. Sign up as a developer and get a free build license.',
   },
   {
+    href: '/studio',
+    title: 'Game Studio',
+    desc: 'Web publisher now. Android beta. Windows later. List titles into P2E and the portal library.',
+  },
+  {
+    href: '/chat',
+    title: 'Crypto chat',
+    desc: 'Trades, general and support. Portal login. Not Telegram — our rooms, our account.',
+  },
+  {
     href: '/software/developers',
     title: 'Developers',
     desc: 'Free license to build on the ecosystem. Upgrade to Pro when you are ready to ship.',
@@ -28,7 +38,7 @@ export default function SoftwarePage() {
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
         Games, developer licenses, and security tools for the MT-ECO SYSTEM.
       </p>
-      <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {sections.map((s) => (
           <Link
             key={s.href}
