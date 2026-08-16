@@ -29,6 +29,7 @@ export async function ensureChat(conn: mysql.Connection) {
       burn_at DATETIME NULL,
       no_forward TINYINT(1) NOT NULL DEFAULT 0,
       kind VARCHAR(16) NOT NULL DEFAULT 'text',
+      owner_email VARCHAR(190) NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       KEY room_time (room, created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -47,6 +48,7 @@ export async function ensureChat(conn: mysql.Connection) {
     'ALTER TABLE mt_crypto_chat ADD COLUMN burn_at DATETIME NULL',
     'ALTER TABLE mt_crypto_chat ADD COLUMN no_forward TINYINT(1) NOT NULL DEFAULT 0',
     'ALTER TABLE mt_crypto_chat ADD COLUMN kind VARCHAR(16) NOT NULL DEFAULT "text"',
+    'ALTER TABLE mt_crypto_chat ADD COLUMN owner_email VARCHAR(190) NULL',
   ]) {
     try {
       await conn.execute(col);

@@ -11,6 +11,7 @@ type Msg = {
   burn_at?: string | null;
   no_forward?: number;
   kind?: string;
+  owner_email?: string;
 };
 type Chan = { slug: string; name: string; kind: string; gate_note: string | null };
 
@@ -45,7 +46,18 @@ export default function ChatPage() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newKind, setNewKind] = useState('public');
+  const [email, setEmail] = useState('');
+  const [q, setQ] = useState('');
+  const [hits, setHits] = useState<{ username: string; email: string; self?: boolean }[]>([]);
+  const [friends, setFriends] = useState<{ username: string; friend_email: string }[]>([]);
+  const [stickers, setStickers] = useState(false);
+  const [tradeOn, setTradeOn] = useState(false);
+  const [sell, setSell] = useState('$MT');
+  const [buy, setBuy] = useState('USDC');
+  const [amt, setAmt] = useState('100');
+  const [photo, setPhoto] = useState('');
   const end = useRef<HTMLDivElement>(null);
+  const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
 
   const current = channels.find((c) => c.slug === room);
 
@@ -71,8 +83,13 @@ export default function ChatPage() {
         setAuthed(!!d.user);
         setWho(d.user?.username || '');
         setWallet(d.user?.wallet_address || '');
+        setEmail(d.user?.email || '');
+        setPhoto(d.user?.avatar_url || '');
       });
     loadChans();
+    fetch('/api/chat/friends', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setFriends(d.friends || []));
   }, []);
 
   useEffect(() => {
@@ -123,6 +140,68 @@ export default function ChatPage() {
     setOpen(true);
   };
 
+  const del = async (id: number) => {
+    await fetch(`/api/chat?id=${id}`, { method: 'DELETE', credentials: 'include' });
+    load();
+  };
+
+  const addFriend = async (username: string, friendEmail: string) => {
+    await fetch('/api/chat/friends', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: friendEmail, username }),
+    });
+    const d = await fetch('/api/chat/friends', { credentials: 'include' }).then((r) => r.json());
+    setFriends(d.friends || []);
+    setHits([]);
+    setQ('');
+  };
+
+  const sendSticker = async (s: string) => {
+    await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, text: s, kind: 'sticker', persona }),
+    });
+    setStickers(false);
+    load();
+  };
+
+  const sendTrade = async () => {
+    const payload = `TRADE ${amt} ${sell} → ${buy}`;
+    await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, text: payload, kind: 'trade', persona }),
+    });
+    setTradeOn(false);
+    load();
+  };
+
+  const savePic = async () => {
+    await fetch('/api/portal/profile', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar_url: photo }),
+    });
+  };
+
+  const searchUsers = async (v: string) => {
+    setQ(v);
+    if (v.trim().length < 2) {
+      setHits([]);
+      return;
+    }
+    const d = await fetch(`/api/chat/users?q=${encodeURIComponent(v)}`, { credentials: 'include' }).then((r) =>
+      r.json()
+    );
+    setHits(d.users || []);
+  };
+
   const emit = async () => {
     await fetch('/api/chat/events', {
       method: 'POST',
@@ -161,6 +240,32 @@ export default function ChatPage() {
             >
               +
             </button>
+          </div>
+          <div className="px-3 pb-2">
+            <input
+              value={q}
+              onChange={(e) => searchUsers(e.target.value)}
+              placeholder="Find people"
+              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
+            />
+            {hits.map((h) => (
+              <div key={h.email} className="flex justify-between items-center text-xs py-1">
+                <span>{h.username}</span>
+                {!h.self && (
+                  <button type="button" className="text-emerald-400" onClick={() => addFriend(h.username, h.email)}>
+                    Add
+                  </button>
+                )}
+              </div>
+            ))}
+            {!!friends.length && (
+              <div className="mt-2 text-[10px] uppercase opacity-40">Friends</div>
+            )}
+            {friends.map((f) => (
+              <div key={f.friend_email} className="text-xs py-0.5 opacity-80">
+                {f.username || f.friend_email}
+              </div>
+            ))}
           </div>
           {creating && (
             <form onSubmit={create} className="px-3 pb-3 space-y-2">
@@ -235,13 +340,23 @@ export default function ChatPage() {
                 </div>
                 <div
                   className={`inline-block text-sm text-left max-w-[85%] rounded-2xl px-3 py-2 ${
-                    m.kind === 'event' ? 'border border-emerald-400/40' : 'bg-white/5'
+                    m.kind === 'event' || m.kind === 'trade'
+                      ? 'border border-emerald-400/40'
+                      : 'bg-white/5'
                   }`}
                 >
                   {m.kind === 'asset' && (
-                    <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Asset</div>
+                    <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Token card</div>
                   )}
-                  {renderBody(m.body)}
+                  {m.kind === 'trade' && (
+                    <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Trade</div>
+                  )}
+                  {m.kind === 'sticker' ? <span className="text-4xl leading-none">{m.body}</span> : renderBody(m.body)}
+                  {email && m.owner_email === email && (
+                    <button type="button" className="block text-[10px] opacity-50 mt-1" onClick={() => del(m.id)}>
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -266,6 +381,26 @@ export default function ChatPage() {
                 No forward
               </label>
             </div>
+            {stickers && (
+              <div className="flex flex-wrap gap-2 text-2xl">
+                {STICKERS.map((s) => (
+                  <button key={s} type="button" onClick={() => sendSticker(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+            {tradeOn && (
+              <div className="flex flex-wrap gap-2 text-xs">
+                <input value={amt} onChange={(e) => setAmt(e.target.value)} className="w-20 px-2 py-1 rounded bg-black/40 border border-white/15" />
+                <input value={sell} onChange={(e) => setSell(e.target.value)} className="w-20 px-2 py-1 rounded bg-black/40 border border-white/15" />
+                <span className="opacity-50 self-center">→</span>
+                <input value={buy} onChange={(e) => setBuy(e.target.value)} className="w-20 px-2 py-1 rounded bg-black/40 border border-white/15" />
+                <button type="button" onClick={sendTrade} className="text-emerald-400">
+                  Post trade
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               <input
                 value={text}
@@ -274,6 +409,12 @@ export default function ChatPage() {
                 disabled={!authed}
                 className="flex-1 min-w-[140px] px-3 py-2.5 rounded-xl bg-black/40 border border-white/15 text-sm"
               />
+              <button type="button" className="text-xs px-3 py-2 rounded-xl border border-white/15" onClick={() => setStickers((v) => !v)}>
+                Stickers
+              </button>
+              <button type="button" className="text-xs px-3 py-2 rounded-xl border border-white/15" onClick={() => setTradeOn((v) => !v)}>
+                Trade
+              </button>
               {wallet && (
                 <button
                   type="button"
@@ -290,6 +431,19 @@ export default function ChatPage() {
                 Send
               </button>
             </div>
+            {authed && (
+              <div className="flex flex-wrap gap-2 text-xs">
+                <input
+                  value={photo}
+                  onChange={(e) => setPhoto(e.target.value)}
+                  placeholder="Profile picture URL"
+                  className="flex-1 min-w-[140px] px-2 py-1 rounded-xl bg-black/40 border border-white/15"
+                />
+                <button type="button" onClick={savePic} className="opacity-70">
+                  Set picture
+                </button>
+              </div>
+            )}
             {err && <div className="text-sm text-red-400">{err}</div>}
           </form>
         </section>
