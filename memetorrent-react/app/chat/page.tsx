@@ -536,6 +536,8 @@ function ChatInner() {
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<{ username: string; email: string; self?: boolean }[]>([]);
   const [friends, setFriends] = useState<{ username: string; friend_email: string }[]>([]);
+  const [incoming, setIncoming] = useState<{ id: number; from_email: string; from_username: string }[]>([]);
+  const [outgoing, setOutgoing] = useState<{ friend_email: string; username: string }[]>([]);
   const [stickers, setStickers] = useState(false);
   const [tradeOn, setTradeOn] = useState(false);
   const [sell, setSell] = useState('$MT');
@@ -585,6 +587,14 @@ function ChatInner() {
   };
 
   const load = () => {
+    fetch('/api/chat/friends', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        setFriends(d.friends || []);
+        setIncoming(d.incoming || []);
+        setOutgoing(d.outgoing || []);
+      })
+      .catch(() => {});
     fetch('/api/chat/game', { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => setGameInvites(d.invites || []))
@@ -636,9 +646,18 @@ function ChatInner() {
         setEmail(d.user?.email || '');
       });
     loadChans();
+    const pullFriends = (d: {
+      friends?: { username: string; friend_email: string }[];
+      incoming?: { id: number; from_email: string; from_username: string }[];
+      outgoing?: { friend_email: string; username: string }[];
+    }) => {
+      setFriends(d.friends || []);
+      setIncoming(d.incoming || []);
+      setOutgoing(d.outgoing || []);
+    };
     fetch('/api/chat/friends', { credentials: 'include' })
       .then((r) => r.json())
-      .then((d) => setFriends(d.friends || []));
+      .then(pullFriends);
     const params = new URLSearchParams(window.location.search);
     const deep = params.get('room');
     if (deep) {
@@ -761,12 +780,31 @@ function ChatInner() {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: friendEmail, username }),
+      body: JSON.stringify({ email: friendEmail, username, action: 'request' }),
     });
     const d = await fetch('/api/chat/friends', { credentials: 'include' }).then((r) => r.json());
     setFriends(d.friends || []);
+    setIncoming(d.incoming || []);
+    setOutgoing(d.outgoing || []);
     setHits([]);
     setQ('');
+  };
+
+  const answerFriend = async (fromEmail: string, action: 'accept' | 'decline') => {
+    const d = await fetch('/api/chat/friends', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: fromEmail, action }),
+    }).then((r) => r.json());
+    const next = await fetch('/api/chat/friends', { credentials: 'include' }).then((r) => r.json());
+    setFriends(next.friends || []);
+    setIncoming(next.incoming || []);
+    setOutgoing(next.outgoing || []);
+    if (d.slug) {
+      setRoom(d.slug);
+      setOpen(true);
+    }
   };
 
   const sendSticker = async (s: string) => {
@@ -1056,6 +1094,20 @@ function ChatInner() {
               </button>
             )}
           </header>
+          {incoming.map((req) => (
+            <div
+              key={`fr-${req.id}`}
+              className="px-3 py-2 border-b border-emerald-400/30 bg-emerald-400/10 flex flex-wrap items-center gap-2 text-xs"
+            >
+              <span className="flex-1">@{req.from_username || req.from_email} sent a friend request</span>
+              <button type="button" className="text-emerald-400 font-semibold" onClick={() => answerFriend(req.from_email, 'accept')}>
+                Accept
+              </button>
+              <button type="button" className="opacity-50" onClick={() => answerFriend(req.from_email, 'decline')}>
+                Decline
+              </button>
+            </div>
+          ))}
           {gameInvites.map((inv) => (
             <div
               key={inv.id}
@@ -1226,6 +1278,11 @@ function ChatInner() {
                     <NftCard mint={m.body} />
                   ) : m.kind === 'game' ? (
                     <GameInvite body={m.body} who={m.username} />
+                  ) : m.kind === 'friend' ? (
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Friend request</div>
+                      <div className="text-sm">{m.body}</div>
+                    </div>
                   ) : (
                     renderBody(m.body)
                   )}
@@ -1485,7 +1542,7 @@ function ChatInner() {
                   setPicked((p) => (p ? { ...p, friend: true } : p));
                 }}
               >
-                Add friend
+                {outgoing.some((o) => o.friend_email === picked.email) ? 'Request sent' : 'Add friend'}
               </button>
             )}
           </div>

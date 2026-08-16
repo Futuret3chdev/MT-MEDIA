@@ -48,6 +48,9 @@ export default function PortalPage() {
   const [friends, setFriends] = useState<
     { username: string | null; friend_email: string; avatar_url?: string | null }[]
   >([]);
+  const [incomingFriends, setIncomingFriends] = useState<
+    { id: number; from_email: string; from_username: string }[]
+  >([]);
   const [friendQ, setFriendQ] = useState('');
   const [friendHits, setFriendHits] = useState<{ username: string; email: string; self?: boolean }[]>([]);
   const [friendMsg, setFriendMsg] = useState('');
@@ -70,7 +73,10 @@ export default function PortalPage() {
             .catch(() => {});
           fetch('/api/chat/friends', { credentials: 'include' })
             .then((r) => r.json())
-            .then((f) => setFriends(f.friends || []))
+            .then((f) => {
+              setFriends(f.friends || []);
+              setIncomingFriends(f.incoming || []);
+            })
             .catch(() => {});
           fetch('/api/portal/wallets', { credentials: 'include' })
             .then((r) => r.json())
@@ -122,6 +128,7 @@ export default function PortalPage() {
   const refreshFriends = async () => {
     const d = await fetch('/api/chat/friends', { credentials: 'include' }).then((r) => r.json());
     setFriends(d.friends || []);
+    setIncomingFriends(d.incoming || []);
   };
 
   const searchFriends = async (v: string) => {
@@ -142,7 +149,7 @@ export default function PortalPage() {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email }),
+      body: JSON.stringify({ username, email, action: 'request' }),
     });
     const d = await res.json();
     if (!d.ok) {
@@ -151,7 +158,7 @@ export default function PortalPage() {
     }
     setFriendHits([]);
     setFriendQ('');
-    setFriendMsg(`Added ${username}`);
+    setFriendMsg(`Request sent to ${username}`);
     await refreshFriends();
   };
 
@@ -459,8 +466,48 @@ export default function PortalPage() {
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Friends</h2>
                 <p className="text-sm opacity-70">
-                  Same list as MT Chat. Search a username, add them, then they show here and in chat.
+                  They get a request and a chat message. They must Accept — adding them does not skip that.
                 </p>
+                {incomingFriends.map((req) => (
+                  <div
+                    key={req.id}
+                    className="flex items-center justify-between max-w-md rounded-xl border border-emerald-400/30 p-3 text-sm"
+                  >
+                    <span>@{req.from_username || req.from_email} wants to be friends</span>
+                    <span className="flex gap-3 text-xs">
+                      <button
+                        type="button"
+                        className="text-emerald-400"
+                        onClick={async () => {
+                          await fetch('/api/chat/friends', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: req.from_email, action: 'accept' }),
+                          });
+                          await refreshFriends();
+                        }}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        className="opacity-50"
+                        onClick={async () => {
+                          await fetch('/api/chat/friends', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: req.from_email, action: 'decline' }),
+                          });
+                          await refreshFriends();
+                        }}
+                      >
+                        Decline
+                      </button>
+                    </span>
+                  </div>
+                ))}
                 <input
                   value={friendQ}
                   onChange={(e) => searchFriends(e.target.value)}
