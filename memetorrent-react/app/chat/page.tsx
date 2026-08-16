@@ -257,6 +257,14 @@ function renderBody(text: string) {
   });
 }
 
+function ytCmd(win: Window | null, func: string) {
+  try {
+    win?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
+  } catch {
+    /* ignore */
+  }
+}
+
 function RoomLiveMedia({
   extra,
   canEdit,
@@ -268,38 +276,50 @@ function RoomLiveMedia({
 }) {
   const url = extra.music_url || '';
   const playing = !!extra.media_playing;
-  const [muted, setMuted] = useState(!canEdit);
+  const [muted, setMuted] = useState(true);
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const soundRef = useRef(false);
   const yt = youtubeId(url);
   const isAudio = /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(url);
 
-  const runMedia = (wantPlay: boolean, wantMute: boolean) => {
+  const setSound = (on: boolean) => {
+    soundRef.current = on;
+    setMuted(!on);
     const el = mediaRef.current;
-    setMuted(wantMute);
-    if (!el) return;
-    el.muted = wantMute;
-    if (wantPlay) {
-      const started = extra.media_started ? new Date(extra.media_started).getTime() : 0;
-      if (started && Number.isFinite(el.duration) && el.duration > 0) {
-        el.currentTime = ((Date.now() - started) / 1000) % el.duration;
-      }
+    if (el) el.muted = !on;
+    ytCmd(frameRef.current?.contentWindow || null, on ? 'unMute' : 'mute');
+    if (on) ytCmd(frameRef.current?.contentWindow || null, 'playVideo');
+  };
+
+  const playLocal = (withSound: boolean) => {
+    const el = mediaRef.current;
+    if (el) {
+      el.muted = !withSound;
       const go = el.play();
       if (go) {
         go.catch(() => {
           el.muted = true;
           setMuted(true);
+          soundRef.current = false;
           el.play().catch(() => {});
         });
       }
-    } else {
-      el.pause();
     }
+    ytCmd(frameRef.current?.contentWindow || null, 'playVideo');
+    if (withSound) ytCmd(frameRef.current?.contentWindow || null, 'unMute');
+    else ytCmd(frameRef.current?.contentWindow || null, 'mute');
+  };
+
+  const stopLocal = () => {
+    mediaRef.current?.pause();
+    ytCmd(frameRef.current?.contentWindow || null, 'pauseVideo');
   };
 
   useEffect(() => {
     if (canEdit) return;
-    runMedia(playing, true);
-    // viewers follow host play/stop; they stay muted until they tap Unmute
+    if (playing) playLocal(soundRef.current);
+    else stopLocal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, url]);
 
@@ -315,7 +335,12 @@ function RoomLiveMedia({
             className="text-[11px] text-emerald-400"
             onClick={() => {
               const next = !playing;
-              runMedia(next, muted && next ? false : muted);
+              if (next) {
+                setSound(true);
+                playLocal(true);
+              } else {
+                stopLocal();
+              }
               onToggle(next);
             }}
           >
@@ -325,17 +350,21 @@ function RoomLiveMedia({
         <button
           type="button"
           className="text-[11px] opacity-80"
-          onClick={() => runMedia(playing || canEdit, !muted)}
+          onClick={() => {
+            const nextSound = muted;
+            setSound(nextSound);
+            if (nextSound) playLocal(true);
+          }}
         >
           {muted ? 'Unmute' : 'Mute'}
         </button>
       </div>
       {yt ? (
         <iframe
-          key={`${yt}-${playing ? 'on' : 'off'}-${muted ? 'm' : 's'}`}
+          ref={frameRef}
           title="room media"
           className="w-full max-w-sm aspect-video rounded-xl pointer-events-none"
-          src={`https://www.youtube.com/embed/${yt}?autoplay=${playing ? 1 : 0}&mute=${muted ? 1 : 0}&controls=0&disablekb=1`}
+          src={`https://www.youtube.com/embed/${yt}?autoplay=${playing ? 1 : 0}&mute=1&controls=0&disablekb=1&enablejsapi=1`}
           allow="autoplay; encrypted-media"
         />
       ) : isAudio ? (
