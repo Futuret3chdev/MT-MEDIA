@@ -38,7 +38,8 @@ export async function ensurePortalColumns(conn: mysql.Connection) {
   const alters = [
     'ALTER TABLE portal_users ADD COLUMN license_key VARCHAR(40) NULL',
     'ALTER TABLE portal_users ADD COLUMN license_tier VARCHAR(16) NULL',
-    'ALTER TABLE mt_dev_licenses ADD COLUMN user_id INT UNSIGNED NULL',
+    'ALTER TABLE mt_dev_licenses ADD COLUMN user_id BIGINT NULL',
+    'ALTER TABLE mt_dev_licenses MODIFY COLUMN user_id BIGINT NULL',
   ];
   for (const sql of alters) {
     try {
@@ -68,25 +69,27 @@ export async function attachLicense(
     [user.email.toLowerCase()]
   );
   const existing = (byEmail as { license_key: string; tier: string }[])[0];
+  const email = user.email.toLowerCase();
+  const uid = String(user.id);
   if (existing?.license_key) {
     await conn.execute(
-      'UPDATE portal_users SET license_key = ?, license_tier = ? WHERE id = ?',
-      [existing.license_key, existing.tier || 'free', user.id]
+      'UPDATE portal_users SET license_key = ?, license_tier = ? WHERE email = ?',
+      [existing.license_key, existing.tier || 'free', email]
     );
     await conn.execute('UPDATE mt_dev_licenses SET user_id = ? WHERE license_key = ?', [
-      user.id,
+      uid,
       existing.license_key,
     ]);
     return { license_key: existing.license_key, license_tier: existing.tier || 'free' };
   }
   const license_key = makeLicenseKey('free');
   await conn.execute(
-    'UPDATE portal_users SET license_key = ?, license_tier = ? WHERE id = ?',
-    [license_key, 'free', user.id]
+    'UPDATE portal_users SET license_key = ?, license_tier = ? WHERE email = ?',
+    [license_key, 'free', email]
   );
   await conn.execute(
     'INSERT INTO mt_dev_licenses (name, email, handle, license_key, tier, user_id) VALUES (?,?,?,?,?,?)',
-    [user.username, user.email.toLowerCase(), null, license_key, 'free', user.id]
+    [user.username, email, null, license_key, 'free', uid]
   );
   return { license_key, license_tier: 'free' };
 }
@@ -115,14 +118,24 @@ export async function userBySession(token: string | undefined | null): Promise<P
 
 export async function writeSessionCookie(token: string) {
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, token, {
+  const base = {
     httpOnly: true,
     secure: true,
-    sameSite: 'lax',
+    sameSite: 'lax' as const,
     path: '/',
     maxAge: WEEK,
-    domain: cookieDomain(),
-  });
+  };
+  // Host-only cookie first so login works on this site even if
+  // parent-domain cookies are blocked.
+  jar.set(SESSION_COOKIE, token, base);
+  const domain = cookieDomain();
+  if (domain) {
+    try {
+      jar.set(SESSION_COOKIE, token, { ...base, domain });
+    } catch {
+      /* host-only cookie is enough */
+    }
+  }
 }
 
 export async function clearSessionCookie() {

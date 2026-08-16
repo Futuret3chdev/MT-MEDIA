@@ -39,14 +39,19 @@ export async function POST(request: NextRequest) {
       token,
       row.id,
     ]);
-    const lic = await attachLicense(conn, row);
-    row.license_key = lic.license_key;
-    row.license_tier = lic.license_tier;
+    try {
+      const lic = await attachLicense(conn, row);
+      row.license_key = lic.license_key;
+      row.license_tier = lic.license_tier;
+    } catch (licErr) {
+      console.error('portal login license', licErr);
+    }
     await writeSessionCookie(token);
     return Response.json({ ok: true, user: publicUser(row) });
   } catch (err) {
     console.error('portal login', err);
-    return Response.json({ ok: false, error: 'Could not log in right now.' }, { status: 500 });
+    const detail = err instanceof Error ? err.message : 'unknown';
+    return Response.json({ ok: false, error: `Could not log in right now. ${detail}` }, { status: 500 });
   } finally {
     await conn.end();
   }

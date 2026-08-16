@@ -40,25 +40,36 @@ export async function POST(request: NextRequest) {
     }
     const hash = await hashPassword(password);
     const token = newSessionToken();
-    const [result] = await conn.execute(
+    await conn.execute(
       'INSERT INTO portal_users (username, email, password_hash, session_token, created_at, last_login, is_admin) VALUES (?,?,?,?,NOW(),NOW(),0)',
       [username, email, hash, token]
     );
-    const id = Number((result as { insertId?: number }).insertId || 0);
-    const lic = await attachLicense(conn, { id, username, email });
+    const [createdRows] = await conn.execute(
+      'SELECT id, username, email, wallet_address, license_key, license_tier FROM portal_users WHERE email = ? LIMIT 1',
+      [email]
+    );
+    const created = (createdRows as PortalUser[])[0];
+    if (!created) {
+      return Response.json({ ok: false, error: 'Account insert did not return a profile.' }, { status: 500 });
+    }
+    let lic = { license_key: created.license_key || '', license_tier: created.license_tier || 'free' };
+    try {
+      lic = await attachLicense(conn, {
+        id: created.id,
+        username: created.username,
+        email: created.email,
+      });
+    } catch (licErr) {
+      console.error('portal register license', licErr);
+    }
+    created.license_key = lic.license_key || created.license_key;
+    created.license_tier = lic.license_tier || created.license_tier;
     await writeSessionCookie(token);
-    const user: PortalUser = {
-      id,
-      username,
-      email,
-      wallet_address: null,
-      license_key: lic.license_key,
-      license_tier: lic.license_tier,
-    };
-    return Response.json({ ok: true, created: true, user: publicUser(user) });
+    return Response.json({ ok: true, created: true, user: publicUser(created) });
   } catch (err) {
     console.error('portal register', err);
-    return Response.json({ ok: false, error: 'Could not create the account.' }, { status: 500 });
+    const detail = err instanceof Error ? err.message : 'unknown';
+    return Response.json({ ok: false, error: `Could not create the account. ${detail}` }, { status: 500 });
   } finally {
     await conn.end();
   }
