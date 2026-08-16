@@ -268,24 +268,40 @@ function RoomLiveMedia({
 }) {
   const url = extra.music_url || '';
   const playing = !!extra.media_playing;
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(!canEdit);
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
   const yt = youtubeId(url);
   const isAudio = /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(url);
 
-  useEffect(() => {
+  const runMedia = (wantPlay: boolean, wantMute: boolean) => {
     const el = mediaRef.current;
+    setMuted(wantMute);
     if (!el) return;
-    if (playing) {
+    el.muted = wantMute;
+    if (wantPlay) {
       const started = extra.media_started ? new Date(extra.media_started).getTime() : 0;
       if (started && Number.isFinite(el.duration) && el.duration > 0) {
         el.currentTime = ((Date.now() - started) / 1000) % el.duration;
       }
-      el.play().catch(() => {});
+      const go = el.play();
+      if (go) {
+        go.catch(() => {
+          el.muted = true;
+          setMuted(true);
+          el.play().catch(() => {});
+        });
+      }
     } else {
       el.pause();
     }
-  }, [playing, extra.media_started, url]);
+  };
+
+  useEffect(() => {
+    if (canEdit) return;
+    runMedia(playing, true);
+    // viewers follow host play/stop; they stay muted until they tap Unmute
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, url]);
 
   return (
     <div className="px-3 py-2 border-b border-white/5">
@@ -293,26 +309,33 @@ function RoomLiveMedia({
         <div className="text-[10px] uppercase tracking-wider text-emerald-400">
           {playing ? 'Playing for everyone' : 'Stopped'}
         </div>
-        {canEdit ? (
+        {canEdit && (
           <button
             type="button"
             className="text-[11px] text-emerald-400"
-            onClick={() => onToggle(!playing)}
+            onClick={() => {
+              const next = !playing;
+              runMedia(next, muted && next ? false : muted);
+              onToggle(next);
+            }}
           >
             {playing ? 'Stop' : 'Play'}
           </button>
-        ) : (
-          <button type="button" className="text-[11px] opacity-70" onClick={() => setMuted((m) => !m)}>
-            {muted ? 'Unmute' : 'Mute'}
-          </button>
         )}
+        <button
+          type="button"
+          className="text-[11px] opacity-80"
+          onClick={() => runMedia(playing || canEdit, !muted)}
+        >
+          {muted ? 'Unmute' : 'Mute'}
+        </button>
       </div>
       {yt ? (
         <iframe
-          key={`${yt}-${playing ? 'on' : 'off'}`}
+          key={`${yt}-${playing ? 'on' : 'off'}-${muted ? 'm' : 's'}`}
           title="room media"
           className="w-full max-w-sm aspect-video rounded-xl pointer-events-none"
-          src={`https://www.youtube.com/embed/${yt}?autoplay=${playing ? 1 : 0}&mute=${muted || !playing ? 1 : 0}&controls=0&disablekb=1`}
+          src={`https://www.youtube.com/embed/${yt}?autoplay=${playing ? 1 : 0}&mute=${muted ? 1 : 0}&controls=0&disablekb=1`}
           allow="autoplay; encrypted-media"
         />
       ) : isAudio ? (
@@ -321,8 +344,7 @@ function RoomLiveMedia({
             mediaRef.current = el;
           }}
           src={url}
-          muted={muted && !canEdit}
-          autoPlay={playing}
+          playsInline
           className="w-full max-w-sm"
         />
       ) : (
@@ -331,10 +353,8 @@ function RoomLiveMedia({
             mediaRef.current = el;
           }}
           src={url}
-          muted={canEdit ? false : muted}
           loop
           playsInline
-          autoPlay={playing}
           className="w-full max-w-sm rounded-xl"
         />
       )}
