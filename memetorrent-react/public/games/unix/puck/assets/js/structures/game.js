@@ -19,6 +19,18 @@ define([ "core/engine", "structures/match", "settings", "core/asset_loader", "co
 		if (myMatch.getPlayer(playerId).score === Settings.winGoals) {
 			AudioCenter.playSfx("match_end");
 			alert("It is over! Player " + (playerId+1) + " is the WINNER!");
+			try {
+				fetch('/api/scores', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						game_id: 'puck',
+						player_name: 'Player ' + (playerId + 1),
+						score: myMatch.getPlayer(playerId).score
+					})
+				});
+			} catch (e) {}
 			myGame.stop();
 		} else {
 			myMatch.reset();

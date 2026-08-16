@@ -3,7 +3,7 @@ import Link from 'next/link';
 const clients = [
   { name: 'Web', status: 'Now', note: 'Publish and manage titles in the browser. Same portal login.' },
   { name: 'Android', status: 'Beta', note: 'MT Games APK — download after a developer license.' },
-  { name: 'Windows', status: 'Later', note: 'Desktop studio after the web publisher is used for real.' },
+  { name: 'Windows', status: 'Now', note: 'MTStudio.exe opens the web publisher on this machine.' },
 ];
 
 export default function StudioPage() {
@@ -36,6 +36,9 @@ export default function StudioPage() {
         <Link href="/portal" className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm">
           Open portal
         </Link>
+        <a href="/downloads/MTStudio.exe" className="text-sm px-4 py-2 rounded-full border border-white/15">
+          Windows Studio
+        </a>
         <Link href="/software/games" className="text-sm px-4 py-2 rounded-full border border-white/15">
           Android APK
         </Link>

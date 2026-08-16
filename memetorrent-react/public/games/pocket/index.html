@@ -2209,6 +2209,12 @@ function showWaitingState(roomCode) {
             finalMessage = `🎉 ${winnerName} Wins!`;
             setMessage(finalMessage);
             playSound(800, 0.5, 'square', 0.3);
+            fetch('/api/scores', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_id: 'mt-world-pocket', player_name: winnerName, score: 1 })
+            }).catch(() => {});
         } else {
             gameState.gameOver = true;
             winnerName = getOtherPlayerName();

@@ -214,8 +214,8 @@ export default function PortalPage() {
               <div>
                 <h2 className="text-xl font-semibold mb-2">Scores</h2>
                 <p className="text-sm opacity-60 mb-4">
-                  Tap Tap posts here when you are logged in. Play{' '}
-                  <a href="/games/unix/tap/index.html" className="text-emerald-400">Tap Tap</a>.
+                  Logged-in scores from Tap Tap, Pocket and Puck land here.{' '}
+                  <a href="/games/unix/tap/index.html" className="text-emerald-400">Play Tap</a>.
                 </p>
                 {!scores.length && <p className="text-sm opacity-50">No scores on this account yet.</p>}
                 <ul className="space-y-2 text-sm">
