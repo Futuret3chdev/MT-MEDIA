@@ -338,6 +338,7 @@ export default function Navbar() {
             </button>
             <ThemeToggle />
           </div>
+        </div>
       </div>
 
       {/* Compact buy form panel - shows just below BUY $MT NOW, hides on click off.
