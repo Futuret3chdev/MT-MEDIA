@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import BackBar from '@/components/ui/BackBar';
 import RequireLogin from '@/components/auth/RequireLogin';
+import RoomStudio, { youtubeId, type RoomExtra } from '@/components/chat/RoomStudio';
+import MtMiniChart from '@/components/chat/MtMiniChart';
 
 type Msg = {
   id: number;
@@ -16,7 +18,7 @@ type Msg = {
   owner_email?: string;
   avatar_url?: string | null;
 };
-type Chan = { slug: string; name: string; kind: string; gate_note: string | null };
+type Chan = RoomExtra & { gate_note?: string | null };
 
 function UserTip({
   name,
@@ -232,8 +234,18 @@ function NftCard({ mint }: { mint: string }) {
 }
 
 function renderBody(text: string) {
-  const parts = text.split(/(\$[A-Za-z0-9]+|0x[a-fA-F0-9]{6,}|[1-9A-HJ-NP-Za-km-z]{32,44})/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`|\$[A-Za-z0-9]+|0x[a-fA-F0-9]{6,}|[1-9A-HJ-NP-Za-km-z]{32,44})/g);
   return parts.map((p, i) => {
+    if (p.startsWith('**') && p.endsWith('**')) {
+      return <strong key={i}>{p.slice(2, -2)}</strong>;
+    }
+    if (p.startsWith('`') && p.endsWith('`')) {
+      return (
+        <code key={i} className="font-mono text-emerald-300">
+          {p.slice(1, -1)}
+        </code>
+      );
+    }
     if (p.startsWith('$') || p.startsWith('0x') || (p.length >= 32 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(p))) {
       return (
         <span key={i} className="text-emerald-400 font-mono break-all">
@@ -243,6 +255,43 @@ function renderBody(text: string) {
     }
     return <span key={i}>{p}</span>;
   });
+}
+
+function FileBubble({ kind, body }: { kind?: string; body: string }) {
+  let meta: { url?: string; name?: string } = {};
+  try {
+    if (body.startsWith('{')) meta = JSON.parse(body);
+  } catch {
+    meta = {};
+  }
+  const url = meta.url || body;
+  const name = meta.name || url.split('/').pop() || 'file';
+  if (kind === 'audio') {
+    return (
+      <div>
+        <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Music</div>
+        <audio controls src={url} className="w-56 max-w-full" />
+        <div className="text-[10px] opacity-50 mt-1 truncate">{name}</div>
+      </div>
+    );
+  }
+  if (kind === 'video') {
+    return (
+      <div>
+        <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Video</div>
+        <video controls src={url} className="max-w-[240px] rounded-xl" />
+        <div className="text-[10px] opacity-50 mt-1 truncate">{name}</div>
+      </div>
+    );
+  }
+  if (kind === 'file') {
+    return (
+      <a href={url} target="_blank" rel="noreferrer" className="text-emerald-400 text-xs break-all">
+        📎 {name}
+      </a>
+    );
+  }
+  return <img src={url} alt="" className="max-w-[220px] rounded-xl" />;
 }
 
 export default function ChatPage() {
@@ -284,15 +333,22 @@ function ChatInner() {
   const [nftMint, setNftMint] = useState('');
   const [nftOn, setNftOn] = useState(false);
   const [peer, setPeer] = useState<{ username: string; email: string } | null>(null);
+  const [studio, setStudio] = useState(false);
+  const [extra, setExtra] = useState<RoomExtra | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
 
-  const current = channels.find((c) => c.slug === room);
+  const current = channels.find((c) => c.slug === room) || extra;
 
   const loadChans = () => {
     fetch('/api/chat/channels', { credentials: 'include' })
       .then((r) => r.json())
-      .then((d) => setChannels(d.channels || []));
+      .then((d) => {
+        const list = (d.channels || []) as Chan[];
+        setChannels(list);
+        const hit = list.find((c) => c.slug === room);
+        if (hit) setExtra(hit);
+      });
   };
 
   const load = () => {
@@ -321,6 +377,29 @@ function ChatInner() {
     fetch('/api/chat/friends', { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => setFriends(d.friends || []));
+    const params = new URLSearchParams(window.location.search);
+    const deep = params.get('room');
+    if (deep) {
+      setRoom(deep);
+      setOpen(true);
+    }
+    const join = params.get('join');
+    if (join) {
+      fetch('/api/chat/invite', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: join }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.ok && d.slug) {
+            setRoom(d.slug);
+            setOpen(true);
+            loadChans();
+          } else setErr(d.error || 'Invite not valid');
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -328,6 +407,18 @@ function ChatInner() {
     const t = setInterval(load, 3000);
     return () => clearInterval(t);
   }, [room]);
+
+  useEffect(() => {
+    const hit = channels.find((c) => c.slug === room);
+    if (hit) setExtra(hit);
+    else if (room.startsWith('dm-') && peer) {
+      setExtra((prev) =>
+        prev && prev.slug === room
+          ? prev
+          : { slug: room, name: peer.username, kind: 'dm' }
+      );
+    }
+  }, [room, channels, peer]);
 
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: 'smooth' });
@@ -441,22 +532,25 @@ function ChatInner() {
     load();
   };
 
-  const uploadFile = async (file: File, as: 'chat') => {
+  const uploadFile = async (file: File) => {
     const fd = new FormData();
     fd.append('file', file);
     const res = await fetch('/api/chat/media', { method: 'POST', credentials: 'include', body: fd });
     const data = await res.json();
     if (!data.ok) {
       setErr(data.error || 'Upload failed');
-      return;
+      return data;
     }
+    const kind = data.kind || 'file';
+    const payload = JSON.stringify({ url: data.url, name: data.name || file.name });
     await fetch('/api/chat', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room, text: data.url, kind: 'image', persona }),
+      body: JSON.stringify({ room, text: payload, kind, persona }),
     });
     load();
+    return data;
   };
 
   const sendNft = async () => {
@@ -546,6 +640,25 @@ function ChatInner() {
                 )}
               </div>
             ))}
+            {channels
+              .filter((c) => c.kind === 'vault')
+              .map((c) => (
+                <button
+                  key={c.slug}
+                  type="button"
+                  onClick={() => {
+                    setPeer(null);
+                    setRoom(c.slug);
+                    setExtra(c);
+                    setOpen(true);
+                  }}
+                  className={`w-full text-left px-1 py-2 text-xs rounded-lg ${
+                    room === c.slug ? 'bg-emerald-400/15 text-emerald-400' : 'text-emerald-400'
+                  }`}
+                >
+                  Vault · only you
+                </button>
+              ))}
             <div className="mt-3 text-[10px] uppercase tracking-wider opacity-40">Friends</div>
             {!friends.length && (
               <p className="text-[11px] opacity-40 py-1">
@@ -600,15 +713,16 @@ function ChatInner() {
                 className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
               >
                 <option value="public">Public</option>
-                <option value="gated">Token-gated</option>
-                <option value="secret">Secret</option>
+                <option value="private">Private (invite)</option>
               </select>
               <button className="w-full py-2 rounded-xl bg-emerald-400 text-black text-sm font-semibold">
                 Create
               </button>
             </form>
           )}
-          {channels.map((c) => (
+          {channels
+            .filter((c) => c.kind !== 'vault')
+            .map((c) => (
             <button
               key={c.slug}
               type="button"
@@ -633,7 +747,10 @@ function ChatInner() {
           ))}
         </aside>
 
-        <section className={`${open ? 'flex' : 'hidden'} md:flex flex-col min-h-[72vh]`}>
+        <section
+          className={`${open ? 'flex' : 'hidden'} md:flex flex-col min-h-[72vh]`}
+          style={current?.background ? { background: current.background } : undefined}
+        >
           <header className="px-3 sm:px-4 py-3 border-b border-white/10 flex items-center gap-3">
             <button type="button" className="md:hidden text-sm min-h-[40px]" onClick={() => setOpen(false)}>
               ← Channels
@@ -646,12 +763,50 @@ function ChatInner() {
                 {peer ? 'Direct message' : current?.kind || 'public'}
               </div>
             </div>
+            <button type="button" className="text-[11px] text-emerald-400" onClick={() => setStudio((v) => !v)}>
+              {studio ? 'Close studio' : 'Studio'}
+            </button>
             {!peer && (
               <button type="button" onClick={emit} className="text-[11px] opacity-50 hidden sm:inline">
                 Post event
               </button>
             )}
           </header>
+          {studio && current && (
+            <RoomStudio
+              room={room}
+              extra={current}
+              isOwner={!!email && (current.owner_email || '').toLowerCase() === email.toLowerCase()}
+              onClose={() => setStudio(false)}
+              onSaved={(c) => {
+                setExtra(c);
+                setChannels((list) => list.map((x) => (x.slug === c.slug ? { ...x, ...c } : x)));
+              }}
+            />
+          )}
+          {current?.topic && (
+            <div className="px-3 py-2 border-b border-white/5 text-xs opacity-70">{current.topic}</div>
+          )}
+          {current?.music_url && (
+            <div className="px-3 py-2 border-b border-white/5">
+              <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Live music</div>
+              {youtubeId(current.music_url) ? (
+                <iframe
+                  title="live music"
+                  className="w-full max-w-md aspect-video rounded-xl"
+                  src={`https://www.youtube.com/embed/${youtubeId(current.music_url)}?autoplay=0`}
+                  allow="autoplay; encrypted-media"
+                />
+              ) : (
+                <audio controls src={current.music_url} className="w-full max-w-md" />
+              )}
+            </div>
+          )}
+          {current?.show_chart && (
+            <div className="px-3 py-2 border-b border-white/5">
+              <MtMiniChart />
+            </div>
+          )}
           {!!events.length && (
             <div className="px-3 py-2 border-b border-white/5 text-[11px] text-emerald-400">
               Latest event: {events[events.length - 1]?.event_name}
@@ -695,17 +850,46 @@ function ChatInner() {
                   )}
                   {m.kind === 'sticker' ? (
                     <span className="text-4xl leading-none">{m.body}</span>
-                  ) : m.kind === 'image' ? (
-                    <img src={m.body} alt="" className="max-w-[220px] rounded-xl" />
+                  ) : m.kind === 'image' || m.kind === 'audio' || m.kind === 'video' || m.kind === 'file' ? (
+                    <FileBubble kind={m.kind} body={m.body} />
                   ) : m.kind === 'nft' ? (
                     <NftCard mint={m.body} />
                   ) : (
                     renderBody(m.body)
                   )}
                   {email && m.owner_email === email && (
-                    <button type="button" className="block text-[10px] opacity-50 mt-1" onClick={() => del(m.id)}>
-                      Delete
-                    </button>
+                    <span className="flex gap-2 mt-1">
+                      <button type="button" className="text-[10px] opacity-50" onClick={() => del(m.id)}>
+                        Delete
+                      </button>
+                      {current?.kind !== 'vault' &&
+                        (m.kind === 'image' || m.kind === 'audio' || m.kind === 'video' || m.kind === 'file') && (
+                          <button
+                            type="button"
+                            className="text-[10px] text-emerald-400"
+                            onClick={async () => {
+                              let meta: { url?: string; name?: string } = {};
+                              try {
+                                if (m.body.startsWith('{')) meta = JSON.parse(m.body);
+                              } catch {
+                                meta = {};
+                              }
+                              await fetch('/api/chat/vault', {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  url: meta.url || m.body,
+                                  name: meta.name,
+                                  kind: m.kind,
+                                }),
+                              });
+                            }}
+                          >
+                            Save to vault
+                          </button>
+                        )}
+                    </span>
                   )}
                 </div>
               </div>
@@ -786,7 +970,47 @@ function ChatInner() {
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) uploadFile(f, 'chat');
+                    if (f) uploadFile(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              <label className="text-xs px-3 py-2 rounded-xl border border-white/15 cursor-pointer">
+                Music
+                <input
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadFile(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              <label className="text-xs px-3 py-2 rounded-xl border border-white/15 cursor-pointer">
+                Video
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadFile(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              <label className="text-xs px-3 py-2 rounded-xl border border-white/15 cursor-pointer">
+                File
+                <input
+                  type="file"
+                  accept=".pdf,.zip,.txt,.json,application/pdf,application/zip,text/plain"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadFile(f);
+                    e.target.value = '';
                   }}
                 />
               </label>

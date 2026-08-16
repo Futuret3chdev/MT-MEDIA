@@ -6,7 +6,7 @@ import GameCard from '@/components/games/GameCard';
 import { liveGames } from '@/lib/mt-catalog';
 
 type Mode = 'users' | 'developers' | 'businesses';
-type UserTab = 'me' | 'games' | 'scores' | 'wallet' | 'chat' | 'friends';
+type UserTab = 'me' | 'games' | 'scores' | 'wallet' | 'chat' | 'friends' | 'vault';
 
 type User = {
   username: string;
@@ -28,6 +28,7 @@ const USER_NAV: { id: UserTab; label: string }[] = [
   { id: 'wallet', label: 'Wallet' },
   { id: 'chat', label: 'Chat' },
   { id: 'friends', label: 'Friends' },
+  { id: 'vault', label: 'Vault' },
 ];
 
 export default function PortalPage() {
@@ -517,6 +518,7 @@ export default function PortalPage() {
                 </Link>
               </div>
             )}
+            {tab === 'vault' && <PortalVault />}
           </div>
         </div>
       )}
@@ -594,6 +596,123 @@ export default function PortalPage() {
             Talk to us →
           </a>
         </div>
+      )}
+    </div>
+  );
+}
+
+function PortalVault() {
+  const [slug, setSlug] = useState('');
+  const [note, setNote] = useState('');
+  const [items, setItems] = useState<{ id: number; kind: string; body: string; created_at: string }[]>([]);
+  const [msg, setMsg] = useState('');
+
+  const load = () => {
+    fetch('/api/chat/vault', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.ok) return;
+        setSlug(d.slug || '');
+        setNote(d.channel?.collab_note || '');
+        setItems(d.items || []);
+      });
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const saveNote = async () => {
+    await fetch('/api/chat/vault', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    });
+    setMsg('Vault note saved');
+  };
+
+  const upload = async (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const up = await fetch('/api/chat/media', { method: 'POST', credentials: 'include', body: fd }).then((r) =>
+      r.json()
+    );
+    if (!up.ok) {
+      setMsg(up.error || 'Upload failed');
+      return;
+    }
+    await fetch('/api/chat/vault', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: up.url, name: up.name, kind: up.kind }),
+    });
+    setMsg('Stored in vault');
+    load();
+  };
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">Personal vault</h2>
+      <p className="text-sm opacity-70">
+        Only you can see this locker. Notes, files, music and video stay on this account.
+      </p>
+      <label className="block text-sm">
+        <span className="opacity-60">Private notes</span>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="mt-1 w-full min-h-[100px] px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
+        />
+      </label>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={saveNote}
+          className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm"
+        >
+          Save notes
+        </button>
+        <label className="px-4 py-2 rounded-full border border-white/15 text-sm cursor-pointer">
+          Add file
+          <input
+            type="file"
+            accept="image/*,audio/*,video/*,.pdf,.zip,.txt"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) upload(f);
+              e.target.value = '';
+            }}
+          />
+        </label>
+        {slug && (
+          <Link href={`/chat?room=${slug}`} className="text-emerald-400 text-sm self-center">
+            Open vault in chat →
+          </Link>
+        )}
+      </div>
+      {msg && <div className="text-sm opacity-70">{msg}</div>}
+      {!items.length ? (
+        <p className="text-sm opacity-50">Nothing stored yet. Add a file or save a note.</p>
+      ) : (
+        <ul className="space-y-2 text-sm">
+          {items.map((it) => {
+            let name = it.kind;
+            try {
+              if (it.body.startsWith('{')) name = JSON.parse(it.body).name || it.kind;
+            } catch {
+              /* raw */
+            }
+            return (
+              <li key={it.id} className="flex justify-between gap-3 border-b border-white/10 py-2">
+                <span className="uppercase text-[11px] text-emerald-400">{it.kind}</span>
+                <span className="truncate">{name}</span>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

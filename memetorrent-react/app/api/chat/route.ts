@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-import { dmParticipant, ensureChat, isDmSlug } from '@/lib/chat-core';
+import { canAccessRoom, ensureChat } from '@/lib/chat-core';
 import { blockedReason } from '@/lib/chat-moderation';
 
 export async function GET(request: NextRequest) {
@@ -9,11 +9,9 @@ export async function GET(request: NextRequest) {
   const conn = await getUserDb();
   try {
     await ensureChat(conn);
-    if (isDmSlug(room)) {
-      const me = await userBySession(await readSessionToken());
-      if (!me || !(await dmParticipant(conn, room, me.email))) {
-        return Response.json({ ok: false, error: 'Private chat.', messages: [] }, { status: 403 });
-      }
+    const me = await userBySession(await readSessionToken());
+    if (!(await canAccessRoom(conn, room, me?.email))) {
+      return Response.json({ ok: false, error: 'This room is private.', messages: [] }, { status: 403 });
     }
     await conn.execute('DELETE FROM mt_crypto_chat WHERE burn_at IS NOT NULL AND burn_at < NOW()');
     const [rows] = await conn.execute(
@@ -68,11 +66,17 @@ export async function POST(request: NextRequest) {
     if (!channel) {
       return Response.json({ ok: false, error: 'Unknown channel.' }, { status: 404 });
     }
-    if (isDmSlug(room) && !(await dmParticipant(conn, room, user.email))) {
-      return Response.json({ ok: false, error: 'Private chat.' }, { status: 403 });
+    if (!(await canAccessRoom(conn, room, user.email))) {
+      return Response.json({ ok: false, error: 'This room is private.' }, { status: 403 });
     }
     let kind = String(body.kind || 'text');
-    if (!['text', 'asset', 'sticker', 'trade', 'event', 'image', 'nft'].includes(kind)) kind = 'text';
+    if (
+      !['text', 'asset', 'sticker', 'trade', 'event', 'image', 'nft', 'audio', 'video', 'file'].includes(
+        kind
+      )
+    ) {
+      kind = 'text';
+    }
     if (kind === 'text' && (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(text) || /^\$[A-Za-z0-9]+$/.test(text))) {
       kind = 'asset';
     }

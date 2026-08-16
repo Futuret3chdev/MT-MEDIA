@@ -63,6 +63,30 @@ export async function ensureChat(conn: mysql.Connection) {
       [r.slug, r.name, r.kind, null, r.sub]
     );
   }
+  for (const sql of [
+    'ALTER TABLE mt_chat_channels ADD COLUMN invite_code VARCHAR(24) NULL',
+    'ALTER TABLE mt_chat_channels ADD COLUMN background VARCHAR(240) NULL',
+    'ALTER TABLE mt_chat_channels ADD COLUMN music_url VARCHAR(400) NULL',
+    'ALTER TABLE mt_chat_channels ADD COLUMN show_chart TINYINT(1) NOT NULL DEFAULT 0',
+    'ALTER TABLE mt_chat_channels ADD COLUMN collab_note MEDIUMTEXT NULL',
+    'ALTER TABLE mt_chat_channels ADD COLUMN topic VARCHAR(200) NULL',
+    'ALTER TABLE mt_chat_media ADD COLUMN filename VARCHAR(160) NULL',
+  ]) {
+    try {
+      await conn.execute(sql);
+    } catch {
+      /* exists */
+    }
+  }
+  await conn.execute(`
+    CREATE TABLE IF NOT EXISTS mt_chat_members (
+      slug VARCHAR(48) NOT NULL,
+      email VARCHAR(190) NOT NULL,
+      role VARCHAR(16) NOT NULL DEFAULT 'member',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (slug, email)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 }
 
 export function slugifyChannel(name: string) {
@@ -118,4 +142,72 @@ export async function dmParticipant(
   if (!ch || ch.kind !== 'dm') return false;
   const e = email.trim().toLowerCase();
   return ch.owner_email === e || ch.gate_note === e;
+}
+
+export function isPrivateKind(kind: string) {
+  return kind === 'private' || kind === 'secret' || kind === 'gated' || kind === 'vault';
+}
+
+export function isVaultSlug(room: string) {
+  return room.startsWith('vault-');
+}
+
+export function vaultSlug(email: string) {
+  const h = crypto.createHash('sha1').update(email.trim().toLowerCase()).digest('hex').slice(0, 20);
+  return `vault-${h}`;
+}
+
+export async function ensurePersonalVault(conn: mysql.Connection, email: string, username?: string) {
+  const slug = vaultSlug(email);
+  const addr = email.trim().toLowerCase();
+  await conn.execute(
+    'INSERT IGNORE INTO mt_chat_channels (slug, name, kind, owner_email, topic) VALUES (?,?,?,?,?)',
+    [slug, 'My vault', 'vault', addr, 'Personal locker — only you']
+  );
+  await addMember(conn, slug, addr, 'owner');
+  if (username) {
+    await conn.execute("UPDATE mt_chat_channels SET name = ? WHERE slug = ? AND name = 'My vault'", [
+      `${username}'s vault`.slice(0, 80),
+      slug,
+    ]);
+  }
+  return slug;
+}
+
+export function newInviteCode() {
+  return crypto.randomBytes(8).toString('hex');
+}
+
+export async function addMember(conn: mysql.Connection, slug: string, email: string, role = 'member') {
+  await conn.execute('INSERT IGNORE INTO mt_chat_members (slug, email, role) VALUES (?,?,?)', [
+    slug,
+    email.trim().toLowerCase(),
+    role,
+  ]);
+}
+
+export async function canAccessRoom(
+  conn: mysql.Connection,
+  room: string,
+  email: string | null | undefined
+): Promise<boolean> {
+  if (isDmSlug(room)) return email ? dmParticipant(conn, room, email) : Promise.resolve(false);
+  const [rows] = await conn.execute(
+    'SELECT kind, owner_email FROM mt_chat_channels WHERE slug = ? LIMIT 1',
+    [room]
+  );
+  const ch = (rows as { kind: string; owner_email: string | null }[])[0];
+  if (!ch) return false;
+  if (ch.kind === 'vault') {
+    return !!email && !!ch.owner_email && ch.owner_email.toLowerCase() === email.trim().toLowerCase();
+  }
+  if (!isPrivateKind(ch.kind)) return true;
+  if (!email) return false;
+  const e = email.trim().toLowerCase();
+  if (ch.owner_email && ch.owner_email.toLowerCase() === e) return true;
+  const [mem] = await conn.execute('SELECT email FROM mt_chat_members WHERE slug = ? AND email = ? LIMIT 1', [
+    room,
+    e,
+  ]);
+  return (mem as object[]).length > 0;
 }
