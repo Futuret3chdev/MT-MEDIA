@@ -1,0 +1,8 @@
+{
+  "name": "mt-media",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix memetorrent-react install && npm --prefix memetorrent-react run build",
+    "vercel-build": "npm --prefix memetorrent-react install && npm --prefix memetorrent-react run build"
+  }
+}
