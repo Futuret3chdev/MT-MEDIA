@@ -1,10 +1,12 @@
+import Link from 'next/link';
 import GameCard from '@/components/games/GameCard';
 import { CATALOG } from '@/lib/mt-catalog';
 
 export default function GamesCatalogPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-      <div className="uppercase text-xs tracking-[3px] text-emerald-400 mb-2">Catalog</div>
+      <Link href="/" className="text-sm opacity-70 hover:opacity-100">← Home</Link>
+      <div className="uppercase text-xs tracking-[3px] text-emerald-400 mt-4 mb-2">Catalog</div>
       <h1 className="text-4xl sm:text-5xl font-semibold tracking-[-1.6px] mb-3">All games</h1>
       <p className="opacity-70 max-w-2xl mb-8 text-sm">
         Cover, name, play. Same shelf as TAP, P2E and the portal library.

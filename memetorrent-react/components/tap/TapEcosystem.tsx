@@ -10,7 +10,7 @@ const TAP_FEATURES = [
   { name: 'TAP Studio', desc: 'Creator tools: mint NFTs, design Rockets rewards, launch mini-games. 1¢ fees.' },
 ];
 
-const FEATURED = ['soccer-pro', 'soccer', 'puck', 'mte-pop', 'metro-vice', 'starfleet'];
+const FEATURED = ['soccer-pro', 'puck', 'mte-pop', 'metro-vice', 'starfleet'];
 
 export default function TapEcosystem() {
   const featured = FEATURED.map((id) => CATALOG.find((g) => g.id === id)).filter(Boolean);

@@ -23,15 +23,6 @@ export const CATALOG: CatalogGame[] = [
     source: 'https://github.com/Futuret3chdev/soccer-pro',
   },
   {
-    id: 'soccer',
-    name: 'Soccer',
-    kind: 'p2e',
-    status: 'live',
-    play: '/games/unix/soccer/',
-    img: '/games/covers/soccer-pro.jpg',
-    blurb: 'Quick soccer from the bot / P2E board.',
-  },
-  {
     id: 'puck',
     name: 'Puck',
     kind: 'p2e',
