@@ -84,15 +84,6 @@ export const CATALOG: CatalogGame[] = [
     img: '/games/sub.png',
     blurb: 'Sideload client. Needs a portal developer license.',
   },
-  {
-    id: 'poker-stars',
-    name: 'Poker Stars',
-    kind: 'casino',
-    status: 'live',
-    play: 'https://poker-stars.vercel.app',
-    img: 'https://poker-stars.vercel.app/classic-512.png',
-    blurb: 'The house table — live on poker-stars. Same ecosystem, own Vercel app.',
-  },
 ];
 
 export function liveGames() {
