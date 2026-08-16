@@ -11,6 +11,7 @@ export default function P2EPage() {
         account. $MT seasons turn on when the cage is ready — not a fake live badge.
       </p>
       <div className="flex flex-wrap gap-3 mb-10 text-sm">
+        <Link href="/catalog" className="text-emerald-400">Full catalog →</Link>
         <Link href="/portal" className="text-emerald-400">Portal library →</Link>
         <Link href="/casino" className="text-emerald-400">Casino →</Link>
         <Link href="/studio" className="text-emerald-400">Game Studio →</Link>
