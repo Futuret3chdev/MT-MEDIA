@@ -1078,7 +1078,7 @@ function ChatInner() {
               }
             })()}
             me={email}
-            canEdit={canEditRoom}
+            canEdit={canEditRoom || !current?.owner_email}
             onChange={(game_id, state) =>
               setExtra((e) =>
                 e ? { ...e, game_id, game_state: state ? JSON.stringify(state) : null } : e
