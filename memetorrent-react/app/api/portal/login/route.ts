@@ -27,7 +27,10 @@ export async function POST(request: NextRequest) {
   try {
     await ensurePortalColumns(conn);
     const [rows] = await conn.execute(
-      'SELECT id, username, email, password_hash, wallet_address, license_key, license_tier FROM portal_users WHERE email = ? LIMIT 1',
+      `SELECT id, username, email, password_hash, wallet_address, license_key, license_tier, bio, avatar_url,
+              CAST(telegram_id AS CHAR) AS telegram_id,
+              CAST(discord_id AS CHAR) AS discord_id
+       FROM portal_users WHERE email = ? LIMIT 1`,
       [email]
     );
     const row = (rows as (PortalUser & { password_hash: string })[])[0];

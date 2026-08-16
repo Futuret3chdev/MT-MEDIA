@@ -17,6 +17,7 @@ type User = {
   bio: string | null;
   avatar_url: string | null;
   telegram_id: string | null;
+  telegram_username?: string | null;
   discord_id: string | null;
 };
 
@@ -61,7 +62,19 @@ export default function PortalPage() {
             .catch(() => {});
           fetch('/api/portal/wallets', { credentials: 'include' })
             .then((r) => r.json())
-            .then((w) => setWallets(w.wallets || []))
+            .then((w) => {
+              setWallets(w.wallets || []);
+              setUser((u) =>
+                u
+                  ? {
+                      ...u,
+                      telegram_id: w.telegram_id || u.telegram_id,
+                      telegram_username: w.telegram_username || u.telegram_username,
+                      discord_id: w.discord_id || u.discord_id,
+                    }
+                  : u
+              );
+            })
             .catch(() => {});
         }
       })
@@ -182,7 +195,7 @@ export default function PortalPage() {
                     Discord {user.discord_id || '—'}
                   </div>
                   <div className="rounded-xl border border-white/10 p-3">
-                    Telegram {user.telegram_id || '—'}
+                    Telegram {user.telegram_username ? `@${user.telegram_username}` : user.telegram_id || '—'}
                   </div>
                 </div>
                 <p className="text-xs opacity-50">Wallets live on the Wallet tab — Phantom now, Infinite Wallet when they sign up.</p>
@@ -238,7 +251,9 @@ export default function PortalPage() {
                   People can link more than one — Phantom now, Infinite Wallet when they create it.
                 </p>
                 <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-xl border border-white/10 p-3">Telegram {user.telegram_id || '—'}</div>
+                  <div className="rounded-xl border border-white/10 p-3">
+                    Telegram {user.telegram_username ? `@${user.telegram_username}` : user.telegram_id || '—'}
+                  </div>
                   <div className="rounded-xl border border-white/10 p-3">Discord {user.discord_id || '—'}</div>
                 </div>
                 {!wallets.length && (

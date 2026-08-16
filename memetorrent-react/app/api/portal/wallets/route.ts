@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-import { addWallet, listWallets, migrateLegacyWallet, removeWallet, type WalletKind } from '@/lib/user-wallets';
+import { addWallet, hydrateFromHeldRecords, listWallets, removeWallet, type WalletKind } from '@/lib/user-wallets';
 
 const KINDS = new Set(['phantom', 'infinite', 'solana', 'other']);
 
@@ -10,13 +10,13 @@ export async function GET() {
   if (!user) return Response.json({ ok: false, error: 'Sign in' }, { status: 401 });
   const conn = await getUserDb();
   try {
-    await migrateLegacyWallet(conn, user.email, user.wallet_address);
-    const wallets = await listWallets(conn, user.email);
+    const extra = await hydrateFromHeldRecords(conn, user);
     return Response.json({
       ok: true,
-      wallets,
-      telegram_id: user.telegram_id,
-      discord_id: user.discord_id,
+      wallets: extra.wallets,
+      telegram_id: extra.telegram_id,
+      telegram_username: extra.telegram_username,
+      discord_id: extra.discord_id,
     });
   } finally {
     await conn.end();

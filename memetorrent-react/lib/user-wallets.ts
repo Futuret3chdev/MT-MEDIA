@@ -73,6 +73,79 @@ export async function addWallet(
   return listWallets(conn, email);
 }
 
+export async function hydrateFromHeldRecords(
+  conn: mysql.Connection,
+  user: { email: string; username?: string; wallet_address?: string | null; telegram_id?: string | null; discord_id?: string | null }
+): Promise<{
+  telegram_id: string | null;
+  telegram_username: string | null;
+  discord_id: string | null;
+  wallets: LinkedWallet[];
+}> {
+  await migrateLegacyWallet(conn, user.email, user.wallet_address || null);
+  const wallets = await listWallets(conn, user.email);
+  const addrs = new Set(wallets.map((w) => w.address).filter(Boolean));
+  if (user.wallet_address && user.wallet_address.toLowerCase() !== 'not set') {
+    addrs.add(user.wallet_address);
+  }
+
+  let telegramId = user.telegram_id ? String(user.telegram_id) : null;
+  let discordId = user.discord_id ? String(user.discord_id) : null;
+  let telegramUsername: string | null = null;
+
+  if (addrs.size) {
+    const list = [...addrs];
+    const ph = list.map(() => '?').join(',');
+    const [sibs] = await conn.execute(
+      `SELECT CAST(telegram_id AS CHAR) AS telegram_id, CAST(discord_id AS CHAR) AS discord_id, wallet_address
+       FROM portal_users
+       WHERE wallet_address IN (${ph})`,
+      list
+    );
+    for (const s of sibs as { telegram_id: string | null; discord_id: string | null; wallet_address: string }[]) {
+      if (!telegramId && s.telegram_id && s.telegram_id !== '0') telegramId = String(s.telegram_id);
+      if (!discordId && s.discord_id && s.discord_id !== '0') discordId = String(s.discord_id);
+    }
+    try {
+      const [held] = await conn.execute(
+        `SELECT CAST(id AS CHAR) AS id, username, wallet_address FROM user_details WHERE wallet_address IN (${ph})`,
+        list
+      );
+      for (const h of held as { id: string; username: string | null; wallet_address: string }[]) {
+        if (h.wallet_address) {
+          await conn.execute(
+            `INSERT IGNORE INTO mt_user_wallets (email, kind, address, is_primary)
+             VALUES (?, 'solana', ?, 0)`,
+            [user.email, h.wallet_address.slice(0, 80)]
+          );
+        }
+        if (!telegramId && h.id) telegramId = String(h.id);
+        if (h.username && (!telegramUsername || h.username.toLowerCase() === String(user.username || '').toLowerCase())) {
+          telegramUsername = h.username;
+        }
+      }
+    } catch {
+      /* user_details may be missing */
+    }
+  }
+
+  if (telegramId || discordId) {
+    await conn.execute(
+      `UPDATE portal_users
+       SET telegram_id = COALESCE(telegram_id, ?), discord_id = COALESCE(discord_id, ?)
+       WHERE email = ?`,
+      [telegramId, discordId, user.email]
+    );
+  }
+
+  return {
+    telegram_id: telegramId,
+    telegram_username: telegramUsername,
+    discord_id: discordId,
+    wallets: await listWallets(conn, user.email),
+  };
+}
+
 export async function removeWallet(conn: mysql.Connection, email: string, id: number) {
   await conn.execute('DELETE FROM mt_user_wallets WHERE email = ? AND id = ?', [email, id]);
   return listWallets(conn, email);
