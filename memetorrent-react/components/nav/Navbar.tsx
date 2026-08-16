@@ -283,22 +283,25 @@ export default function Navbar() {
             LIVE $MT
           </a>
           <a
+            href={portalUser ? '/chat' : '/login?next=/chat'}
+            title="MT Chat"
+            aria-label="MT Chat"
+            className="relative shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-emerald-400/40"
+          >
+            <img src="/icons/mt-chat.jpg" alt="" className="w-full h-full object-cover" />
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-black drop-shadow-[0_0_2px_#00ff99]">
+              MT
+            </span>
+          </a>
+          <a
             href="/contact"
             className="text-[11px] sm:text-xs font-medium opacity-80 hover:opacity-100 whitespace-nowrap"
           >
             CONTACT
           </a>
-          <a
-            href={portalUser ? '/chat' : '/login?next=/chat'}
-            title="MT Chat"
-            aria-label="MT Chat"
-            className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-400 text-black font-bold text-[10px] leading-none"
-          >
-            MT
-          </a>
 
-          <div className="ml-1 sm:ml-3 pl-2 sm:pl-3 border-l border-white/20 flex items-center gap-1.5 text-[10px] sm:text-xs min-w-0 flex-1">
-            <span className="opacity-60 shrink-0">CA</span>
+          <div className="flex items-center gap-2 shrink-0 pl-2 border-l border-white/20">
+            <span className="opacity-60 shrink-0 text-[10px] sm:text-xs">CA</span>
             <button
               onClick={(e) => {
                 navigator.clipboard.writeText(MT_MINT);
@@ -306,20 +309,18 @@ export default function Navbar() {
                 if (btn) btn.innerText = 'Copied!';
                 setTimeout(() => { if (btn) btn.innerText = MT_MINT; }, 1500);
               }}
-              className="font-mono text-emerald-400 hover:text-emerald-300 active:text-white transition text-left break-all"
+              className="font-mono text-emerald-400 hover:text-emerald-300 active:text-white transition text-left text-[10px] sm:text-xs max-w-[9.5rem] sm:max-w-[16rem] truncate"
               title={`${MT_MINT} — tap to copy`}
             >
               {MT_MINT}
             </button>
+            <button
+              onClick={() => setShowBuyPanel(!showBuyPanel)}
+              className="font-medium text-emerald-400 hover:text-emerald-300 transition cursor-pointer text-xs sm:text-sm px-2 py-1 border border-emerald-400/30 rounded whitespace-nowrap"
+            >
+              BUY $MT NOW
+            </button>
           </div>
-
-          {/* BUY $MT NOW - toggles the compact form panel just below */}
-          <button 
-            onClick={() => setShowBuyPanel(!showBuyPanel)}
-            className="font-medium text-emerald-400 hover:text-emerald-300 transition cursor-pointer text-xs sm:text-sm px-2 py-1 border border-emerald-400/30 rounded whitespace-nowrap"
-          >
-            BUY $MT NOW
-          </button>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
             <button
