@@ -308,7 +308,7 @@ export default function Navbar() {
                 if (btn) btn.innerText = 'Copied!';
                 setTimeout(() => { if (btn) btn.innerText = MT_MINT; }, 1500);
               }}
-              className="font-mono text-emerald-400 hover:text-emerald-300 active:text-white transition text-left text-[10px] sm:text-xs max-w-[9.5rem] sm:max-w-[16rem] truncate"
+              className="font-mono text-emerald-400 hover:text-emerald-300 active:text-white transition text-left text-[10px] sm:text-xs whitespace-nowrap"
               title={`${MT_MINT} — tap to copy`}
             >
               {MT_MINT}
