@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-import { ensureChat } from '@/lib/chat-core';
+import { dmParticipant, ensureChat, isDmSlug } from '@/lib/chat-core';
 import { blockedReason } from '@/lib/chat-moderation';
 
 export async function GET(request: NextRequest) {
@@ -9,6 +9,12 @@ export async function GET(request: NextRequest) {
   const conn = await getUserDb();
   try {
     await ensureChat(conn);
+    if (isDmSlug(room)) {
+      const me = await userBySession(await readSessionToken());
+      if (!me || !(await dmParticipant(conn, room, me.email))) {
+        return Response.json({ ok: false, error: 'Private chat.', messages: [] }, { status: 403 });
+      }
+    }
     await conn.execute('DELETE FROM mt_crypto_chat WHERE burn_at IS NOT NULL AND burn_at < NOW()');
     const [rows] = await conn.execute(
       `SELECT m.id, m.room, m.username, m.body, m.burn_at, m.no_forward, m.kind, m.owner_email, m.created_at,
@@ -57,9 +63,13 @@ export async function POST(request: NextRequest) {
   const conn = await getUserDb();
   try {
     await ensureChat(conn);
-    const [ch] = await conn.execute('SELECT slug FROM mt_chat_channels WHERE slug = ? LIMIT 1', [room]);
-    if (!(ch as object[]).length) {
+    const [ch] = await conn.execute('SELECT slug, kind FROM mt_chat_channels WHERE slug = ? LIMIT 1', [room]);
+    const channel = (ch as { slug: string; kind: string }[])[0];
+    if (!channel) {
       return Response.json({ ok: false, error: 'Unknown channel.' }, { status: 404 });
+    }
+    if (isDmSlug(room) && !(await dmParticipant(conn, room, user.email))) {
+      return Response.json({ ok: false, error: 'Private chat.' }, { status: 403 });
     }
     let kind = String(body.kind || 'text');
     if (!['text', 'asset', 'sticker', 'trade', 'event', 'image', 'nft'].includes(kind)) kind = 'text';

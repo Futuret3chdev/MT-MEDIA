@@ -8,7 +8,7 @@ export async function GET() {
   try {
     await ensureChat(conn);
     const [rows] = await conn.execute(
-      'SELECT slug, name, kind, gate_note, owner_email FROM mt_chat_channels ORDER BY id ASC'
+      "SELECT slug, name, kind, gate_note, owner_email FROM mt_chat_channels WHERE kind != 'dm' ORDER BY id ASC"
     );
     return Response.json({ ok: true, channels: rows });
   } catch (err) {

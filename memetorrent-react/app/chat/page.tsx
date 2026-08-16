@@ -24,12 +24,14 @@ function UserTip({
   isFriend,
   alignRight,
   onAdded,
+  onMessage,
 }: {
   name: string;
   me?: string;
   isFriend?: boolean;
   alignRight?: boolean;
   onAdded?: () => void;
+  onMessage?: (name: string) => void;
 }) {
   const [card, setCard] = useState<null | {
     username: string;
@@ -182,14 +184,27 @@ function UserTip({
                 ))}
               </div>
               {!self && !name.startsWith('0xStealth') && (
-                <button
-                  type="button"
-                  disabled={adding || added}
-                  onClick={add}
-                  className="mt-3 w-full py-2 rounded-xl bg-emerald-400 text-black text-xs font-semibold disabled:opacity-50"
-                >
-                  {added ? 'Added' : adding ? 'Adding…' : 'Add'}
-                </button>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={adding || added}
+                    onClick={add}
+                    className="py-2 rounded-xl border border-white/15 text-xs font-semibold disabled:opacity-50"
+                  >
+                    {added ? 'Added' : adding ? 'Adding…' : 'Add'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPinned(false);
+                      setOn(false);
+                      onMessage?.(name);
+                    }}
+                    className="py-2 rounded-xl bg-emerald-400 text-black text-xs font-semibold"
+                  >
+                    Message
+                  </button>
+                </div>
               )}
             </>
           )}
@@ -231,8 +246,10 @@ function renderBody(text: string) {
 }
 
 export default function ChatPage() {
+  const next =
+    typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/chat';
   return (
-    <RequireLogin next="/chat">
+    <RequireLogin next={next}>
       <ChatInner />
     </RequireLogin>
   );
@@ -266,6 +283,7 @@ function ChatInner() {
   const [amt, setAmt] = useState('100');
   const [nftMint, setNftMint] = useState('');
   const [nftOn, setNftOn] = useState(false);
+  const [peer, setPeer] = useState<{ username: string; email: string } | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
 
@@ -281,6 +299,10 @@ function ChatInner() {
     fetch(`/api/chat?room=${room}`, { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => setMsgs(d.messages || []));
+    if (String(room).startsWith('dm-')) {
+      setEvents([]);
+      return;
+    }
     fetch(`/api/chat/events?room=${room}`, { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => setEvents(d.events || []));
@@ -344,6 +366,7 @@ function ChatInner() {
     }
     setCreating(false);
     setNewName('');
+    setPeer(null);
     loadChans();
     setRoom(data.slug);
     setOpen(true);
@@ -353,6 +376,34 @@ function ChatInner() {
     await fetch(`/api/chat?id=${id}`, { method: 'DELETE', credentials: 'include' });
     load();
   };
+
+  const openDm = async (username: string, friendEmail?: string) => {
+    setErr('');
+    const res = await fetch('/api/chat/dm', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email: friendEmail }),
+    });
+    const d = await res.json();
+    if (!d.ok) {
+      setErr(d.error || 'Could not open chat');
+      return;
+    }
+    setPeer(d.with);
+    setRoom(d.slug);
+    setOpen(true);
+    const url = new URL(window.location.href);
+    url.searchParams.set('with', d.with?.username || username);
+    window.history.replaceState({}, '', url.pathname + url.search);
+  };
+
+  useEffect(() => {
+    const want = new URLSearchParams(window.location.search).get('with');
+    if (want) openDm(want);
+    // open a 1:1 thread from ?with=username — not the public room
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addFriend = async (username: string, friendEmail: string) => {
     await fetch('/api/chat/friends', {
@@ -481,24 +532,40 @@ function ChatInner() {
               className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
             />
             {hits.map((h) => (
-              <div key={h.email} className="flex justify-between items-center text-xs py-1">
-                <span>@{h.username}</span>
+              <div key={h.email} className="flex justify-between items-center gap-2 text-xs py-1">
+                <span className="truncate">@{h.username}</span>
                 {!h.self && (
-                  <button type="button" className="text-emerald-400" onClick={() => addFriend(h.username, h.email)}>
-                    Add
-                  </button>
+                  <span className="flex gap-2 shrink-0">
+                    <button type="button" className="text-emerald-400" onClick={() => addFriend(h.username, h.email)}>
+                      Add
+                    </button>
+                    <button type="button" className="text-emerald-400" onClick={() => openDm(h.username, h.email)}>
+                      Message
+                    </button>
+                  </span>
                 )}
               </div>
             ))}
             <div className="mt-3 text-[10px] uppercase tracking-wider opacity-40">Friends</div>
             {!friends.length && (
               <p className="text-[11px] opacity-40 py-1">
-                Hover a name in the room and tap Add, or search above.
+                Hover a name, tap Add, then Message them here — that is a private chat, not the main room.
               </p>
             )}
             {friends.map((f) => (
-              <div key={f.friend_email} className="flex items-center justify-between gap-2 text-xs py-1.5">
-                <span className="truncate">@{f.username || f.friend_email}</span>
+              <div
+                key={f.friend_email}
+                className={`flex items-center justify-between gap-2 text-xs py-1.5 px-1 rounded-lg ${
+                  peer?.email === f.friend_email ? 'bg-white/10' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  className="truncate text-left text-emerald-400"
+                  onClick={() => openDm(f.username || '', f.friend_email)}
+                >
+                  @{f.username || f.friend_email}
+                </button>
                 <button
                   type="button"
                   className="opacity-40 hover:opacity-100 shrink-0"
@@ -546,8 +613,12 @@ function ChatInner() {
               key={c.slug}
               type="button"
               onClick={() => {
+                setPeer(null);
                 setRoom(c.slug);
                 setOpen(true);
+                const url = new URL(window.location.href);
+                url.searchParams.delete('with');
+                window.history.replaceState({}, '', url.pathname + url.search);
               }}
               className={`w-full text-left px-4 py-3 border-b border-white/5 ${
                 room === c.slug ? 'bg-white/10' : 'hover:bg-white/5'
@@ -568,12 +639,18 @@ function ChatInner() {
               ← Channels
             </button>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold truncate">#{current?.name || room}</div>
-              <div className="text-xs opacity-50 capitalize">{current?.kind || 'public'}</div>
+              <div className="font-semibold truncate">
+                {peer ? `@${peer.username}` : `#${current?.name || room}`}
+              </div>
+              <div className="text-xs opacity-50 capitalize">
+                {peer ? 'Direct message' : current?.kind || 'public'}
+              </div>
             </div>
-            <button type="button" onClick={emit} className="text-[11px] opacity-50 hidden sm:inline">
-              Post event
-            </button>
+            {!peer && (
+              <button type="button" onClick={emit} className="text-[11px] opacity-50 hidden sm:inline">
+                Post event
+              </button>
+            )}
           </header>
           {!!events.length && (
             <div className="px-3 py-2 border-b border-white/5 text-[11px] text-emerald-400">
@@ -597,6 +674,7 @@ function ChatInner() {
                         .then((r) => r.json())
                         .then((d) => setFriends(d.friends || []));
                     }}
+                    onMessage={(n) => openDm(n)}
                   />
                   {m.no_forward ? ' · no forward' : ''}
                   {m.burn_at ? ' · burns' : ''}{' '}
@@ -632,7 +710,11 @@ function ChatInner() {
                 </div>
               </div>
             ))}
-            {!msgs.length && <div className="text-sm opacity-40">No messages yet. Start the room.</div>}
+            {!msgs.length && (
+              <div className="text-sm opacity-40">
+                {peer ? `Private chat with @${peer.username}. Only you two see this.` : 'No messages yet. Start the room.'}
+              </div>
+            )}
             <div ref={end} />
           </div>
           <form onSubmit={send} className="p-3 border-t border-white/10 space-y-2">
@@ -677,7 +759,13 @@ function ChatInner() {
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={authed ? `Message #${current?.name || room}` : 'Sign in to send'}
+                placeholder={
+                  authed
+                    ? peer
+                      ? `Message @${peer.username}`
+                      : `Message #${current?.name || room}`
+                    : 'Sign in to send'
+                }
                 disabled={!authed}
                 className="flex-1 min-w-[140px] px-3 py-2.5 rounded-xl bg-black/40 border border-white/15 text-sm"
               />

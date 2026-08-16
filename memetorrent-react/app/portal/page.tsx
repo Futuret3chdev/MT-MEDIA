@@ -50,8 +50,7 @@ export default function PortalPage() {
   const [friendQ, setFriendQ] = useState('');
   const [friendHits, setFriendHits] = useState<{ username: string; email: string; self?: boolean }[]>([]);
   const [friendMsg, setFriendMsg] = useState('');
-  const [licBusy, setLicBusy] = useState(false);
-  const [licMsg, setLicMsg] = useState('');
+
 
   useEffect(() => {
     const stored = localStorage.getItem('mt_portal_mode');
@@ -165,32 +164,7 @@ export default function PortalPage() {
     await refreshFriends();
   };
 
-  const upgradePro = async () => {
-    setLicBusy(true);
-    setLicMsg('');
-    try {
-      const res = await fetch('/api/portal/license', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'upgrade' }),
-      });
-      const d = await res.json();
-      if (!d.ok) {
-        setLicMsg(d.error || 'Could not upgrade');
-        return;
-      }
-      if (d.user) setUser((u) => (u ? { ...u, ...d.user } : u));
-      else {
-        setUser((u) =>
-          u ? { ...u, license_key: d.license_key, license_tier: d.license_tier } : u
-        );
-      }
-      setLicMsg('You are on Pro. New key is on this profile.');
-    } finally {
-      setLicBusy(false);
-    }
-  };
+
 
   if (loading) {
     return <div className="max-w-6xl mx-auto px-4 py-20 opacity-60">Loading portal…</div>;
@@ -518,7 +492,10 @@ export default function PortalPage() {
                           </div>
                         </div>
                         <div className="flex gap-3 text-xs shrink-0">
-                          <Link href="/chat" className="text-emerald-400">
+                          <Link
+                            href={`/chat?with=${encodeURIComponent(f.username || '')}`}
+                            className="text-emerald-400"
+                          >
                             Chat
                           </Link>
                           <button type="button" className="opacity-60" onClick={() => removeFriend(f.friend_email)}>
@@ -581,16 +558,17 @@ export default function PortalPage() {
               {(user.license_tier || 'free') === 'pro' ? (
                 <div className="text-sm text-emerald-400">You are on Pro</div>
               ) : (
-                <button
-                  type="button"
-                  disabled={licBusy}
-                  onClick={upgradePro}
-                  className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm disabled:opacity-50"
-                >
-                  {licBusy ? 'Upgrading…' : 'Upgrade to Pro'}
-                </button>
+                <div>
+                  <button
+                    type="button"
+                    disabled
+                    className="font-semibold text-black bg-emerald-400/40 px-4 py-2 rounded-full text-sm cursor-not-allowed"
+                  >
+                    Upgrade to Pro
+                  </button>
+                  <p className="text-xs opacity-50 mt-2">Coming soon — paid upgrade. You stay on Free until then.</p>
+                </div>
               )}
-              {licMsg && <p className="text-sm opacity-70 mt-3">{licMsg}</p>}
             </div>
           </div>
           <div className="rounded-2xl p-6 border border-white/10" style={{ background: 'var(--card)' }}>

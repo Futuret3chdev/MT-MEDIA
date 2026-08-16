@@ -1,13 +1,19 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-import { ensureChat } from '@/lib/chat-core';
+import { dmParticipant, ensureChat, isDmSlug } from '@/lib/chat-core';
 
 export async function GET(request: NextRequest) {
   const room = request.nextUrl.searchParams.get('room') || 'trades';
   const conn = await getUserDb();
   try {
     await ensureChat(conn);
+    if (isDmSlug(room)) {
+      const me = await userBySession(await readSessionToken());
+      if (!me || !(await dmParticipant(conn, room, me.email))) {
+        return Response.json({ ok: true, events: [] });
+      }
+    }
     const [rows] = await conn.execute(
       'SELECT id, room, event_name, payload, created_at FROM mt_chat_events WHERE room = ? ORDER BY id DESC LIMIT 20',
       [room]

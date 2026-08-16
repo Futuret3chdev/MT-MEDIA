@@ -1,4 +1,5 @@
 import type mysql from 'mysql2/promise';
+import crypto from 'crypto';
 
 export const SYSTEM_ROOMS = [
   { slug: 'trades', name: 'Trades', kind: 'public', sub: 'Fills and pairs' },
@@ -72,4 +73,49 @@ export function slugifyChannel(name: string) {
     .replace(/^-|-$/g, '')
     .slice(0, 40);
   return s || 'room';
+}
+
+export function pairEmails(a: string, b: string): [string, string] {
+  return [a.trim().toLowerCase(), b.trim().toLowerCase()].sort() as [string, string];
+}
+
+export function dmSlug(emailA: string, emailB: string) {
+  const [x, y] = pairEmails(emailA, emailB);
+  const h = crypto.createHash('sha1').update(`${x}\n${y}`).digest('hex').slice(0, 24);
+  return `dm-${h}`;
+}
+
+export function isDmSlug(room: string) {
+  return room.startsWith('dm-');
+}
+
+export async function ensureDmChannel(
+  conn: mysql.Connection,
+  meEmail: string,
+  otherEmail: string,
+  label = 'Direct'
+) {
+  const [x, y] = pairEmails(meEmail, otherEmail);
+  const slug = dmSlug(meEmail, otherEmail);
+  await conn.execute(
+    'INSERT IGNORE INTO mt_chat_channels (slug, name, kind, owner_email, gate_note) VALUES (?,?,?,?,?)',
+    [slug, label.slice(0, 80), 'dm', x, y]
+  );
+  return slug;
+}
+
+export async function dmParticipant(
+  conn: mysql.Connection,
+  room: string,
+  email: string
+): Promise<boolean> {
+  if (!isDmSlug(room)) return true;
+  const [rows] = await conn.execute(
+    'SELECT kind, owner_email, gate_note FROM mt_chat_channels WHERE slug = ? LIMIT 1',
+    [room]
+  );
+  const ch = (rows as { kind: string; owner_email: string | null; gate_note: string | null }[])[0];
+  if (!ch || ch.kind !== 'dm') return false;
+  const e = email.trim().toLowerCase();
+  return ch.owner_email === e || ch.gate_note === e;
 }

@@ -19,7 +19,7 @@ const sections = [
   {
     href: '/software/developers',
     title: 'Developers',
-    desc: 'Free license to build on the ecosystem. Upgrade to Pro when you are ready to ship.',
+    desc: 'Free license to build on the ecosystem. Paid Pro upgrade coming soon.',
   },
   {
     href: '/software/security',

@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import { upgradeToPro } from '@/lib/dev-license';
 import { publicUser, readSessionToken, userBySession } from '@/lib/portal-auth';
 
 export async function GET() {
@@ -33,11 +32,8 @@ export async function POST(request: NextRequest) {
       user: publicUser(me),
     });
   }
-  const lic = await upgradeToPro(me.email, me.username);
-  return Response.json({
-    ok: true,
-    license_key: lic.license_key,
-    license_tier: lic.license_tier,
-    user: publicUser({ ...me, license_key: lic.license_key, license_tier: lic.license_tier }),
-  });
+  return Response.json(
+    { ok: false, error: 'Coming soon. Pro requires payment.' },
+    { status: 402 }
+  );
 }

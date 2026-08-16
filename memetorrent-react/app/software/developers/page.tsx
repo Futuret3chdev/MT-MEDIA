@@ -13,8 +13,6 @@ type User = {
 export default function SoftwareDevelopersPage() {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState('');
 
   useEffect(() => {
     fetch('/api/portal/me', { credentials: 'include' })
@@ -23,32 +21,6 @@ export default function SoftwareDevelopersPage() {
       .catch(() => setUser(null))
       .finally(() => setReady(true));
   }, []);
-
-  const upgrade = async () => {
-    setBusy(true);
-    setMsg('');
-    try {
-      const res = await fetch('/api/portal/license', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'upgrade' }),
-      });
-      const d = await res.json();
-      if (!d.ok) {
-        setMsg(d.error || 'Could not upgrade');
-        return;
-      }
-      setUser((u) =>
-        u
-          ? { ...u, license_key: d.license_key || d.user?.license_key, license_tier: 'pro' }
-          : u
-      );
-      setMsg('Upgraded. Your Pro key is on this profile.');
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
@@ -82,15 +54,17 @@ export default function SoftwareDevelopersPage() {
             <li>• $MT and Rockets hooks</li>
             <li>• iOS, Windows and Mac when those clients ship</li>
           </ul>
-          {user && (user.license_tier || 'free') !== 'pro' && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={upgrade}
-              className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm disabled:opacity-50"
-            >
-              {busy ? 'Upgrading…' : 'Upgrade to Pro'}
-            </button>
+          {(!user || (user.license_tier || 'free') !== 'pro') && (
+            <div>
+              <button
+                type="button"
+                disabled
+                className="font-semibold text-black bg-emerald-400/40 px-4 py-2 rounded-full text-sm cursor-not-allowed"
+              >
+                Upgrade to Pro
+              </button>
+              <p className="text-xs opacity-50 mt-2">Coming soon — paid upgrade.</p>
+            </div>
           )}
         </div>
       </div>
@@ -104,15 +78,9 @@ export default function SoftwareDevelopersPage() {
           <p className="text-sm opacity-70 mb-4">
             {user.username} · {user.email} · {(user.license_tier || 'free').toUpperCase()}
           </p>
-          {msg && <p className="text-sm text-emerald-400 mb-3">{msg}</p>}
           <div className="flex flex-wrap gap-4 text-sm">
             <Link href="/portal" className="text-emerald-400 hover:underline">Open portal →</Link>
             <Link href="/software/games" className="text-emerald-400 hover:underline">Download Android →</Link>
-            {(user.license_tier || 'free') !== 'pro' && (
-              <button type="button" disabled={busy} onClick={upgrade} className="text-emerald-400 hover:underline">
-                {busy ? 'Upgrading…' : 'Upgrade to Pro →'}
-              </button>
-            )}
           </div>
         </div>
       ) : (
