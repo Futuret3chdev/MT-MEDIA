@@ -6,7 +6,10 @@ export async function POST() {
   if (token) {
     const conn = await getUserDb();
     try {
-      await conn.execute('UPDATE portal_users SET session_token = NULL WHERE session_token = ?', [token]);
+      await conn.execute(
+        'UPDATE portal_users SET session_token = NULL WHERE session_token = ? OR session_token = ?',
+        [token, String(token)]
+      );
     } catch {
       /* ignore */
     } finally {

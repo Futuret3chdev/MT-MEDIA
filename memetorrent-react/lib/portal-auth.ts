@@ -161,7 +161,7 @@ export function newSessionToken(): string {
 
 export function publicUser(user: PortalUser) {
   return {
-    id: user.id,
+    id: String(user.id),
     username: user.username,
     email: user.email,
     wallet_address: user.wallet_address,

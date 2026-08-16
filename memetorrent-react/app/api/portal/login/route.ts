@@ -35,9 +35,9 @@ export async function POST(request: NextRequest) {
       return Response.json({ ok: false, error: 'Invalid email or password.' }, { status: 401 });
     }
     const token = newSessionToken();
-    await conn.execute('UPDATE portal_users SET session_token = ?, last_login = NOW() WHERE id = ?', [
+    await conn.execute('UPDATE portal_users SET session_token = ?, last_login = NOW() WHERE email = ?', [
       token,
-      row.id,
+      email,
     ]);
     try {
       const lic = await attachLicense(conn, row);
