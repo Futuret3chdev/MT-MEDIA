@@ -55,9 +55,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
   }
   const name = String(body.name || '').trim().slice(0, 80);
-  const kind = ['public', 'private', 'gated', 'secret'].includes(String(body.kind))
-    ? String(body.kind)
-    : 'public';
+  const rawKind = String(body.kind || 'public');
+  const kind = rawKind === 'private' || rawKind === 'secret' ? rawKind : 'public';
   if (name.length < 2) return Response.json({ ok: false, error: 'Channel name required.' }, { status: 400 });
   const slug = slugifyChannel(name) + '-' + Date.now().toString(36).slice(-3);
   const conn = await getUserDb();

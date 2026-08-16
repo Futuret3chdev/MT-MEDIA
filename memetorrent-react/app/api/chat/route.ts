@@ -23,7 +23,20 @@ export async function GET(request: NextRequest) {
        ORDER BY m.id DESC LIMIT 100`,
       [room]
     );
-    return Response.json({ ok: true, room, messages: (rows as object[]).reverse() });
+    const [ch] = await conn.execute(
+      `SELECT slug, name, kind, owner_email, topic, background, music_url, show_chart, collab_note
+       FROM mt_chat_channels WHERE slug = ? LIMIT 1`,
+      [room]
+    );
+    const channel = (ch as Record<string, unknown>[])[0] || null;
+    return Response.json({
+      ok: true,
+      room,
+      messages: (rows as object[]).reverse(),
+      channel: channel
+        ? { ...channel, show_chart: Number(channel.show_chart) === 1 }
+        : null,
+    });
   } catch (err) {
     console.error('chat get', err);
     return Response.json({ ok: false, error: 'Chat unavailable.' }, { status: 500 });

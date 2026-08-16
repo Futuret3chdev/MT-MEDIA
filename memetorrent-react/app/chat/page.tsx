@@ -279,7 +279,15 @@ function FileBubble({ kind, body }: { kind?: string; body: string }) {
     return (
       <div>
         <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Video</div>
-        <video controls src={url} className="max-w-[240px] rounded-xl" />
+        <video
+          controls
+          autoPlay
+          muted
+          loop
+          playsInline
+          src={url}
+          className="max-w-[240px] rounded-xl"
+        />
         <div className="text-[10px] opacity-50 mt-1 truncate">{name}</div>
       </div>
     );
@@ -354,7 +362,19 @@ function ChatInner() {
   const load = () => {
     fetch(`/api/chat?room=${room}`, { credentials: 'include' })
       .then((r) => r.json())
-      .then((d) => setMsgs(d.messages || []));
+      .then((d) => {
+        setMsgs(d.messages || []);
+        if (d.channel) {
+          setExtra(d.channel);
+          setChannels((list) =>
+            list.some((c) => c.slug === d.channel.slug)
+              ? list.map((c) => (c.slug === d.channel.slug ? { ...c, ...d.channel } : c))
+              : d.channel.kind === 'dm' || d.channel.kind === 'vault'
+                ? list
+                : [...list, d.channel]
+          );
+        }
+      });
     if (String(room).startsWith('dm-')) {
       setEvents([]);
       return;
@@ -549,6 +569,15 @@ function ChatInner() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ room, text: payload, kind, persona }),
     });
+    if (kind === 'video' || kind === 'audio') {
+      await fetch('/api/chat/channels', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: room, music_url: data.url }),
+      });
+      setExtra((e) => (e ? { ...e, music_url: data.url } : e));
+    }
     load();
     return data;
   };
@@ -723,6 +752,12 @@ function ChatInner() {
           )}
           {channels
             .filter((c) => c.kind !== 'vault')
+            .sort((a, b) => {
+              const sys = ['trades', 'signals', 'otc', 'general', 'support'];
+              const au = sys.includes(a.slug) ? 1 : 0;
+              const bu = sys.includes(b.slug) ? 1 : 0;
+              return au - bu;
+            })
             .map((c) => (
             <button
               key={c.slug}
@@ -807,16 +842,30 @@ function ChatInner() {
           )}
           {current?.music_url && (
             <div className="px-3 py-2 border-b border-white/5">
-              <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Live music</div>
+              <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">
+                {/\.(mp4|webm|mov)(\?|$)/i.test(current.music_url) || current.music_url.includes('/api/chat/media/')
+                  ? 'Playing for everyone'
+                  : 'Live music'}
+              </div>
               {youtubeId(current.music_url) ? (
                 <iframe
-                  title="live music"
+                  title="live media"
                   className="w-full max-w-md aspect-video rounded-xl"
-                  src={`https://www.youtube.com/embed/${youtubeId(current.music_url)}?autoplay=0`}
+                  src={`https://www.youtube.com/embed/${youtubeId(current.music_url)}?autoplay=1&mute=1`}
                   allow="autoplay; encrypted-media"
                 />
+              ) : /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(current.music_url) ? (
+                <audio controls autoPlay src={current.music_url} className="w-full max-w-md" />
               ) : (
-                <audio controls src={current.music_url} className="w-full max-w-md" />
+                <video
+                  controls
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  src={current.music_url}
+                  className="w-full max-w-md rounded-xl"
+                />
               )}
             </div>
           )}

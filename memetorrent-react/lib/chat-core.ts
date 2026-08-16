@@ -146,7 +146,7 @@ export async function dmParticipant(
 }
 
 export function isPrivateKind(kind: string) {
-  return kind === 'private' || kind === 'secret' || kind === 'gated' || kind === 'vault';
+  return kind === 'private' || kind === 'secret' || kind === 'vault';
 }
 
 export function isVaultSlug(room: string) {
