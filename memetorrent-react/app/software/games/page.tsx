@@ -1,35 +1,28 @@
-import Link from 'next/link';
+'use client';
 
-const platforms = [
-  {
-    name: 'Android',
-    status: 'First release',
-    ready: true,
-    note: 'APK for phones and tablets. Sign up as a developer to unlock the download.',
-    href: '/software/developers',
-    cta: 'Get free license + Android',
-  },
-  {
-    name: 'iOS',
-    status: 'Later',
-    ready: false,
-    note: 'App Store build after the Android client is stable.',
-  },
-  {
-    name: 'Windows',
-    status: 'Later',
-    ready: false,
-    note: 'Desktop client once the Android loop is proven.',
-  },
-  {
-    name: 'macOS',
-    status: 'Later',
-    ready: false,
-    note: 'Signed Mac build comes after Windows.',
-  },
-];
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
+const APK = '/downloads/MTGames.apk';
 
 export default function SoftwareGamesPage() {
+  const [licensed, setLicensed] = useState(false);
+  const [key, setKey] = useState('');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('mt_dev_license');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.license_key) {
+        setLicensed(true);
+        setKey(parsed.license_key);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
       <Link href="/software" className="text-sm opacity-60 hover:opacity-100">← Software</Link>
@@ -38,41 +31,54 @@ export default function SoftwareGamesPage() {
         Game software you can download.
       </h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        Start on Android. Sign up as a developer, get a free license to build,
-        then upgrade to Pro to publish on the MT-ECO SYSTEM. iOS, Windows and
-        Mac stay listed so the path is obvious — they are not ready yet.
+        Android is live for licensed developers. Allow installs from this browser,
+        then open the APK. iOS, Windows and Mac stay later.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        {platforms.map((p) => (
-          <div
-            key={p.name}
-            className="rounded-2xl p-6 border border-white/10"
-            style={{ background: 'var(--card)' }}
-          >
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <h2 className="font-semibold text-xl">{p.name}</h2>
-              <span
-                className={`text-[11px] tracking-wide px-2 py-0.5 rounded-full border ${
-                  p.ready
-                    ? 'text-emerald-400 border-emerald-400/40'
-                    : 'opacity-50 border-white/15'
-                }`}
-              >
-                {p.status}
-              </span>
-            </div>
-            <p className="text-sm opacity-70 mb-5">{p.note}</p>
-            {p.ready && p.href ? (
-              <Link
-                href={p.href}
+        <div className="rounded-2xl p-6 border border-emerald-400/30" style={{ background: 'var(--card)' }}>
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <h2 className="font-semibold text-xl">Android</h2>
+            <span className="text-[11px] tracking-wide px-2 py-0.5 rounded-full border text-emerald-400 border-emerald-400/40">
+              Live
+            </span>
+          </div>
+          <p className="text-sm opacity-70 mb-5">
+            MT Games 0.1 — tap-orb demo client. Sideload the APK after you have a free license.
+          </p>
+          {licensed ? (
+            <div className="space-y-3">
+              <a
+                href={APK}
+                download
                 className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm"
               >
-                {p.cta}
-              </Link>
-            ) : (
-              <span className="text-sm opacity-40">Available later</span>
-            )}
+                Download Android APK
+              </a>
+              <div className="text-xs opacity-50 font-mono break-all">License {key}</div>
+            </div>
+          ) : (
+            <Link
+              href="/software/developers"
+              className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm"
+            >
+              Get free license first
+            </Link>
+          )}
+        </div>
+
+        {[
+          ['iOS', 'App Store build after Android is stable.'],
+          ['Windows', 'Desktop client once the Android loop is proven.'],
+          ['macOS', 'Signed Mac build comes after Windows.'],
+        ].map(([name, note]) => (
+          <div key={name} className="rounded-2xl p-6 border border-white/10" style={{ background: 'var(--card)' }}>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <h2 className="font-semibold text-xl">{name}</h2>
+              <span className="text-[11px] tracking-wide px-2 py-0.5 rounded-full border opacity-50 border-white/15">Later</span>
+            </div>
+            <p className="text-sm opacity-70 mb-5">{note}</p>
+            <span className="text-sm opacity-40">Available later</span>
           </div>
         ))}
       </div>
