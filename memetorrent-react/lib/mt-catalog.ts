@@ -85,12 +85,13 @@ export const CATALOG: CatalogGame[] = [
     blurb: 'Sideload client. Needs a portal developer license.',
   },
   {
-    id: 'blackjack',
-    name: 'Blackjack',
+    id: 'poker-stars',
+    name: 'Poker Stars',
     kind: 'casino',
-    status: 'soon',
-    play: '/casino',
-    blurb: 'House table. $MT chips when the cage is live.',
+    status: 'live',
+    play: 'https://poker-stars.vercel.app',
+    img: 'https://poker-stars.vercel.app/classic-512.png',
+    blurb: 'The house table — live on poker-stars. Same ecosystem, own Vercel app.',
   },
 ];
 

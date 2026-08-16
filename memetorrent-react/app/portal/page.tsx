@@ -200,6 +200,8 @@ export default function PortalPage() {
                     <a
                       key={g.id}
                       href={g.play}
+                      target={g.play.startsWith('http') ? '_blank' : undefined}
+                      rel={g.play.startsWith('http') ? 'noopener noreferrer' : undefined}
                       className="rounded-xl overflow-hidden border border-white/10 hover:border-emerald-400/40"
                     >
                       <div className="h-28 bg-black/40 overflow-hidden">
