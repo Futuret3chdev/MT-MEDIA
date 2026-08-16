@@ -336,8 +336,8 @@ export default function PortalPage() {
                   </button>
                   {walletMsg && <div className="text-sm opacity-70">{walletMsg}</div>}
                 </form>
-                <a href="https://wallet.futuret3ch.com.au" className="inline-block text-emerald-400 text-sm">
-                  Sign up to Infinite Wallet →
+                <a href="https://mt.futuret3ch.com.au/" target="_blank" rel="noopener noreferrer" className="inline-block text-emerald-400 text-sm">
+                  Open Infinite Wallet →
                 </a>
               </div>
             )}
