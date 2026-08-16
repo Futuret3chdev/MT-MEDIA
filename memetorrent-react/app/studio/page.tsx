@@ -27,6 +27,12 @@ export default function StudioLandingPage() {
         >
           Try SDK demo
         </Link>
+        <Link
+          href="/studio/editor"
+          className="px-6 py-3 rounded-2xl border border-white/25 font-semibold text-sm"
+        >
+          Open editor
+        </Link>
       </div>
       <div className="grid sm:grid-cols-3 gap-4 text-sm">
         <div className="rounded-2xl border border-white/10 p-5">

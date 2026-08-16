@@ -25,6 +25,7 @@ export type MapSpec = {
   jump: number;
   speed: number;
   time: number;
+  events?: { when: string; do: string }[];
 };
 
 export const THEMES: Record<ThemeId, { bg: string; ground: string; accent: string; hazard: string; coin: string }> = {
@@ -73,6 +74,12 @@ export function blankMap(): MapSpec {
     jump: 9.2,
     speed: 3.4,
     time: 90,
+    events: [
+      { when: 'Player touches Coin', do: 'Add 1 to Score' },
+      { when: 'Player touches Spike', do: 'Restart scene' },
+      { when: 'Player touches Exit', do: 'Win the game' },
+      { when: 'Player jumps on Enemy', do: 'Remove Enemy' },
+    ],
   };
 }
 
