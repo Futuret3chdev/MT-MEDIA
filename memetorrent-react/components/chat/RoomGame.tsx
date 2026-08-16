@@ -51,7 +51,10 @@ export default function RoomGame({
         body: JSON.stringify({ room, action, ...extra }),
       });
       const d = await res.json();
-      if (d.ok) onChange(d.game_id || null, d.state || null);
+      if (d.ok) {
+        onChange(d.game_id || null, d.state || null);
+        if (action === 'start') setOpenPick(false);
+      }
     } finally {
       setBusy(false);
     }
@@ -175,18 +178,18 @@ export default function RoomGame({
       )}
 
       {catalog && (
-        <div className="flex gap-3 items-center">
-          <img src={catalog.img} alt="" className="w-14 h-14 rounded-lg object-cover" />
+        <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/5 p-3 flex gap-3 items-center">
+          <img src={catalog.img} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium truncate">{catalog.name}</div>
-            <div className="text-[11px] opacity-50 truncate">{catalog.blurb}</div>
+            <div className="text-sm font-medium truncate">{catalog.name} is on for this room</div>
+            <div className="text-[11px] opacity-60">They stay in chat until they tap Join. You are not pulled out.</div>
             <a
               href={catalog.play}
-              target={catalog.play.startsWith('http') ? '_blank' : undefined}
+              target="_blank"
               rel="noreferrer"
-              className="text-emerald-400 text-[11px]"
+              className="inline-block mt-1 text-emerald-400 text-[11px] font-semibold"
             >
-              Play with the room →
+              Join game
             </a>
           </div>
         </div>

@@ -437,6 +437,37 @@ function RoomLiveMedia({
   );
 }
 
+function GameInvite({ body, who }: { body: string; who: string }) {
+  let meta: { title?: string; play?: string; id?: string } = {};
+  try {
+    if (body.startsWith('{')) meta = JSON.parse(body);
+  } catch {
+    meta = { title: body };
+  }
+  const title = meta.title || 'a game';
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Game invite</div>
+      <div className="text-sm">
+        @{who} wants to play <span className="text-emerald-400">{title}</span>
+      </div>
+      <div className="text-[11px] opacity-50 mt-1">It is waiting in this room. You were not moved anywhere.</div>
+      {meta.play ? (
+        <a
+          href={meta.play}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-block mt-2 text-xs font-semibold text-black bg-emerald-400 px-3 py-1.5 rounded-full"
+        >
+          Join {title}
+        </a>
+      ) : (
+        <div className="text-xs text-emerald-400 mt-2">Sit down in the room game above.</div>
+      )}
+    </div>
+  );
+}
+
 function FileBubble({ kind, body }: { kind?: string; body: string }) {
   let meta: { url?: string; name?: string } = {};
   try {
@@ -1053,11 +1084,12 @@ function ChatInner() {
             })()}
             me={email}
             canEdit={canEditRoom || !current?.owner_email}
-            onChange={(game_id, state) =>
+            onChange={(game_id, state) => {
               setExtra((e) =>
                 e ? { ...e, game_id, game_state: state ? JSON.stringify(state) : null } : e
-              )
-            }
+              );
+              load();
+            }}
           />
           {current?.music_url && (
             <RoomLiveMedia
@@ -1130,6 +1162,8 @@ function ChatInner() {
                     <FileBubble kind={m.kind} body={m.body} />
                   ) : m.kind === 'nft' ? (
                     <NftCard mint={m.body} />
+                  ) : m.kind === 'game' ? (
+                    <GameInvite body={m.body} who={m.username} />
                   ) : (
                     renderBody(m.body)
                   )}

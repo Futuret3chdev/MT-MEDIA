@@ -78,7 +78,9 @@ export async function POST(request: NextRequest) {
         return Response.json({ ok: false, error: 'Only the host or staff can set the game' }, { status: 403 });
       }
       const kind = String(body.kind || 'ttt');
+      let label = 'a game';
       if (kind === 'ttt') {
+        label = 'tic-tac-toe';
         state = { kind: 'ttt', board: Array(9).fill(''), turn: 'x', x: me.email, o: null, winner: null };
         await conn.execute('UPDATE mt_chat_channels SET game_id = ?, game_state = ? WHERE slug = ?', [
           'ttt',
@@ -86,6 +88,7 @@ export async function POST(request: NextRequest) {
           room,
         ]);
       } else if (kind === 'rps') {
+        label = 'rock paper scissors';
         state = { kind: 'rps', a: me.email, b: null, pickA: null, pickB: null, scoreA: 0, scoreB: 0 };
         await conn.execute('UPDATE mt_chat_channels SET game_id = ?, game_state = ? WHERE slug = ?', [
           'rps',
@@ -95,6 +98,7 @@ export async function POST(request: NextRequest) {
       } else {
         const g = getGame(kind);
         if (!g) return Response.json({ ok: false, error: 'Unknown game' }, { status: 400 });
+        label = g.name;
         state = { kind: 'catalog', id: g.id };
         await conn.execute('UPDATE mt_chat_channels SET game_id = ?, game_state = ? WHERE slug = ?', [
           g.id,
@@ -102,7 +106,20 @@ export async function POST(request: NextRequest) {
           room,
         ]);
       }
-      return Response.json({ ok: true, game_id: kind === 'ttt' || kind === 'rps' ? kind : getGame(kind)?.id, state });
+      const invite = JSON.stringify({
+        title: label,
+        id: kind === 'ttt' || kind === 'rps' ? kind : getGame(kind)?.id,
+        play: kind !== 'ttt' && kind !== 'rps' ? getGame(kind)?.play || '' : '',
+      });
+      await conn.execute(
+        'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
+        [room, me.username, invite.slice(0, 800), 'game', me.email]
+      );
+      return Response.json({
+        ok: true,
+        game_id: kind === 'ttt' || kind === 'rps' ? kind : getGame(kind)?.id,
+        state,
+      });
     }
 
     if (action === 'clear') {
