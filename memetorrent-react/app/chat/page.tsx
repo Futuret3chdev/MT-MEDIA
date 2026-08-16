@@ -257,9 +257,9 @@ function renderBody(text: string) {
   });
 }
 
-function ytCmd(win: Window | null, func: string) {
+function ytCmd(win: Window | null, func: string, args: unknown[] = []) {
   try {
-    win?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
+    win?.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
   } catch {
     /* ignore */
   }
@@ -268,18 +268,20 @@ function ytCmd(win: Window | null, func: string) {
 function RoomLiveMedia({
   url,
   playing,
+  started,
   canEdit,
   onToggle,
 }: {
   url: string;
   playing: boolean;
+  started?: string | null;
   canEdit: boolean;
   onToggle: (playing: boolean) => void;
 }) {
   const [muted, setMuted] = useState(true);
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
-  const lastUrl = useRef(url);
+  const lastStart = useRef<string | null>(null);
   const yt = youtubeId(url);
   const isAudio = /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(url);
 
@@ -290,36 +292,58 @@ function RoomLiveMedia({
     ytCmd(frameRef.current?.contentWindow || null, silence ? 'mute' : 'unMute');
   };
 
-  const playIfNeeded = (withSound: boolean) => {
+  const restartForHost = (withSound: boolean) => {
     onlyMute(!withSound);
     const el = mediaRef.current;
-    if (el && el.paused) {
-      const go = el.play();
-      if (go) {
-        go.catch(() => {
-          el.muted = true;
-          setMuted(true);
-          el.play().catch(() => {});
-        });
-      }
+    if (el) {
+      const kick = () => {
+        try {
+          el.currentTime = 0;
+        } catch {
+          /* not ready */
+        }
+        const go = el.play();
+        if (go) {
+          go.catch(() => {
+            el.muted = true;
+            setMuted(true);
+            el.play().catch(() => {});
+          });
+        }
+      };
+      if (el.readyState >= 1) kick();
+      else el.addEventListener('loadedmetadata', kick, { once: true });
     }
-    ytCmd(frameRef.current?.contentWindow || null, 'playVideo');
+    const win = frameRef.current?.contentWindow || null;
+    ytCmd(win, 'seekTo', [0, true]);
+    ytCmd(win, 'playVideo');
   };
 
   const stopLocal = () => {
     mediaRef.current?.pause();
+    try {
+      if (mediaRef.current) mediaRef.current.currentTime = 0;
+    } catch {
+      /* ignore */
+    }
     ytCmd(frameRef.current?.contentWindow || null, 'pauseVideo');
+    ytCmd(frameRef.current?.contentWindow || null, 'seekTo', [0, true]);
   };
 
   useEffect(() => {
-    if (url !== lastUrl.current) {
-      lastUrl.current = url;
-    }
     if (canEdit) return;
-    if (playing) playIfNeeded(false);
-    else stopLocal();
+    if (playing) {
+      const session = started || 'play';
+      if (lastStart.current !== session) {
+        lastStart.current = session;
+        restartForHost(false);
+      }
+    } else {
+      lastStart.current = null;
+      stopLocal();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, url]);
+  }, [playing, started, url]);
 
   return (
     <div className="px-3 py-2 border-b border-white/5">
@@ -333,7 +357,7 @@ function RoomLiveMedia({
             className="text-[11px] text-emerald-400"
             onClick={() => {
               const next = !playing;
-              if (next) playIfNeeded(true);
+              if (next) restartForHost(true);
               else stopLocal();
               onToggle(next);
             }}
@@ -341,11 +365,7 @@ function RoomLiveMedia({
             {playing ? 'Stop' : 'Play'}
           </button>
         )}
-        <button
-          type="button"
-          className="text-[11px] opacity-80"
-          onClick={() => onlyMute(!muted)}
-        >
+        <button type="button" className="text-[11px] opacity-80" onClick={() => onlyMute(!muted)}>
           {muted ? 'Unmute' : 'Mute'}
         </button>
       </div>
@@ -499,7 +519,8 @@ function ChatInner() {
               prev &&
               prev.slug === d.channel.slug &&
               prev.music_url === d.channel.music_url &&
-              !!prev.media_playing === !!d.channel.media_playing
+              !!prev.media_playing === !!d.channel.media_playing &&
+              String(prev.media_started || '') === String(d.channel.media_started || '')
             ) {
               return prev;
             }
@@ -563,7 +584,7 @@ function ChatInner() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 3000);
+    const t = setInterval(load, 1200);
     return () => clearInterval(t);
   }, [room]);
 
@@ -715,7 +736,9 @@ function ChatInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug: room, music_url: data.url, media_playing: true }),
       });
-      setExtra((e) => (e ? { ...e, music_url: data.url, media_playing: true } : e));
+      setExtra((e) =>
+        e ? { ...e, music_url: data.url, media_playing: true, media_started: new Date().toISOString() } : e
+      );
     }
     load();
     return data;
@@ -984,15 +1007,17 @@ function ChatInner() {
             <RoomLiveMedia
               url={current.music_url}
               playing={!!current.media_playing}
+              started={current.media_started}
               canEdit={canEditRoom}
               onToggle={async (playing) => {
+                const startedAt = playing ? new Date().toISOString() : current.media_started;
                 await fetch('/api/chat/channels', {
                   method: 'PATCH',
                   credentials: 'include',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ slug: room, media_playing: playing }),
                 });
-                setExtra((e) => (e ? { ...e, media_playing: playing } : e));
+                setExtra((e) => (e ? { ...e, media_playing: playing, media_started: startedAt } : e));
               }}
             />
           )}
