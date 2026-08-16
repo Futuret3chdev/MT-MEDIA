@@ -2,9 +2,14 @@ import Link from 'next/link';
 
 const sections = [
   {
+    href: '/software/games',
+    title: 'Games',
+    desc: 'Download the MT game client. Android first. Sign up as a developer and get a free build license.',
+  },
+  {
     href: '/software/developers',
     title: 'Developers',
-    desc: 'APIs, MT-Connect, wallets, and how to build on the network without third-party bridges.',
+    desc: 'Free license to build on the ecosystem. Upgrade to Pro when you are ready to ship.',
   },
   {
     href: '/software/security',
@@ -21,9 +26,9 @@ export default function SoftwarePage() {
         Software we build ourselves.
       </h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        Developers, security, and tools for the MT-ECO SYSTEM. Same site as everything else.
+        Games, developer licenses, and security tools for the MT-ECO SYSTEM.
       </p>
-      <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
         {sections.map((s) => (
           <Link
             key={s.href}
