@@ -1,32 +1,16 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-
-const ROOMS = ['trades', 'signals', 'otc', 'general', 'support'] as const;
-
-async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
-  await conn.execute(`
-    CREATE TABLE IF NOT EXISTS mt_crypto_chat (
-      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      room VARCHAR(32) NOT NULL,
-      username VARCHAR(255) NOT NULL,
-      body VARCHAR(500) NOT NULL,
-      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      KEY room_time (room, created_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `);
-}
+import { ensureChat } from '@/lib/chat-core';
 
 export async function GET(request: NextRequest) {
   const room = request.nextUrl.searchParams.get('room') || 'trades';
-  if (!ROOMS.includes(room as (typeof ROOMS)[number])) {
-    return Response.json({ ok: false, error: 'Unknown room' }, { status: 400 });
-  }
   const conn = await getUserDb();
   try {
-    await ensure(conn);
+    await ensureChat(conn);
+    await conn.execute('DELETE FROM mt_crypto_chat WHERE burn_at IS NOT NULL AND burn_at < NOW()');
     const [rows] = await conn.execute(
-      'SELECT id, room, username, body, created_at FROM mt_crypto_chat WHERE room = ? ORDER BY id DESC LIMIT 80',
+      'SELECT id, room, username, body, burn_at, no_forward, kind, created_at FROM mt_crypto_chat WHERE room = ? ORDER BY id DESC LIMIT 100',
       [room]
     );
     return Response.json({ ok: true, room, messages: (rows as object[]).reverse() });
@@ -41,25 +25,35 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const user = await userBySession(await readSessionToken());
   if (!user) return Response.json({ ok: false, error: 'Sign in to chat.' }, { status: 401 });
-  let body: { room?: string; text?: string };
+  let body: { room?: string; text?: string; burn?: number; no_forward?: boolean; persona?: string };
   try {
     body = await request.json();
   } catch {
     return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
   }
-  const room = body.room || 'trades';
-  const text = (body.text || '').trim().slice(0, 500);
-  if (!ROOMS.includes(room as (typeof ROOMS)[number]) || !text) {
-    return Response.json({ ok: false, error: 'Need a room and a message.' }, { status: 400 });
-  }
+  const room = String(body.room || 'trades').slice(0, 48);
+  const text = (body.text || '').trim().slice(0, 800);
+  if (!text) return Response.json({ ok: false, error: 'Message required.' }, { status: 400 });
+  const stealth = body.persona === 'stealth';
+  const username = stealth
+    ? '0xStealth' + String(user.id).slice(-4)
+    : user.username;
+  const burn = Number(body.burn) || 0;
   const conn = await getUserDb();
   try {
-    await ensure(conn);
-    await conn.execute('INSERT INTO mt_crypto_chat (room, username, body) VALUES (?,?,?)', [
-      room,
-      user.username,
-      text,
-    ]);
+    await ensureChat(conn);
+    const [ch] = await conn.execute('SELECT slug FROM mt_chat_channels WHERE slug = ? LIMIT 1', [room]);
+    if (!(ch as object[]).length) {
+      return Response.json({ ok: false, error: 'Unknown channel.' }, { status: 404 });
+    }
+    const kind = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(text) || text.startsWith('$') ? 'asset' : 'text';
+    await conn.execute(
+      `INSERT INTO mt_crypto_chat (room, username, body, burn_at, no_forward, kind)
+       VALUES (?,?,?,${burn > 0 ? 'DATE_ADD(NOW(), INTERVAL ? SECOND)' : 'NULL'},?,?)`,
+      burn > 0
+        ? [room, username, text, burn, body.no_forward ? 1 : 0, kind]
+        : [room, username, text, body.no_forward ? 1 : 0, kind]
+    );
     return Response.json({ ok: true });
   } catch (err) {
     console.error('chat post', err);

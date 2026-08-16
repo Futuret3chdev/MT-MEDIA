@@ -210,6 +210,7 @@ export default function Navbar() {
             >
               CLAIM $MT
             </a>
+            <a href="/chat" className="opacity-70 hover:opacity-100">CHAT</a>
             <a href="/software" className="opacity-70 hover:opacity-100">SOFTWARE</a>
           </div>
 
@@ -262,6 +263,7 @@ export default function Navbar() {
           >
             CLAIM $MT
           </a>
+          <a href="/chat" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CHAT</a>
           <a href="/software" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SOFTWARE</a>
           <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
           <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
