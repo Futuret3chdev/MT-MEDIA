@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-build="2026-08-17-play-exit-scores">
+    <html lang="en" data-build="2026-08-17-score-once">
       <head>
         {/* Font Awesome for social icons in original brand colors */}
         <link 

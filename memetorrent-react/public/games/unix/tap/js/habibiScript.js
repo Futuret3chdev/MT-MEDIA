@@ -62,6 +62,8 @@ var leaderboardEngine = {
     maxEntries: 10,
     apiUrl: '/api/scores?game_id=tap',
     saveScore: async function(playerName, score) {
+        if (this._saving) return { success: true, duplicate: true };
+        this._saving = true;
         try {
             const response = await fetch('/api/scores', {
                 method: 'POST',
@@ -79,6 +81,8 @@ var leaderboardEngine = {
         } catch (error) {
             console.error('Error saving score:', error);
             return { error: error.message };
+        } finally {
+            setTimeout(() => { leaderboardEngine._saving = false; }, 4000);
         }
     },
     getScores: async function() {
@@ -255,6 +259,7 @@ var gameEngine = {
     updateLevelTime: function(time) { gameEngine.levelTime = time; },
     updateBonusScore: function(bonus) { gameEngine.bonusScore = bonus; },
     reset: function() {
+        gameEngine._lost = false;
         gameEngine.updateScore(0);
         gameEngine.updateLevel(1);
         gameEngine.updateLevelTime(7);
@@ -334,6 +339,8 @@ var gameEngine = {
     resume: function() { timeEngine.resume(); },
     stop: function() { timeEngine.stop(); gameEngine.reset(); },
     gameLost: async function() {
+        if (gameEngine._lost) return;
+        gameEngine._lost = true;
         audioPool.playSound(levelLost);
         lvlLostScore.innerHTML = gameEngine.score;
         // Force prompt for testing

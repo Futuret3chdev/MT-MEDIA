@@ -40,7 +40,12 @@ export async function GET(request: NextRequest) {
     const room = request.nextUrl.searchParams.get('room');
     if (room) {
       const [rows] = await conn.execute(
-        'SELECT id, game_id, username, score, created_at FROM mt_game_scores WHERE game_id = ? AND room = ? ORDER BY score DESC, id DESC LIMIT 25',
+        `SELECT username, MAX(score) AS score, MAX(created_at) AS created_at
+         FROM mt_game_scores
+         WHERE game_id = ? AND room = ?
+         GROUP BY username
+         ORDER BY score DESC
+         LIMIT 25`,
         [gameId, room]
       );
       return Response.json({ ok: true, game_id: gameId, room, scores: rows });
@@ -75,22 +80,38 @@ export async function POST(request: NextRequest) {
   try {
     await ensure(conn);
     const room = String(body.room || '').slice(0, 48) || null;
+    if (room && email) {
+      const [dup] = await conn.execute(
+        `SELECT id FROM mt_game_scores
+         WHERE game_id = ? AND room = ? AND email = ? AND score = ?
+           AND created_at > DATE_SUB(NOW(), INTERVAL 2 MINUTE)
+         LIMIT 1`,
+        [gameId, room, email, score]
+      );
+      if ((dup as object[]).length) {
+        return Response.json({ ok: true, success: true, attached: true, username, room, duplicate: true });
+      }
+    }
     await conn.execute(
       'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
       [gameId, email, username, score, room]
     );
     if (room) {
       try {
-        await conn.execute(
-          'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
-          [
-            room,
-            username,
-            JSON.stringify({ game_id: gameId, score }).slice(0, 800),
-            'score',
-            email,
-          ]
+        const payload = JSON.stringify({ game_id: gameId, score }).slice(0, 800);
+        const [chatDup] = await conn.execute(
+          `SELECT id FROM mt_crypto_chat
+           WHERE room = ? AND kind = 'score' AND username = ? AND body = ?
+             AND created_at > DATE_SUB(NOW(), INTERVAL 2 MINUTE)
+           LIMIT 1`,
+          [room, username, payload]
         );
+        if (!(chatDup as object[]).length) {
+          await conn.execute(
+            'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
+            [room, username, payload, 'score', email]
+          );
+        }
       } catch {
         /* chat optional */
       }

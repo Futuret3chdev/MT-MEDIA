@@ -1258,7 +1258,14 @@ function ChatInner() {
             </div>
           )}
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
-            {msgs.map((m) => (
+            {msgs
+              .filter((m, i, all) => {
+                if (m.kind !== 'score') return true;
+                return !all
+                  .slice(0, i)
+                  .some((p) => p.kind === 'score' && p.username === m.username && p.body === m.body);
+              })
+              .map((m) => (
               <div key={m.id} className={m.username === who || m.username.startsWith('0xStealth') ? 'text-right' : ''}>
                 <div className="text-[11px] text-emerald-400 inline-flex items-center gap-1.5">
                   {m.avatar_url && (
