@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 type Item = {
   id: string;
@@ -14,6 +15,16 @@ type Item = {
 export default function NoticeBell() {
   const [items, setItems] = useState<Item[]>([]);
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 8, left: 8 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const place = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    const w = Math.min(320, window.innerWidth - 16);
+    const left = Math.max(8, Math.min((r?.right || window.innerWidth) - w, window.innerWidth - w - 8));
+    const top = Math.min((r?.bottom || 40) + 8, window.innerHeight - 280);
+    setPos({ top, left });
+  };
 
   const load = () => {
     fetch('/api/chat/notices', { credentials: 'include' })
@@ -34,6 +45,18 @@ export default function NoticeBell() {
       window.removeEventListener('mt-friends', onFriends);
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    place();
+    const onWin = () => place();
+    window.addEventListener('resize', onWin);
+    window.addEventListener('scroll', onWin, true);
+    return () => {
+      window.removeEventListener('resize', onWin);
+      window.removeEventListener('scroll', onWin, true);
+    };
+  }, [open]);
 
   const mark = async (id: string) => {
     await fetch('/api/chat/notices', {
@@ -62,8 +85,12 @@ export default function NoticeBell() {
   return (
     <div className="relative">
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          place();
+          setOpen((v) => !v);
+        }}
         className="relative p-1 text-sm opacity-90 hover:opacity-100"
         title="Notifications"
         aria-label="Notifications"
@@ -75,41 +102,55 @@ export default function NoticeBell() {
           </span>
         )}
       </button>
-      {open && (
-        <div className="absolute right-0 top-8 z-[80] w-72 max-h-80 overflow-y-auto rounded-2xl border border-white/15 bg-[#12141c] shadow-2xl p-2 text-xs">
-          {!items.length && <div className="px-2 py-3 opacity-50">No new notifications</div>}
-          {items.map((it) => (
-            <div key={it.id} className="px-2 py-2 border-b border-white/10 last:border-0">
-              <div className="mb-1">{it.title}</div>
-              {it.kind === 'friend_request' && it.from_email ? (
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className="text-emerald-400 font-semibold"
-                    onClick={() => answer(it.from_email!, 'accept', it.id)}
-                  >
-                    Accept
-                  </button>
-                  <button type="button" className="opacity-50" onClick={() => answer(it.from_email!, 'decline', it.id)}>
-                    Decline
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  {it.href && (
-                    <a href={it.href} className="text-emerald-400" onClick={() => mark(it.id)}>
-                      Open
-                    </a>
+      {open &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <>
+            <button
+              type="button"
+              className="fixed inset-0 z-[240] bg-black/40"
+              aria-label="Close notifications"
+              onClick={() => setOpen(false)}
+            />
+            <div
+              className="fixed z-[250] w-[min(20rem,calc(100vw-16px))] max-h-[min(24rem,70vh)] overflow-y-auto rounded-2xl border border-white/15 bg-[#12141c] shadow-2xl p-2 text-xs"
+              style={{ top: pos.top, left: pos.left }}
+            >
+              {!items.length && <div className="px-2 py-3 opacity-50">No new notifications</div>}
+              {items.map((it) => (
+                <div key={it.id} className="px-2 py-2 border-b border-white/10 last:border-0">
+                  <div className="mb-1">{it.title}</div>
+                  {it.kind === 'friend_request' && it.from_email ? (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-emerald-400 font-semibold"
+                        onClick={() => answer(it.from_email!, 'accept', it.id)}
+                      >
+                        Accept
+                      </button>
+                      <button type="button" className="opacity-50" onClick={() => answer(it.from_email!, 'decline', it.id)}>
+                        Decline
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      {it.href && (
+                        <a href={it.href} className="text-emerald-400" onClick={() => mark(it.id)}>
+                          Open
+                        </a>
+                      )}
+                      <button type="button" className="opacity-50" onClick={() => mark(it.id)}>
+                        Dismiss
+                      </button>
+                    </div>
                   )}
-                  <button type="button" className="opacity-50" onClick={() => mark(it.id)}>
-                    Dismiss
-                  </button>
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          </>,
+          document.body
+        )}
     </div>
   );
 }
