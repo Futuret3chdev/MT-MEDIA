@@ -42,6 +42,14 @@ export default function Navbar() {
     setAuthOpen(false);
   };
 
+  const logout = async () => {
+    await fetch('/api/portal/logout', { method: 'POST', credentials: 'include' });
+    setPortalUser(null);
+    if (window.location.pathname.startsWith('/portal') || window.location.pathname.startsWith('/chat')) {
+      window.location.href = '/';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthBusy(true);
@@ -61,7 +69,6 @@ export default function Navbar() {
       }
       setPortalUser(data.user);
       closeAuth();
-      window.location.href = '/portal';
     } catch {
       setAuthError('Network error. Try again.');
     } finally {
@@ -261,6 +268,46 @@ export default function Navbar() {
             BUY $MT NOW
           </button>
           <a href={LINKS.wallet} target="_blank" onClick={() => setMobileMenuOpen(false)} className="py-1 font-medium">Infinite Wallet</a>
+          {portalUser ? (
+            <>
+              <a href="/portal" onClick={() => setMobileMenuOpen(false)} className="py-1 text-emerald-400">
+                @{portalUser.username}
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
+                className="py-1 text-left"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openAuth('login');
+                }}
+                className="py-1 text-left"
+              >
+                Log in
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openAuth('register');
+                }}
+                className="py-1 text-left"
+              >
+                Register
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -316,19 +363,48 @@ export default function Navbar() {
           </div>
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => (portalUser ? (window.location.href = '/portal') : openAuth('login'))}
-              className="opacity-80 hover:opacity-100 p-1 text-sm flex items-center gap-1.5 max-w-[7.5rem]"
-              title={portalUser ? 'Open portal' : 'Account'}
-              aria-label="Account"
-            >
-              {portalUser?.avatar_url ? (
-                <img src={portalUser.avatar_url} alt="" className="w-6 h-6 rounded-md object-cover" />
-              ) : (
-                <span>👤</span>
-              )}
-              {portalUser && <span className="truncate text-xs">{portalUser.username}</span>}
-            </button>
+            {portalUser ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => (window.location.href = '/portal')}
+                  className="opacity-80 hover:opacity-100 p-1 text-sm flex items-center gap-1.5 max-w-[7.5rem]"
+                  title="Open portal"
+                  aria-label="Account"
+                >
+                  {portalUser.avatar_url ? (
+                    <img src={portalUser.avatar_url} alt="" className="w-6 h-6 rounded-md object-cover" />
+                  ) : (
+                    <span>👤</span>
+                  )}
+                  <span className="truncate text-xs">{portalUser.username}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap px-2 py-1 border border-white/20 rounded"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => openAuth('login')}
+                  className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap"
+                >
+                  Log in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAuth('register')}
+                  className="text-[11px] sm:text-xs px-2 py-1 border border-white/20 rounded whitespace-nowrap"
+                >
+                  Register
+                </button>
+              </>
+            )}
             <ThemeToggle />
           </div>
         </div>
