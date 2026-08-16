@@ -15,6 +15,76 @@ type Msg = {
 };
 type Chan = { slug: string; name: string; kind: string; gate_note: string | null };
 
+function UserTip({ name }: { name: string }) {
+  const [card, setCard] = useState<null | {
+    username: string;
+    bio: string | null;
+    avatar_url: string | null;
+    telegram_id: string | null;
+    discord_id: string | null;
+    wallets: { kind: string; address: string }[];
+  }>(null);
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!on || name.startsWith('0xStealth') || name === 'sdk') return;
+    fetch(`/api/chat/profile?username=${encodeURIComponent(name)}`)
+      .then((r) => r.json())
+      .then((d) => d.ok && setCard(d.profile))
+      .catch(() => {});
+  }, [on, name]);
+  return (
+    <span className="relative inline-block" onMouseEnter={() => setOn(true)} onMouseLeave={() => setOn(false)}>
+      <button type="button" className="text-emerald-400" onClick={() => setOn((v) => !v)}>
+        {name}
+      </button>
+      {on && (
+        <div className="absolute z-30 left-0 top-5 w-64 rounded-2xl border border-white/15 bg-[#12141c] p-3 text-left shadow-xl">
+          {!card ? (
+            <div className="text-xs opacity-50">Loading…</div>
+          ) : (
+            <>
+              <div className="flex gap-2 items-center mb-2">
+                {card.avatar_url && (
+                  <img src={card.avatar_url} alt="" className="w-10 h-10 rounded-xl object-cover" />
+                )}
+                <div>
+                  <div className="font-semibold text-sm">{card.username}</div>
+                  <div className="text-[11px] opacity-50">{card.bio || 'No bio'}</div>
+                </div>
+              </div>
+              <div className="text-[11px] opacity-70 space-y-1">
+                <div>Telegram {card.telegram_id || '—'}</div>
+                <div>Discord {card.discord_id || '—'}</div>
+                {card.wallets.map((w) => (
+                  <div key={w.address} className="font-mono break-all">
+                    {w.kind}: {w.address.slice(0, 6)}…{w.address.slice(-4)}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </span>
+  );
+}
+
+function NftCard({ mint }: { mint: string }) {
+  const [meta, setMeta] = useState<{ name?: string; image?: string; explorer?: string }>({});
+  useEffect(() => {
+    fetch(`/api/chat/nft?mint=${encodeURIComponent(mint)}`)
+      .then((r) => r.json())
+      .then((d) => d.ok && setMeta(d));
+  }, [mint]);
+  return (
+    <a href={meta.explorer || `https://solscan.io/token/${mint}`} target="_blank" rel="noreferrer" className="block">
+      {meta.image && <img src={meta.image} alt="" className="w-40 h-40 object-cover rounded-xl mb-2" />}
+      <div className="text-xs font-semibold">{meta.name || 'NFT'}</div>
+      <div className="font-mono text-[10px] break-all opacity-60">{mint}</div>
+    </a>
+  );
+}
+
 function renderBody(text: string) {
   const parts = text.split(/(\$[A-Za-z0-9]+|0x[a-fA-F0-9]{6,}|[1-9A-HJ-NP-Za-km-z]{32,44})/g);
   return parts.map((p, i) => {
@@ -56,6 +126,8 @@ export default function ChatPage() {
   const [buy, setBuy] = useState('USDC');
   const [amt, setAmt] = useState('100');
   const [photo, setPhoto] = useState('');
+  const [nftMint, setNftMint] = useState('');
+  const [nftOn, setNftOn] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
 
@@ -182,12 +254,55 @@ export default function ChatPage() {
   };
 
   const savePic = async () => {
+    if (!photo) return;
     await fetch('/api/portal/profile', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ avatar_url: photo }),
     });
+  };
+
+  const uploadFile = async (file: File, as: 'avatar' | 'chat') => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/chat/media', { method: 'POST', credentials: 'include', body: fd });
+    const data = await res.json();
+    if (!data.ok) {
+      setErr(data.error || 'Upload failed');
+      return;
+    }
+    if (as === 'avatar') {
+      setPhoto(data.url);
+      await fetch('/api/portal/profile', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar_url: data.url }),
+      });
+      return;
+    }
+    await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, text: data.url, kind: 'image', persona }),
+    });
+    load();
+  };
+
+  const sendNft = async () => {
+    const mint = nftMint.trim();
+    if (mint.length < 32) return;
+    await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, text: mint, kind: 'nft', persona }),
+    });
+    setNftMint('');
+    setNftOn(false);
+    load();
   };
 
   const searchUsers = async (v: string) => {
@@ -333,7 +448,7 @@ export default function ChatPage() {
             {msgs.map((m) => (
               <div key={m.id} className={m.username === who || m.username.startsWith('0xStealth') ? 'text-right' : ''}>
                 <div className="text-[11px] text-emerald-400">
-                  {m.username}
+                  <UserTip name={m.username} />
                   {m.no_forward ? ' · no forward' : ''}
                   {m.burn_at ? ' · burns' : ''}{' '}
                   <span className="opacity-40">{new Date(m.created_at).toLocaleTimeString()}</span>
@@ -351,7 +466,15 @@ export default function ChatPage() {
                   {m.kind === 'trade' && (
                     <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Trade</div>
                   )}
-                  {m.kind === 'sticker' ? <span className="text-4xl leading-none">{m.body}</span> : renderBody(m.body)}
+                  {m.kind === 'sticker' ? (
+                    <span className="text-4xl leading-none">{m.body}</span>
+                  ) : m.kind === 'image' ? (
+                    <img src={m.body} alt="" className="max-w-[220px] rounded-xl" />
+                  ) : m.kind === 'nft' ? (
+                    <NftCard mint={m.body} />
+                  ) : (
+                    renderBody(m.body)
+                  )}
                   {email && m.owner_email === email && (
                     <button type="button" className="block text-[10px] opacity-50 mt-1" onClick={() => del(m.id)}>
                       Delete
@@ -415,6 +538,21 @@ export default function ChatPage() {
               <button type="button" className="text-xs px-3 py-2 rounded-xl border border-white/15" onClick={() => setTradeOn((v) => !v)}>
                 Trade
               </button>
+              <button type="button" className="text-xs px-3 py-2 rounded-xl border border-white/15" onClick={() => setNftOn((v) => !v)}>
+                NFT
+              </button>
+              <label className="text-xs px-3 py-2 rounded-xl border border-white/15 cursor-pointer">
+                Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadFile(f, 'chat');
+                  }}
+                />
+              </label>
               {wallet && (
                 <button
                   type="button"
@@ -431,14 +569,40 @@ export default function ChatPage() {
                 Send
               </button>
             </div>
-            {authed && (
+            {nftOn && (
               <div className="flex flex-wrap gap-2 text-xs">
+                <input
+                  value={nftMint}
+                  onChange={(e) => setNftMint(e.target.value)}
+                  placeholder="NFT mint address"
+                  className="flex-1 min-w-[160px] px-2 py-1 rounded-xl bg-black/40 border border-white/15 font-mono"
+                />
+                <button type="button" onClick={sendNft} className="text-emerald-400">
+                  Send NFT
+                </button>
+              </div>
+            )}
+            {authed && (
+              <div className="flex flex-wrap gap-2 text-xs items-center">
+                {photo && <img src={photo} alt="" className="w-8 h-8 rounded-lg object-cover" />}
                 <input
                   value={photo}
                   onChange={(e) => setPhoto(e.target.value)}
                   placeholder="Profile picture URL"
-                  className="flex-1 min-w-[140px] px-2 py-1 rounded-xl bg-black/40 border border-white/15"
+                  className="flex-1 min-w-[120px] px-2 py-1 rounded-xl bg-black/40 border border-white/15"
                 />
+                <label className="px-3 py-1 rounded-xl border border-white/15 cursor-pointer">
+                  Upload
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadFile(f, 'avatar');
+                    }}
+                  />
+                </label>
                 <button type="button" onClick={savePic} className="opacity-70">
                   Set picture
                 </button>

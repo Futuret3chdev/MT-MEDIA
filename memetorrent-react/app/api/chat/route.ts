@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ ok: false, error: 'Unknown channel.' }, { status: 404 });
     }
     let kind = String(body.kind || 'text');
-    if (!['text', 'asset', 'sticker', 'trade', 'event'].includes(kind)) kind = 'text';
+    if (!['text', 'asset', 'sticker', 'trade', 'event', 'image', 'nft'].includes(kind)) kind = 'text';
     if (kind === 'text' && (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(text) || /^\$[A-Za-z0-9]+$/.test(text))) {
       kind = 'asset';
     }
