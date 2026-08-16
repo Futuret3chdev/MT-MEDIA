@@ -31,7 +31,8 @@ const sections = [
 export default function SoftwarePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-      <div className="uppercase text-xs tracking-[3px] text-emerald-400 mb-2">Software</div>
+      <Link href="/" className="text-sm opacity-70 hover:opacity-100">← Home</Link>
+      <div className="uppercase text-xs tracking-[3px] text-emerald-400 mt-4 mb-2">Software</div>
       <h1 className="text-4xl sm:text-5xl font-semibold tracking-[-1.6px] mb-4">
         Software we build ourselves.
       </h1>

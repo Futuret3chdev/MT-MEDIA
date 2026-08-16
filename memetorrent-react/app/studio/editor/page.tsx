@@ -62,8 +62,11 @@ export default function StudioEditorPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#12141a] text-[#e8eaf0]">
       <div className="border-b border-white/10 flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
+        <Link href="/" className="opacity-60 hover:opacity-100">
+          ← Home
+        </Link>
         <Link href="/studio" className="opacity-60 hover:opacity-100">
-          Project
+          ← Studio
         </Link>
         <span className="opacity-30 hidden sm:inline">/</span>
         <input

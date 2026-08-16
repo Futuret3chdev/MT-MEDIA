@@ -96,7 +96,10 @@ export default function StudioDemoPage() {
     <div className="min-h-[80vh] bg-[#07080c]">
       <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between gap-3">
         <div>
-          <Link href="/studio" className="text-xs opacity-60">← MT Studio SDK</Link>
+          <div className="flex flex-wrap gap-3 text-xs mb-1">
+            <Link href="/" className="opacity-60">← Home</Link>
+            <Link href="/studio" className="opacity-60">← Studio</Link>
+          </div>
           <div className="font-semibold">SDK Explorer</div>
         </div>
         <div className="flex flex-wrap gap-1 justify-end">

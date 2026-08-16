@@ -51,7 +51,10 @@ export default function PublisherPage() {
   if (who) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <Link href="/studio" className="text-sm opacity-60">← MT Studio SDK</Link>
+        <div className="flex flex-wrap gap-4 text-sm mb-2">
+          <Link href="/" className="opacity-60">← Home</Link>
+          <Link href="/studio" className="opacity-60">← Studio</Link>
+        </div>
         <h1 className="text-3xl font-semibold mt-3 mb-2">Publisher account</h1>
         <p className="text-sm opacity-70 mb-8">Signed in as {who}</p>
         <div className="rounded-2xl border border-white/10 p-5 mb-6">
@@ -79,7 +82,10 @@ export default function PublisherPage() {
   return (
     <div className="min-h-[80vh] grid lg:grid-cols-2">
       <div className="px-5 sm:px-14 py-10 sm:py-16 flex flex-col justify-center">
-        <Link href="/studio" className="text-sm opacity-60 mb-8 w-fit">← MT Studio SDK</Link>
+        <div className="flex flex-wrap gap-4 text-sm mb-8">
+          <Link href="/" className="opacity-60">← Home</Link>
+          <Link href="/studio" className="opacity-60">← Studio</Link>
+        </div>
         <h1 className="text-4xl font-semibold tracking-tight mb-4">
           Publisher account
         </h1>

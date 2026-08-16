@@ -127,6 +127,11 @@ export default function PortalPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <div className="flex flex-wrap gap-4 text-sm mb-4">
+        <Link href="/" className="opacity-70 hover:opacity-100">← Home</Link>
+        <Link href="/catalog" className="opacity-70 hover:opacity-100">← Games</Link>
+        <Link href="/chat" className="opacity-70 hover:opacity-100">← Chat</Link>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <div className="uppercase text-xs tracking-[3px] text-emerald-400 mb-1">Portal</div>

@@ -34,7 +34,11 @@ export default function StudioPlayPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
-      <Link href="/studio" className="text-sm opacity-70">← Studio</Link>
+      <div className="flex flex-wrap gap-4 text-sm mb-2">
+        <Link href="/" className="opacity-70">← Home</Link>
+        <Link href="/studio" className="opacity-70">← Studio</Link>
+        <Link href="/studio/editor" className="opacity-70">← Editor</Link>
+      </div>
       <h1 className="text-3xl font-semibold mt-3 mb-4">{name}</h1>
       {err && <p className="text-red-400 text-sm">{err}</p>}
       {map && <PlatformPlay spec={map} />}

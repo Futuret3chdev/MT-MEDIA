@@ -13,9 +13,10 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
   const external = g.play.startsWith('http');
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-      <Link href="/catalog" className="text-sm opacity-60 hover:opacity-100">
-        ← Catalog
-      </Link>
+      <div className="flex flex-wrap gap-4 text-sm">
+        <Link href="/" className="opacity-70 hover:opacity-100">← Home</Link>
+        <Link href="/catalog" className="opacity-70 hover:opacity-100">← Games</Link>
+      </div>
       <div className="mt-4 rounded-3xl overflow-hidden border border-white/10">
         <div className="h-56 sm:h-72 bg-black">
           <img src={g.img} alt="" className="w-full h-full object-cover" />

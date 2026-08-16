@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
 
-const ROOMS = ['trades', 'general', 'support'] as const;
+const ROOMS = ['trades', 'signals', 'otc', 'general', 'support'] as const;
 
 async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
   await conn.execute(`
