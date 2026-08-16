@@ -266,6 +266,12 @@ export default function Navbar() {
           >
             LIVE $MT
           </a>
+          <a
+            href="/contact"
+            className="text-[11px] sm:text-xs font-medium opacity-80 hover:opacity-100 whitespace-nowrap"
+          >
+            CONTACT
+          </a>
 
           {/* Contract address near social icons - short display on mobile to avoid overflow, full on copy/title */}
           <div className="ml-1 sm:ml-3 pl-2 sm:pl-3 border-l border-white/20 flex items-center gap-1 text-[10px] sm:text-[11px] min-w-0">
