@@ -27,14 +27,18 @@ export default function RoomStudio({
   room,
   extra,
   isOwner,
+  vaultSlug,
   onClose,
   onSaved,
+  onCancelled,
 }: {
   room: string;
   extra: RoomExtra;
   isOwner: boolean;
+  vaultSlug?: string;
   onClose: () => void;
   onSaved: (c: RoomExtra) => void;
+  onCancelled?: () => void;
 }) {
   const [name, setName] = useState(extra.name || '');
   const [kind, setKind] = useState(extra.kind === 'secret' ? 'private' : extra.kind || 'public');
@@ -69,6 +73,46 @@ export default function RoomStudio({
     }
   };
 
+  const canCancel =
+    isOwner && extra.kind !== 'dm' && extra.kind !== 'vault' && !['trades', 'signals', 'otc', 'general', 'support'].includes(room);
+
+  const setImageBg = async (file: File) => {
+    setBusy(true);
+    setMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const up = await fetch('/api/chat/media', { method: 'POST', credentials: 'include', body: fd }).then((r) =>
+        r.json()
+      );
+      if (!up.ok) {
+        setMsg(up.error || 'Upload failed');
+        return;
+      }
+      setBackground(up.url);
+      await save({ background: up.url });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelRoom = async () => {
+    if (!canCancel) return;
+    if (!window.confirm(`Cancel #${extra.name}? Messages in this room are removed.`)) return;
+    setBusy(true);
+    const res = await fetch(`/api/chat/channels?slug=${encodeURIComponent(room)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    const d = await res.json();
+    setBusy(false);
+    if (!d.ok) {
+      setMsg(d.error || 'Could not cancel');
+      return;
+    }
+    onCancelled?.();
+  };
+
   const mintInvite = async () => {
     const res = await fetch('/api/chat/invite', {
       method: 'POST',
@@ -94,14 +138,30 @@ export default function RoomStudio({
   return (
     <div className="border-b border-white/10 bg-black/70 p-3 sm:p-4 space-y-3 text-sm">
       <div className="flex items-center justify-between">
-        <div className="font-semibold">Room studio</div>
+        <div className="font-semibold">Settings</div>
         <button type="button" className="opacity-60" onClick={onClose}>
           Close
         </button>
       </div>
       <p className="text-xs opacity-60">
-        Invite people, switch public/private any time, drop music, change the look, share a pad and pin the $MT chart.
+        Vault, friends and this room live here. Invite people, switch public/private, set a photo as the background, or cancel a room you own.
       </p>
+      <div className="flex flex-wrap gap-2 text-xs">
+        {vaultSlug && (
+          <a
+            href={`/chat?room=${encodeURIComponent(vaultSlug)}`}
+            className="px-3 py-1.5 rounded-full border border-emerald-400/40 text-emerald-400"
+          >
+            Vault
+          </a>
+        )}
+        <a href="/portal" className="px-3 py-1.5 rounded-full border border-white/15">
+          Friends
+        </a>
+        <a href="/chat" className="px-3 py-1.5 rounded-full border border-white/15">
+          Chat
+        </a>
+      </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="block text-xs">
           <span className="opacity-50">Name</span>
@@ -150,7 +210,23 @@ export default function RoomStudio({
               {b.label}
             </button>
           ))}
+          <label className="px-2 py-1 rounded-lg border border-white/15 cursor-pointer text-[11px]">
+            Image…
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setImageBg(f);
+                e.target.value = '';
+              }}
+            />
+          </label>
         </div>
+        {background && (background.startsWith('/') || background.startsWith('http')) && (
+          <img src={background} alt="" className="mt-2 h-16 w-28 object-cover rounded-lg border border-white/10" />
+        )}
       </div>
       <label className="block text-xs">
         <span className="opacity-50">Live music (YouTube or audio URL)</span>
@@ -196,6 +272,16 @@ export default function RoomStudio({
         {kind !== 'dm' && kind !== 'vault' && (
           <button type="button" onClick={mintInvite} className="px-3 py-1.5 rounded-full border border-white/15 text-xs">
             Invite link
+          </button>
+        )}
+        {canCancel && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={cancelRoom}
+            className="px-3 py-1.5 rounded-full border border-red-400/40 text-red-300 text-xs"
+          >
+            Cancel room
           </button>
         )}
       </div>

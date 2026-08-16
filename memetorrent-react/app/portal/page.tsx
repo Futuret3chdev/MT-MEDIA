@@ -219,7 +219,19 @@ export default function PortalPage() {
       {mode === 'users' && (
         <div className="grid lg:grid-cols-[220px_1fr] gap-6">
           <nav className="flex lg:flex-col flex-wrap gap-1">
-            {USER_NAV.map((n) => (
+            {USER_NAV.filter((n) => !['chat', 'friends', 'vault'].includes(n.id)).map((n) => (
+              <button
+                key={n.id}
+                onClick={() => setTab(n.id)}
+                className={`text-left px-3 py-2 rounded-xl text-sm ${
+                  tab === n.id ? 'bg-white/10 text-emerald-400' : 'opacity-70 hover:opacity-100'
+                }`}
+              >
+                {n.label}
+              </button>
+            ))}
+            <div className="w-full text-[10px] uppercase tracking-wider opacity-40 px-3 pt-3 pb-1">Settings</div>
+            {USER_NAV.filter((n) => ['chat', 'friends', 'vault'].includes(n.id)).map((n) => (
               <button
                 key={n.id}
                 onClick={() => setTab(n.id)}

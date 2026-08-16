@@ -65,7 +65,8 @@ export async function ensureChat(conn: mysql.Connection) {
   }
   for (const sql of [
     'ALTER TABLE mt_chat_channels ADD COLUMN invite_code VARCHAR(24) NULL',
-    'ALTER TABLE mt_chat_channels ADD COLUMN background VARCHAR(240) NULL',
+    'ALTER TABLE mt_chat_channels ADD COLUMN background VARCHAR(400) NULL',
+    'ALTER TABLE mt_chat_channels MODIFY COLUMN background VARCHAR(400) NULL',
     'ALTER TABLE mt_chat_channels ADD COLUMN music_url VARCHAR(400) NULL',
     'ALTER TABLE mt_chat_channels ADD COLUMN show_chart TINYINT(1) NOT NULL DEFAULT 0',
     'ALTER TABLE mt_chat_channels ADD COLUMN collab_note MEDIUMTEXT NULL',

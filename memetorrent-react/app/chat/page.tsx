@@ -640,6 +640,7 @@ function ChatInner() {
                 )}
               </div>
             ))}
+            <div className="mt-3 text-[10px] uppercase tracking-wider opacity-40">Settings</div>
             {channels
               .filter((c) => c.kind === 'vault')
               .map((c) => (
@@ -652,14 +653,14 @@ function ChatInner() {
                     setExtra(c);
                     setOpen(true);
                   }}
-                  className={`w-full text-left px-1 py-2 text-xs rounded-lg ${
-                    room === c.slug ? 'bg-emerald-400/15 text-emerald-400' : 'text-emerald-400'
+                  className={`w-full text-left px-1 py-1.5 text-xs rounded-lg ${
+                    room === c.slug ? 'bg-emerald-400/15 text-emerald-400' : 'opacity-80'
                   }`}
                 >
-                  Vault · only you
+                  Vault
                 </button>
               ))}
-            <div className="mt-3 text-[10px] uppercase tracking-wider opacity-40">Friends</div>
+            <div className="mt-2 text-[10px] uppercase tracking-wider opacity-40">Friends</div>
             {!friends.length && (
               <p className="text-[11px] opacity-40 py-1">
                 Hover a name, tap Add, then Message them here — that is a private chat, not the main room.
@@ -749,7 +750,17 @@ function ChatInner() {
 
         <section
           className={`${open ? 'flex' : 'hidden'} md:flex flex-col min-h-[72vh]`}
-          style={current?.background ? { background: current.background } : undefined}
+          style={
+            current?.background
+              ? current.background.startsWith('/') || current.background.startsWith('http')
+                ? {
+                    backgroundImage: `url(${current.background})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
+                : { background: current.background }
+              : undefined
+          }
         >
           <header className="px-3 sm:px-4 py-3 border-b border-white/10 flex items-center gap-3">
             <button type="button" className="md:hidden text-sm min-h-[40px]" onClick={() => setOpen(false)}>
@@ -764,7 +775,7 @@ function ChatInner() {
               </div>
             </div>
             <button type="button" className="text-[11px] text-emerald-400" onClick={() => setStudio((v) => !v)}>
-              {studio ? 'Close studio' : 'Studio'}
+              {studio ? 'Close settings' : 'Settings'}
             </button>
             {!peer && (
               <button type="button" onClick={emit} className="text-[11px] opacity-50 hidden sm:inline">
@@ -777,10 +788,17 @@ function ChatInner() {
               room={room}
               extra={current}
               isOwner={!!email && (current.owner_email || '').toLowerCase() === email.toLowerCase()}
+              vaultSlug={channels.find((c) => c.kind === 'vault')?.slug}
               onClose={() => setStudio(false)}
               onSaved={(c) => {
                 setExtra(c);
                 setChannels((list) => list.map((x) => (x.slug === c.slug ? { ...x, ...c } : x)));
+              }}
+              onCancelled={() => {
+                setStudio(false);
+                setPeer(null);
+                setRoom('trades');
+                loadChans();
               }}
             />
           )}

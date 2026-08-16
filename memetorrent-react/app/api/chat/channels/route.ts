@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-import { addMember, ensureChat, ensurePersonalVault, isPrivateKind, slugifyChannel } from '@/lib/chat-core';
+import { addMember, ensureChat, ensurePersonalVault, isPrivateKind, slugifyChannel, SYSTEM_ROOMS } from '@/lib/chat-core';
 
 const EXTRAS =
   'slug, name, kind, gate_note, owner_email, invite_code, background, music_url, show_chart, collab_note, topic';
@@ -172,6 +172,42 @@ export async function PATCH(request: NextRequest) {
   } catch (err) {
     console.error('channels patch', err);
     return Response.json({ ok: false, error: 'Could not update' }, { status: 500 });
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const user = await userBySession(await readSessionToken());
+  if (!user) return Response.json({ ok: false, error: 'Sign in' }, { status: 401 });
+  const slug = String(request.nextUrl.searchParams.get('slug') || '').slice(0, 48);
+  if (!slug) return Response.json({ ok: false, error: 'Missing room' }, { status: 400 });
+  if (SYSTEM_ROOMS.some((r) => r.slug === slug) || slug.startsWith('vault-')) {
+    return Response.json({ ok: false, error: 'That room cannot be cancelled.' }, { status: 400 });
+  }
+  const conn = await getUserDb();
+  try {
+    await ensureChat(conn);
+    const [rows] = await conn.execute(
+      'SELECT kind, owner_email FROM mt_chat_channels WHERE slug = ? LIMIT 1',
+      [slug]
+    );
+    const ch = (rows as { kind: string; owner_email: string | null }[])[0];
+    if (!ch) return Response.json({ ok: false, error: 'Unknown room' }, { status: 404 });
+    if (ch.kind === 'dm' || ch.kind === 'vault') {
+      return Response.json({ ok: false, error: 'That room cannot be cancelled.' }, { status: 400 });
+    }
+    if (String(ch.owner_email || '').toLowerCase() !== user.email.toLowerCase()) {
+      return Response.json({ ok: false, error: 'Only the owner can cancel this room.' }, { status: 403 });
+    }
+    await conn.execute('DELETE FROM mt_crypto_chat WHERE room = ?', [slug]);
+    await conn.execute('DELETE FROM mt_chat_events WHERE room = ?', [slug]);
+    await conn.execute('DELETE FROM mt_chat_members WHERE slug = ?', [slug]);
+    await conn.execute('DELETE FROM mt_chat_channels WHERE slug = ?', [slug]);
+    return Response.json({ ok: true });
+  } catch (err) {
+    console.error('channels delete', err);
+    return Response.json({ ok: false, error: 'Could not cancel room' }, { status: 500 });
   } finally {
     await conn.end();
   }
