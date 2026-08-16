@@ -46,6 +46,36 @@ export async function POST(request: NextRequest) {
   const conn = await getUserDb();
   try {
     await ensureCommerce(conn);
+    if (body.action === 'seed') {
+      const [have] = await conn.execute(
+        'SELECT id FROM mt_studio_projects WHERE email = ? LIMIT 1',
+        [user.email]
+      );
+      let projectId = (have as { id: string | number }[])[0]?.id;
+      if (!projectId) {
+        await conn.execute(
+          'INSERT INTO mt_studio_projects (email, username, name, slug, api_key) VALUES (?,?,?,?,?)',
+          [user.email, user.username, 'Demo Shop', 'demo-' + Date.now().toString(36), newApiKey()]
+        );
+        const [created] = await conn.execute(
+          'SELECT id FROM mt_studio_projects WHERE email = ? ORDER BY id DESC LIMIT 1',
+          [user.email]
+        );
+        projectId = (created as { id: string | number }[])[0]?.id;
+      }
+      const seeds = [
+        ['ROCKET_PACK', 'Rocket pack', 10, 'currency'],
+        ['SKIN_GOLD', 'Gold skin', 25, 'item'],
+        ['BATTLE_PASS', 'Season pass', 50, 'pass'],
+      ];
+      for (const [s, n, p, k] of seeds) {
+        await conn.execute(
+          `INSERT IGNORE INTO mt_studio_items (project_id, sku, name, price_mt, kind) VALUES (?,?,?,?,?)`,
+          [String(projectId), s, n, p, k]
+        );
+      }
+      return Response.json({ ok: true, seeded: true });
+    }
     if (body.action === 'project') {
       const name = String(body.name || '').trim().slice(0, 80);
       if (name.length < 2) return Response.json({ ok: false, error: 'Project name required' }, { status: 400 });
