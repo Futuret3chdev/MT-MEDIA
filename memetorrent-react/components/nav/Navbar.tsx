@@ -309,7 +309,7 @@ export default function Navbar() {
           </a>
 
           <div className="ml-1 sm:ml-3 pl-2 sm:pl-3 border-l border-white/20 flex items-center gap-1.5 text-[10px] sm:text-xs min-w-0 flex-1">
-            <span className="opacity-60 shrink-0">Contract:</span>
+            <span className="opacity-60 shrink-0">CA</span>
             <button
               onClick={(e) => {
                 navigator.clipboard.writeText(MT_MINT);
