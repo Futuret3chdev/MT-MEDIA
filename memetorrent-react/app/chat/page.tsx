@@ -686,7 +686,12 @@ function ChatInner() {
   useEffect(() => {
     load();
     const t = setInterval(load, 1200);
-    return () => clearInterval(t);
+    const onFriends = () => load();
+    window.addEventListener('mt-friends', onFriends);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('mt-friends', onFriends);
+    };
   }, [room]);
 
   useEffect(() => {
@@ -805,6 +810,7 @@ function ChatInner() {
       setRoom(d.slug);
       setOpen(true);
     }
+    window.dispatchEvent(new Event('mt-friends'));
   };
 
   const sendSticker = async (s: string) => {

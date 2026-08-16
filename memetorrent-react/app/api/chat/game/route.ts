@@ -3,6 +3,7 @@ import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
 import { canAccessRoom, canEditRoom, ensureChat, ensureDmChannel, isDmSlug, roomRole } from '@/lib/chat-core';
 import { getGame } from '@/lib/mt-catalog';
+import { addNotice } from '@/lib/chat-notices';
 
 type Ttt = {
   kind: 'ttt';

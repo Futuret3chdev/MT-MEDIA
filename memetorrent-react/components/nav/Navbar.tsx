@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '@/components/theme/ThemeToggle';
+import NoticeBell from '@/components/nav/NoticeBell';
 import { LINKS } from '@/lib/constants';
 import { Connection, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import servicesData from '@/app/status/services.json';
@@ -270,6 +271,10 @@ export default function Navbar() {
           <a href={LINKS.wallet} target="_blank" onClick={() => setMobileMenuOpen(false)} className="py-1 font-medium">Infinite Wallet</a>
           {portalUser ? (
             <>
+              <div className="py-1 flex items-center gap-2">
+                <NoticeBell />
+                <span className="text-xs opacity-70">Notifications</span>
+              </div>
               <a href="/portal" onClick={() => setMobileMenuOpen(false)} className="py-1 text-emerald-400">
                 @{portalUser.username}
               </a>
@@ -365,6 +370,7 @@ export default function Navbar() {
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {portalUser ? (
               <>
+                <NoticeBell />
                 <button
                   type="button"
                   onClick={() => (window.location.href = '/portal')}

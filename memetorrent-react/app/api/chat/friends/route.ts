@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
 import { ensureChat, ensureDmChannel } from '@/lib/chat-core';
+import { addNotice } from '@/lib/chat-notices';
 
 async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
   await conn.execute(`
@@ -116,6 +117,14 @@ export async function POST(request: NextRequest) {
         'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
         [slug, me.username, `accepted the friend request`, 'text', me.email]
       );
+      await addNotice(conn, {
+        to_email: them.email,
+        kind: 'friend_accepted',
+        title: `@${me.username} accepted — you are friends`,
+        href: `/chat?with=${encodeURIComponent(me.username)}`,
+        from_email: me.email,
+        from_username: me.username,
+      });
       return Response.json({ ok: true, accepted: true, slug });
     }
 
@@ -160,6 +169,14 @@ export async function POST(request: NextRequest) {
       'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
       [slug, me.username, `sent you a friend request`, 'friend', me.email]
     );
+    await addNotice(conn, {
+      to_email: them.email,
+      kind: 'friend_request',
+      title: `@${me.username} sent a friend request`,
+      href: '/chat',
+      from_email: me.email,
+      from_username: me.username,
+    });
     return Response.json({ ok: true, requested: true, slug, username: them.username });
   } catch (err) {
     console.error('friends', err);
