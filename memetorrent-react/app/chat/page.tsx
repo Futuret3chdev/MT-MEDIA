@@ -257,6 +257,91 @@ function renderBody(text: string) {
   });
 }
 
+function RoomLiveMedia({
+  extra,
+  canEdit,
+  onToggle,
+}: {
+  extra: RoomExtra;
+  canEdit: boolean;
+  onToggle: (playing: boolean) => void;
+}) {
+  const url = extra.music_url || '';
+  const playing = !!extra.media_playing;
+  const [muted, setMuted] = useState(true);
+  const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
+  const yt = youtubeId(url);
+  const isAudio = /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(url);
+
+  useEffect(() => {
+    const el = mediaRef.current;
+    if (!el) return;
+    if (playing) {
+      const started = extra.media_started ? new Date(extra.media_started).getTime() : 0;
+      if (started && Number.isFinite(el.duration) && el.duration > 0) {
+        el.currentTime = ((Date.now() - started) / 1000) % el.duration;
+      }
+      el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [playing, extra.media_started, url]);
+
+  return (
+    <div className="px-3 py-2 border-b border-white/5">
+      <div className="flex items-center gap-2 mb-1">
+        <div className="text-[10px] uppercase tracking-wider text-emerald-400">
+          {playing ? 'Playing for everyone' : 'Stopped'}
+        </div>
+        {canEdit ? (
+          <button
+            type="button"
+            className="text-[11px] text-emerald-400"
+            onClick={() => onToggle(!playing)}
+          >
+            {playing ? 'Stop' : 'Play'}
+          </button>
+        ) : (
+          <button type="button" className="text-[11px] opacity-70" onClick={() => setMuted((m) => !m)}>
+            {muted ? 'Unmute' : 'Mute'}
+          </button>
+        )}
+      </div>
+      {yt ? (
+        <iframe
+          key={`${yt}-${playing ? 'on' : 'off'}`}
+          title="room media"
+          className="w-full max-w-sm aspect-video rounded-xl pointer-events-none"
+          src={`https://www.youtube.com/embed/${yt}?autoplay=${playing ? 1 : 0}&mute=${muted || !playing ? 1 : 0}&controls=0&disablekb=1`}
+          allow="autoplay; encrypted-media"
+        />
+      ) : isAudio ? (
+        <audio
+          ref={(el) => {
+            mediaRef.current = el;
+          }}
+          src={url}
+          muted={muted && !canEdit}
+          autoPlay={playing}
+          className="w-full max-w-sm"
+        />
+      ) : (
+        <video
+          ref={(el) => {
+            mediaRef.current = el;
+          }}
+          src={url}
+          muted={canEdit ? false : muted}
+          loop
+          playsInline
+          autoPlay={playing}
+          className="w-full max-w-sm rounded-xl"
+        />
+      )}
+    </div>
+  );
+}
+
 function FileBubble({ kind, body }: { kind?: string; body: string }) {
   let meta: { url?: string; name?: string } = {};
   try {
@@ -279,15 +364,7 @@ function FileBubble({ kind, body }: { kind?: string; body: string }) {
     return (
       <div>
         <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Video</div>
-        <video
-          controls
-          autoPlay
-          muted
-          loop
-          playsInline
-          src={url}
-          className="max-w-[240px] rounded-xl"
-        />
+        <video muted loop playsInline src={url} className="max-w-[240px] rounded-xl" />
         <div className="text-[10px] opacity-50 mt-1 truncate">{name}</div>
       </div>
     );
@@ -347,6 +424,17 @@ function ChatInner() {
   const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
 
   const current = channels.find((c) => c.slug === room) || extra;
+  const myRole =
+    current?.my_role ||
+    (email && current?.owner_email && current.owner_email.toLowerCase() === email.toLowerCase()
+      ? 'owner'
+      : 'member');
+  const canEditRoom =
+    current?.kind === 'vault' ||
+    current?.kind === 'dm' ||
+    myRole === 'owner' ||
+    myRole === 'admin' ||
+    myRole === 'mod';
 
   const loadChans = () => {
     fetch('/api/chat/channels', { credentials: 'include' })
@@ -569,14 +657,16 @@ function ChatInner() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ room, text: payload, kind, persona }),
     });
-    if (kind === 'video' || kind === 'audio') {
+    const role = extra?.my_role;
+    const hostish = extra?.kind === 'vault' || extra?.kind === 'dm' || role === 'owner' || role === 'admin' || role === 'mod';
+    if ((kind === 'video' || kind === 'audio') && hostish) {
       await fetch('/api/chat/channels', {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: room, music_url: data.url }),
+        body: JSON.stringify({ slug: room, music_url: data.url, media_playing: true }),
       });
-      setExtra((e) => (e ? { ...e, music_url: data.url } : e));
+      setExtra((e) => (e ? { ...e, music_url: data.url, media_playing: true } : e));
     }
     load();
     return data;
@@ -822,7 +912,8 @@ function ChatInner() {
             <RoomStudio
               room={room}
               extra={current}
-              isOwner={!!email && (current.owner_email || '').toLowerCase() === email.toLowerCase()}
+              isOwner={myRole === 'owner'}
+              canEdit={canEditRoom}
               vaultSlug={channels.find((c) => c.kind === 'vault')?.slug}
               onClose={() => setStudio(false)}
               onSaved={(c) => {
@@ -841,33 +932,19 @@ function ChatInner() {
             <div className="px-3 py-2 border-b border-white/5 text-xs opacity-70">{current.topic}</div>
           )}
           {current?.music_url && (
-            <div className="px-3 py-2 border-b border-white/5">
-              <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">
-                {/\.(mp4|webm|mov)(\?|$)/i.test(current.music_url) || current.music_url.includes('/api/chat/media/')
-                  ? 'Playing for everyone'
-                  : 'Live music'}
-              </div>
-              {youtubeId(current.music_url) ? (
-                <iframe
-                  title="live media"
-                  className="w-full max-w-md aspect-video rounded-xl"
-                  src={`https://www.youtube.com/embed/${youtubeId(current.music_url)}?autoplay=1&mute=1`}
-                  allow="autoplay; encrypted-media"
-                />
-              ) : /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(current.music_url) ? (
-                <audio controls autoPlay src={current.music_url} className="w-full max-w-md" />
-              ) : (
-                <video
-                  controls
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  src={current.music_url}
-                  className="w-full max-w-md rounded-xl"
-                />
-              )}
-            </div>
+            <RoomLiveMedia
+              extra={current}
+              canEdit={canEditRoom}
+              onToggle={async (playing) => {
+                await fetch('/api/chat/channels', {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ slug: room, media_playing: playing }),
+                });
+                setExtra((e) => (e ? { ...e, media_playing: playing } : e));
+              }}
+            />
           )}
           {current?.show_chart && (
             <div className="px-3 py-2 border-b border-white/5">

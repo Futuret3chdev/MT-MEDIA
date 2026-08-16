@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export type RoomExtra = {
   slug: string;
@@ -13,6 +13,9 @@ export type RoomExtra = {
   show_chart?: boolean;
   collab_note?: string | null;
   invite_code?: string | null;
+  media_playing?: boolean;
+  media_started?: string | null;
+  my_role?: 'owner' | 'admin' | 'mod' | 'member' | null;
 };
 
 const BACKGROUNDS = [
@@ -27,6 +30,7 @@ export default function RoomStudio({
   room,
   extra,
   isOwner,
+  canEdit,
   vaultSlug,
   onClose,
   onSaved,
@@ -35,6 +39,7 @@ export default function RoomStudio({
   room: string;
   extra: RoomExtra;
   isOwner: boolean;
+  canEdit: boolean;
   vaultSlug?: string;
   onClose: () => void;
   onSaved: (c: RoomExtra) => void;
@@ -50,6 +55,9 @@ export default function RoomStudio({
   const [invite, setInvite] = useState('');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [staff, setStaff] = useState<{ email: string; role: string; username: string | null }[]>([]);
+  const [staffUser, setStaffUser] = useState('');
+  const [staffRole, setStaffRole] = useState<'admin' | 'mod'>('mod');
 
   const save = async (patch: Record<string, unknown>) => {
     setBusy(true);
@@ -113,6 +121,45 @@ export default function RoomStudio({
     onCancelled?.();
   };
 
+  const loadStaff = () => {
+    fetch(`/api/chat/staff?room=${encodeURIComponent(room)}`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => d.ok && setStaff(d.staff || []))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    if (canEdit) loadStaff();
+  }, [room, canEdit]);
+
+  const addStaff = async () => {
+    setMsg('');
+    const res = await fetch('/api/chat/staff', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, username: staffUser, role: staffRole }),
+    });
+    const d = await res.json();
+    if (!d.ok) {
+      setMsg(d.error || 'Could not add staff');
+      return;
+    }
+    setStaffUser('');
+    setMsg(`${d.username || d.email} is now ${d.role}`);
+    loadStaff();
+  };
+
+  const dropStaff = async (email: string) => {
+    await fetch('/api/chat/staff', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, email }),
+    });
+    loadStaff();
+  };
+
   const mintInvite = async () => {
     const res = await fetch('/api/chat/invite', {
       method: 'POST',
@@ -162,6 +209,11 @@ export default function RoomStudio({
           Chat
         </a>
       </div>
+      {!canEdit && extra.kind !== 'vault' && extra.kind !== 'dm' && (
+        <p className="text-xs text-amber-200/80">Only the host can edit this channel. Hosts can add admins and mods to help.</p>
+      )}
+      {(canEdit || extra.kind === 'vault' || extra.kind === 'dm') && (
+      <div className="space-y-3">
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="block text-xs">
           <span className="opacity-50">Name</span>
@@ -289,6 +341,45 @@ export default function RoomStudio({
         <div className="text-[11px] break-all font-mono text-emerald-400">{invite}</div>
       )}
       {msg && <div className="text-xs opacity-70">{msg}</div>}
+      </div>
+      )}
+      {canEdit && extra.kind !== 'dm' && extra.kind !== 'vault' && (isOwner || extra.my_role === 'admin') && (
+        <div className="pt-2 border-t border-white/10 space-y-2">
+          <div className="text-xs font-semibold">Admins and mods</div>
+          <p className="text-[11px] opacity-50">They can play/stop the room video and edit settings. You stay host.</p>
+          {staff.map((s) => (
+            <div key={s.email} className="flex justify-between text-xs">
+              <span>
+                @{s.username || s.email} · {s.role}
+              </span>
+              {s.role !== 'owner' && (
+                <button type="button" className="opacity-50" onClick={() => dropStaff(s.email)}>
+                  Remove
+                </button>
+              )}
+            </div>
+          ))}
+          <div className="flex flex-wrap gap-2">
+            <input
+              value={staffUser}
+              onChange={(e) => setStaffUser(e.target.value)}
+              placeholder="Username"
+              className="flex-1 min-w-[120px] px-2 py-1.5 rounded-lg bg-black/40 border border-white/15 text-xs"
+            />
+            <select
+              value={staffRole}
+              onChange={(e) => setStaffRole(e.target.value as 'admin' | 'mod')}
+              className="px-2 py-1.5 rounded-lg bg-black/40 border border-white/15 text-xs"
+            >
+              {isOwner && <option value="admin">Admin</option>}
+              <option value="mod">Mod</option>
+            </select>
+            <button type="button" onClick={addStaff} className="text-xs text-emerald-400">
+              Add
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

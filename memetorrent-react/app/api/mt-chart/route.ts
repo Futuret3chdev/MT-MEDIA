@@ -52,8 +52,5 @@ export async function GET() {
     change,
     pair,
     points,
-    embed: pair
-      ? `https://dexscreener.com/solana/${pair}?embed=1&theme=dark&info=0&trades=0`
-      : 'https://dexscreener.com/solana/e3kdauld47xlhaisluvgtanqd5mwwjojjynmcoevthi7?embed=1&theme=dark&info=0&trades=0',
   });
 }

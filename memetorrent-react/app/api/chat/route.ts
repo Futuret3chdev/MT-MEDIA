@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-import { canAccessRoom, ensureChat } from '@/lib/chat-core';
+import { canAccessRoom, ensureChat, roomRole } from '@/lib/chat-core';
 import { blockedReason } from '@/lib/chat-moderation';
 
 export async function GET(request: NextRequest) {
@@ -24,17 +24,23 @@ export async function GET(request: NextRequest) {
       [room]
     );
     const [ch] = await conn.execute(
-      `SELECT slug, name, kind, owner_email, topic, background, music_url, show_chart, collab_note
+      `SELECT slug, name, kind, owner_email, topic, background, music_url, show_chart, collab_note, media_playing, media_started
        FROM mt_chat_channels WHERE slug = ? LIMIT 1`,
       [room]
     );
     const channel = (ch as Record<string, unknown>[])[0] || null;
+    const my_role = me ? await roomRole(conn, room, me.email) : null;
     return Response.json({
       ok: true,
       room,
       messages: (rows as object[]).reverse(),
       channel: channel
-        ? { ...channel, show_chart: Number(channel.show_chart) === 1 }
+        ? {
+            ...channel,
+            show_chart: Number(channel.show_chart) === 1,
+            media_playing: Number(channel.media_playing) === 1,
+            my_role,
+          }
         : null,
     });
   } catch (err) {

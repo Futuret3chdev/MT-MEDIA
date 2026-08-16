@@ -1,10 +1,20 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-import { addMember, ensureChat, ensurePersonalVault, isPrivateKind, slugifyChannel, SYSTEM_ROOMS } from '@/lib/chat-core';
+import {
+  addMember,
+  canEditRoom,
+  canOwnRoom,
+  ensureChat,
+  ensurePersonalVault,
+  isPrivateKind,
+  roomRole,
+  slugifyChannel,
+  SYSTEM_ROOMS,
+} from '@/lib/chat-core';
 
 const EXTRAS =
-  'slug, name, kind, gate_note, owner_email, invite_code, background, music_url, show_chart, collab_note, topic';
+  'slug, name, kind, gate_note, owner_email, invite_code, background, music_url, show_chart, collab_note, topic, media_playing, media_started';
 
 export async function GET() {
   const me = await userBySession(await readSessionToken());
@@ -35,6 +45,7 @@ export async function GET() {
         ...c,
         invite_code: String(c.owner_email || '').toLowerCase() === email ? c.invite_code : undefined,
         show_chart: Number(c.show_chart) === 1,
+        media_playing: Number(c.media_playing) === 1,
       }));
     return Response.json({ ok: true, channels });
   } catch (err) {
@@ -88,6 +99,7 @@ export async function PATCH(request: NextRequest) {
     music_url?: string;
     show_chart?: boolean;
     collab_note?: string;
+    media_playing?: boolean;
   };
   try {
     body = await request.json();
@@ -105,38 +117,28 @@ export async function PATCH(request: NextRequest) {
     );
     const ch = (rows as Record<string, string | number | null>[])[0];
     if (!ch) return Response.json({ ok: false, error: 'Unknown channel' }, { status: 404 });
-    const owner = String(ch.owner_email || '').toLowerCase();
     const me = user.email.toLowerCase();
-    const isOwner = owner === me;
-    const [mem] = await conn.execute('SELECT email FROM mt_chat_members WHERE slug = ? AND email = ?', [
-      slug,
-      me,
-    ]);
-    const isMember = (mem as object[]).length > 0 || isOwner || ch.kind === 'dm';
-    if (ch.kind === 'dm') {
-      const { dmParticipant } = await import('@/lib/chat-core');
-      if (!(await dmParticipant(conn, slug, me))) {
-        return Response.json({ ok: false, error: 'Private chat' }, { status: 403 });
-      }
-    } else if (!isMember && isPrivateKind(String(ch.kind))) {
-      return Response.json({ ok: false, error: 'Not in this room' }, { status: 403 });
+    const role = await roomRole(conn, slug, me);
+    if (!role) return Response.json({ ok: false, error: 'Not in this room' }, { status: 403 });
+    if (!canEditRoom(role) && String(ch.kind) !== 'dm') {
+      return Response.json({ ok: false, error: 'Only the host, admins or mods can edit this room' }, { status: 403 });
     }
 
     const sets: string[] = [];
     const vals: Array<string | number | null> = [];
-    if (isOwner || !owner) {
+    if (canOwnRoom(role) || String(ch.kind) === 'dm') {
       if (typeof body.name === 'string' && body.name.trim().length >= 2) {
         sets.push('name = ?');
         vals.push(body.name.trim().replace(/^#/, '').slice(0, 80));
       }
       if (
         body.kind &&
-        ['public', 'private', 'secret', 'gated'].includes(body.kind) &&
+        ['public', 'private'].includes(body.kind) &&
         String(ch.kind) !== 'dm' &&
         String(ch.kind) !== 'vault'
       ) {
         sets.push('kind = ?');
-        vals.push(body.kind === 'secret' ? 'private' : body.kind);
+        vals.push(body.kind);
       }
     }
     if (typeof body.topic === 'string') {
@@ -145,7 +147,7 @@ export async function PATCH(request: NextRequest) {
     }
     if (typeof body.background === 'string') {
       sets.push('background = ?');
-      vals.push(body.background.trim().slice(0, 240) || null);
+      vals.push(body.background.trim().slice(0, 400) || null);
     }
     if (typeof body.music_url === 'string') {
       sets.push('music_url = ?');
@@ -159,6 +161,12 @@ export async function PATCH(request: NextRequest) {
       sets.push('collab_note = ?');
       vals.push(body.collab_note.slice(0, 20000));
     }
+    if (typeof body.media_playing === 'boolean') {
+      sets.push('media_playing = ?');
+      vals.push(body.media_playing ? 1 : 0);
+      sets.push('media_started = ?');
+      vals.push(body.media_playing ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null);
+    }
     if (!sets.length) return Response.json({ ok: false, error: 'Nothing to update' }, { status: 400 });
     vals.push(slug);
     await conn.execute(`UPDATE mt_chat_channels SET ${sets.join(', ')} WHERE slug = ?`, vals);
@@ -166,7 +174,12 @@ export async function PATCH(request: NextRequest) {
     const next = (fresh as Record<string, unknown>[])[0];
     return Response.json({
       ok: true,
-      channel: { ...next, show_chart: Number(next.show_chart) === 1 },
+      channel: {
+        ...next,
+        show_chart: Number(next.show_chart) === 1,
+        media_playing: Number(next.media_playing) === 1,
+        my_role: role,
+      },
     });
   } catch (err) {
     console.error('channels patch', err);

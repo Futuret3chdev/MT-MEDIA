@@ -71,6 +71,8 @@ export async function ensureChat(conn: mysql.Connection) {
     'ALTER TABLE mt_chat_channels ADD COLUMN show_chart TINYINT(1) NOT NULL DEFAULT 0',
     'ALTER TABLE mt_chat_channels ADD COLUMN collab_note MEDIUMTEXT NULL',
     'ALTER TABLE mt_chat_channels ADD COLUMN topic VARCHAR(200) NULL',
+    'ALTER TABLE mt_chat_channels ADD COLUMN media_playing TINYINT(1) NOT NULL DEFAULT 0',
+    'ALTER TABLE mt_chat_channels ADD COLUMN media_started DATETIME NULL',
     'ALTER TABLE mt_chat_media ADD COLUMN filename VARCHAR(160) NULL',
   ]) {
     try {
@@ -180,11 +182,47 @@ export function newInviteCode() {
 }
 
 export async function addMember(conn: mysql.Connection, slug: string, email: string, role = 'member') {
-  await conn.execute('INSERT IGNORE INTO mt_chat_members (slug, email, role) VALUES (?,?,?)', [
+  await conn.execute(
+    `INSERT INTO mt_chat_members (slug, email, role) VALUES (?,?,?)
+     ON DUPLICATE KEY UPDATE role = VALUES(role)`,
+    [slug, email.trim().toLowerCase(), role]
+  );
+}
+
+export type RoomRole = 'owner' | 'admin' | 'mod' | 'member';
+
+export async function roomRole(
+  conn: mysql.Connection,
+  slug: string,
+  email: string | null | undefined
+): Promise<RoomRole | null> {
+  if (!email) return null;
+  const e = email.trim().toLowerCase();
+  const [rows] = await conn.execute(
+    'SELECT kind, owner_email FROM mt_chat_channels WHERE slug = ? LIMIT 1',
+    [slug]
+  );
+  const ch = (rows as { kind: string; owner_email: string | null }[])[0];
+  if (!ch) return null;
+  if (ch.kind === 'dm') return (await dmParticipant(conn, slug, e)) ? 'owner' : null;
+  if (ch.owner_email && ch.owner_email.toLowerCase() === e) return 'owner';
+  const [mem] = await conn.execute('SELECT role FROM mt_chat_members WHERE slug = ? AND email = ? LIMIT 1', [
     slug,
-    email.trim().toLowerCase(),
-    role,
+    e,
   ]);
+  const role = String((mem as { role: string }[])[0]?.role || '');
+  if (role === 'admin' || role === 'mod' || role === 'owner') return role;
+  if (role === 'member') return 'member';
+  if (!isPrivateKind(ch.kind)) return 'member';
+  return null;
+}
+
+export function canEditRoom(role: RoomRole | null) {
+  return role === 'owner' || role === 'admin' || role === 'mod';
+}
+
+export function canOwnRoom(role: RoomRole | null) {
+  return role === 'owner';
 }
 
 export async function canAccessRoom(
