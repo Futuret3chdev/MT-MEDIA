@@ -7,8 +7,18 @@ import PlatformPlay from '@/components/studio/PlatformPlay';
 import GameRuntime from '@/components/studio/GameRuntime';
 import { blankMap, type MapSpec } from '@/lib/studio-map';
 import type { StudioSpec } from '@/lib/studio-spec';
+import RequireLogin from '@/components/auth/RequireLogin';
 
 export default function StudioPlayPage() {
+  const params = useParams<{ id: string }>();
+  return (
+    <RequireLogin next={`/studio/play/${params.id}`}>
+      <PlayInner />
+    </RequireLogin>
+  );
+}
+
+function PlayInner() {
   const params = useParams<{ id: string }>();
   const [map, setMap] = useState<MapSpec | null>(null);
   const [kit, setKit] = useState<StudioSpec | null>(null);

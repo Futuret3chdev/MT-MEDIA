@@ -5,10 +5,19 @@ import { useEffect, useState } from 'react';
 import MapEditor from '@/components/studio/MapEditor';
 import PlatformPlay from '@/components/studio/PlatformPlay';
 import { TILE, blankMap, idx, type MapSpec, type ThemeId, type TileId } from '@/lib/studio-map';
+import RequireLogin from '@/components/auth/RequireLogin';
 
 type Title = { id: number; name: string; blurb: string; play_url: string };
 
 export default function StudioPage() {
+  return (
+    <RequireLogin next="/studio/maker">
+      <MakerInner />
+    </RequireLogin>
+  );
+}
+
+function MakerInner() {
   const [authed, setAuthed] = useState(false);
   const [who, setWho] = useState('');
   const [titles, setTitles] = useState<Title[]>([]);

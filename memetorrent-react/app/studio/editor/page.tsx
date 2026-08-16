@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import MapEditor from '@/components/studio/MapEditor';
 import PlatformPlay from '@/components/studio/PlatformPlay';
 import { TILE, blankMap, idx, type MapSpec, type ThemeId, type TileId } from '@/lib/studio-map';
+import RequireLogin from '@/components/auth/RequireLogin';
 
 const WHEN = [
   'Player touches Coin',
@@ -16,6 +17,14 @@ const WHEN = [
 const THEN = ['Add 1 to Score', 'Restart scene', 'Win the game', 'Remove Enemy', 'Play sound'];
 
 export default function StudioEditorPage() {
+  return (
+    <RequireLogin next="/studio/editor">
+      <EditorInner />
+    </RequireLogin>
+  );
+}
+
+function EditorInner() {
   const [authed, setAuthed] = useState(false);
   const [spec, setSpec] = useState<MapSpec>(blankMap());
   const [brush, setBrush] = useState<TileId>(TILE.ground);

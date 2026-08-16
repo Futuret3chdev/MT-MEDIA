@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import BackBar from '@/components/ui/BackBar';
+import RequireLogin from '@/components/auth/RequireLogin';
 
 type Msg = {
   id: number;
@@ -100,6 +101,14 @@ function renderBody(text: string) {
 }
 
 export default function ChatPage() {
+  return (
+    <RequireLogin next="/chat">
+      <ChatInner />
+    </RequireLogin>
+  );
+}
+
+function ChatInner() {
   const [channels, setChannels] = useState<Chan[]>([]);
   const [room, setRoom] = useState('trades');
   const [open, setOpen] = useState(false);

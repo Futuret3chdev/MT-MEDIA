@@ -1,4 +1,5 @@
 import type { CatalogGame } from '@/lib/mt-catalog';
+import PlayLink from '@/components/auth/PlayLink';
 
 export default function GameCard({ game }: { game: CatalogGame }) {
   const external = game.play.startsWith('http');
@@ -22,14 +23,13 @@ export default function GameCard({ game }: { game: CatalogGame }) {
           <p className="text-sm opacity-70 mt-1">{game.blurb}</p>
         </div>
         <div className="mt-auto flex gap-2">
-          <a
+          <PlayLink
             href={game.play}
-            target={external ? '_blank' : undefined}
-            rel={external ? 'noopener noreferrer' : undefined}
+            external={external}
             className="inline-flex items-center justify-center font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm"
           >
             Play
-          </a>
+          </PlayLink>
           <a
             href={`/catalog/${game.id}`}
             className="inline-flex items-center justify-center px-4 py-2 rounded-full border border-white/15 text-sm opacity-80 hover:opacity-100"

@@ -210,7 +210,6 @@ export default function Navbar() {
             >
               CLAIM $MT
             </a>
-            <a href="/chat" className="opacity-70 hover:opacity-100">CHAT</a>
             <a href="/software" className="opacity-70 hover:opacity-100">SOFTWARE</a>
           </div>
 
@@ -263,7 +262,6 @@ export default function Navbar() {
           >
             CLAIM $MT
           </a>
-          <a href="/chat" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CHAT</a>
           <a href="/software" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SOFTWARE</a>
           <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
           <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
@@ -302,6 +300,12 @@ export default function Navbar() {
             className="text-[11px] sm:text-xs font-medium opacity-80 hover:opacity-100 whitespace-nowrap"
           >
             CONTACT
+          </a>
+          <a
+            href={portalUser ? '/chat' : '/login?next=/chat'}
+            className="text-[11px] sm:text-xs font-medium opacity-80 hover:opacity-100 whitespace-nowrap"
+          >
+            CHAT
           </a>
 
           <div className="ml-1 sm:ml-3 pl-2 sm:pl-3 border-l border-white/20 flex items-center gap-1.5 text-[10px] sm:text-xs min-w-0 flex-1">
