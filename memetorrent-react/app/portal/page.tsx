@@ -39,6 +39,10 @@ export default function PortalPage() {
   const [avatar, setAvatar] = useState('');
   const [saved, setSaved] = useState('');
   const [scores, setScores] = useState<{ game_id: string; score: number; created_at: string }[]>([]);
+  const [wallets, setWallets] = useState<{ id: number; kind: string; address: string; is_primary: number }[]>([]);
+  const [newKind, setNewKind] = useState('phantom');
+  const [newAddr, setNewAddr] = useState('');
+  const [walletMsg, setWalletMsg] = useState('');
 
   useEffect(() => {
     const stored = localStorage.getItem('mt_portal_mode');
@@ -54,6 +58,10 @@ export default function PortalPage() {
           fetch('/api/scores?mine=1', { credentials: 'include' })
             .then((r) => r.json())
             .then((s) => setScores(s.scores || []))
+            .catch(() => {});
+          fetch('/api/portal/wallets', { credentials: 'include' })
+            .then((r) => r.json())
+            .then((w) => setWallets(w.wallets || []))
             .catch(() => {});
         }
       })
@@ -169,14 +177,6 @@ export default function PortalPage() {
                     className="mt-1 w-full min-h-[90px] px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
                   />
                 </label>
-                <label className="block text-sm">
-                  <span className="opacity-60">Wallet</span>
-                  <input
-                    value={wallet}
-                    onChange={(e) => setWallet(e.target.value)}
-                    className="mt-1 w-full px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm font-mono"
-                  />
-                </label>
                 <div className="grid sm:grid-cols-2 gap-3 text-sm">
                   <div className="rounded-xl border border-white/10 p-3">
                     Discord {user.discord_id || '—'}
@@ -185,6 +185,7 @@ export default function PortalPage() {
                     Telegram {user.telegram_id || '—'}
                   </div>
                 </div>
+                <p className="text-xs opacity-50">Wallets live on the Wallet tab — Phantom now, Infinite Wallet when they sign up.</p>
                 <button
                   onClick={saveProfile}
                   className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm"
@@ -230,11 +231,98 @@ export default function PortalPage() {
             )}
 
             {tab === 'wallet' && (
-              <div className="space-y-3">
-                <h2 className="text-xl font-semibold">Wallet</h2>
-                <p className="font-mono text-sm break-all opacity-80">{user.wallet_address || 'Not linked yet'}</p>
-                <a href="https://wallet.futuret3ch.com.au" className="text-emerald-400 text-sm">
-                  Open Infinite Wallet →
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Wallets</h2>
+                <p className="text-sm opacity-70">
+                  We already hold the wallet, Telegram and Discord on this profile.
+                  People can link more than one — Phantom now, Infinite Wallet when they create it.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-xl border border-white/10 p-3">Telegram {user.telegram_id || '—'}</div>
+                  <div className="rounded-xl border border-white/10 p-3">Discord {user.discord_id || '—'}</div>
+                </div>
+                {!wallets.length && (
+                  <p className="text-sm opacity-50">No wallets linked yet. Add Phantom or a Solana address below.</p>
+                )}
+                <ul className="space-y-2">
+                  {wallets.map((w) => (
+                    <li key={w.id} className="rounded-xl border border-white/10 p-3 flex flex-wrap justify-between gap-2 text-sm">
+                      <div>
+                        <div className="uppercase text-[11px] text-emerald-400">
+                          {w.kind}
+                          {w.is_primary ? ' · primary' : ''}
+                        </div>
+                        <div className="font-mono break-all">{w.address}</div>
+                      </div>
+                      <button
+                        className="opacity-60 hover:opacity-100 text-xs"
+                        onClick={async () => {
+                          const res = await fetch('/api/portal/wallets', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ remove_id: w.id }),
+                          });
+                          const d = await res.json();
+                          if (d.wallets) setWallets(d.wallets);
+                        }}
+                      >
+                        Unlink
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <form
+                  className="space-y-2 max-w-xl"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setWalletMsg('');
+                    const res = await fetch('/api/portal/wallets', {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        kind: newKind,
+                        address: newAddr,
+                        primary: wallets.length === 0,
+                      }),
+                    });
+                    const d = await res.json();
+                    if (!d.ok) {
+                      setWalletMsg(d.error || 'Could not link');
+                      return;
+                    }
+                    setWallets(d.wallets || []);
+                    setNewAddr('');
+                    setWalletMsg('Linked.');
+                  }}
+                >
+                  <div className="flex flex-wrap gap-2">
+                    <select
+                      value={newKind}
+                      onChange={(e) => setNewKind(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
+                    >
+                      <option value="phantom">Phantom</option>
+                      <option value="infinite">Infinite Wallet</option>
+                      <option value="solana">Other Solana</option>
+                      <option value="other">Other</option>
+                    </select>
+                    <input
+                      required
+                      value={newAddr}
+                      onChange={(e) => setNewAddr(e.target.value)}
+                      placeholder="Wallet address"
+                      className="flex-1 min-w-[200px] px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm font-mono"
+                    />
+                  </div>
+                  <button className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full text-sm">
+                    Link wallet
+                  </button>
+                  {walletMsg && <div className="text-sm opacity-70">{walletMsg}</div>}
+                </form>
+                <a href="https://wallet.futuret3ch.com.au" className="inline-block text-emerald-400 text-sm">
+                  Sign up to Infinite Wallet →
                 </a>
               </div>
             )}
