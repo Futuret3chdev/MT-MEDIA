@@ -13,6 +13,7 @@ export default function Footer() {
           <a href="/updates" className="hover:text-white">Updates</a>
           <a href="/terms" className="hover:text-white">Terms</a>
           <a href="/policies" className="hover:text-white">Policies</a>
+          <a href="/#safety" className="hover:text-white">Safety</a>
           <a href="/privacy" className="hover:text-white">Privacy</a>
           <a href="/donations" className="hover:text-white">Donations</a>
         </div>

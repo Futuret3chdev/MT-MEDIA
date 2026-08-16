@@ -169,17 +169,20 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3 sm:gap-6 text-sm">
           {/* Desktop nav links - use /# so they work correctly even from /contact */}
-          <div className="hidden md:flex items-center gap-6">
-            <a href="/#stats" className="opacity-70 hover:opacity-100">LIVE $MT</a>
+          <div className="hidden md:flex items-center gap-5">
             <a href="/#tokenomics" className="opacity-70 hover:opacity-100">TOKENOMICS</a>
             <a href="/#utilities" className="opacity-70 hover:opacity-100">UTILITIES</a>
             <a href="/#tap" className="opacity-70 hover:opacity-100">TAP</a>
             <a href="/#tap" className="opacity-70 hover:opacity-100">P2E</a>
-            <a href="/#safety" className="opacity-70 hover:opacity-100">SAFETY</a>
-            <a href="/claims" className="opacity-70 hover:opacity-100">CLAIM $MT</a>
-            <a href="/contact" className="opacity-70 hover:opacity-100">CONTACT</a>
-            <a href="/software" className="opacity-70 hover:opacity-100">SOFTWARE</a>
             <a href="/developers" className="opacity-70 hover:opacity-100">API</a>
+            <a
+              href="/claims"
+              className="font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-3 py-1 rounded-full whitespace-nowrap"
+            >
+              CLAIM $MT
+            </a>
+            <a href="/software" className="opacity-70 hover:opacity-100">SOFTWARE</a>
+            <a href="/contact" className="opacity-70 hover:opacity-100">CONTACT</a>
           </div>
 
           {/* Status icon (replaces Launch) — pulls live summary from /status services.json */}
@@ -218,16 +221,21 @@ export default function Navbar() {
       {/* Mobile nav menu - use /# so anchors work from subpages like /contact */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-white/10 bg-black px-4 py-3 flex flex-col gap-2 text-sm">
-          <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
           <a href="/#tokenomics" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TOKENOMICS</a>
           <a href="/#utilities" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">UTILITIES</a>
           <a href="/#tap" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAP</a>
           <a href="/#tap" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">P2E</a>
-          <a href="/#safety" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SAFETY</a>
-          <a href="/claims" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CLAIM $MT</a>
-          <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
-          <a href="/software" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SOFTWARE</a>
           <a href="/developers" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">API</a>
+          <a
+            href="/claims"
+            onClick={() => setMobileMenuOpen(false)}
+            className="py-2 my-1 text-center font-semibold text-black bg-emerald-400 rounded-full"
+          >
+            CLAIM $MT
+          </a>
+          <a href="/software" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SOFTWARE</a>
+          <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
+          <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
           <a href="/status" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">Status</a>
           <button 
             onClick={() => { setMobileMenuOpen(false); setShowBuyPanel(true); }}
@@ -250,6 +258,13 @@ export default function Navbar() {
           </a>
           <a href="https://t.me/+hxWzh5DZbfhiYWM9" target="_blank" rel="noopener" title="Telegram Portal" style={{ color: '#26A5E4' }}>
             <i className="fab fa-telegram text-lg sm:text-xl"></i>
+          </a>
+
+          <a
+            href="/#stats"
+            className="text-[11px] sm:text-xs font-medium text-emerald-400 hover:text-emerald-300 whitespace-nowrap"
+          >
+            LIVE $MT
           </a>
 
           {/* Contract address near social icons - short display on mobile to avoid overflow, full on copy/title */}
