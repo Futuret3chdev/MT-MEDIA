@@ -32,6 +32,7 @@ export default function RoomGame({
   inviteTo,
   onChange,
   onOpened,
+  onPlay,
 }: {
   room: string;
   gameId: string | null | undefined;
@@ -41,6 +42,7 @@ export default function RoomGame({
   inviteTo?: { username: string; email: string } | null;
   onChange: (game_id: string | null, state: GameState | null) => void;
   onOpened?: (slug: string, withUser?: { username: string; email: string }) => void;
+  onPlay?: (play: { url: string; id: string; title: string }) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [openPick, setOpenPick] = useState(false);
@@ -193,15 +195,14 @@ export default function RoomGame({
           <img src={catalog.img} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium truncate">{catalog.name} is on for this room</div>
-            <div className="text-[11px] opacity-60">They stay in chat until they tap Join. You are not pulled out.</div>
-            <a
-              href={catalog.play}
-              target="_blank"
-              rel="noreferrer"
+            <div className="text-[11px] opacity-60">Play here. Exit game when you are done to see both scores.</div>
+            <button
+              type="button"
+              onClick={() => onPlay?.({ url: catalog.play, id: catalog.id, title: catalog.name })}
               className="inline-block mt-1 text-emerald-400 text-[11px] font-semibold"
             >
-              Join game
-            </a>
+              Play {catalog.name}
+            </button>
           </div>
         </div>
       )}

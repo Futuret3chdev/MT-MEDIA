@@ -15,6 +15,11 @@ async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
       KEY email_game (email, game_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  try {
+    await conn.execute('ALTER TABLE mt_game_scores ADD COLUMN room VARCHAR(48) NULL');
+  } catch {
+    /* exists */
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -32,6 +37,14 @@ export async function GET(request: NextRequest) {
       );
       return Response.json({ ok: true, scores: rows });
     }
+    const room = request.nextUrl.searchParams.get('room');
+    if (room) {
+      const [rows] = await conn.execute(
+        'SELECT id, game_id, username, score, created_at FROM mt_game_scores WHERE game_id = ? AND room = ? ORDER BY score DESC, id DESC LIMIT 25',
+        [gameId, room]
+      );
+      return Response.json({ ok: true, game_id: gameId, room, scores: rows });
+    }
     const [rows] = await conn.execute(
       'SELECT id, game_id, username, score, created_at FROM mt_game_scores WHERE game_id = ? ORDER BY score DESC, id DESC LIMIT 25',
       [gameId]
@@ -47,7 +60,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const user = await userBySession(await readSessionToken());
-  let body: { game_id?: string; score?: number; player_name?: string };
+  let body: { game_id?: string; score?: number; player_name?: string; room?: string };
   try {
     body = await request.json();
   } catch {
@@ -61,15 +74,33 @@ export async function POST(request: NextRequest) {
   const conn = await getUserDb();
   try {
     await ensure(conn);
+    const room = String(body.room || '').slice(0, 48) || null;
     await conn.execute(
-      'INSERT INTO mt_game_scores (game_id, email, username, score) VALUES (?,?,?,?)',
-      [gameId, email, username, score]
+      'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
+      [gameId, email, username, score, room]
     );
+    if (room) {
+      try {
+        await conn.execute(
+          'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
+          [
+            room,
+            username,
+            JSON.stringify({ game_id: gameId, score }).slice(0, 800),
+            'score',
+            email,
+          ]
+        );
+      } catch {
+        /* chat optional */
+      }
+    }
     return Response.json({
       ok: true,
       success: true,
       attached: !!user,
       username,
+      room,
     });
   } catch (err) {
     console.error('scores post', err);

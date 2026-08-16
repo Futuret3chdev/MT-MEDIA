@@ -67,7 +67,12 @@ var leaderboardEngine = {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game_id: 'tap', player_name: playerName, score: score })
+                body: JSON.stringify({
+                    game_id: 'tap',
+                    player_name: playerName,
+                    score: score,
+                    room: new URLSearchParams(window.location.search).get('room') || undefined
+                })
             });
             if (!response.ok) throw new Error('Failed to save score: ' + response.statusText);
             return await response.json();

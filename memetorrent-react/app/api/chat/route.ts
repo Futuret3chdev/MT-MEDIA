@@ -90,9 +90,21 @@ export async function POST(request: NextRequest) {
     }
     let kind = String(body.kind || 'text');
     if (
-      !['text', 'asset', 'sticker', 'trade', 'event', 'image', 'nft', 'audio', 'video', 'file', 'game', 'friend'].includes(
-        kind
-      )
+      ![
+        'text',
+        'asset',
+        'sticker',
+        'trade',
+        'event',
+        'image',
+        'nft',
+        'audio',
+        'video',
+        'file',
+        'game',
+        'friend',
+        'score',
+      ].includes(kind)
     ) {
       kind = 'text';
     }

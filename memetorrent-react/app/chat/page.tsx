@@ -8,6 +8,7 @@ import RoomStudio, { youtubeId, type RoomExtra } from '@/components/chat/RoomStu
 import MtMiniChart from '@/components/chat/MtMiniChart';
 import RoomGame, { type GameState } from '@/components/chat/RoomGame';
 import CallDock, { type CallTarget } from '@/components/chat/CallDock';
+import RoomPlay from '@/components/chat/RoomPlay';
 
 type Msg = {
   id: number;
@@ -437,7 +438,17 @@ function RoomLiveMedia({
   );
 }
 
-function GameInvite({ body, who }: { body: string; who: string }) {
+function GameInvite({
+  body,
+  who,
+  me,
+  onPlay,
+}: {
+  body: string;
+  who: string;
+  me?: string;
+  onPlay: (play: { url: string; id: string; title: string }) => void;
+}) {
   let meta: { title?: string; play?: string; id?: string } = {};
   try {
     if (body.startsWith('{')) meta = JSON.parse(body);
@@ -445,22 +456,21 @@ function GameInvite({ body, who }: { body: string; who: string }) {
     meta = { title: body };
   }
   const title = meta.title || 'a game';
+  const mine = !!me && who === me;
   return (
     <div>
       <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Game invite</div>
       <div className="text-sm">
-        @{who} wants to play <span className="text-emerald-400">{title}</span>
+        {mine ? 'You started' : `@${who} wants to play`} <span className="text-emerald-400">{title}</span>
       </div>
-      <div className="text-[11px] opacity-50 mt-1">It is waiting in this room. You were not moved anywhere.</div>
       {meta.play ? (
-        <a
-          href={meta.play}
-          target="_blank"
-          rel="noreferrer"
+        <button
+          type="button"
+          onClick={() => onPlay({ url: meta.play || '', id: meta.id || 'tap', title })}
           className="inline-block mt-2 text-xs font-semibold text-black bg-emerald-400 px-3 py-1.5 rounded-full"
         >
-          Join {title}
-        </a>
+          {mine ? `Play ${title}` : `Join ${title}`}
+        </button>
       ) : (
         <div className="text-xs text-emerald-400 mt-2">Sit down in the room game above.</div>
       )}
@@ -550,8 +560,9 @@ function ChatInner() {
   const [extra, setExtra] = useState<RoomExtra | null>(null);
   const [callTo, setCallTo] = useState<CallTarget | null>(null);
   const [gameInvites, setGameInvites] = useState<
-    { id: number; from_username: string; room: string; title: string; play: string | null }[]
+    { id: number; from_username: string; room: string; title: string; play: string | null; game_id?: string }[]
   >([]);
+  const [playGame, setPlayGame] = useState<{ url: string; id: string; title: string } | null>(null);
   const [picked, setPicked] = useState<{
     username: string;
     email: string;
@@ -1141,9 +1152,15 @@ function ChatInner() {
                 Open
               </button>
               {inv.play && (
-                <a href={inv.play} target="_blank" rel="noreferrer" className="text-emerald-400">
+                <button
+                  type="button"
+                  className="text-emerald-400"
+                  onClick={() =>
+                    setPlayGame({ url: inv.play || '', id: inv.game_id || 'tap', title: inv.title })
+                  }
+                >
                   Join
-                </a>
+                </button>
               )}
               <button
                 type="button"
@@ -1198,6 +1215,7 @@ function ChatInner() {
             me={email}
             canEdit={canEditRoom || !current?.owner_email || !!picked || !!peer}
             inviteTo={picked || peer}
+            onPlay={setPlayGame}
             onOpened={(slug, withUser) => {
               setRoom(slug);
               if (withUser) setPeer({ username: withUser.username, email: withUser.email });
@@ -1283,7 +1301,25 @@ function ChatInner() {
                   ) : m.kind === 'nft' ? (
                     <NftCard mint={m.body} />
                   ) : m.kind === 'game' ? (
-                    <GameInvite body={m.body} who={m.username} />
+                    <GameInvite body={m.body} who={m.username} me={who} onPlay={setPlayGame} />
+                  ) : m.kind === 'score' ? (
+                    (() => {
+                      let s: { game_id?: string; score?: number } = {};
+                      try {
+                        s = JSON.parse(m.body);
+                      } catch {
+                        s = {};
+                      }
+                      return (
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Score</div>
+                          <div className="text-sm">
+                            @{m.username} · {s.game_id || 'game'} ·{' '}
+                            <span className="font-mono text-emerald-400">{s.score ?? m.body}</span>
+                          </div>
+                        </div>
+                      );
+                    })()
                   ) : m.kind === 'friend' ? (
                     <div>
                       <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Friend request</div>
@@ -1484,6 +1520,18 @@ function ChatInner() {
         </section>
       </div>
       {email && <CallDock me={email} room={room} start={callTo} />}
+      {playGame && (
+        <RoomPlay
+          url={playGame.url}
+          gameId={playGame.id}
+          title={playGame.title}
+          room={room}
+          onExit={() => {
+            setPlayGame(null);
+            load();
+          }}
+        />
+      )}
       {picked && (
         <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#12141c] p-4 space-y-3">
