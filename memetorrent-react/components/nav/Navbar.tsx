@@ -272,25 +272,21 @@ export default function Navbar() {
             CONTACT
           </a>
 
-          {/* Contract address near social icons - short display on mobile to avoid overflow, full on copy/title */}
-          <div className="ml-1 sm:ml-3 pl-2 sm:pl-3 border-l border-white/20 flex items-center gap-1 text-[10px] sm:text-[11px] min-w-0">
+          <div className="ml-1 sm:ml-3 pl-2 sm:pl-3 border-l border-white/20 flex items-center gap-1.5 text-[10px] sm:text-xs min-w-0 flex-1">
             <span className="opacity-60 shrink-0">Contract:</span>
             <button
               onClick={(e) => {
-                navigator.clipboard.writeText('ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump');
+                navigator.clipboard.writeText(MT_MINT);
                 const btn = e.currentTarget as HTMLElement;
-                const origText = btn?.innerText;
                 if (btn) btn.innerText = 'Copied!';
-                setTimeout(() => { if (btn) btn.innerText = origText || 'ELyw...pump'; }, 1500);
+                setTimeout(() => { if (btn) btn.innerText = MT_MINT; }, 1500);
               }}
-              className="font-mono text-emerald-400 hover:text-emerald-300 active:text-white transition truncate max-w-[110px] sm:max-w-none"
-              title="ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump — tap to copy"
+              className="font-mono text-emerald-400 hover:text-emerald-300 active:text-white transition text-left break-all"
+              title={`${MT_MINT} — tap to copy`}
             >
-              ELyw...pump
+              {MT_MINT}
             </button>
           </div>
-
-          <div className="flex-1" />
 
           {/* BUY $MT NOW - toggles the compact form panel just below */}
           <button 
