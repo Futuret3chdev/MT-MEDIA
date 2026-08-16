@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import GameCard from '@/components/games/GameCard';
 import { liveGames } from '@/lib/mt-catalog';
 
 type Mode = 'users' | 'developers' | 'businesses';
@@ -195,23 +196,9 @@ export default function PortalPage() {
                   Steam-style shelf — same titles as <Link href="/p2e" className="text-emerald-400">P2E</Link> and{' '}
                   <Link href="/casino" className="text-emerald-400">Casino</Link>.
                 </p>
-                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {liveGames().map((g) => (
-                    <a
-                      key={g.id}
-                      href={g.play}
-                      target={g.play.startsWith('http') ? '_blank' : undefined}
-                      rel={g.play.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="rounded-xl overflow-hidden border border-white/10 hover:border-emerald-400/40"
-                    >
-                      <div className="h-28 bg-black/40 overflow-hidden">
-                        {g.img && <img src={g.img} alt="" className="w-full h-full object-cover" />}
-                      </div>
-                      <div className="p-3 flex justify-between text-sm">
-                        <span>{g.name}</span>
-                        <span className="text-emerald-400 text-xs uppercase">{g.kind}</span>
-                      </div>
-                    </a>
+                    <GameCard key={g.id} game={g} />
                   ))}
                 </div>
               </div>
