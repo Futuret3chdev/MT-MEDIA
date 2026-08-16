@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
-import { canAccessRoom, canEditRoom, ensureChat, roomRole } from '@/lib/chat-core';
+import { canAccessRoom, canEditRoom, ensureChat, ensureDmChannel, isDmSlug, roomRole } from '@/lib/chat-core';
 import { getGame } from '@/lib/mt-catalog';
 
 type Ttt = {
@@ -41,17 +41,50 @@ function lines(b: string[]) {
   return null;
 }
 
+export async function GET() {
+  const me = await userBySession(await readSessionToken());
+  if (!me) return Response.json({ ok: false, error: 'Sign in' }, { status: 401 });
+  const conn = await getUserDb();
+  try {
+    await ensureChat(conn);
+    const [rows] = await conn.execute(
+      `SELECT id, from_email, from_username, room, game_id, title, play, created_at
+       FROM mt_chat_game_invites
+       WHERE to_email = ? AND seen = 0
+       ORDER BY id DESC LIMIT 8`,
+      [me.email]
+    );
+    return Response.json({ ok: true, invites: rows });
+  } finally {
+    await conn.end();
+  }
+}
+
 export async function POST(request: NextRequest) {
   const me = await userBySession(await readSessionToken());
   if (!me) return Response.json({ ok: false, error: 'Sign in' }, { status: 401 });
-  let body: { room?: string; action?: string; kind?: string; cell?: number; pick?: string } = {};
+  let body: { room?: string; action?: string; kind?: string; cell?: number; pick?: string; to?: string; id?: number } =
+    {};
   try {
     body = await request.json();
   } catch {
     body = {};
   }
-  const room = String(body.room || '').slice(0, 48);
   const action = String(body.action || '');
+  if (action === 'seen') {
+    const conn = await getUserDb();
+    try {
+      await ensureChat(conn);
+      await conn.execute('UPDATE mt_chat_game_invites SET seen = 1 WHERE id = ? AND to_email = ?', [
+        Number(body.id) || 0,
+        me.email,
+      ]);
+      return Response.json({ ok: true });
+    } finally {
+      await conn.end();
+    }
+  }
+  let room = String(body.room || '').slice(0, 48);
   if (!room) return Response.json({ ok: false, error: 'Missing room' }, { status: 400 });
   const conn = await getUserDb();
   try {
@@ -74,51 +107,78 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'start') {
-      if (ch.owner_email && !canEditRoom(role)) {
+      let toEmail = String(body.to || '').trim().toLowerCase();
+      let toName = '';
+      if (toEmail && !toEmail.includes('@')) {
+        const [found] = await conn.execute('SELECT email, username FROM portal_users WHERE username = ? LIMIT 1', [
+          toEmail,
+        ]);
+        const u = (found as { email: string; username: string }[])[0];
+        toEmail = u?.email?.toLowerCase() || '';
+        toName = u?.username || '';
+      } else if (toEmail) {
+        const [found] = await conn.execute('SELECT username FROM portal_users WHERE email = ? LIMIT 1', [toEmail]);
+        toName = String((found as { username: string }[])[0]?.username || '');
+      }
+      if (!toEmail && isDmSlug(room)) {
+        const [pair] = await conn.execute(
+          'SELECT owner_email, gate_note FROM mt_chat_channels WHERE slug = ? LIMIT 1',
+          [room]
+        );
+        const p = (pair as { owner_email: string | null; gate_note: string | null }[])[0];
+        const a = String(p?.owner_email || '').toLowerCase();
+        const b = String(p?.gate_note || '').toLowerCase();
+        toEmail = a === me.email.toLowerCase() ? b : a;
+        if (toEmail) {
+          const [found] = await conn.execute('SELECT username FROM portal_users WHERE email = ? LIMIT 1', [toEmail]);
+          toName = String((found as { username: string }[])[0]?.username || '');
+        }
+      }
+      if (!toEmail && ch.owner_email && !canEditRoom(role) && !isDmSlug(room)) {
         return Response.json({ ok: false, error: 'Only the host or staff can set the game' }, { status: 403 });
+      }
+      if (toEmail && toEmail !== me.email.toLowerCase()) {
+        room = await ensureDmChannel(conn, me.email, toEmail, `@${toName || 'Direct'}`);
       }
       const kind = String(body.kind || 'ttt');
       let label = 'a game';
+      let gameId = kind;
       if (kind === 'ttt') {
         label = 'tic-tac-toe';
-        state = { kind: 'ttt', board: Array(9).fill(''), turn: 'x', x: me.email, o: null, winner: null };
-        await conn.execute('UPDATE mt_chat_channels SET game_id = ?, game_state = ? WHERE slug = ?', [
-          'ttt',
-          JSON.stringify(state),
-          room,
-        ]);
+        state = { kind: 'ttt', board: Array(9).fill(''), turn: 'x', x: me.email, o: toEmail || null, winner: null };
       } else if (kind === 'rps') {
         label = 'rock paper scissors';
-        state = { kind: 'rps', a: me.email, b: null, pickA: null, pickB: null, scoreA: 0, scoreB: 0 };
-        await conn.execute('UPDATE mt_chat_channels SET game_id = ?, game_state = ? WHERE slug = ?', [
-          'rps',
-          JSON.stringify(state),
-          room,
-        ]);
+        state = { kind: 'rps', a: me.email, b: toEmail || null, pickA: null, pickB: null, scoreA: 0, scoreB: 0 };
       } else {
         const g = getGame(kind);
         if (!g) return Response.json({ ok: false, error: 'Unknown game' }, { status: 400 });
         label = g.name;
+        gameId = g.id;
         state = { kind: 'catalog', id: g.id };
-        await conn.execute('UPDATE mt_chat_channels SET game_id = ?, game_state = ? WHERE slug = ?', [
-          g.id,
-          JSON.stringify(state),
-          room,
-        ]);
       }
-      const invite = JSON.stringify({
-        title: label,
-        id: kind === 'ttt' || kind === 'rps' ? kind : getGame(kind)?.id,
-        play: kind !== 'ttt' && kind !== 'rps' ? getGame(kind)?.play || '' : '',
-      });
+      await conn.execute('UPDATE mt_chat_channels SET game_id = ?, game_state = ? WHERE slug = ?', [
+        gameId,
+        JSON.stringify(state),
+        room,
+      ]);
+      const play = kind !== 'ttt' && kind !== 'rps' ? getGame(kind)?.play || '' : '';
+      const invite = JSON.stringify({ title: label, id: gameId, play });
       await conn.execute(
         'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
         [room, me.username, invite.slice(0, 800), 'game', me.email]
       );
+      if (toEmail && toEmail !== me.email.toLowerCase()) {
+        await conn.execute(
+          'INSERT INTO mt_chat_game_invites (to_email, from_email, from_username, room, game_id, title, play) VALUES (?,?,?,?,?,?,?)',
+          [toEmail, me.email, me.username, room, gameId, label, play || null]
+        );
+      }
       return Response.json({
         ok: true,
-        game_id: kind === 'ttt' || kind === 'rps' ? kind : getGame(kind)?.id,
+        game_id: gameId,
         state,
+        slug: room,
+        with: toEmail ? { email: toEmail, username: toName } : null,
       });
     }
 

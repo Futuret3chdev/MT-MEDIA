@@ -547,6 +547,9 @@ function ChatInner() {
   const [studio, setStudio] = useState(false);
   const [extra, setExtra] = useState<RoomExtra | null>(null);
   const [callTo, setCallTo] = useState<CallTarget | null>(null);
+  const [gameInvites, setGameInvites] = useState<
+    { id: number; from_username: string; room: string; title: string; play: string | null }[]
+  >([]);
   const [picked, setPicked] = useState<{
     username: string;
     email: string;
@@ -582,6 +585,10 @@ function ChatInner() {
   };
 
   const load = () => {
+    fetch('/api/chat/game', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setGameInvites(d.invites || []))
+      .catch(() => {});
     fetch(`/api/chat?room=${room}`, { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => {
@@ -1049,6 +1056,54 @@ function ChatInner() {
               </button>
             )}
           </header>
+          {gameInvites.map((inv) => (
+            <div
+              key={inv.id}
+              className="px-3 py-2 border-b border-emerald-400/30 bg-emerald-400/10 flex flex-wrap items-center gap-2 text-xs"
+            >
+              <span className="flex-1">
+                @{inv.from_username} wants to play <span className="text-emerald-400">{inv.title}</span>
+              </span>
+              <button
+                type="button"
+                className="text-emerald-400 font-semibold"
+                onClick={() => {
+                  setRoom(inv.room);
+                  setPeer({ username: inv.from_username, email: '' });
+                  setOpen(true);
+                  fetch('/api/chat/game', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'seen', id: inv.id }),
+                  });
+                  setGameInvites((list) => list.filter((x) => x.id !== inv.id));
+                }}
+              >
+                Open
+              </button>
+              {inv.play && (
+                <a href={inv.play} target="_blank" rel="noreferrer" className="text-emerald-400">
+                  Join
+                </a>
+              )}
+              <button
+                type="button"
+                className="opacity-50"
+                onClick={() => {
+                  fetch('/api/chat/game', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'seen', id: inv.id }),
+                  });
+                  setGameInvites((list) => list.filter((x) => x.id !== inv.id));
+                }}
+              >
+                Dismiss
+              </button>
+            </div>
+          ))}
           {studio && current && (
             <RoomStudio
               room={room}
@@ -1083,7 +1138,14 @@ function ChatInner() {
               }
             })()}
             me={email}
-            canEdit={canEditRoom || !current?.owner_email}
+            canEdit={canEditRoom || !current?.owner_email || !!picked || !!peer}
+            inviteTo={picked || peer}
+            onOpened={(slug, withUser) => {
+              setRoom(slug);
+              if (withUser) setPeer({ username: withUser.username, email: withUser.email });
+              setPicked(null);
+              setOpen(true);
+            }}
             onChange={(game_id, state) => {
               setExtra((e) =>
                 e ? { ...e, game_id, game_state: state ? JSON.stringify(state) : null } : e
@@ -1393,6 +1455,9 @@ function ChatInner() {
                 Call
               </button>
             </div>
+            <p className="text-[11px] opacity-50">
+              Play a game from the room strip while they are selected — they get an invite even if you are not friends.
+            </p>
             {picked.friend ? (
               <button
                 type="button"

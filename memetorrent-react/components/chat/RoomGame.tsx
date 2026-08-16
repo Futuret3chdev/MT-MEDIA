@@ -29,14 +29,18 @@ export default function RoomGame({
   state,
   me,
   canEdit,
+  inviteTo,
   onChange,
+  onOpened,
 }: {
   room: string;
   gameId: string | null | undefined;
   state: GameState | null;
   me: string;
   canEdit: boolean;
+  inviteTo?: { username: string; email: string } | null;
   onChange: (game_id: string | null, state: GameState | null) => void;
+  onOpened?: (slug: string, withUser?: { username: string; email: string }) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [openPick, setOpenPick] = useState(false);
@@ -48,12 +52,19 @@ export default function RoomGame({
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room, action, ...extra }),
+        body: JSON.stringify({
+          room,
+          action,
+          to: inviteTo?.email || inviteTo?.username,
+          ...extra,
+        }),
       });
       const d = await res.json();
       if (d.ok) {
         onChange(d.game_id || null, d.state || null);
         if (action === 'start') setOpenPick(false);
+        if (d.slug && d.with) onOpened?.(d.slug, d.with);
+        else if (d.slug) onOpened?.(d.slug);
       }
     } finally {
       setBusy(false);
@@ -196,7 +207,11 @@ export default function RoomGame({
       )}
 
       {!gameId && !openPick && (
-        <p className="text-[11px] opacity-40">Host can set a catalog game or a table game for this room.</p>
+        <p className="text-[11px] opacity-40">
+          {inviteTo
+            ? `Set a game and @${inviteTo.username} gets an invite — they do not need to be a friend.`
+            : 'Host can set a game. Select a person first to send them the invite.'}
+        </p>
       )}
     </div>
   );
