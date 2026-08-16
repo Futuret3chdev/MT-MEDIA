@@ -266,49 +266,44 @@ function ytCmd(win: Window | null, func: string) {
 }
 
 function RoomLiveMedia({
-  extra,
+  url,
+  playing,
   canEdit,
   onToggle,
 }: {
-  extra: RoomExtra;
+  url: string;
+  playing: boolean;
   canEdit: boolean;
   onToggle: (playing: boolean) => void;
 }) {
-  const url = extra.music_url || '';
-  const playing = !!extra.media_playing;
   const [muted, setMuted] = useState(true);
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
-  const soundRef = useRef(false);
+  const lastUrl = useRef(url);
   const yt = youtubeId(url);
   const isAudio = /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(url);
 
-  const setSound = (on: boolean) => {
-    soundRef.current = on;
-    setMuted(!on);
+  const onlyMute = (silence: boolean) => {
+    setMuted(silence);
     const el = mediaRef.current;
-    if (el) el.muted = !on;
-    ytCmd(frameRef.current?.contentWindow || null, on ? 'unMute' : 'mute');
-    if (on) ytCmd(frameRef.current?.contentWindow || null, 'playVideo');
+    if (el) el.muted = silence;
+    ytCmd(frameRef.current?.contentWindow || null, silence ? 'mute' : 'unMute');
   };
 
-  const playLocal = (withSound: boolean) => {
+  const playIfNeeded = (withSound: boolean) => {
+    onlyMute(!withSound);
     const el = mediaRef.current;
-    if (el) {
-      el.muted = !withSound;
+    if (el && el.paused) {
       const go = el.play();
       if (go) {
         go.catch(() => {
           el.muted = true;
           setMuted(true);
-          soundRef.current = false;
           el.play().catch(() => {});
         });
       }
     }
     ytCmd(frameRef.current?.contentWindow || null, 'playVideo');
-    if (withSound) ytCmd(frameRef.current?.contentWindow || null, 'unMute');
-    else ytCmd(frameRef.current?.contentWindow || null, 'mute');
   };
 
   const stopLocal = () => {
@@ -317,8 +312,11 @@ function RoomLiveMedia({
   };
 
   useEffect(() => {
+    if (url !== lastUrl.current) {
+      lastUrl.current = url;
+    }
     if (canEdit) return;
-    if (playing) playLocal(soundRef.current);
+    if (playing) playIfNeeded(false);
     else stopLocal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, url]);
@@ -335,12 +333,8 @@ function RoomLiveMedia({
             className="text-[11px] text-emerald-400"
             onClick={() => {
               const next = !playing;
-              if (next) {
-                setSound(true);
-                playLocal(true);
-              } else {
-                stopLocal();
-              }
+              if (next) playIfNeeded(true);
+              else stopLocal();
               onToggle(next);
             }}
           >
@@ -350,11 +344,7 @@ function RoomLiveMedia({
         <button
           type="button"
           className="text-[11px] opacity-80"
-          onClick={() => {
-            const nextSound = muted;
-            setSound(nextSound);
-            if (nextSound) playLocal(true);
-          }}
+          onClick={() => onlyMute(!muted)}
         >
           {muted ? 'Unmute' : 'Mute'}
         </button>
@@ -364,7 +354,7 @@ function RoomLiveMedia({
           ref={frameRef}
           title="room media"
           className="w-full max-w-sm aspect-video rounded-xl pointer-events-none"
-          src={`https://www.youtube.com/embed/${yt}?autoplay=${playing ? 1 : 0}&mute=1&controls=0&disablekb=1&enablejsapi=1`}
+          src={`https://www.youtube.com/embed/${yt}?autoplay=1&mute=1&controls=0&disablekb=1&enablejsapi=1`}
           allow="autoplay; encrypted-media"
         />
       ) : isAudio ? (
@@ -413,7 +403,7 @@ function FileBubble({ kind, body }: { kind?: string; body: string }) {
     return (
       <div>
         <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Video</div>
-        <video muted loop playsInline src={url} className="max-w-[240px] rounded-xl" />
+        <div className="text-[11px] opacity-70">Video — playing in the room player above</div>
         <div className="text-[10px] opacity-50 mt-1 truncate">{name}</div>
       </div>
     );
@@ -472,7 +462,9 @@ function ChatInner() {
   const end = useRef<HTMLDivElement>(null);
   const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
 
-  const current = channels.find((c) => c.slug === room) || extra;
+  const listed = channels.find((c) => c.slug === room);
+  const current =
+    extra && extra.slug === room ? ({ ...(listed || {}), ...extra } as Chan) : listed || extra;
   const myRole =
     current?.my_role ||
     (email && current?.owner_email && current.owner_email.toLowerCase() === email.toLowerCase()
@@ -502,7 +494,17 @@ function ChatInner() {
       .then((d) => {
         setMsgs(d.messages || []);
         if (d.channel) {
-          setExtra(d.channel);
+          setExtra((prev) => {
+            if (
+              prev &&
+              prev.slug === d.channel.slug &&
+              prev.music_url === d.channel.music_url &&
+              !!prev.media_playing === !!d.channel.media_playing
+            ) {
+              return prev;
+            }
+            return d.channel;
+          });
           setChannels((list) =>
             list.some((c) => c.slug === d.channel.slug)
               ? list.map((c) => (c.slug === d.channel.slug ? { ...c, ...d.channel } : c))
@@ -566,16 +568,14 @@ function ChatInner() {
   }, [room]);
 
   useEffect(() => {
-    const hit = channels.find((c) => c.slug === room);
-    if (hit) setExtra(hit);
-    else if (room.startsWith('dm-') && peer) {
+    if (room.startsWith('dm-') && peer) {
       setExtra((prev) =>
         prev && prev.slug === room
           ? prev
           : { slug: room, name: peer.username, kind: 'dm' }
       );
     }
-  }, [room, channels, peer]);
+  }, [room, peer]);
 
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: 'smooth' });
@@ -982,7 +982,8 @@ function ChatInner() {
           )}
           {current?.music_url && (
             <RoomLiveMedia
-              extra={current}
+              url={current.music_url}
+              playing={!!current.media_playing}
               canEdit={canEditRoom}
               onToggle={async (playing) => {
                 await fetch('/api/chat/channels', {
