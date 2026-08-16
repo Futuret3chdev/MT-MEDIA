@@ -516,6 +516,11 @@ function ChatInner() {
   const [studio, setStudio] = useState(false);
   const [extra, setExtra] = useState<RoomExtra | null>(null);
   const [callTo, setCallTo] = useState<CallTarget | null>(null);
+  const [picked, setPicked] = useState<{
+    username: string;
+    email: string;
+    friend?: boolean;
+  } | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
 
@@ -856,26 +861,20 @@ function ChatInner() {
               className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
             />
             {hits.map((h) => (
-              <div key={h.email} className="flex justify-between items-center gap-2 text-xs py-1">
-                <span className="truncate">@{h.username}</span>
-                {!h.self && (
-                  <span className="flex gap-2 shrink-0">
-                    <button type="button" className="text-emerald-400" onClick={() => addFriend(h.username, h.email)}>
-                      Add
-                    </button>
-                    <button type="button" className="text-emerald-400" onClick={() => openDm(h.username, h.email)}>
-                      Message
-                    </button>
-                    <button
-                      type="button"
-                      className="text-emerald-400"
-                      onClick={() => setCallTo({ username: h.username, email: h.email, n: Date.now() })}
-                    >
-                      Call
-                    </button>
-                  </span>
-                )}
-              </div>
+              <button
+                key={h.email}
+                type="button"
+                className="block w-full text-left text-xs py-1.5 truncate text-emerald-400"
+                onClick={() =>
+                  setPicked({
+                    username: h.username,
+                    email: h.email,
+                    friend: friends.some((f) => f.friend_email === h.email),
+                  })
+                }
+              >
+                @{h.username}
+              </button>
             ))}
             <div className="mt-3 text-[10px] uppercase tracking-wider opacity-40">Settings</div>
             {channels
@@ -904,45 +903,20 @@ function ChatInner() {
               </p>
             )}
             {friends.map((f) => (
-              <div
+              <button
                 key={f.friend_email}
-                className={`flex items-center justify-between gap-2 text-xs py-1.5 px-1 rounded-lg ${
-                  peer?.email === f.friend_email ? 'bg-white/10' : ''
+                type="button"
+                className={`block w-full text-left text-xs py-1.5 px-1 rounded-lg truncate ${
+                  picked?.email === f.friend_email || peer?.email === f.friend_email
+                    ? 'bg-white/10 text-emerald-400'
+                    : 'text-emerald-400'
                 }`}
+                onClick={() =>
+                  setPicked({ username: f.username || f.friend_email, email: f.friend_email, friend: true })
+                }
               >
-                <button
-                  type="button"
-                  className="truncate text-left text-emerald-400"
-                  onClick={() => openDm(f.username || '', f.friend_email)}
-                >
-                  @{f.username || f.friend_email}
-                </button>
-                <button
-                  type="button"
-                  className="text-emerald-400 shrink-0"
-                  onClick={() =>
-                    setCallTo({ username: f.username || '', email: f.friend_email, n: Date.now() })
-                  }
-                >
-                  Call
-                </button>
-                <button
-                  type="button"
-                  className="opacity-40 hover:opacity-100 shrink-0"
-                  onClick={async () => {
-                    await fetch('/api/chat/friends', {
-                      method: 'DELETE',
-                      credentials: 'include',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ email: f.friend_email }),
-                    });
-                    const d = await fetch('/api/chat/friends', { credentials: 'include' }).then((r) => r.json());
-                    setFriends(d.friends || []);
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
+                @{f.username || f.friend_email}
+              </button>
             ))}
           </div>
           {creating && (
@@ -1351,6 +1325,73 @@ function ChatInner() {
         </section>
       </div>
       {email && <CallDock me={email} room={room} start={callTo} />}
+      {picked && (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#12141c] p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider opacity-40">Selected</div>
+                <div className="font-semibold">@{picked.username}</div>
+              </div>
+              <button type="button" className="text-xs opacity-60" onClick={() => setPicked(null)}>
+                Close
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="py-2 rounded-xl bg-emerald-400 text-black text-sm font-semibold"
+                onClick={() => {
+                  openDm(picked.username, picked.email);
+                  setPicked(null);
+                }}
+              >
+                Message
+              </button>
+              <button
+                type="button"
+                className="py-2 rounded-xl border border-emerald-400/40 text-emerald-400 text-sm font-semibold"
+                onClick={() => {
+                  setCallTo({ username: picked.username, email: picked.email, n: Date.now() });
+                  setPicked(null);
+                }}
+              >
+                Call
+              </button>
+            </div>
+            {picked.friend ? (
+              <button
+                type="button"
+                className="w-full py-2 text-xs opacity-50"
+                onClick={async () => {
+                  await fetch('/api/chat/friends', {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: picked.email }),
+                  });
+                  const d = await fetch('/api/chat/friends', { credentials: 'include' }).then((r) => r.json());
+                  setFriends(d.friends || []);
+                  setPicked(null);
+                }}
+              >
+                Remove friend
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="w-full py-2 text-xs text-emerald-400"
+                onClick={async () => {
+                  await addFriend(picked.username, picked.email);
+                  setPicked((p) => (p ? { ...p, friend: true } : p));
+                }}
+              >
+                Add friend
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
