@@ -28,6 +28,7 @@ export async function ensureDevLicenseTable(conn: mysql.Connection) {
       handle VARCHAR(80) NULL,
       license_key VARCHAR(40) NOT NULL UNIQUE,
       tier VARCHAR(16) NOT NULL DEFAULT 'free',
+      user_id INT UNSIGNED NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uniq_email (email)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4

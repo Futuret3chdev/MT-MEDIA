@@ -10,17 +10,15 @@ export default function SoftwareGamesPage() {
   const [key, setKey] = useState('');
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('mt_dev_license');
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed?.license_key) {
-        setLicensed(true);
-        setKey(parsed.license_key);
-      }
-    } catch {
-      /* ignore */
-    }
+    fetch('/api/portal/me', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.user?.license_key) {
+          setLicensed(true);
+          setKey(d.user.license_key);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (

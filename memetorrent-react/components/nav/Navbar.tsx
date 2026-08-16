@@ -18,10 +18,23 @@ export default function Navbar() {
     email: '',
     password: '',
   });
+  const [authError, setAuthError] = useState('');
+  const [authBusy, setAuthBusy] = useState(false);
+  const [portalUser, setPortalUser] = useState<{ username: string; license_key?: string | null } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/portal/me', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.user) setPortalUser(d.user);
+      })
+      .catch(() => {});
+  }, []);
 
   const openAuth = (mode: 'login' | 'register') => {
     setAuthMode(mode);
     setFormData({ username: '', email: '', password: '' });
+    setAuthError('');
     setAuthOpen(true);
   };
 
@@ -29,15 +42,31 @@ export default function Navbar() {
     setAuthOpen(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    closeAuth();
-    // Demo only
-    const msg = authMode === 'login' 
-      ? 'Welcome back to the MT Eco System (demo). Full access & flows in INFINITE WALLET.' 
-      : 'Account created (demo). Welcome — use INFINITE WALLET for real self-custodial experience.';
-    // Simple toast via alert for now (or we can reuse global toast if exposed)
-    alert(msg);
+    setAuthBusy(true);
+    setAuthError('');
+    try {
+      const path = authMode === 'login' ? '/api/portal/login' : '/api/portal/register';
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setAuthError(data.error || 'Could not sign in.');
+        return;
+      }
+      setPortalUser(data.user);
+      closeAuth();
+      window.location.href = '/portal';
+    } catch {
+      setAuthError('Network error. Try again.');
+    } finally {
+      setAuthBusy(false);
+    }
   };
 
   // Buy $MT form state (compact at top, below BUY $MT NOW)
@@ -196,12 +225,13 @@ export default function Navbar() {
 
           {/* Unified account icon (replaces separate Login + Register) */}
           <button 
-            onClick={() => openAuth('login')} 
-            className="opacity-70 hover:opacity-100 p-1 text-base" 
-            title="Account"
+            onClick={() => (portalUser ? (window.location.href = '/portal') : openAuth('login'))} 
+            className="opacity-70 hover:opacity-100 p-1 text-base flex items-center gap-2" 
+            title={portalUser ? 'Open portal' : 'Account'}
             aria-label="Account"
           >
-            👤
+            <span>👤</span>
+            {portalUser && <span className="hidden sm:inline text-xs opacity-80">{portalUser.username}</span>}
           </button>
 
           <ThemeToggle />
@@ -442,16 +472,18 @@ export default function Navbar() {
                   />
                 </div>
 
+                {authError && <div className="text-sm text-red-400">{authError}</div>}
                 <button
                   type="submit"
-                  className="mt-2 w-full py-3.5 rounded-2xl bg-white text-black font-semibold tracking-wider text-sm active:opacity-90"
+                  disabled={authBusy}
+                  className="mt-2 w-full py-3.5 rounded-2xl bg-white text-black font-semibold tracking-wider text-sm active:opacity-90 disabled:opacity-50"
                 >
-                  {authMode === 'login' ? 'ENTER PORTAL' : 'CREATE ACCOUNT'}
+                  {authBusy ? 'PLEASE WAIT' : authMode === 'login' ? 'ENTER PORTAL' : 'CREATE ACCOUNT'}
                 </button>
               </form>
 
               <div className="text-center text-[10px] mt-4 opacity-50">
-                Demo only. Real self-custodial access lives in INFINITE WALLET.
+                Same account on every Futuret3ch site. Your developer license stays on this profile.
               </div>
             </motion.div>
           </div>
