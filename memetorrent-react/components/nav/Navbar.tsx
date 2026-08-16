@@ -211,6 +211,7 @@ export default function Navbar() {
               CLAIM $MT
             </a>
             <a href="/software" className="opacity-70 hover:opacity-100">SOFTWARE</a>
+            <a href="/contact" className="opacity-70 hover:opacity-100">CONTACT</a>
           </div>
 
           {/* Status icon (replaces Launch) — pulls live summary from /status services.json */}
@@ -250,8 +251,8 @@ export default function Navbar() {
             CLAIM $MT
           </a>
           <a href="/software" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SOFTWARE</a>
-          <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
           <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
+          <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
           <a href="/status" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">Status</a>
           <button 
             onClick={() => { setMobileMenuOpen(false); setShowBuyPanel(true); }}
@@ -286,19 +287,17 @@ export default function Navbar() {
             href={portalUser ? '/chat' : '/login?next=/chat'}
             title="MT Chat"
             aria-label="MT Chat"
-            className="relative shrink-0 w-8 h-8 rounded-lg overflow-hidden border border-emerald-400/40"
+            className="flex items-center gap-1.5 shrink-0 text-[11px] sm:text-xs font-medium text-emerald-400 hover:text-emerald-300 whitespace-nowrap"
           >
-            <img src="/icons/mt-chat.jpg" alt="" className="w-full h-full object-cover" />
-            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-black drop-shadow-[0_0_2px_#00ff99]">
-              MT
-            </span>
+            <img src="/icons/mt-chat.jpg" alt="" className="w-7 h-7 rounded-md object-cover" />
+            CHAT
           </a>
-          <a
-            href="/contact"
-            className="text-[11px] sm:text-xs font-medium opacity-80 hover:opacity-100 whitespace-nowrap"
+          <button
+            onClick={() => setShowBuyPanel(!showBuyPanel)}
+            className="font-medium text-emerald-400 hover:text-emerald-300 transition cursor-pointer text-[11px] sm:text-xs px-2 py-1 border border-emerald-400/30 rounded whitespace-nowrap"
           >
-            CONTACT
-          </a>
+            BUY $MT
+          </button>
 
           <div className="flex items-center gap-2 shrink-0 pl-2 border-l border-white/20">
             <span className="opacity-60 shrink-0 text-[10px] sm:text-xs">CA</span>
@@ -313,12 +312,6 @@ export default function Navbar() {
               title={`${MT_MINT} — tap to copy`}
             >
               {MT_MINT}
-            </button>
-            <button
-              onClick={() => setShowBuyPanel(!showBuyPanel)}
-              className="font-medium text-emerald-400 hover:text-emerald-300 transition cursor-pointer text-xs sm:text-sm px-2 py-1 border border-emerald-400/30 rounded whitespace-nowrap"
-            >
-              BUY $MT NOW
             </button>
           </div>
 
