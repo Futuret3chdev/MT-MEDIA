@@ -60,13 +60,14 @@ var toolsBox = {
 // Leaderboard Engine
 var leaderboardEngine = {
     maxEntries: 10,
-    apiUrl: 'https://memetorrent.futuret3ch.com.au/games/unix/tap/api/leaderboard.php',
+    apiUrl: '/api/scores?game_id=tap',
     saveScore: async function(playerName, score) {
         try {
-            const response = await fetch(leaderboardEngine.apiUrl, {
+            const response = await fetch('/api/scores', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ player_name: playerName, score: score })
+                body: JSON.stringify({ game_id: 'tap', player_name: playerName, score: score })
             });
             if (!response.ok) throw new Error('Failed to save score: ' + response.statusText);
             return await response.json();
@@ -77,9 +78,10 @@ var leaderboardEngine = {
     },
     getScores: async function() {
         try {
-            const response = await fetch(leaderboardEngine.apiUrl);
+            const response = await fetch(leaderboardEngine.apiUrl, { credentials: 'include' });
             if (!response.ok) throw new Error('Failed to fetch scores: ' + response.statusText);
-            return await response.json();
+            const data = await response.json();
+            return data.scores || data || [];
         } catch (error) {
             console.error('Error fetching scores:', error);
             leaderboardBody.innerHTML = '<tr><td colspan="3">Failed to load leaderboard</td></tr>';
@@ -97,7 +99,7 @@ var leaderboardEngine = {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${entry.player_name}</td>
+                <td>${entry.username || entry.player_name}</td>
                 <td>${entry.score}</td>
             `;
             leaderboardBody.appendChild(row);

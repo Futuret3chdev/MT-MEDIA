@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import GameCard from '@/components/games/GameCard';
+import TapBoard from '@/components/games/TapBoard';
 import { getGame, p2eGames } from '@/lib/mt-catalog';
 
 const WORLD = ['mt-world-pocket', 'mt-world-gallery']
@@ -31,6 +32,7 @@ export default function P2EPage() {
           <GameCard key={g.id} game={g} />
         ))}
       </div>
+      <TapBoard />
     </div>
   );
 }

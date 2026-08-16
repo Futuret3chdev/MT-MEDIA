@@ -1,0 +1,80 @@
+import { NextRequest } from 'next/server';
+import { getUserDb } from '@/lib/rewards-db';
+import { readSessionToken, userBySession } from '@/lib/portal-auth';
+
+async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
+  await conn.execute(`
+    CREATE TABLE IF NOT EXISTS mt_game_scores (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      game_id VARCHAR(40) NOT NULL,
+      email VARCHAR(190) NULL,
+      username VARCHAR(120) NOT NULL,
+      score INT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      KEY game_score (game_id, score),
+      KEY email_game (email, game_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+}
+
+export async function GET(request: NextRequest) {
+  const gameId = request.nextUrl.searchParams.get('game_id') || 'tap';
+  const mine = request.nextUrl.searchParams.get('mine') === '1';
+  const conn = await getUserDb();
+  try {
+    await ensure(conn);
+    if (mine) {
+      const user = await userBySession(await readSessionToken());
+      if (!user) return Response.json({ ok: false, error: 'Sign in' }, { status: 401 });
+      const [rows] = await conn.execute(
+        'SELECT id, game_id, username, score, created_at FROM mt_game_scores WHERE email = ? ORDER BY score DESC, id DESC LIMIT 50',
+        [user.email]
+      );
+      return Response.json({ ok: true, scores: rows });
+    }
+    const [rows] = await conn.execute(
+      'SELECT id, game_id, username, score, created_at FROM mt_game_scores WHERE game_id = ? ORDER BY score DESC, id DESC LIMIT 25',
+      [gameId]
+    );
+    return Response.json({ ok: true, game_id: gameId, scores: rows });
+  } catch (err) {
+    console.error('scores get', err);
+    return Response.json({ ok: false, error: 'Scores unavailable' }, { status: 500 });
+  } finally {
+    await conn.end();
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const user = await userBySession(await readSessionToken());
+  let body: { game_id?: string; score?: number; player_name?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
+  }
+  const gameId = String(body.game_id || 'tap').slice(0, 40);
+  const score = Math.max(0, Math.min(1_000_000_000, Math.floor(Number(body.score) || 0)));
+  const guest = String(body.player_name || 'Player').trim().slice(0, 20) || 'Player';
+  const username = user?.username || guest;
+  const email = user?.email || null;
+  const conn = await getUserDb();
+  try {
+    await ensure(conn);
+    await conn.execute(
+      'INSERT INTO mt_game_scores (game_id, email, username, score) VALUES (?,?,?,?)',
+      [gameId, email, username, score]
+    );
+    return Response.json({
+      ok: true,
+      success: true,
+      attached: !!user,
+      username,
+    });
+  } catch (err) {
+    console.error('scores post', err);
+    return Response.json({ ok: false, error: 'Could not save score' }, { status: 500 });
+  } finally {
+    await conn.end();
+  }
+}

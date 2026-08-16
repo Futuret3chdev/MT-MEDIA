@@ -6,7 +6,7 @@ import GameCard from '@/components/games/GameCard';
 import { liveGames } from '@/lib/mt-catalog';
 
 type Mode = 'users' | 'developers' | 'businesses';
-type UserTab = 'me' | 'games' | 'wallet' | 'chat' | 'friends';
+type UserTab = 'me' | 'games' | 'scores' | 'wallet' | 'chat' | 'friends';
 
 type User = {
   username: string;
@@ -23,6 +23,7 @@ type User = {
 const USER_NAV: { id: UserTab; label: string }[] = [
   { id: 'me', label: 'Profile' },
   { id: 'games', label: 'Library' },
+  { id: 'scores', label: 'Scores' },
   { id: 'wallet', label: 'Wallet' },
   { id: 'chat', label: 'Chat' },
   { id: 'friends', label: 'Friends' },
@@ -37,6 +38,7 @@ export default function PortalPage() {
   const [wallet, setWallet] = useState('');
   const [avatar, setAvatar] = useState('');
   const [saved, setSaved] = useState('');
+  const [scores, setScores] = useState<{ game_id: string; score: number; created_at: string }[]>([]);
 
   useEffect(() => {
     const stored = localStorage.getItem('mt_portal_mode');
@@ -49,6 +51,10 @@ export default function PortalPage() {
           setBio(d.user.bio || '');
           setWallet(d.user.wallet_address || '');
           setAvatar(d.user.avatar_url || '');
+          fetch('/api/scores?mine=1', { credentials: 'include' })
+            .then((r) => r.json())
+            .then((s) => setScores(s.scores || []))
+            .catch(() => {});
         }
       })
       .catch(() => setUser(null))
@@ -201,6 +207,25 @@ export default function PortalPage() {
                     <GameCard key={g.id} game={g} />
                   ))}
                 </div>
+              </div>
+            )}
+
+            {tab === 'scores' && (
+              <div>
+                <h2 className="text-xl font-semibold mb-2">Scores</h2>
+                <p className="text-sm opacity-60 mb-4">
+                  Tap Tap posts here when you are logged in. Play{' '}
+                  <a href="/games/unix/tap/" className="text-emerald-400">Tap Tap</a>.
+                </p>
+                {!scores.length && <p className="text-sm opacity-50">No scores on this account yet.</p>}
+                <ul className="space-y-2 text-sm">
+                  {scores.map((s, i) => (
+                    <li key={i} className="flex justify-between border-b border-white/10 py-2">
+                      <span className="uppercase text-emerald-400">{s.game_id}</span>
+                      <span className="font-mono">{s.score}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
