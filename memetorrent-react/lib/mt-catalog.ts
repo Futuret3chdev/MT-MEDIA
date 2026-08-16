@@ -13,6 +13,24 @@ export type CatalogGame = {
 
 export const CATALOG: CatalogGame[] = [
   {
+    id: 'mt-world-pocket',
+    name: 'MT WORLD — Pocket',
+    kind: 'multiplayer',
+    status: 'live',
+    play: 'https://memetorrent.futuret3ch.com.au/games/pocket',
+    img: '/games/covers/pocket.jpg',
+    blurb: 'Clubpool in MT WORLD. Live multiplayer on our servers.',
+  },
+  {
+    id: 'mt-world-gallery',
+    name: 'MT WORLD — Gallery',
+    kind: 'multiplayer',
+    status: 'live',
+    play: 'https://admin.futuret3ch.com.au/play/gallery/',
+    img: '/games/covers/gallery.jpg',
+    blurb: 'Walk the gallery with other players. Hang art. Live room.',
+  },
+  {
     id: 'soccer-pro',
     name: 'Soccer Pro',
     kind: 'p2e',
@@ -60,24 +78,6 @@ export const CATALOG: CatalogGame[] = [
     img: '/games/covers/starfleet.jpg',
     blurb: '3D space colony strategy.',
     source: 'https://github.com/Futuret3chdev/starfleet',
-  },
-  {
-    id: 'pocket',
-    name: 'Pocket',
-    kind: 'multiplayer',
-    status: 'live',
-    play: 'https://memetorrent.futuret3ch.com.au/games/pocket',
-    img: '/games/covers/pocket.jpg',
-    blurb: 'Live multiplayer pocket arena on our servers.',
-  },
-  {
-    id: 'gallery',
-    name: 'Gallery',
-    kind: 'multiplayer',
-    status: 'live',
-    play: 'https://admin.futuret3ch.com.au/play/gallery/',
-    img: '/games/covers/gallery.jpg',
-    blurb: 'Walk the gallery with other players.',
   },
   {
     id: 'tap',
@@ -180,7 +180,9 @@ export function liveGames() {
 }
 
 export function p2eGames() {
-  return CATALOG.filter((g) => g.kind === 'p2e' || g.kind === 'arcade' || g.kind === 'action');
+  return CATALOG.filter(
+    (g) => g.kind === 'p2e' || g.kind === 'arcade' || g.kind === 'action' || g.kind === 'multiplayer'
+  );
 }
 
 export function casinoGames() {
