@@ -164,7 +164,7 @@ export default function PlatformPlay({ spec }: { spec: MapSpec }) {
 
   return (
     <div>
-      <canvas ref={ref} width={720} height={360} className="w-full rounded-2xl border border-white/10 bg-black" />
+      <canvas ref={ref} width={720} height={360} className="w-full max-w-full h-auto rounded-2xl border border-white/10 bg-black" />
       <div className="text-xs opacity-60 mt-2">{hud}</div>
     </div>
   );

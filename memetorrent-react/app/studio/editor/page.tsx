@@ -60,22 +60,22 @@ export default function StudioEditorPage() {
   const events = spec.events || [];
 
   return (
-    <div className="-mt-0 min-h-[calc(100vh-4rem)] bg-[#12141a] text-[#e8eaf0]">
-      <div className="h-11 border-b border-white/10 flex items-center gap-2 px-3 text-xs">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#12141a] text-[#e8eaf0]">
+      <div className="border-b border-white/10 flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
         <Link href="/studio" className="opacity-60 hover:opacity-100">
           Project
         </Link>
-        <span className="opacity-30">/</span>
+        <span className="opacity-30 hidden sm:inline">/</span>
         <input
           value={spec.name}
           onChange={(e) => setSpec({ ...spec, name: e.target.value })}
-          className="bg-transparent font-semibold w-40 outline-none"
+          className="bg-transparent font-semibold w-28 sm:w-40 outline-none"
         />
-        <div className="flex-1" />
+        <div className="flex-1 min-w-2" />
         <button
           type="button"
           onClick={() => setTab('preview')}
-          className="px-3 py-1 rounded-md bg-emerald-400 text-black font-semibold"
+          className="px-3 py-2 rounded-md bg-emerald-400 text-black font-semibold min-h-[40px]"
         >
           Preview
         </button>
@@ -83,26 +83,28 @@ export default function StudioEditorPage() {
           type="button"
           disabled={!authed}
           onClick={save}
-          className="px-3 py-1 rounded-md border border-white/20 disabled:opacity-40"
+          className="px-3 py-2 rounded-md border border-white/20 disabled:opacity-40 min-h-[40px]"
         >
           Save
         </button>
-        {msg && <span className="opacity-50 max-w-[220px] truncate">{msg}</span>}
+        {msg && <span className="opacity-50 w-full sm:w-auto max-w-full truncate">{msg}</span>}
       </div>
 
-      <div className="grid grid-cols-[200px_1fr_240px] max-lg:grid-cols-1 min-h-[calc(100vh-7.5rem)]">
-        <aside className="border-r border-white/10 p-3 text-sm">
-          <div className="text-[10px] uppercase tracking-wider opacity-40 mb-2">Project</div>
-          <button type="button" onClick={() => setTab('scene')} className={`block w-full text-left px-2 py-1 rounded ${tab === 'scene' ? 'bg-white/10' : ''}`}>
-            Scene · {spec.name}
+      <div className="grid lg:grid-cols-[200px_1fr_240px] min-h-[calc(100vh-8rem)]">
+        <aside className="border-b lg:border-b-0 lg:border-r border-white/10 p-3 text-sm">
+          <div className="flex lg:block gap-2 overflow-x-auto pb-1">
+          <div className="text-[10px] uppercase tracking-wider opacity-40 mb-2 hidden lg:block">Project</div>
+          <button type="button" onClick={() => setTab('scene')} className={`shrink-0 px-3 py-2 rounded ${tab === 'scene' ? 'bg-white/10' : ''}`}>
+            Scene
           </button>
-          <button type="button" onClick={() => setTab('events')} className={`block w-full text-left px-2 py-1 rounded ${tab === 'events' ? 'bg-white/10' : ''}`}>
+          <button type="button" onClick={() => setTab('events')} className={`shrink-0 px-3 py-2 rounded ${tab === 'events' ? 'bg-white/10' : ''}`}>
             Events
           </button>
-          <button type="button" onClick={() => setTab('preview')} className={`block w-full text-left px-2 py-1 rounded ${tab === 'preview' ? 'bg-white/10' : ''}`}>
+          <button type="button" onClick={() => setTab('preview')} className={`shrink-0 px-3 py-2 rounded ${tab === 'preview' ? 'bg-white/10' : ''}`}>
             Preview
           </button>
-          <div className="text-[10px] uppercase tracking-wider opacity-40 mt-4 mb-2">Objects</div>
+          </div>
+          <div className="text-[10px] uppercase tracking-wider opacity-40 mt-3 mb-2">Objects</div>
           {['Ground', 'Spike', 'Coin', 'Start', 'Exit', 'Enemy', 'Spring'].map((n) => (
             <button
               key={n}
@@ -121,7 +123,7 @@ export default function StudioEditorPage() {
                 setBrush(map[n]);
                 setTab('scene');
               }}
-              className={`block w-full text-left px-2 py-1 rounded ${sel === n ? 'text-emerald-400' : 'opacity-70'}`}
+              className={`inline-block lg:block mr-1 lg:mr-0 px-2 py-1.5 rounded ${sel === n ? 'text-emerald-400' : 'opacity-70'}`}
             >
               {n}
             </button>
@@ -190,7 +192,7 @@ export default function StudioEditorPage() {
           )}
         </section>
 
-        <aside className="border-l border-white/10 p-3 text-sm space-y-3">
+        <aside className="border-t lg:border-t-0 lg:border-l border-white/10 p-3 text-sm space-y-3">
           <div className="text-[10px] uppercase tracking-wider opacity-40">Properties</div>
           <div className="opacity-70 text-xs">Selected object: {sel}</div>
           <label className="block text-xs">

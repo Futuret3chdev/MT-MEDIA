@@ -7,29 +7,29 @@ export default function StudioLandingPage() {
         <Link href="/" className="opacity-70 hover:opacity-100">← Home</Link>
       </div>
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mb-3">MT Studio SDK</div>
-      <h1 className="text-4xl sm:text-6xl font-semibold tracking-[-2px] mb-5 max-w-3xl">
+      <h1 className="text-3xl sm:text-6xl font-semibold tracking-[-1.5px] sm:tracking-[-2px] mb-5 max-w-3xl">
         Game monetization.<br />Four API calls.
       </h1>
       <p className="opacity-70 max-w-xl text-base mb-8">
         Authenticate players, load the store, take $MT, deliver items. One integration
         for web, Android and Windows. Checkout through Infinite Wallet.
       </p>
-      <div className="flex flex-wrap gap-3 mb-16">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-12 sm:mb-16">
         <Link
           href="/studio/publish"
-          className="px-6 py-3 rounded-2xl bg-emerald-400 text-black font-semibold text-sm"
+          className="px-6 py-3 rounded-2xl bg-emerald-400 text-black font-semibold text-sm text-center"
         >
           Get started
         </Link>
         <Link
           href="/studio/demo"
-          className="px-6 py-3 rounded-2xl border border-white/25 font-semibold text-sm"
+          className="px-6 py-3 rounded-2xl border border-white/25 font-semibold text-sm text-center"
         >
           Try SDK demo
         </Link>
         <Link
           href="/studio/editor"
-          className="px-6 py-3 rounded-2xl border border-white/25 font-semibold text-sm"
+          className="px-6 py-3 rounded-2xl border border-white/25 font-semibold text-sm text-center"
         >
           Open editor
         </Link>

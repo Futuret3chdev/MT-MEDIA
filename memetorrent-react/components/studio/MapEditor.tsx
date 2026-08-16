@@ -2,7 +2,7 @@
 
 import { BRUSHES, TILE, THEMES, type MapSpec, type TileId } from '@/lib/studio-map';
 
-const CELL = 18;
+const CELL = 16;
 
 export default function MapEditor({
   spec,

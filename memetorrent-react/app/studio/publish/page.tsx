@@ -78,7 +78,7 @@ export default function PublisherPage() {
 
   return (
     <div className="min-h-[80vh] grid lg:grid-cols-2">
-      <div className="px-8 sm:px-14 py-16 flex flex-col justify-center">
+      <div className="px-5 sm:px-14 py-10 sm:py-16 flex flex-col justify-center">
         <Link href="/studio" className="text-sm opacity-60 mb-8 w-fit">← MT Studio SDK</Link>
         <h1 className="text-4xl font-semibold tracking-tight mb-4">
           Publisher account
@@ -93,7 +93,7 @@ export default function PublisherPage() {
           <li>Inventory delivered to the player profile</li>
         </ul>
       </div>
-      <div className="bg-[#0c0e14] border-l border-white/10 px-8 sm:px-14 py-16 flex flex-col justify-center">
+      <div className="bg-[#0c0e14] border-t lg:border-t-0 lg:border-l border-white/10 px-5 sm:px-14 py-10 sm:py-16 flex flex-col justify-center">
         <div className="flex gap-2 mb-6">
           <button
             type="button"

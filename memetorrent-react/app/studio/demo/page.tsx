@@ -99,7 +99,7 @@ export default function StudioDemoPage() {
           <Link href="/studio" className="text-xs opacity-60">← MT Studio SDK</Link>
           <div className="font-semibold">SDK Explorer</div>
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1 justify-end">
           {STEPS.map((s, i) => (
             <div
               key={s}
@@ -107,7 +107,10 @@ export default function StudioDemoPage() {
                 i === step ? 'bg-emerald-400 text-black font-semibold' : i < step ? 'bg-white/10' : 'opacity-40'
               }`}
             >
-              {i + 1}. {s}
+              <span className="sm:hidden">{i + 1}</span>
+              <span className="hidden sm:inline">
+                {i + 1}. {s}
+              </span>
             </div>
           ))}
         </div>
@@ -161,7 +164,7 @@ export default function StudioDemoPage() {
                   Load catalog
                 </button>
               )}
-              <div className="grid sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {(items.length ? items : []).map((it) => (
                   <div key={it.sku} className="rounded-2xl border border-white/10 p-3 bg-black/30">
                     <div className="h-20 rounded-xl mb-2" style={{ background: `linear-gradient(135deg,#123,#0f3)` }} />
