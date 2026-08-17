@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CATALOG } from '@/lib/mt-catalog';
+import { CATALOG, getGame } from '@/lib/mt-catalog';
 
 export type RoomSession = {
   id: number;
@@ -57,15 +57,25 @@ export default function GameDock({
     }
   };
 
-  const openSession = async (s: RoomSession) => {
-    await fetch('/api/chat/game', {
+  const playUrl = (s: RoomSession) => {
+    if (s.play && String(s.play).trim()) return s.play;
+    const g = getGame(s.game_id);
+    if (g?.play) return g.play;
+    if (s.game_id === 'tap') return '/games/unix/tap/index.html';
+    return '';
+  };
+
+  const openSession = (s: RoomSession) => {
+    const url = playUrl(s);
+    if (url) {
+      onPlay({ url, id: s.game_id || 'tap', title: s.title || 'Game' });
+    }
+    fetch('/api/chat/game', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ room, action: 'join', id: s.id }),
-    });
-    if (s.play) onPlay({ url: s.play, id: s.game_id, title: s.title });
-    onRefresh();
+    }).finally(() => onRefresh());
   };
 
   const closeSession = async (id: number) => {
@@ -103,6 +113,7 @@ export default function GameDock({
                   ? s.scores.map((x) => `${x.username} ${x.score}`).join(' · ')
                   : 'No scores yet'}
               </div>
+              <div className="text-[11px] font-semibold text-emerald-400 mt-1">Play</div>
             </button>
             <button type="button" className="text-[10px] opacity-40 mt-1" onClick={() => closeSession(s.id)}>
               End

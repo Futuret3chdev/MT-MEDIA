@@ -474,6 +474,7 @@ function GameInvite({
       <div className="text-sm">
         {mine ? 'You started' : `@${who} wants to play`} <span className="text-emerald-400">{title}</span>
       </div>
+      <div className="text-[11px] opacity-50 mt-1">Open it from the game bar under the messages — no need to scroll here.</div>
       {meta.play ? (
         <button
           type="button"
@@ -1448,7 +1449,21 @@ function ChatInner() {
           </div>
           <GameDock
             room={room}
-            sessions={sessions}
+            sessions={
+              sessions.length
+                ? sessions
+                : gameInvites
+                    .filter((inv) => inv.play || inv.game_id)
+                    .map((inv) => ({
+                      id: inv.id,
+                      game_id: inv.game_id || 'tap',
+                      title: inv.title,
+                      play: inv.play,
+                      host_username: inv.from_username,
+                      players: 1,
+                      scores: [],
+                    }))
+            }
             canAdd={canEditRoom || !current?.owner_email || !!picked || !!peer || !!email}
             inviteTo={picked || peer}
             onPlay={setPlayGame}
