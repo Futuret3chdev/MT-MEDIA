@@ -330,16 +330,18 @@ export default function CallDock({
   }
 
   return (
-    <div className="shrink-0 border-t border-white/10 bg-[#12141c] px-2 py-1.5">
-      <div className="flex items-center gap-2">
-        <video ref={remoteRef} autoPlay playsInline className="w-12 h-9 rounded-md bg-black object-cover" />
-        <video ref={localRef} muted autoPlay playsInline className="w-12 h-9 rounded-md bg-black object-cover" />
-        <div className="text-xs text-emerald-400 flex-1 truncate">
-          {phase === 'outgoing' && `Calling ${who}…`}
-          {phase === 'incoming' && `${who} is calling`}
-          {phase === 'live' && `Live ${who}`}
+    <div className="shrink-0 border-t border-white/10 bg-[#12141c] p-2">
+      <div className="flex items-end gap-2">
+        <video ref={remoteRef} autoPlay playsInline className="w-[13.5rem] h-[8.5rem] sm:w-[18rem] sm:h-[10.5rem] rounded-xl bg-black object-cover" />
+        <video ref={localRef} muted autoPlay playsInline className="w-[6.5rem] h-[8.5rem] sm:w-28 sm:h-[10.5rem] rounded-xl bg-black object-cover" />
+        <div className="flex-1 min-w-0 pb-1">
+          <div className="text-xs text-emerald-400 truncate mb-1">
+            {phase === 'outgoing' && `Calling ${who}…`}
+            {phase === 'incoming' && `${who} is calling`}
+            {phase === 'live' && `Live ${who}`}
+          </div>
+          {controls}
         </div>
-        {controls}
       </div>
       {err && <div className="text-[11px] text-red-300 mt-1">{err}</div>}
     </div>

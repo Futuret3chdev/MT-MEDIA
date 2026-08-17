@@ -10,7 +10,7 @@ import CallDock, { type CallTarget, type CallView } from '@/components/chat/Call
 import RoomPlay from '@/components/chat/RoomPlay';
 import GameDock, { type RoomSession } from '@/components/chat/GameDock';
 import TablePlay from '@/components/chat/TablePlay';
-import FunSky, { type Burst } from '@/components/chat/FunSky';
+
 
 type Msg = {
   id: number;
@@ -613,7 +613,6 @@ function ChatInner() {
   const [tableGame, setTableGame] = useState<string | null>(null);
   const [lang, setLang] = useState('');
   const [funOn, setFunOn] = useState(false);
-  const [burst, setBurst] = useState<Burst | null>(null);
   const [sessions, setSessions] = useState<RoomSession[]>([]);
   const [replyTo, setReplyTo] = useState<Msg | null>(null);
   const [fwd, setFwd] = useState<Msg | null>(null);
@@ -786,17 +785,6 @@ function ChatInner() {
     end.current?.scrollIntoView({ behavior: 'smooth' });
   }, [msgs.length]);
 
-  useEffect(() => {
-    const last = [...msgs].reverse().find((m) => m.kind === 'fun');
-    if (!last || last.id === burst?.id) return;
-    try {
-      const p = JSON.parse(last.body);
-      if (p.t === 'throw' && p.e) setBurst({ id: last.id, e: p.e });
-    } catch {
-      /* ignore */
-    }
-  }, [msgs, burst?.id]);
-
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr('');
@@ -931,14 +919,8 @@ function ChatInner() {
   };
 
   const sendFun = async (e: string) => {
-    setBurst({ id: Date.now(), e });
-    await fetch('/api/chat', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room, text: JSON.stringify({ t: 'throw', e }), kind: 'fun', persona }),
-    });
-    load();
+    await sendSticker(e);
+    setFunOn(false);
   };
 
   const sendReact = async (id: number, e: string) => {
@@ -1238,7 +1220,6 @@ function ChatInner() {
               />
             </div>
           )}
-          <FunSky burst={burst} />
           {incoming.map((req) => (
             <div
               key={`fr-${req.id}`}
