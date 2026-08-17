@@ -19,6 +19,14 @@ export type CallTarget = { username: string; email?: string; n: number };
 
 const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
+function label(name?: string | null) {
+  const n = String(name || '')
+    .trim()
+    .replace(/^@+/, '');
+  if (!n || n === '@') return '';
+  return `@${n}`;
+}
+
 export default function CallDock({
   me,
   room,
@@ -158,9 +166,17 @@ export default function CallDock({
           setPeerName(s.from_username || s.from_email);
           setPhase('incoming');
         } else if (s.kind === 'offer') {
+          if (!s.from_email) continue;
           pendingOffer.current = payload as unknown as RTCSessionDescriptionInit;
+          if (phase === 'idle') {
+            peerRef.current = s.from_email;
+            setPeerEmail(s.from_email);
+            setPeerName(s.from_username || s.from_email);
+            setPhase('incoming');
+            continue;
+          }
           const pc = pcRef.current;
-          if (!pc) continue;
+          if (!pc || phase !== 'incoming') continue;
           await pc.setRemoteDescription(payload as unknown as RTCSessionDescriptionInit);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
@@ -168,7 +184,8 @@ export default function CallDock({
           setPhase('live');
         } else if (s.kind === 'answer') {
           const pc = pcRef.current;
-          if (pc && !pc.currentRemoteDescription) {
+          if (!pc || phase !== 'outgoing') continue;
+          if (!pc.currentRemoteDescription) {
             await pc.setRemoteDescription(payload as unknown as RTCSessionDescriptionInit);
           }
           setPhase('live');
@@ -187,6 +204,12 @@ export default function CallDock({
   }, [me, phase, kill]);
 
   useEffect(() => {
+    if (phase !== 'idle' && !label(peerName) && !peerEmail.includes('@')) {
+      kill(false);
+    }
+  }, [phase, peerName, peerEmail, kill]);
+
+  useEffect(() => {
     const s = streamRef.current;
     if (!s) return;
     s.getAudioTracks().forEach((t) => {
@@ -197,14 +220,15 @@ export default function CallDock({
     });
   }, [muted, cam]);
 
-  if (phase === 'idle') return null;
+  const who = label(peerName) || label(peerEmail.split('@')[0]);
+  if (phase === 'idle' || !who) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-[210] w-72 rounded-2xl border border-white/15 bg-[#12141c] p-3 shadow-2xl">
       <div className="text-xs text-emerald-400 mb-2">
-        {phase === 'outgoing' && `Calling ${peerName && peerName !== '@' ? `@${peerName.replace(/^@+/, '')}` : 'them'}…`}
-        {phase === 'incoming' && `${peerName && peerName !== '@' ? `@${peerName.replace(/^@+/, '')}` : 'Someone'} is calling`}
-        {phase === 'live' && `Live with ${peerName && peerName !== '@' ? `@${peerName.replace(/^@+/, '')}` : 'them'}`}
+        {phase === 'outgoing' && `Calling ${who}…`}
+        {phase === 'incoming' && `${who} is calling`}
+        {phase === 'live' && `Live with ${who}`}
       </div>
       <div className="grid grid-cols-2 gap-2 mb-2">
         <video ref={localRef} muted autoPlay playsInline className="w-full h-20 rounded-lg bg-black object-cover" />
