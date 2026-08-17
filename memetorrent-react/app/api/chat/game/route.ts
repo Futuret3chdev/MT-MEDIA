@@ -42,12 +42,51 @@ function lines(b: string[]) {
   return null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const me = await userBySession(await readSessionToken());
   if (!me) return Response.json({ ok: false, error: 'Sign in' }, { status: 401 });
+  const room = String(request.nextUrl.searchParams.get('room') || '').slice(0, 48);
   const conn = await getUserDb();
   try {
     await ensureChat(conn);
+    if (room) {
+      const [sessions] = await conn.execute(
+        `SELECT id, room, game_id, title, play, host_email, host_username, status, created_at
+         FROM mt_chat_room_games
+         WHERE room = ? AND status = 'open'
+         ORDER BY id DESC LIMIT 12`,
+        [room]
+      );
+      const out = [];
+      for (const s of sessions as {
+        id: number;
+        game_id: string;
+        title: string;
+        play: string | null;
+        host_username: string;
+      }[]) {
+        const [seats] = await conn.execute(
+          'SELECT username FROM mt_chat_game_seats WHERE session_id = ?',
+          [s.id]
+        );
+        const [scores] = await conn.execute(
+          `SELECT username, MAX(score) AS score
+           FROM mt_game_scores
+           WHERE game_id = ? AND room = ?
+           GROUP BY username
+           ORDER BY score DESC
+           LIMIT 6`,
+          [s.game_id, room]
+        ).catch(() => [[]]);
+        out.push({
+          ...s,
+          players: (seats as object[]).length,
+          seats: seats,
+          scores: scores || [],
+        });
+      }
+      return Response.json({ ok: true, sessions: out });
+    }
     const [rows] = await conn.execute(
       `SELECT id, from_email, from_username, room, game_id, title, play, created_at
        FROM mt_chat_game_invites
@@ -220,13 +259,53 @@ export async function POST(request: NextRequest) {
           from_username: me.username,
         });
       }
+      const [created] = await conn.execute(
+        'INSERT INTO mt_chat_room_games (room, game_id, title, play, host_email, host_username) VALUES (?,?,?,?,?,?)',
+        [room, gameId, label, play || null, me.email, me.username]
+      );
+      const sessionId = Number((created as { insertId: number }).insertId || 0);
+      if (sessionId) {
+        await conn.execute('INSERT IGNORE INTO mt_chat_game_seats (session_id, email, username) VALUES (?,?,?)', [
+          sessionId,
+          me.email,
+          me.username,
+        ]);
+        if (toEmail) {
+          await conn.execute('INSERT IGNORE INTO mt_chat_game_seats (session_id, email, username) VALUES (?,?,?)', [
+            sessionId,
+            toEmail,
+            toName || toEmail,
+          ]);
+        }
+      }
       return Response.json({
         ok: true,
         game_id: gameId,
         state,
         slug: room,
+        session_id: sessionId,
         with: toEmail ? { email: toEmail, username: toName } : null,
       });
+    }
+
+    if (action === 'join') {
+      const sid = Number(body.id) || 0;
+      if (!sid) return Response.json({ ok: false, error: 'Missing game' }, { status: 400 });
+      await conn.execute('INSERT IGNORE INTO mt_chat_game_seats (session_id, email, username) VALUES (?,?,?)', [
+        sid,
+        me.email,
+        me.username,
+      ]);
+      return Response.json({ ok: true, session_id: sid });
+    }
+
+    if (action === 'close') {
+      const sid = Number(body.id) || 0;
+      await conn.execute("UPDATE mt_chat_room_games SET status = 'closed' WHERE id = ? AND host_email = ?", [
+        sid,
+        me.email,
+      ]);
+      return Response.json({ ok: true });
     }
 
     if (action === 'clear') {

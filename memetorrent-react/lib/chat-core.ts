@@ -86,6 +86,30 @@ export async function ensureChat(conn: mysql.Connection) {
     }
   }
   await conn.execute(`
+    CREATE TABLE IF NOT EXISTS mt_chat_room_games (
+      id BIGINT NOT NULL AUTO_INCREMENT,
+      room VARCHAR(48) NOT NULL,
+      game_id VARCHAR(64) NOT NULL,
+      title VARCHAR(120) NOT NULL,
+      play VARCHAR(400) NULL,
+      host_email VARCHAR(190) NOT NULL,
+      host_username VARCHAR(80) NOT NULL,
+      status VARCHAR(16) NOT NULL DEFAULT 'open',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY room_status (room, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await conn.execute(`
+    CREATE TABLE IF NOT EXISTS mt_chat_game_seats (
+      session_id BIGINT NOT NULL,
+      email VARCHAR(190) NOT NULL,
+      username VARCHAR(80) NOT NULL,
+      joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (session_id, email)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await conn.execute(`
     CREATE TABLE IF NOT EXISTS mt_chat_game_invites (
       id BIGINT NOT NULL AUTO_INCREMENT,
       to_email VARCHAR(190) NOT NULL,
