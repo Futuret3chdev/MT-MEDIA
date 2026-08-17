@@ -1680,7 +1680,15 @@ function ChatInner() {
       )}
       {email && <CallDock me={email} room={room} start={callTo} />}
       {tableGame && email && (
-        <TablePlay room={room} me={email} title={tableGame} onExit={() => setTableGame(null)} />
+        <TablePlay
+          room={room}
+          me={email}
+          title={tableGame}
+          onExit={() => {
+            setTableGame(null);
+            load();
+          }}
+        />
       )}
       {playGame && (
         <RoomPlay

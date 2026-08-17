@@ -69,20 +69,44 @@ export async function GET(request: NextRequest) {
           'SELECT username FROM mt_chat_game_seats WHERE session_id = ?',
           [s.id]
         );
-        const [scores] = await conn.execute(
-          `SELECT username, MAX(score) AS score
-           FROM mt_game_scores
-           WHERE game_id = ? AND room = ?
-           GROUP BY username
-           ORDER BY score DESC
-           LIMIT 6`,
-          [s.game_id, room]
-        ).catch(() => [[]]);
+        let scores: { username: string; score: number }[] = [];
+        try {
+          const [rows] = await conn.execute(
+            `SELECT username, MAX(score) AS score
+             FROM mt_game_scores
+             WHERE game_id = ? AND room = ?
+             GROUP BY username
+             ORDER BY score DESC
+             LIMIT 6`,
+            [s.game_id, room]
+          );
+          scores = rows as { username: string; score: number }[];
+        } catch {
+          scores = [];
+        }
+        if (!scores.length && (s.game_id === 'rps' || s.game_id === 'ttt')) {
+          const [ch] = await conn.execute(
+            'SELECT game_state FROM mt_chat_channels WHERE slug = ? LIMIT 1',
+            [room]
+          );
+          try {
+            const st = JSON.parse(String((ch as { game_state: string }[])[0]?.game_state || 'null'));
+            if (st?.kind === 'rps') {
+              const names = seats as { username: string }[];
+              scores = [
+                { username: names[0]?.username || 'A', score: Number(st.scoreA) || 0 },
+                { username: names[1]?.username || 'B', score: Number(st.scoreB) || 0 },
+              ].filter((x) => x.username);
+            }
+          } catch {
+            /* ignore */
+          }
+        }
         out.push({
           ...s,
           players: (seats as object[]).length,
           seats: seats,
-          scores: scores || [],
+          scores,
         });
       }
       return Response.json({ ok: true, sessions: out });
@@ -297,6 +321,86 @@ export async function POST(request: NextRequest) {
         me.username,
       ]);
       return Response.json({ ok: true, session_id: sid });
+    }
+
+    if (action === 'finish') {
+      const gameId = String(ch.game_id || state?.kind || 'rps');
+      const scores: { username: string; score: number }[] = [];
+      const nameOf = async (email: string | null) => {
+        if (!email) return 'player';
+        const [u] = await conn.execute('SELECT username FROM portal_users WHERE email = ? LIMIT 1', [email]);
+        return String((u as { username: string }[])[0]?.username || email.split('@')[0]);
+      };
+      try {
+        await conn.execute(`
+          CREATE TABLE IF NOT EXISTS mt_game_scores (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            game_id VARCHAR(40) NOT NULL,
+            email VARCHAR(190) NULL,
+            username VARCHAR(120) NOT NULL,
+            score INT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY game_score (game_id, score)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        await conn.execute('ALTER TABLE mt_game_scores ADD COLUMN room VARCHAR(48) NULL');
+      } catch {
+        /* exists */
+      }
+      if (state?.kind === 'rps') {
+        const na = await nameOf(state.a);
+        const nb = await nameOf(state.b);
+        scores.push({ username: na, score: state.scoreA });
+        if (state.b) scores.push({ username: nb, score: state.scoreB });
+        await conn.execute(
+          'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
+          [gameId, state.a, na, state.scoreA, room]
+        );
+        if (state.b) {
+          await conn.execute(
+            'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
+            [gameId, state.b, nb, state.scoreB, room]
+          );
+        }
+      } else if (state?.kind === 'ttt' && state.winner && state.winner !== 'draw') {
+        const nx = await nameOf(state.x);
+        const no = await nameOf(state.o);
+        const xWin = state.winner === 'x' ? 1 : 0;
+        scores.push({ username: nx, score: xWin });
+        if (state.o) scores.push({ username: no, score: 1 - xWin });
+        await conn.execute(
+          'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
+          [gameId, state.x, nx, xWin, room]
+        );
+        if (state.o) {
+          await conn.execute(
+            'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
+            [gameId, state.o, no, 1 - xWin, room]
+          );
+        }
+      }
+      const payload = JSON.stringify({
+        game_id: gameId,
+        title: gameId === 'rps' ? 'Rock paper scissors' : gameId === 'ttt' ? 'Tic-tac-toe' : gameId,
+        scores,
+      }).slice(0, 800);
+      const [dup] = await conn.execute(
+        `SELECT id FROM mt_crypto_chat
+         WHERE room = ? AND kind = 'match' AND created_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+         LIMIT 1`,
+        [room]
+      );
+      if (!(dup as object[]).length && scores.length) {
+        await conn.execute(
+          'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
+          [room, me.username, payload, 'match', me.email]
+        );
+      }
+      await conn.execute(
+        "UPDATE mt_chat_room_games SET status = 'closed' WHERE room = ? AND game_id IN ('rps','ttt') AND status = 'open'",
+        [room]
+      );
+      return Response.json({ ok: true, scores, ended: true });
     }
 
     if (action === 'close') {

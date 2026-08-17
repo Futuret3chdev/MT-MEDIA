@@ -76,8 +76,15 @@ export default function TablePlay({
       <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#12141c] p-4 space-y-3">
         <div className="flex justify-between items-center">
           <div className="font-semibold">{title}</div>
-          <button type="button" className="text-xs opacity-60" onClick={onExit}>
-            Exit game
+          <button
+            type="button"
+            className="text-xs font-semibold text-black bg-emerald-400 px-3 py-1.5 rounded-full"
+            onClick={async () => {
+              await act('finish');
+              onExit();
+            }}
+          >
+            Exit and save score
           </button>
         </div>
         {err && <div className="text-xs text-red-300">{err}</div>}
