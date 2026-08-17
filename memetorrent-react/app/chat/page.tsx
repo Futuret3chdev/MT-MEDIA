@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import BackBar from '@/components/ui/BackBar';
 import RequireLogin from '@/components/auth/RequireLogin';
@@ -653,18 +653,6 @@ function ChatInner() {
   };
 
   const load = () => {
-    fetch('/api/chat/friends', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((d) => {
-        setFriends(d.friends || []);
-        setIncoming(d.incoming || []);
-        setOutgoing(d.outgoing || []);
-      })
-      .catch(() => {});
-    fetch('/api/chat/game', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((d) => setGameInvites(d.invites || []))
-      .catch(() => {});
     fetch(`/api/chat/game?room=${encodeURIComponent(room)}`, { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => setSessions(d.sessions || []))
@@ -672,7 +660,11 @@ function ChatInner() {
     fetch(`/api/chat?room=${room}`, { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => {
-        setMsgs(d.messages || []);
+        const next = d.messages || [];
+        setMsgs((prev) => {
+          if (prev.length === next.length && prev[prev.length - 1]?.id === next[next.length - 1]?.id) return prev;
+          return next;
+        });
         if (d.channel) {
           setExtra((prev) => {
             if (
@@ -755,11 +747,26 @@ function ChatInner() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 1200);
+    const t = setInterval(load, 2800);
+    const extras = setInterval(() => {
+      fetch('/api/chat/friends', { credentials: 'include' })
+        .then((r) => r.json())
+        .then((d) => {
+          setFriends(d.friends || []);
+          setIncoming(d.incoming || []);
+          setOutgoing(d.outgoing || []);
+        })
+        .catch(() => {});
+      fetch('/api/chat/game', { credentials: 'include' })
+        .then((r) => r.json())
+        .then((d) => setGameInvites(d.invites || []))
+        .catch(() => {});
+    }, 8000);
     const onFriends = () => load();
     window.addEventListener('mt-friends', onFriends);
     return () => {
       clearInterval(t);
+      clearInterval(extras);
       window.removeEventListener('mt-friends', onFriends);
     };
   }, [room]);
@@ -780,14 +787,14 @@ function ChatInner() {
 
   useEffect(() => {
     const last = [...msgs].reverse().find((m) => m.kind === 'fun');
-    if (!last) return;
+    if (!last || last.id === burst?.id) return;
     try {
       const p = JSON.parse(last.body);
       if (p.t === 'throw' && p.e) setBurst({ id: last.id, e: p.e });
     } catch {
       /* ignore */
     }
-  }, [msgs]);
+  }, [msgs, burst?.id]);
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1187,7 +1194,7 @@ function ChatInner() {
         </aside>
 
         <section
-          className={`${open ? 'flex' : 'hidden'} md:flex flex-col min-h-[72vh]`}
+          className={`${open ? 'flex' : 'hidden'} md:flex flex-col min-h-[72vh] relative overflow-hidden`}
           style={
             current?.background
               ? current.background.startsWith('/') || current.background.startsWith('http')
@@ -1235,6 +1242,8 @@ function ChatInner() {
               </button>
             )}
           </header>
+          {email && <CallDock me={email} room={room} start={callTo} />}
+          <FunSky burst={burst} />
           {incoming.map((req) => (
             <div
               key={`fr-${req.id}`}
@@ -1476,7 +1485,9 @@ function ChatInner() {
                   ) : (
                     <>
                       {renderBody(m.body)}
-                      {lang && m.kind !== 'sticker' && <TranslateLine text={m.body} lang={lang} />}
+                      {lang && m.kind !== 'sticker' && i >= vis.length - 8 && (
+                        <TranslateLine text={m.body} lang={lang} />
+                      )}
                     </>
                   )}
                   <span className="flex flex-wrap gap-1 mt-1">
@@ -1831,8 +1842,6 @@ function ChatInner() {
           </div>
         </div>
       )}
-      <FunSky burst={burst} />
-      {email && <CallDock me={email} room={room} start={callTo} />}
       {tableGame && email && (
         <TablePlay
           room={room}

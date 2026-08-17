@@ -201,7 +201,7 @@ export default function CallDock({
           await kill(false);
         }
       }
-    }, 900);
+    }, 2000);
     return () => clearInterval(t);
   }, [me, phase, kill]);
 
@@ -261,7 +261,7 @@ export default function CallDock({
 
   if (full) {
     return (
-      <div className="fixed inset-0 z-[220] bg-black flex flex-col">
+      <div className="absolute inset-0 z-30 bg-black flex flex-col">
         <div className="relative flex-1 min-h-0">
           <video ref={remoteRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
           <video
@@ -303,7 +303,7 @@ export default function CallDock({
   }
 
   return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[210] w-[min(36rem,calc(100vw-16px))] rounded-2xl border border-white/15 bg-[#12141c]/95 shadow-2xl p-2">
+    <div className="shrink-0 border-b border-white/10 bg-[#12141c] p-2">
       <div className="flex items-center gap-2">
         <video ref={remoteRef} autoPlay playsInline className="w-14 h-10 rounded-lg bg-black object-cover" />
         <video ref={localRef} muted autoPlay playsInline className="w-14 h-10 rounded-lg bg-black object-cover" />
