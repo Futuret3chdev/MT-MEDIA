@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (action === 'join') {
+    if (action === 'seat') {
       const sid = Number(body.id) || 0;
       if (!sid) return Response.json({ ok: false, error: 'Missing game' }, { status: 400 });
       await conn.execute('INSERT IGNORE INTO mt_chat_game_seats (session_id, email, username) VALUES (?,?,?)', [

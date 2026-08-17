@@ -19,6 +19,7 @@ export default function GameDock({
   canAdd,
   inviteTo,
   onPlay,
+  onTable,
   onRefresh,
   onOpened,
 }: {
@@ -27,6 +28,7 @@ export default function GameDock({
   canAdd: boolean;
   inviteTo?: { username: string; email: string } | null;
   onPlay: (play: { url: string; id: string; title: string }) => void;
+  onTable?: (title: string) => void;
   onRefresh: () => void;
   onOpened?: (slug: string, withUser?: { username: string; email: string }, gameId?: string | null) => void;
 }) {
@@ -51,6 +53,7 @@ export default function GameDock({
         setPick(false);
         if (d.slug && d.with) onOpened?.(d.slug, d.with, d.game_id);
         onRefresh();
+        if (kind === 'rps' || kind === 'ttt') onTable?.(kind === 'rps' ? 'Rock paper scissors' : 'Tic-tac-toe');
       }
     } finally {
       setBusy(false);
@@ -74,8 +77,11 @@ export default function GameDock({
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room, action: 'join', id: s.id }),
+      body: JSON.stringify({ room, action: 'seat', id: s.id }),
     }).finally(() => onRefresh());
+    if (s.game_id === 'rps' || s.game_id === 'ttt' || s.title.toLowerCase().includes('rock')) {
+      onTable?.(s.game_id === 'ttt' ? 'Tic-tac-toe' : 'Rock paper scissors');
+    }
   };
 
   const closeSession = async (id: number) => {
@@ -138,9 +144,9 @@ export default function GameDock({
             type="button"
             disabled={busy}
             onClick={() => start('rps')}
-            className="text-left text-[11px] rounded-lg border border-white/15 p-2"
+            className="text-left text-[11px] rounded-lg border border-emerald-400/40 p-2 col-span-2"
           >
-            Rock paper scissors
+            🪨📄✂️ Rock paper scissors
           </button>
           {CATALOG.filter((g) => g.status === 'live').map((g) => (
             <button

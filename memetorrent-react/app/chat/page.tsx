@@ -9,6 +9,7 @@ import MtMiniChart from '@/components/chat/MtMiniChart';
 import CallDock, { type CallTarget } from '@/components/chat/CallDock';
 import RoomPlay from '@/components/chat/RoomPlay';
 import GameDock, { type RoomSession } from '@/components/chat/GameDock';
+import TablePlay from '@/components/chat/TablePlay';
 
 type Msg = {
   id: number;
@@ -575,6 +576,7 @@ function ChatInner() {
     { id: number; from_username: string; room: string; title: string; play: string | null; game_id?: string }[]
   >([]);
   const [playGame, setPlayGame] = useState<{ url: string; id: string; title: string } | null>(null);
+  const [tableGame, setTableGame] = useState<string | null>(null);
   const [sessions, setSessions] = useState<RoomSession[]>([]);
   const [replyTo, setReplyTo] = useState<Msg | null>(null);
   const [fwd, setFwd] = useState<Msg | null>(null);
@@ -1467,6 +1469,7 @@ function ChatInner() {
             canAdd={canEditRoom || !current?.owner_email || !!picked || !!peer || !!email}
             inviteTo={picked || peer}
             onPlay={setPlayGame}
+            onTable={setTableGame}
             onRefresh={load}
             onOpened={(slug, withUser) => {
               setRoom(slug);
@@ -1676,6 +1679,9 @@ function ChatInner() {
         </div>
       )}
       {email && <CallDock me={email} room={room} start={callTo} />}
+      {tableGame && email && (
+        <TablePlay room={room} me={email} title={tableGame} onExit={() => setTableGame(null)} />
+      )}
       {playGame && (
         <RoomPlay
           url={playGame.url}
