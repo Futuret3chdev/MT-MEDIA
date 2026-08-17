@@ -27,14 +27,22 @@ function label(name?: string | null) {
   return `@${n}`;
 }
 
+export type CallView = 'dock' | 'split' | 'overlay';
+
 export default function CallDock({
   me,
   room,
   start,
+  view,
+  onView,
+  recent,
 }: {
   me: string;
   room: string;
   start: CallTarget | null;
+  view: CallView;
+  onView: (v: CallView) => void;
+  recent?: { username: string; body: string; kind?: string }[];
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
   const [peerName, setPeerName] = useState('');
@@ -42,7 +50,6 @@ export default function CallDock({
   const [muted, setMuted] = useState(false);
   const [cam, setCam] = useState(true);
   const [err, setErr] = useState('');
-  const [full, setFull] = useState(false);
   const [line, setLine] = useState('');
   const since = useRef(0);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -226,7 +233,7 @@ export default function CallDock({
   if (phase === 'idle' || !who) return null;
 
   const controls = (
-    <div className="flex flex-wrap gap-2 text-[11px]">
+    <div className="flex flex-wrap gap-1.5 text-[11px]">
       {phase === 'incoming' && (
         <button type="button" className="px-2 py-1 rounded-lg bg-emerald-400 text-black" onClick={accept}>
           Accept
@@ -236,11 +243,27 @@ export default function CallDock({
         {muted ? 'Unmute' : 'Mute'}
       </button>
       <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => setCam((c) => !c)}>
-        {cam ? 'Camera off' : 'Camera on'}
+        {cam ? 'Cam off' : 'Cam on'}
       </button>
-      <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => setFull((v) => !v)}>
-        {full ? 'Exit full screen' : 'Full screen'}
+      <button
+        type="button"
+        className={`px-2 py-1 rounded-lg border ${view === 'overlay' ? 'border-emerald-400 text-emerald-400' : 'border-white/15'}`}
+        onClick={() => onView('overlay')}
+      >
+        Full + chat
       </button>
+      <button
+        type="button"
+        className={`px-2 py-1 rounded-lg border ${view === 'split' ? 'border-emerald-400 text-emerald-400' : 'border-white/15'}`}
+        onClick={() => onView('split')}
+      >
+        Half / half
+      </button>
+      {view !== 'dock' && (
+        <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => onView('dock')}>
+          Dock
+        </button>
+      )}
       <button type="button" className="px-2 py-1 rounded-lg border border-red-400/40 text-red-300" onClick={() => kill(true)}>
         Hang up
       </button>
@@ -259,29 +282,44 @@ export default function CallDock({
     });
   };
 
-  if (full) {
+  const videosFill = (
+    <>
+      <video ref={remoteRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover bg-black" />
+      <video
+        ref={localRef}
+        muted
+        autoPlay
+        playsInline
+        className="absolute bottom-3 right-3 w-20 h-28 rounded-xl bg-black object-cover border border-white/20"
+      />
+    </>
+  );
+
+  if (view === 'overlay') {
     return (
-      <div className="absolute inset-0 z-30 bg-black flex flex-col">
-        <div className="relative flex-1 min-h-0">
-          <video ref={remoteRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
-          <video
-            ref={localRef}
-            muted
-            autoPlay
-            playsInline
-            className="absolute bottom-24 right-4 w-28 h-36 rounded-xl bg-black object-cover border border-white/20"
-          />
-          <div className="absolute top-3 left-3 text-sm text-emerald-400">
+      <div className="fixed inset-0 z-40 h-[100dvh] max-h-[100dvh] w-full bg-black">
+        {videosFill}
+        <div className="absolute top-2 left-2 right-2 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-emerald-400">
             {phase === 'outgoing' && `Calling ${who}…`}
             {phase === 'incoming' && `${who} is calling`}
-            {phase === 'live' && `Live with ${who} — audio on, type below`}
-          </div>
-        </div>
-        <div className="p-3 bg-[#12141c] space-y-2">
-          {err && <div className="text-[11px] text-red-300">{err}</div>}
+            {phase === 'live' && `Live ${who}`}
+          </span>
           {controls}
+        </div>
+        <div className="absolute inset-x-0 bottom-0 max-h-[46dvh] flex flex-col bg-gradient-to-t from-black via-black/80 to-transparent pt-10">
+          <div className="overflow-y-auto px-3 pb-2 text-xs space-y-1 max-h-[28dvh]">
+            {(recent || [])
+              .filter((m) => m.kind !== 'fun' && m.kind !== 'react')
+              .slice(-12)
+              .map((m, i) => (
+                <div key={i} className="text-white/90">
+                  <span className="text-emerald-400">{m.username}</span> {m.body.slice(0, 160)}
+                </div>
+              ))}
+          </div>
           <form
-            className="flex gap-2"
+            className="flex gap-2 p-3"
             onSubmit={(e) => {
               e.preventDefault();
               sendLine();
@@ -290,8 +328,8 @@ export default function CallDock({
             <input
               value={line}
               onChange={(e) => setLine(e.target.value)}
-              placeholder="Text while you talk"
-              className="flex-1 px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
+              placeholder="Text on the video"
+              className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-sm"
             />
             <button type="submit" className="text-sm text-black bg-emerald-400 px-3 rounded-xl font-semibold">
               Send
@@ -302,15 +340,27 @@ export default function CallDock({
     );
   }
 
+  if (view === 'split') {
+    return (
+      <div className="relative h-[40dvh] max-h-[40dvh] min-h-[140px] shrink-0 bg-black overflow-hidden">
+        {videosFill}
+        <div className="absolute top-2 left-2 right-2 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-emerald-400">Live {who}</span>
+          {controls}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="shrink-0 border-b border-white/10 bg-[#12141c] p-2">
+    <div className="shrink-0 border-t border-white/10 bg-[#12141c] p-2">
       <div className="flex items-center gap-2">
-        <video ref={remoteRef} autoPlay playsInline className="w-14 h-10 rounded-lg bg-black object-cover" />
-        <video ref={localRef} muted autoPlay playsInline className="w-14 h-10 rounded-lg bg-black object-cover" />
+        <video ref={remoteRef} autoPlay playsInline className="w-16 h-12 rounded-lg bg-black object-cover" />
+        <video ref={localRef} muted autoPlay playsInline className="w-16 h-12 rounded-lg bg-black object-cover" />
         <div className="text-xs text-emerald-400 flex-1 truncate">
           {phase === 'outgoing' && `Calling ${who}…`}
           {phase === 'incoming' && `${who} is calling`}
-          {phase === 'live' && `Live ${who} · type in chat`}
+          {phase === 'live' && `Live ${who}`}
         </div>
       </div>
       {err && <div className="text-[11px] text-red-300 mt-1">{err}</div>}

@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-build="2026-08-17-dock-lag">
+    <html lang="en" data-build="2026-08-17-call-layout">
       <head>
         {/* Font Awesome for social icons in original brand colors */}
         <link 

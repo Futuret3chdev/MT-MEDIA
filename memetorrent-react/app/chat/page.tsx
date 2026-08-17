@@ -6,7 +6,7 @@ import BackBar from '@/components/ui/BackBar';
 import RequireLogin from '@/components/auth/RequireLogin';
 import RoomStudio, { youtubeId, type RoomExtra } from '@/components/chat/RoomStudio';
 import MtMiniChart from '@/components/chat/MtMiniChart';
-import CallDock, { type CallTarget } from '@/components/chat/CallDock';
+import CallDock, { type CallTarget, type CallView } from '@/components/chat/CallDock';
 import RoomPlay from '@/components/chat/RoomPlay';
 import GameDock, { type RoomSession } from '@/components/chat/GameDock';
 import TablePlay from '@/components/chat/TablePlay';
@@ -605,6 +605,7 @@ function ChatInner() {
   const [studio, setStudio] = useState(false);
   const [extra, setExtra] = useState<RoomExtra | null>(null);
   const [callTo, setCallTo] = useState<CallTarget | null>(null);
+  const [callView, setCallView] = useState<CallView>('dock');
   const [gameInvites, setGameInvites] = useState<
     { id: number; from_username: string; room: string; title: string; play: string | null; game_id?: string }[]
   >([]);
@@ -1194,7 +1195,7 @@ function ChatInner() {
         </aside>
 
         <section
-          className={`${open ? 'flex' : 'hidden'} md:flex flex-col min-h-[72vh] relative overflow-hidden`}
+          className={`${open ? 'flex' : 'hidden'} md:flex flex-col h-[calc(100dvh-6.5rem)] max-h-[calc(100dvh-6.5rem)] relative overflow-hidden`}
           style={
             current?.background
               ? current.background.startsWith('/') || current.background.startsWith('http')
@@ -1207,7 +1208,7 @@ function ChatInner() {
               : undefined
           }
         >
-          <header className="px-3 sm:px-4 py-3 border-b border-white/10 flex items-center gap-3">
+          <header className="order-1 px-3 sm:px-4 py-3 border-b border-white/10 flex items-center gap-3">
             <button type="button" className="md:hidden text-sm min-h-[40px]" onClick={() => setOpen(false)}>
               ← Channels
             </button>
@@ -1224,25 +1225,19 @@ function ChatInner() {
                 {peer ? 'Direct message' : current?.kind || 'public'}
               </div>
             </div>
-            {peer?.username && peer.username !== '@' && (
-              <button
-                type="button"
-                className="text-[11px] text-emerald-400"
-                onClick={() => setCallTo({ username: peer.username, email: peer.email, n: Date.now() })}
-              >
-                Call
-              </button>
-            )}
-            <button type="button" className="text-[11px] text-emerald-400" onClick={() => setStudio((v) => !v)}>
-              {studio ? 'Close settings' : 'Settings'}
-            </button>
-            {!peer && (
-              <button type="button" onClick={emit} className="text-[11px] opacity-50 hidden sm:inline">
-                Post event
-              </button>
-            )}
           </header>
-          {email && <CallDock me={email} room={room} start={callTo} />}
+          {email && (
+            <div className={callView === 'split' ? 'order-2' : callView === 'overlay' ? '' : 'order-8'}>
+              <CallDock
+                me={email}
+                room={room}
+                start={callTo}
+                view={callView}
+                onView={setCallView}
+                recent={msgs}
+              />
+            </div>
+          )}
           <FunSky burst={burst} />
           {incoming.map((req) => (
             <div
@@ -1368,7 +1363,7 @@ function ChatInner() {
               Latest event: {events[events.length - 1]?.event_name}
             </div>
           )}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
+          <div className="order-4 flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-3">
             {msgs
               .filter((m) => m.kind !== 'fun' && m.kind !== 'react')
               .filter((m, i, all) => {
@@ -1575,6 +1570,8 @@ function ChatInner() {
             )}
             <div ref={end} />
           </div>
+          <div className="order-9 shrink-0 flex items-end gap-1 border-t border-white/10">
+            <div className="flex-1 min-w-0">
           <GameDock
             room={room}
             sessions={
@@ -1604,7 +1601,30 @@ function ChatInner() {
               setOpen(true);
             }}
           />
-          <form onSubmit={send} className="p-3 border-t border-white/10 space-y-2">
+            </div>
+            <div className="flex flex-col gap-1 p-2 shrink-0">
+              <button
+                type="button"
+                title="Call"
+                disabled={!peer?.username || peer.username === '@'}
+                onClick={() =>
+                  peer && setCallTo({ username: peer.username, email: peer.email, n: Date.now() })
+                }
+                className="w-10 h-10 rounded-xl border border-white/15 text-lg disabled:opacity-30"
+              >
+                📞
+              </button>
+              <button
+                type="button"
+                title="Settings"
+                onClick={() => setStudio((v) => !v)}
+                className="w-10 h-10 rounded-xl border border-white/15 text-lg"
+              >
+                ⚙️
+              </button>
+            </div>
+          </div>
+          <form onSubmit={send} className="order-10 p-3 border-t border-white/10 space-y-2">
             {replyTo && (
               <div className="flex items-center gap-2 text-[11px] opacity-80">
                 <span className="truncate flex-1">
