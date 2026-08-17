@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
        FROM mt_chat_signals s
        LEFT JOIN portal_users u ON u.email = s.from_email
        WHERE s.id > ? AND (s.to_email = ? OR s.from_email = ?)
+         AND s.created_at > DATE_SUB(NOW(), INTERVAL 90 SECOND)
        ORDER BY s.id ASC LIMIT 80`,
       [since, me.email, me.email]
     );

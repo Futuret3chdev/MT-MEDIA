@@ -10,6 +10,7 @@ type Signal = {
   kind: string;
   payload: string;
   from_username?: string | null;
+  created_at?: string;
 };
 
 type Phase = 'idle' | 'outgoing' | 'incoming' | 'live';
@@ -82,10 +83,12 @@ export default function CallDock({
   };
 
   const startCall = async (username: string, email?: string) => {
+    const who = String(email || username || '').trim();
+    if (!who || who === '@') return;
     setErr('');
-    setPeerName(username);
-    setPeerEmail(email || username);
-    peerRef.current = email || username;
+    setPeerName(username || who);
+    setPeerEmail(who);
+    peerRef.current = who;
     setPhase('outgoing');
     try {
       const stream = await media();
@@ -127,7 +130,10 @@ export default function CallDock({
   };
 
   useEffect(() => {
-    if (start) startCall(start.username, start.email);
+    if (!start) return;
+    const who = String(start.email || start.username || '').trim();
+    if (!who || who === '@') return;
+    startCall(start.username, start.email);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [start?.n]);
 
@@ -145,6 +151,8 @@ export default function CallDock({
           payload = {};
         }
         if (s.kind === 'invite' && phase === 'idle') {
+          const age = Date.now() - new Date(s.created_at).getTime();
+          if (!s.from_email || age > 90_000) continue;
           peerRef.current = s.from_email;
           setPeerEmail(s.from_email);
           setPeerName(s.from_username || s.from_email);

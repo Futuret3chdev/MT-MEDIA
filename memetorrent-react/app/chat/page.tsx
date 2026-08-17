@@ -376,7 +376,13 @@ function RoomLiveMedia({
     ytCmd(frameRef.current?.contentWindow || null, 'seekTo', [0, true]);
   };
 
+  const skipAuto = useRef(true);
   useEffect(() => {
+    if (skipAuto.current) {
+      skipAuto.current = false;
+      lastStart.current = playing ? sessionId(started) : null;
+      return;
+    }
     if (!playing) {
       lastStart.current = null;
       stopLocal();
@@ -418,12 +424,12 @@ function RoomLiveMedia({
           {muted ? 'Unmute' : 'Mute'}
         </button>
       </div>
-      {yt ? (
+      {yt.length === 11 ? (
         <iframe
           ref={frameRef}
           title="room media"
           className="w-full max-w-sm aspect-video rounded-xl pointer-events-none"
-          src={`https://www.youtube.com/embed/${yt}?autoplay=1&mute=1&start=0&controls=0&disablekb=1&enablejsapi=1`}
+          src={`https://www.youtube.com/embed/${yt}?autoplay=0&mute=1&start=0&controls=0&disablekb=1&enablejsapi=1`}
           allow="autoplay; encrypted-media"
         />
       ) : isAudio ? (
@@ -1141,7 +1147,7 @@ function ChatInner() {
                 {peer ? 'Direct message' : current?.kind || 'public'}
               </div>
             </div>
-            {peer && (
+            {peer?.username && peer.username !== '@' && (
               <button
                 type="button"
                 className="text-[11px] text-emerald-400"
@@ -1250,7 +1256,10 @@ function ChatInner() {
           {current?.topic && (
             <div className="px-3 py-2 border-b border-white/5 text-xs opacity-70">{current.topic}</div>
           )}
-          {current?.music_url && (
+          {current?.music_url &&
+            (current.music_url.startsWith('http') ||
+              current.music_url.startsWith('/api/chat/media') ||
+              current.music_url.includes('youtu')) && (
             <RoomLiveMedia
               url={current.music_url}
               playing={!!current.media_playing}
