@@ -50,6 +50,8 @@ export async function ensureChat(conn: mysql.Connection) {
     'ALTER TABLE mt_crypto_chat ADD COLUMN no_forward TINYINT(1) NOT NULL DEFAULT 0',
     'ALTER TABLE mt_crypto_chat ADD COLUMN kind VARCHAR(16) NOT NULL DEFAULT "text"',
     'ALTER TABLE mt_crypto_chat ADD COLUMN owner_email VARCHAR(190) NULL',
+    'ALTER TABLE mt_crypto_chat ADD COLUMN reply_to BIGINT NULL',
+    'ALTER TABLE mt_crypto_chat ADD COLUMN forwarded_from VARCHAR(80) NULL',
   ]) {
     try {
       await conn.execute(col);

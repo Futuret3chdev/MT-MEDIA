@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function RoomPlay({
   url,
@@ -16,13 +16,28 @@ export default function RoomPlay({
   onExit: () => void;
 }) {
   const [scores, setScores] = useState<{ username: string; score: number }[] | null>(null);
+  const recap = useRef(false);
   const src = `${url}${url.includes('?') ? '&' : '?'}room=${encodeURIComponent(room)}&from=chat`;
 
   const finish = async () => {
     const d = await fetch(`/api/scores?game_id=${encodeURIComponent(gameId)}&room=${encodeURIComponent(room)}`, {
       credentials: 'include',
     }).then((r) => r.json());
-    setScores(d.scores || []);
+    const list = (d.scores || []) as { username: string; score: number }[];
+    setScores(list);
+    if (list.length && !recap.current) {
+      recap.current = true;
+      await fetch('/api/chat', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room,
+          kind: 'match',
+          text: JSON.stringify({ game_id: gameId, title, scores: list }),
+        }),
+      }).catch(() => {});
+    }
   };
 
   useEffect(() => {

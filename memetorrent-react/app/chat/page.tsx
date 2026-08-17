@@ -9,6 +9,7 @@ import MtMiniChart from '@/components/chat/MtMiniChart';
 import RoomGame, { type GameState } from '@/components/chat/RoomGame';
 import CallDock, { type CallTarget } from '@/components/chat/CallDock';
 import RoomPlay from '@/components/chat/RoomPlay';
+import { getGame } from '@/lib/mt-catalog';
 
 type Msg = {
   id: number;
@@ -20,7 +21,18 @@ type Msg = {
   kind?: string;
   owner_email?: string;
   avatar_url?: string | null;
+  reply_to?: number | null;
+  forwarded_from?: string | null;
+  reply_username?: string | null;
+  reply_body?: string | null;
+  reply_kind?: string | null;
 };
+
+function userHue(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 33 + name.charCodeAt(i)) % 360;
+  return h;
+}
 type Chan = RoomExtra & { gate_note?: string | null };
 
 function UserTip({
@@ -563,6 +575,8 @@ function ChatInner() {
     { id: number; from_username: string; room: string; title: string; play: string | null; game_id?: string }[]
   >([]);
   const [playGame, setPlayGame] = useState<{ url: string; id: string; title: string } | null>(null);
+  const [replyTo, setReplyTo] = useState<Msg | null>(null);
+  const [fwd, setFwd] = useState<Msg | null>(null);
   const [picked, setPicked] = useState<{
     username: string;
     email: string;
@@ -726,7 +740,14 @@ function ChatInner() {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room, text, burn, no_forward: noFwd, persona }),
+      body: JSON.stringify({
+        room,
+        text,
+        burn,
+        no_forward: noFwd,
+        persona,
+        reply_to: replyTo?.id,
+      }),
     });
     const data = await res.json();
     if (!data.ok) {
@@ -734,6 +755,26 @@ function ChatInner() {
       return;
     }
     setText('');
+    setReplyTo(null);
+    load();
+  };
+
+  const forwardTo = async (target: string) => {
+    if (!fwd || fwd.no_forward) return;
+    await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        room: target,
+        text: fwd.body,
+        kind: fwd.kind === 'sticker' || fwd.kind === 'image' || fwd.kind === 'file' ? fwd.kind : 'text',
+        forwarded_from: fwd.username,
+      }),
+    });
+    setFwd(null);
+    setRoom(target);
+    setOpen(true);
     load();
   };
 
@@ -1265,16 +1306,21 @@ function ChatInner() {
                   .slice(0, i)
                   .some((p) => p.kind === 'score' && p.username === m.username && p.body === m.body);
               })
-              .map((m) => (
-              <div key={m.id} className={m.username === who || m.username.startsWith('0xStealth') ? 'text-right' : ''}>
-                <div className="text-[11px] text-emerald-400 inline-flex items-center gap-1.5">
+              .map((m, i, vis) => {
+              const mine = m.username === who || m.username.startsWith('0xStealth');
+              const hue = userHue(m.username);
+              const startSeg = i === 0 || vis[i - 1].username !== m.username;
+              return (
+              <div key={m.id} className={mine ? 'text-right' : ''}>
+                {startSeg && (
+                <div className="text-[11px] inline-flex items-center gap-1.5 mb-0.5" style={{ color: `hsl(${hue},70%,62%)` }}>
                   {m.avatar_url && (
                     <img src={m.avatar_url} alt="" className="w-5 h-5 rounded-md object-cover" />
                   )}
                   <UserTip
                     name={m.username}
                     me={who}
-                    alignRight={m.username === who || m.username.startsWith('0xStealth')}
+                    alignRight={mine}
                     isFriend={friends.some((f) => f.username === m.username)}
                     onAdded={() => {
                       fetch('/api/chat/friends', { credentials: 'include' })
@@ -1288,13 +1334,23 @@ function ChatInner() {
                   {m.burn_at ? ' · burns' : ''}{' '}
                   <span className="opacity-40">{new Date(m.created_at).toLocaleTimeString()}</span>
                 </div>
+                )}
                 <div
-                  className={`inline-block text-sm text-left max-w-[85%] rounded-2xl px-3 py-2 ${
-                    m.kind === 'event' || m.kind === 'trade'
-                      ? 'border border-emerald-400/40'
-                      : 'bg-white/5'
-                  }`}
+                  className="inline-block text-sm text-left max-w-[85%] rounded-2xl px-3 py-2 border"
+                  style={
+                    mine
+                      ? { background: 'rgba(16,185,129,0.14)', borderColor: 'rgba(52,211,153,0.35)' }
+                      : { background: `hsl(${hue},28%,14%)`, borderColor: `hsl(${hue},45%,32%)` }
+                  }
                 >
+                  {m.reply_username && (
+                    <div className="text-[11px] opacity-60 border-l-2 border-emerald-400/50 pl-2 mb-1 truncate">
+                      @{m.reply_username}: {m.reply_body}
+                    </div>
+                  )}
+                  {m.forwarded_from && (
+                    <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Forwarded from @{m.forwarded_from}</div>
+                  )}
                   {m.kind === 'asset' && (
                     <div className="text-[10px] uppercase tracking-wider opacity-50 mb-1">Token card</div>
                   )}
@@ -1327,6 +1383,29 @@ function ChatInner() {
                         </div>
                       );
                     })()
+                  ) : m.kind === 'match' ? (
+                    (() => {
+                      let rec: { title?: string; game_id?: string; scores?: { username: string; score: number }[] } = {};
+                      try {
+                        rec = JSON.parse(m.body);
+                      } catch {
+                        rec = {};
+                      }
+                      return (
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Match recap</div>
+                          <div className="text-sm font-medium mb-1">{rec.title || rec.game_id || 'Game'}</div>
+                          <ul className="text-xs space-y-0.5">
+                            {(rec.scores || []).map((s, n) => (
+                              <li key={n} className="flex justify-between gap-4">
+                                <span>@{s.username}</span>
+                                <span className="font-mono text-emerald-400">{s.score}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })()
                   ) : m.kind === 'friend' ? (
                     <div>
                       <div className="text-[10px] uppercase tracking-wider text-emerald-400 mb-1">Friend request</div>
@@ -1335,8 +1414,17 @@ function ChatInner() {
                   ) : (
                     renderBody(m.body)
                   )}
+                  <span className="flex gap-2 mt-1">
+                    <button type="button" className="text-[10px] text-emerald-400" onClick={() => setReplyTo(m)}>
+                      Reply
+                    </button>
+                    {!m.no_forward && (
+                      <button type="button" className="text-[10px] opacity-60" onClick={() => setFwd(m)}>
+                        Forward
+                      </button>
+                    )}
                   {email && m.owner_email === email && (
-                    <span className="flex gap-2 mt-1">
+                    <>
                       <button type="button" className="text-[10px] opacity-50" onClick={() => del(m.id)}>
                         Delete
                       </button>
@@ -1367,11 +1455,13 @@ function ChatInner() {
                             Save to vault
                           </button>
                         )}
-                    </span>
+                    </>
                   )}
+                  </span>
                 </div>
               </div>
-            ))}
+              );
+              })}
             {!msgs.length && (
               <div className="text-sm opacity-40">
                 {peer ? `Private chat with @${peer.username}. Only you two see this.` : 'No messages yet. Start the room.'}
@@ -1379,7 +1469,45 @@ function ChatInner() {
             )}
             <div ref={end} />
           </div>
+          {current?.game_id && (
+            <div className="px-3 py-2 border-t border-emerald-400/30 bg-emerald-400/10 flex flex-wrap items-center gap-2">
+              <span className="text-xs flex-1">
+                {getGame(current.game_id)?.name || current.game_id} is live in this room
+              </span>
+              <button
+                type="button"
+                className="text-xs font-semibold text-black bg-emerald-400 px-3 py-1.5 rounded-full"
+                onClick={() => {
+                  const g = getGame(current.game_id || '');
+                  if (g) setPlayGame({ url: g.play, id: g.id, title: g.name });
+                  else {
+                    const last = [...msgs].reverse().find((m) => m.kind === 'game');
+                    if (last) {
+                      try {
+                        const meta = JSON.parse(last.body);
+                        if (meta.play) setPlayGame({ url: meta.play, id: meta.id || current.game_id || 'tap', title: meta.title || 'Game' });
+                      } catch {
+                        /* table game */
+                      }
+                    }
+                  }
+                }}
+              >
+                Open game
+              </button>
+            </div>
+          )}
           <form onSubmit={send} className="p-3 border-t border-white/10 space-y-2">
+            {replyTo && (
+              <div className="flex items-center gap-2 text-[11px] opacity-80">
+                <span className="truncate flex-1">
+                  Replying to @{replyTo.username}: {replyTo.body.slice(0, 80)}
+                </span>
+                <button type="button" onClick={() => setReplyTo(null)}>
+                  Cancel
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               <select
                 value={burn}
@@ -1526,6 +1654,49 @@ function ChatInner() {
           </form>
         </section>
       </div>
+      {fwd && (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#12141c] p-4 space-y-2">
+            <div className="flex justify-between">
+              <div className="font-semibold text-sm">Forward</div>
+              <button type="button" className="text-xs opacity-60" onClick={() => setFwd(null)}>
+                Close
+              </button>
+            </div>
+            <p className="text-[11px] opacity-50 truncate">{fwd.body}</p>
+            {friends.map((f) => (
+              <button
+                key={f.friend_email}
+                type="button"
+                className="block w-full text-left text-sm text-emerald-400 py-1"
+                onClick={async () => {
+                  const d = await fetch('/api/chat/dm', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: f.username, email: f.friend_email }),
+                  }).then((r) => r.json());
+                  if (d.slug) await forwardTo(d.slug);
+                }}
+              >
+                @{f.username || f.friend_email}
+              </button>
+            ))}
+            {channels
+              .filter((c) => c.kind !== 'vault' && c.kind !== 'dm')
+              .map((c) => (
+                <button
+                  key={c.slug}
+                  type="button"
+                  className="block w-full text-left text-sm py-1 opacity-80"
+                  onClick={() => forwardTo(c.slug)}
+                >
+                  #{c.name}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
       {email && <CallDock me={email} room={room} start={callTo} />}
       {playGame && (
         <RoomPlay

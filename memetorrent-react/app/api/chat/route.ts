@@ -16,9 +16,11 @@ export async function GET(request: NextRequest) {
     await conn.execute('DELETE FROM mt_crypto_chat WHERE burn_at IS NOT NULL AND burn_at < NOW()');
     const [rows] = await conn.execute(
       `SELECT m.id, m.room, m.username, m.body, m.burn_at, m.no_forward, m.kind, m.owner_email, m.created_at,
-              u.avatar_url
+              m.reply_to, m.forwarded_from, u.avatar_url,
+              r.username AS reply_username, r.body AS reply_body, r.kind AS reply_kind
        FROM mt_crypto_chat m
        LEFT JOIN portal_users u ON u.email = m.owner_email
+       LEFT JOIN mt_crypto_chat r ON r.id = m.reply_to
        WHERE m.room = ?
        ORDER BY m.id DESC LIMIT 100`,
       [room]
@@ -61,6 +63,8 @@ export async function POST(request: NextRequest) {
     no_forward?: boolean;
     persona?: string;
     kind?: string;
+    reply_to?: number;
+    forwarded_from?: string;
   };
   try {
     body = await request.json();
@@ -104,6 +108,7 @@ export async function POST(request: NextRequest) {
         'game',
         'friend',
         'score',
+        'match',
       ].includes(kind)
     ) {
       kind = 'text';
@@ -111,12 +116,14 @@ export async function POST(request: NextRequest) {
     if (kind === 'text' && (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(text) || /^\$[A-Za-z0-9]+$/.test(text))) {
       kind = 'asset';
     }
+    const replyTo = Number(body.reply_to) || null;
+    const forwarded = String(body.forwarded_from || '').slice(0, 80) || null;
     await conn.execute(
-      `INSERT INTO mt_crypto_chat (room, username, body, burn_at, no_forward, kind, owner_email)
-       VALUES (?,?,?,${burn > 0 ? 'DATE_ADD(NOW(), INTERVAL ? SECOND)' : 'NULL'},?,?,?)`,
+      `INSERT INTO mt_crypto_chat (room, username, body, burn_at, no_forward, kind, owner_email, reply_to, forwarded_from)
+       VALUES (?,?,?,${burn > 0 ? 'DATE_ADD(NOW(), INTERVAL ? SECOND)' : 'NULL'},?,?,?,?,?)`,
       burn > 0
-        ? [room, username, text, burn, body.no_forward ? 1 : 0, kind, user.email]
-        : [room, username, text, body.no_forward ? 1 : 0, kind, user.email]
+        ? [room, username, text, burn, body.no_forward ? 1 : 0, kind, user.email, replyTo, forwarded]
+        : [room, username, text, body.no_forward ? 1 : 0, kind, user.email, replyTo, forwarded]
     );
     return Response.json({ ok: true });
   } catch (err) {
