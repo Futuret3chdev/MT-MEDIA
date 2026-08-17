@@ -124,6 +124,8 @@ export async function POST(request: NextRequest) {
         'friend',
         'score',
         'match',
+        'fun',
+        'react',
       ].includes(kind)
     ) {
       kind = 'text';

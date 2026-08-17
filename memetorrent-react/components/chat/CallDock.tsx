@@ -42,6 +42,8 @@ export default function CallDock({
   const [muted, setMuted] = useState(false);
   const [cam, setCam] = useState(true);
   const [err, setErr] = useState('');
+  const [full, setFull] = useState(false);
+  const [line, setLine] = useState('');
   const since = useRef(0);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localRef = useRef<HTMLVideoElement | null>(null);
@@ -159,7 +161,7 @@ export default function CallDock({
           payload = {};
         }
         if (s.kind === 'invite' && phase === 'idle') {
-          const age = Date.now() - new Date(s.created_at).getTime();
+          const age = Date.now() - new Date(s.created_at || 0).getTime();
           if (!s.from_email || age > 90_000) continue;
           peerRef.current = s.from_email;
           setPeerEmail(s.from_email);
@@ -223,34 +225,96 @@ export default function CallDock({
   const who = label(peerName) || label(peerEmail.split('@')[0]);
   if (phase === 'idle' || !who) return null;
 
+  const controls = (
+    <div className="flex flex-wrap gap-2 text-[11px]">
+      {phase === 'incoming' && (
+        <button type="button" className="px-2 py-1 rounded-lg bg-emerald-400 text-black" onClick={accept}>
+          Accept
+        </button>
+      )}
+      <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => setMuted((m) => !m)}>
+        {muted ? 'Unmute' : 'Mute'}
+      </button>
+      <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => setCam((c) => !c)}>
+        {cam ? 'Camera off' : 'Camera on'}
+      </button>
+      <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => setFull((v) => !v)}>
+        {full ? 'Exit full screen' : 'Full screen'}
+      </button>
+      <button type="button" className="px-2 py-1 rounded-lg border border-red-400/40 text-red-300" onClick={() => kill(true)}>
+        Hang up
+      </button>
+    </div>
+  );
+
+  const sendLine = async () => {
+    const t = line.trim();
+    if (!t) return;
+    setLine('');
+    await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, text: t }),
+    });
+  };
+
+  if (full) {
+    return (
+      <div className="fixed inset-0 z-[220] bg-black flex flex-col">
+        <div className="relative flex-1 min-h-0">
+          <video ref={remoteRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
+          <video
+            ref={localRef}
+            muted
+            autoPlay
+            playsInline
+            className="absolute bottom-24 right-4 w-28 h-36 rounded-xl bg-black object-cover border border-white/20"
+          />
+          <div className="absolute top-3 left-3 text-sm text-emerald-400">
+            {phase === 'outgoing' && `Calling ${who}…`}
+            {phase === 'incoming' && `${who} is calling`}
+            {phase === 'live' && `Live with ${who} — audio on, type below`}
+          </div>
+        </div>
+        <div className="p-3 bg-[#12141c] space-y-2">
+          {err && <div className="text-[11px] text-red-300">{err}</div>}
+          {controls}
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendLine();
+            }}
+          >
+            <input
+              value={line}
+              onChange={(e) => setLine(e.target.value)}
+              placeholder="Text while you talk"
+              className="flex-1 px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-sm"
+            />
+            <button type="submit" className="text-sm text-black bg-emerald-400 px-3 rounded-xl font-semibold">
+              Send
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed bottom-4 right-4 z-[210] w-72 rounded-2xl border border-white/15 bg-[#12141c] p-3 shadow-2xl">
-      <div className="text-xs text-emerald-400 mb-2">
-        {phase === 'outgoing' && `Calling ${who}…`}
-        {phase === 'incoming' && `${who} is calling`}
-        {phase === 'live' && `Live with ${who}`}
+    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[210] w-[min(36rem,calc(100vw-16px))] rounded-2xl border border-white/15 bg-[#12141c]/95 shadow-2xl p-2">
+      <div className="flex items-center gap-2">
+        <video ref={remoteRef} autoPlay playsInline className="w-14 h-10 rounded-lg bg-black object-cover" />
+        <video ref={localRef} muted autoPlay playsInline className="w-14 h-10 rounded-lg bg-black object-cover" />
+        <div className="text-xs text-emerald-400 flex-1 truncate">
+          {phase === 'outgoing' && `Calling ${who}…`}
+          {phase === 'incoming' && `${who} is calling`}
+          {phase === 'live' && `Live ${who} · type in chat`}
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-2 mb-2">
-        <video ref={localRef} muted autoPlay playsInline className="w-full h-20 rounded-lg bg-black object-cover" />
-        <video ref={remoteRef} autoPlay playsInline className="w-full h-20 rounded-lg bg-black object-cover" />
-      </div>
-      {err && <div className="text-[11px] text-red-300 mb-2">{err}</div>}
-      <div className="flex flex-wrap gap-2 text-[11px]">
-        {phase === 'incoming' && (
-          <button type="button" className="px-2 py-1 rounded-lg bg-emerald-400 text-black" onClick={accept}>
-            Accept
-          </button>
-        )}
-        <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => setMuted((m) => !m)}>
-          {muted ? 'Unmute' : 'Mute'}
-        </button>
-        <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => setCam((c) => !c)}>
-          {cam ? 'Camera off' : 'Camera on'}
-        </button>
-        <button type="button" className="px-2 py-1 rounded-lg border border-red-400/40 text-red-300" onClick={() => kill(true)}>
-          Hang up
-        </button>
-      </div>
+      {err && <div className="text-[11px] text-red-300 mt-1">{err}</div>}
+      <div className="mt-2">{controls}</div>
     </div>
   );
 }

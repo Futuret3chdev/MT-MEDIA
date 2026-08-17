@@ -10,6 +10,7 @@ import CallDock, { type CallTarget } from '@/components/chat/CallDock';
 import RoomPlay from '@/components/chat/RoomPlay';
 import GameDock, { type RoomSession } from '@/components/chat/GameDock';
 import TablePlay from '@/components/chat/TablePlay';
+import FunSky, { type Burst } from '@/components/chat/FunSky';
 
 type Msg = {
   id: number;
@@ -27,6 +28,26 @@ type Msg = {
   reply_body?: string | null;
   reply_kind?: string | null;
 };
+
+function TranslateLine({ text, lang }: { text: string; lang: string }) {
+  const [out, setOut] = useState('');
+  useEffect(() => {
+    if (!lang || !text.trim()) {
+      setOut('');
+      return;
+    }
+    fetch('/api/chat/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text.slice(0, 400), to: lang }),
+    })
+      .then((r) => r.json())
+      .then((d) => setOut(d.text && d.text !== text ? d.text : ''))
+      .catch(() => setOut(''));
+  }, [text, lang]);
+  if (!out) return null;
+  return <div className="text-[11px] opacity-70 mt-1 italic">{out}</div>;
+}
 
 function handle(name?: string | null) {
   const n = String(name || '').trim().replace(/^@+/, '');
@@ -589,6 +610,9 @@ function ChatInner() {
   >([]);
   const [playGame, setPlayGame] = useState<{ url: string; id: string; title: string } | null>(null);
   const [tableGame, setTableGame] = useState<string | null>(null);
+  const [lang, setLang] = useState('');
+  const [funOn, setFunOn] = useState(false);
+  const [burst, setBurst] = useState<Burst | null>(null);
   const [sessions, setSessions] = useState<RoomSession[]>([]);
   const [replyTo, setReplyTo] = useState<Msg | null>(null);
   const [fwd, setFwd] = useState<Msg | null>(null);
@@ -598,7 +622,9 @@ function ChatInner() {
     friend?: boolean;
   } | null>(null);
   const end = useRef<HTMLDivElement>(null);
-  const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙'];
+  const STICKERS = ['🚀', '💎', '🔥', '📈', '📉', '🐋', '✅', '❌', '🫡', '🧠', '🎮', '🪙', '😎', '🥰', '💀', '🤡', '🍕', '🏆'];
+  const THROWS = ['🎉', '❤️', '🔥', '⭐', '💩', '🌈', '😂', '💎'];
+  const REACTS = ['❤️', '😂', '🔥', '👍', '🎉', '💯'];
 
   const listed = channels.find((c) => c.slug === room);
   const current =
@@ -752,6 +778,17 @@ function ChatInner() {
     end.current?.scrollIntoView({ behavior: 'smooth' });
   }, [msgs.length]);
 
+  useEffect(() => {
+    const last = [...msgs].reverse().find((m) => m.kind === 'fun');
+    if (!last) return;
+    try {
+      const p = JSON.parse(last.body);
+      if (p.t === 'throw' && p.e) setBurst({ id: last.id, e: p.e });
+    } catch {
+      /* ignore */
+    }
+  }, [msgs]);
+
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr('');
@@ -883,6 +920,27 @@ function ChatInner() {
       setOpen(true);
     }
     window.dispatchEvent(new Event('mt-friends'));
+  };
+
+  const sendFun = async (e: string) => {
+    setBurst({ id: Date.now(), e });
+    await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, text: JSON.stringify({ t: 'throw', e }), kind: 'fun', persona }),
+    });
+    load();
+  };
+
+  const sendReact = async (id: number, e: string) => {
+    await fetch('/api/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, text: JSON.stringify({ t: 'react', id, e }), kind: 'react', persona }),
+    });
+    load();
   };
 
   const sendSticker = async (s: string) => {
@@ -1303,6 +1361,7 @@ function ChatInner() {
           )}
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
             {msgs
+              .filter((m) => m.kind !== 'fun' && m.kind !== 'react')
               .filter((m, i, all) => {
                 if (m.kind !== 'score') return true;
                 return !all
@@ -1415,7 +1474,38 @@ function ChatInner() {
                       <div className="text-sm">{m.body}</div>
                     </div>
                   ) : (
-                    renderBody(m.body)
+                    <>
+                      {renderBody(m.body)}
+                      {lang && m.kind !== 'sticker' && <TranslateLine text={m.body} lang={lang} />}
+                    </>
+                  )}
+                  <span className="flex flex-wrap gap-1 mt-1">
+                    {REACTS.map((e) => (
+                      <button key={e} type="button" className="text-[12px] opacity-70" onClick={() => sendReact(m.id, e)}>
+                        {e}
+                      </button>
+                    ))}
+                  </span>
+                  {!!msgs.filter((x) => x.kind === 'react').length && (
+                    <div className="text-[12px] mt-1">
+                      {REACTS.map((e) => {
+                        const n = msgs.filter((x) => {
+                          if (x.kind !== 'react') return false;
+                          try {
+                            const p = JSON.parse(x.body);
+                            return p.t === 'react' && p.id === m.id && p.e === e;
+                          } catch {
+                            return false;
+                          }
+                        }).length;
+                        return n ? (
+                          <span key={e} className="mr-1">
+                            {e}
+                            {n}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
                   )}
                   <span className="flex gap-2 mt-1">
                     <button type="button" className="text-[10px] text-emerald-400" onClick={() => setReplyTo(m)}>
@@ -1516,6 +1606,26 @@ function ChatInner() {
             )}
             <div className="flex flex-wrap gap-2">
               <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value)}
+                className="text-xs px-2 py-2 rounded-xl bg-black/40 border border-white/15"
+                title="Live translate"
+              >
+                <option value="">Translate off</option>
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="zh-CN">中文</option>
+                <option value="hi">हिन्दी</option>
+                <option value="ar">العربية</option>
+                <option value="pt">Português</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="ja">日本語</option>
+                <option value="ko">한국어</option>
+                <option value="id">Indonesia</option>
+                <option value="tr">Türkçe</option>
+              </select>
+              <select
                 value={burn}
                 onChange={(e) => setBurn(Number(e.target.value))}
                 className="text-xs px-2 py-2 rounded-xl bg-black/40 border border-white/15"
@@ -1536,6 +1646,21 @@ function ChatInner() {
                 {STICKERS.map((s) => (
                   <button key={s} type="button" onClick={() => sendSticker(s)}>
                     {s}
+                  </button>
+                ))}
+              </div>
+            )}
+            {funOn && (
+              <div className="flex flex-wrap gap-2">
+                {THROWS.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    className="text-2xl"
+                    onClick={() => sendFun(e)}
+                    title="Throw"
+                  >
+                    {e}
                   </button>
                 ))}
               </div>
@@ -1567,6 +1692,9 @@ function ChatInner() {
               />
               <button type="button" className="text-xs px-3 py-2 rounded-xl border border-white/15" onClick={() => setStickers((v) => !v)}>
                 Stickers
+              </button>
+              <button type="button" className="text-xs px-3 py-2 rounded-xl border border-white/15" onClick={() => setFunOn((v) => !v)}>
+                Fun
               </button>
               <button type="button" className="text-xs px-3 py-2 rounded-xl border border-white/15" onClick={() => setTradeOn((v) => !v)}>
                 Trade
@@ -1703,6 +1831,7 @@ function ChatInner() {
           </div>
         </div>
       )}
+      <FunSky burst={burst} />
       {email && <CallDock me={email} room={room} start={callTo} />}
       {tableGame && email && (
         <TablePlay
