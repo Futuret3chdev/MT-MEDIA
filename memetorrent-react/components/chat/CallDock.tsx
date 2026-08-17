@@ -202,9 +202,9 @@ export default function CallDock({
   return (
     <div className="fixed bottom-4 right-4 z-[210] w-72 rounded-2xl border border-white/15 bg-[#12141c] p-3 shadow-2xl">
       <div className="text-xs text-emerald-400 mb-2">
-        {phase === 'outgoing' && `Calling @${peerName}…`}
-        {phase === 'incoming' && `@${peerName} is calling`}
-        {phase === 'live' && `Live with @${peerName}`}
+        {phase === 'outgoing' && `Calling ${peerName && peerName !== '@' ? `@${peerName.replace(/^@+/, '')}` : 'them'}…`}
+        {phase === 'incoming' && `${peerName && peerName !== '@' ? `@${peerName.replace(/^@+/, '')}` : 'Someone'} is calling`}
+        {phase === 'live' && `Live with ${peerName && peerName !== '@' ? `@${peerName.replace(/^@+/, '')}` : 'them'}`}
       </div>
       <div className="grid grid-cols-2 gap-2 mb-2">
         <video ref={localRef} muted autoPlay playsInline className="w-full h-20 rounded-lg bg-black object-cover" />

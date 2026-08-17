@@ -28,6 +28,12 @@ type Msg = {
   reply_kind?: string | null;
 };
 
+function handle(name?: string | null) {
+  const n = String(name || '').trim().replace(/^@+/, '');
+  if (!n || n === '@') return '';
+  return `@${n}`;
+}
+
 function userHue(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 33 + name.charCodeAt(i)) % 360;
@@ -830,7 +836,8 @@ function ChatInner() {
       setErr(d.error || 'Could not open chat');
       return;
     }
-    setPeer(d.with);
+    if (d.with?.username && d.with.username !== '@') setPeer(d.with);
+    else if (d.with?.email) setPeer({ username: d.with.email.split('@')[0], email: d.with.email });
     setRoom(d.slug);
     setOpen(true);
     const url = new URL(window.location.href);
@@ -1141,7 +1148,12 @@ function ChatInner() {
             </button>
             <div className="flex-1 min-w-0">
               <div className="font-semibold truncate">
-                {peer ? `@${peer.username}` : `#${current?.name || room}`}
+                {handle(peer?.username) ||
+                  (current?.name && current.name.replace(/^@+/, '')
+                    ? current.name.startsWith('#')
+                      ? current.name
+                      : handle(current.name) || `#${current.name.replace(/^@+/, '')}`
+                    : `#${room}`)}
               </div>
               <div className="text-xs opacity-50 capitalize">
                 {peer ? 'Direct message' : current?.kind || 'public'}
@@ -1185,14 +1197,16 @@ function ChatInner() {
               className="px-3 py-2 border-b border-emerald-400/30 bg-emerald-400/10 flex flex-wrap items-center gap-2 text-xs"
             >
               <span className="flex-1">
-                @{inv.from_username} wants to play <span className="text-emerald-400">{inv.title}</span>
+                {handle(inv.from_username) || 'Someone'} wants to play <span className="text-emerald-400">{inv.title}</span>
               </span>
               <button
                 type="button"
                 className="text-emerald-400 font-semibold"
                 onClick={() => {
                   setRoom(inv.room);
-                  setPeer({ username: inv.from_username, email: '' });
+                  if (inv.from_username && inv.from_username !== '@') {
+                    setPeer({ username: inv.from_username, email: '' });
+                  }
                   setOpen(true);
                   fetch('/api/chat/game', {
                     method: 'POST',
@@ -1453,7 +1467,9 @@ function ChatInner() {
               })}
             {!msgs.length && (
               <div className="text-sm opacity-40">
-                {peer ? `Private chat with @${peer.username}. Only you two see this.` : 'No messages yet. Start the room.'}
+                {handle(peer?.username)
+                  ? `Private chat with ${handle(peer?.username)}. Only you two see this.`
+                  : 'No messages yet. Start the room.'}
               </div>
             )}
             <div ref={end} />
@@ -1542,7 +1558,7 @@ function ChatInner() {
                 placeholder={
                   authed
                     ? peer
-                      ? `Message @${peer.username}`
+                      ? `Message ${handle(peer.username) || 'them'}`
                       : `Message #${current?.name || room}`
                     : 'Sign in to send'
                 }
@@ -1717,7 +1733,7 @@ function ChatInner() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] uppercase tracking-wider opacity-40">Selected</div>
-                <div className="font-semibold">@{picked.username}</div>
+                <div className="font-semibold">{handle(picked.username) || picked.email}</div>
               </div>
               <button type="button" className="text-xs opacity-60" onClick={() => setPicked(null)}>
                 Close
