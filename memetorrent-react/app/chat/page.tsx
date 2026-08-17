@@ -1257,16 +1257,25 @@ function ChatInner() {
             canEdit={canEditRoom || !current?.owner_email || !!picked || !!peer}
             inviteTo={picked || peer}
             onPlay={setPlayGame}
-            onOpened={(slug, withUser) => {
+            onOpened={(slug, withUser, startedId) => {
               setRoom(slug);
               if (withUser) setPeer({ username: withUser.username, email: withUser.email });
+              setExtra((e) => ({
+                ...(e || { name: slug, kind: 'dm' }),
+                slug,
+                kind: 'dm',
+                game_id: startedId || e?.game_id,
+              }));
               setPicked(null);
               setOpen(true);
             }}
             onChange={(game_id, state) => {
-              setExtra((e) =>
-                e ? { ...e, game_id, game_state: state ? JSON.stringify(state) : null } : e
-              );
+              setExtra((e) => ({
+                ...(e || { slug: room, name: room, kind: 'public' }),
+                slug: e?.slug === room ? room : e?.slug || room,
+                game_id,
+                game_state: state ? JSON.stringify(state) : null,
+              }));
               load();
             }}
           />
@@ -1469,34 +1478,35 @@ function ChatInner() {
             )}
             <div ref={end} />
           </div>
-          {current?.game_id && (
-            <div className="px-3 py-2 border-t border-emerald-400/30 bg-emerald-400/10 flex flex-wrap items-center gap-2">
-              <span className="text-xs flex-1">
-                {getGame(current.game_id)?.name || current.game_id} is live in this room
-              </span>
-              <button
-                type="button"
-                className="text-xs font-semibold text-black bg-emerald-400 px-3 py-1.5 rounded-full"
-                onClick={() => {
-                  const g = getGame(current.game_id || '');
-                  if (g) setPlayGame({ url: g.play, id: g.id, title: g.name });
-                  else {
-                    const last = [...msgs].reverse().find((m) => m.kind === 'game');
-                    if (last) {
-                      try {
-                        const meta = JSON.parse(last.body);
-                        if (meta.play) setPlayGame({ url: meta.play, id: meta.id || current.game_id || 'tap', title: meta.title || 'Game' });
-                      } catch {
-                        /* table game */
-                      }
-                    }
-                  }
-                }}
-              >
-                Open game
-              </button>
-            </div>
-          )}
+          {(() => {
+            const cat = current?.game_id ? getGame(current.game_id) : null;
+            const last = [...msgs].reverse().find((m) => m.kind === 'game');
+            let fromMsg: { url: string; id: string; title: string } | null = null;
+            if (last) {
+              try {
+                const meta = JSON.parse(last.body);
+                if (meta.play) fromMsg = { url: meta.play, id: meta.id || 'tap', title: meta.title || 'Game' };
+              } catch {
+                fromMsg = null;
+              }
+            }
+            const live = cat
+              ? { url: cat.play, id: cat.id, title: cat.name }
+              : fromMsg;
+            if (!live) return null;
+            return (
+              <div className="px-3 py-2 border-t border-emerald-400/30 bg-emerald-400/10 flex flex-wrap items-center gap-2">
+                <span className="text-xs flex-1">{live.title} is live — tap Open</span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-black bg-emerald-400 px-3 py-1.5 rounded-full"
+                  onClick={() => setPlayGame(live)}
+                >
+                  Open game
+                </button>
+              </div>
+            );
+          })()}
           <form onSubmit={send} className="p-3 border-t border-white/10 space-y-2">
             {replyTo && (
               <div className="flex items-center gap-2 text-[11px] opacity-80">
@@ -1696,6 +1706,34 @@ function ChatInner() {
               ))}
           </div>
         </div>
+      )}
+      {!playGame && (current?.game_id || msgs.some((m) => m.kind === 'game')) && (
+        <button
+          type="button"
+          className="fixed bottom-6 right-4 z-[190] font-semibold text-black bg-emerald-400 px-4 py-2.5 rounded-full text-sm shadow-xl"
+          onClick={() => {
+            const cat = current?.game_id ? getGame(current.game_id) : null;
+            if (cat) {
+              setPlayGame({ url: cat.play, id: cat.id, title: cat.name });
+              return;
+            }
+            const last = [...msgs].reverse().find((m) => m.kind === 'game');
+            if (last) {
+              try {
+                const meta = JSON.parse(last.body);
+                if (meta.play) {
+                  setPlayGame({ url: meta.play, id: meta.id || 'tap', title: meta.title || 'Game' });
+                  return;
+                }
+              } catch {
+                /* ignore */
+              }
+            }
+            setPlayGame({ url: '/games/unix/tap/index.html', id: 'tap', title: 'Tap Tap' });
+          }}
+        >
+          Open game
+        </button>
       )}
       {email && <CallDock me={email} room={room} start={callTo} />}
       {playGame && (

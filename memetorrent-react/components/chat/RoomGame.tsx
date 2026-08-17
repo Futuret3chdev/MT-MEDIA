@@ -41,7 +41,7 @@ export default function RoomGame({
   canEdit: boolean;
   inviteTo?: { username: string; email: string } | null;
   onChange: (game_id: string | null, state: GameState | null) => void;
-  onOpened?: (slug: string, withUser?: { username: string; email: string }) => void;
+  onOpened?: (slug: string, withUser?: { username: string; email: string }, gameId?: string | null) => void;
   onPlay?: (play: { url: string; id: string; title: string }) => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -65,8 +65,8 @@ export default function RoomGame({
       if (d.ok) {
         onChange(d.game_id || null, d.state || null);
         if (action === 'start') setOpenPick(false);
-        if (d.slug && d.with) onOpened?.(d.slug, d.with);
-        else if (d.slug) onOpened?.(d.slug);
+        if (d.slug && d.with) onOpened?.(d.slug, d.with, d.game_id);
+        else if (d.slug) onOpened?.(d.slug, undefined, d.game_id);
       }
     } finally {
       setBusy(false);

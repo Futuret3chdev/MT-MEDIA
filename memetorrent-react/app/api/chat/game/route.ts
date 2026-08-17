@@ -64,14 +64,52 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const me = await userBySession(await readSessionToken());
   if (!me) return Response.json({ ok: false, error: 'Sign in' }, { status: 401 });
-  let body: { room?: string; action?: string; kind?: string; cell?: number; pick?: string; to?: string; id?: number } =
-    {};
+  let body: {
+    room?: string;
+    action?: string;
+    kind?: string;
+    cell?: number;
+    pick?: string;
+    to?: string;
+    id?: number;
+    title?: string;
+    scores?: { username: string; score: number }[];
+  } = {};
   try {
     body = await request.json();
   } catch {
     body = {};
   }
   const action = String(body.action || '');
+  if (action === 'recap') {
+    const conn = await getUserDb();
+    try {
+      await ensureChat(conn);
+      const room = String(body.room || '').slice(0, 48);
+      const title = String(body.title || body.kind || 'Game');
+      const scores = Array.isArray(body.scores) ? body.scores : [];
+      const payload = JSON.stringify({
+        game_id: String(body.kind || 'game'),
+        title,
+        scores,
+      }).slice(0, 800);
+      const [dup] = await conn.execute(
+        `SELECT id FROM mt_crypto_chat
+         WHERE room = ? AND kind = 'match' AND created_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+         LIMIT 1`,
+        [room]
+      );
+      if (!(dup as object[]).length) {
+        await conn.execute(
+          'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
+          [room, me.username, payload, 'match', me.email]
+        );
+      }
+      return Response.json({ ok: true });
+    } finally {
+      await conn.end();
+    }
+  }
   if (action === 'seen') {
     const conn = await getUserDb();
     try {
@@ -173,6 +211,14 @@ export async function POST(request: NextRequest) {
           'INSERT INTO mt_chat_game_invites (to_email, from_email, from_username, room, game_id, title, play) VALUES (?,?,?,?,?,?,?)',
           [toEmail, me.email, me.username, room, gameId, label, play || null]
         );
+        await addNotice(conn, {
+          to_email: toEmail,
+          kind: 'game_invite',
+          title: `@${me.username} wants to play ${label}`,
+          href: `/chat?room=${encodeURIComponent(room)}`,
+          from_email: me.email,
+          from_username: me.username,
+        });
       }
       return Response.json({
         ok: true,

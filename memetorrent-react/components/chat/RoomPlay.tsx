@@ -20,22 +20,30 @@ export default function RoomPlay({
   const src = `${url}${url.includes('?') ? '&' : '?'}room=${encodeURIComponent(room)}&from=chat`;
 
   const finish = async () => {
-    const d = await fetch(`/api/scores?game_id=${encodeURIComponent(gameId)}&room=${encodeURIComponent(room)}`, {
-      credentials: 'include',
-    }).then((r) => r.json());
-    const list = (d.scores || []) as { username: string; score: number }[];
+    let list: { username: string; score: number }[] = [];
+    try {
+      const d = await fetch(
+        `/api/scores?game_id=${encodeURIComponent(gameId)}&room=${encodeURIComponent(room)}`,
+        { credentials: 'include' }
+      ).then((r) => r.json());
+      list = d.scores || [];
+      if (!list.length) {
+        const all = await fetch(`/api/scores?game_id=${encodeURIComponent(gameId)}`, { credentials: 'include' }).then(
+          (r) => r.json()
+        );
+        list = (all.scores || []).slice(0, 6);
+      }
+    } catch {
+      list = [];
+    }
     setScores(list);
-    if (list.length && !recap.current) {
+    if (!recap.current) {
       recap.current = true;
-      await fetch('/api/chat', {
+      await fetch('/api/chat/game', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          room,
-          kind: 'match',
-          text: JSON.stringify({ game_id: gameId, title, scores: list }),
-        }),
+        body: JSON.stringify({ action: 'recap', room, kind: gameId, title, scores: list }),
       }).catch(() => {});
     }
   };
@@ -46,7 +54,7 @@ export default function RoomPlay({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [gameId, room]);
+  }, [gameId, room, title]);
 
   return (
     <div className="fixed inset-0 z-[260] bg-black flex flex-col">
@@ -62,10 +70,10 @@ export default function RoomPlay({
       </div>
       {scores ? (
         <div className="flex-1 overflow-y-auto p-6 max-w-md mx-auto w-full">
-          <h2 className="text-lg font-semibold mb-1">Scores</h2>
-          <p className="text-xs opacity-50 mb-4">Yours and theirs from this room. Also on Portal → Scores.</p>
+          <h2 className="text-lg font-semibold mb-1">Match recap</h2>
+          <p className="text-xs opacity-50 mb-4">Both scores. This is also posted in the thread.</p>
           {!scores.length ? (
-            <p className="text-sm opacity-50">No scores posted yet. Finish a round, then Exit again.</p>
+            <p className="text-sm opacity-50">No scores this round. Back to chat anyway.</p>
           ) : (
             <ul className="space-y-2 text-sm">
               {scores.map((s, i) => (
