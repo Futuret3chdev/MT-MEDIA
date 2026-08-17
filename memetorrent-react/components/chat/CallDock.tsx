@@ -27,7 +27,7 @@ function label(name?: string | null) {
   return `@${n}`;
 }
 
-export type CallView = 'dock' | 'split' | 'overlay';
+export type CallView = 'dock' | 'overlay';
 
 export default function CallDock({
   me,
@@ -81,7 +81,8 @@ export default function CallDock({
     setPeerEmail('');
     setPeerName('');
     setErr('');
-  }, [room]);
+    onView('dock');
+  }, [room, onView]);
 
   const attach = (pc: RTCPeerConnection) => {
     pc.onicecandidate = (e) => {
@@ -248,22 +249,10 @@ export default function CallDock({
       <button
         type="button"
         className={`px-2 py-1 rounded-lg border ${view === 'overlay' ? 'border-emerald-400 text-emerald-400' : 'border-white/15'}`}
-        onClick={() => onView('overlay')}
+        onClick={() => onView(view === 'overlay' ? 'dock' : 'overlay')}
       >
-        Full + chat
+        {view === 'overlay' ? 'Back to chat' : 'Full screen'}
       </button>
-      <button
-        type="button"
-        className={`px-2 py-1 rounded-lg border ${view === 'split' ? 'border-emerald-400 text-emerald-400' : 'border-white/15'}`}
-        onClick={() => onView('split')}
-      >
-        Half / half
-      </button>
-      {view !== 'dock' && (
-        <button type="button" className="px-2 py-1 rounded-lg border border-white/15" onClick={() => onView('dock')}>
-          Dock
-        </button>
-      )}
       <button type="button" className="px-2 py-1 rounded-lg border border-red-400/40 text-red-300" onClick={() => kill(true)}>
         Hang up
       </button>
@@ -307,14 +296,14 @@ export default function CallDock({
           </span>
           {controls}
         </div>
-        <div className="absolute inset-x-0 bottom-0 max-h-[46dvh] flex flex-col bg-gradient-to-t from-black via-black/80 to-transparent pt-10">
-          <div className="overflow-y-auto px-3 pb-2 text-xs space-y-1 max-h-[28dvh]">
+        <div className="absolute inset-x-0 bottom-0 flex flex-col bg-gradient-to-t from-black/90 to-transparent pt-8">
+          <div className="px-3 pb-1 text-xs space-y-0.5 max-h-[7.5rem] overflow-y-auto">
             {(recent || [])
               .filter((m) => m.kind !== 'fun' && m.kind !== 'react')
-              .slice(-12)
+              .slice(-4)
               .map((m, i) => (
-                <div key={i} className="text-white/90">
-                  <span className="text-emerald-400">{m.username}</span> {m.body.slice(0, 160)}
+                <div key={i} className="text-white/90 truncate">
+                  <span className="text-emerald-400">{m.username}</span> {m.body.slice(0, 120)}
                 </div>
               ))}
           </div>
@@ -340,31 +329,19 @@ export default function CallDock({
     );
   }
 
-  if (view === 'split') {
-    return (
-      <div className="relative h-[40dvh] max-h-[40dvh] min-h-[140px] shrink-0 bg-black overflow-hidden">
-        {videosFill}
-        <div className="absolute top-2 left-2 right-2 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-emerald-400">Live {who}</span>
-          {controls}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="shrink-0 border-t border-white/10 bg-[#12141c] p-2">
+    <div className="shrink-0 border-t border-white/10 bg-[#12141c] px-2 py-1.5">
       <div className="flex items-center gap-2">
-        <video ref={remoteRef} autoPlay playsInline className="w-16 h-12 rounded-lg bg-black object-cover" />
-        <video ref={localRef} muted autoPlay playsInline className="w-16 h-12 rounded-lg bg-black object-cover" />
+        <video ref={remoteRef} autoPlay playsInline className="w-12 h-9 rounded-md bg-black object-cover" />
+        <video ref={localRef} muted autoPlay playsInline className="w-12 h-9 rounded-md bg-black object-cover" />
         <div className="text-xs text-emerald-400 flex-1 truncate">
           {phase === 'outgoing' && `Calling ${who}…`}
           {phase === 'incoming' && `${who} is calling`}
           {phase === 'live' && `Live ${who}`}
         </div>
+        {controls}
       </div>
       {err && <div className="text-[11px] text-red-300 mt-1">{err}</div>}
-      <div className="mt-2">{controls}</div>
     </div>
   );
 }

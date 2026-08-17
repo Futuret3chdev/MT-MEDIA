@@ -1227,7 +1227,7 @@ function ChatInner() {
             </div>
           </header>
           {email && (
-            <div className={callView === 'split' ? 'order-2' : callView === 'overlay' ? '' : 'order-8'}>
+            <div className={callView === 'overlay' ? '' : 'order-8'}>
               <CallDock
                 me={email}
                 room={room}
