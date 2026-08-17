@@ -36,6 +36,7 @@ export default function TablePlay({
 }) {
   const [state, setState] = useState<State>(null);
   const [err, setErr] = useState('');
+  const [saved, setSaved] = useState<{ username: string; score: number }[] | null>(null);
 
   const load = () => {
     fetch(`/api/chat?room=${encodeURIComponent(room)}`, { credentials: 'include' })
@@ -80,7 +81,16 @@ export default function TablePlay({
             type="button"
             className="text-xs font-semibold text-black bg-emerald-400 px-3 py-1.5 rounded-full"
             onClick={async () => {
-              await act('finish');
+              const d = await fetch('/api/chat/game', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ room, action: 'finish' }),
+              }).then((r) => r.json());
+              if (d.ok && Array.isArray(d.scores) && d.scores.length) {
+                setSaved(d.scores);
+                return;
+              }
               onExit();
             }}
           >
@@ -88,8 +98,24 @@ export default function TablePlay({
           </button>
         </div>
         {err && <div className="text-xs text-red-300">{err}</div>}
+        {saved && (
+          <div>
+            <div className="text-xs uppercase tracking-wider text-emerald-400 mb-2">Saved to group scores</div>
+            <ul className="text-sm space-y-1 mb-3">
+              {saved.map((s, i) => (
+                <li key={i} className="flex justify-between">
+                  <span>@{s.username}</span>
+                  <span className="font-mono text-emerald-400">{s.score}</span>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="text-sm text-emerald-400" onClick={onExit}>
+              Back to chat
+            </button>
+          </div>
+        )}
 
-        {state?.kind === 'ttt' && (
+        {!saved && state?.kind === 'ttt' && (
           <div>
             <div className="text-[11px] opacity-60 mb-2">
               {!state.o
@@ -128,7 +154,7 @@ export default function TablePlay({
           </div>
         )}
 
-        {state?.kind === 'rps' && (
+        {!saved && state?.kind === 'rps' && (
           <div>
             <div className="text-sm font-mono text-emerald-400 mb-1">
               {state.scoreA} – {state.scoreB}
@@ -162,7 +188,7 @@ export default function TablePlay({
           </div>
         )}
 
-        {!state && <p className="text-sm opacity-50">Loading the table…</p>}
+        {!saved && !state && <p className="text-sm opacity-50">Loading the table…</p>}
       </div>
     </div>
   );

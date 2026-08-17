@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CATALOG, getGame } from '@/lib/mt-catalog';
+import GameScores from '@/components/chat/GameScores';
 
 export type RoomSession = {
   id: number;
@@ -34,6 +35,7 @@ export default function GameDock({
 }) {
   const [pick, setPick] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [scoresOpen, setScoresOpen] = useState(false);
 
   const start = async (kind: string) => {
     setBusy(true);
@@ -97,6 +99,13 @@ export default function GameDock({
   return (
     <div className="px-3 py-2 border-t border-emerald-400/25 bg-black/70">
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <button
+          type="button"
+          onClick={() => setScoresOpen(true)}
+          className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl border border-white/15"
+        >
+          Scores
+        </button>
         {canAdd && (
           <button
             type="button"
@@ -130,6 +139,7 @@ export default function GameDock({
           <span className="text-[11px] opacity-40">Games sit here. Add one — nobody scrolls the thread.</span>
         )}
       </div>
+      {scoresOpen && <GameScores room={room} onClose={() => setScoresOpen(false)} />}
       {pick && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 max-h-40 overflow-y-auto">
           <button

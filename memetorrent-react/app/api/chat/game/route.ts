@@ -49,6 +49,31 @@ export async function GET(request: NextRequest) {
   const conn = await getUserDb();
   try {
     await ensureChat(conn);
+    if (room && request.nextUrl.searchParams.get('archive') === '1') {
+      const [matches] = await conn.execute(
+        `SELECT id, room, game_id, title, scores_json, created_at
+         FROM mt_chat_matches
+         WHERE room = ?
+         ORDER BY id DESC
+         LIMIT 80`,
+        [room]
+      );
+      const groups: Record<
+        string,
+        { game_id: string; title: string; matches: { id: number; scores: { username: string; score: number }[]; created_at: string }[] }
+      > = {};
+      for (const m of matches as { id: number; game_id: string; title: string; scores_json: string; created_at: string }[]) {
+        let scores: { username: string; score: number }[] = [];
+        try {
+          scores = JSON.parse(m.scores_json);
+        } catch {
+          scores = [];
+        }
+        if (!groups[m.game_id]) groups[m.game_id] = { game_id: m.game_id, title: m.title, matches: [] };
+        groups[m.game_id].matches.push({ id: m.id, scores, created_at: m.created_at });
+      }
+      return Response.json({ ok: true, archive: Object.values(groups) });
+    }
     if (room) {
       const [sessions] = await conn.execute(
         `SELECT id, room, game_id, title, play, host_email, host_username, status, created_at
@@ -156,17 +181,21 @@ export async function POST(request: NextRequest) {
         title,
         scores,
       }).slice(0, 800);
-      const [dup] = await conn.execute(
-        `SELECT id FROM mt_crypto_chat
-         WHERE room = ? AND kind = 'match' AND created_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
-         LIMIT 1`,
-        [room]
-      );
-      if (!(dup as object[]).length) {
+      try {
+        await conn.execute(
+          'INSERT INTO mt_chat_matches (room, game_id, title, scores_json) VALUES (?,?,?,?)',
+          [room, String(body.kind || 'game'), title, payload]
+        );
+      } catch {
+        /* table may be created on next ensureChat */
+      }
+      try {
         await conn.execute(
           'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
           [room, me.username, payload, 'match', me.email]
         );
+      } catch (err) {
+        console.error('recap chat', err);
       }
       return Response.json({ ok: true });
     } finally {
@@ -350,57 +379,58 @@ export async function POST(request: NextRequest) {
       if (state?.kind === 'rps') {
         const na = await nameOf(state.a);
         const nb = await nameOf(state.b);
-        scores.push({ username: na, score: state.scoreA });
-        if (state.b) scores.push({ username: nb, score: state.scoreB });
-        await conn.execute(
-          'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
-          [gameId, state.a, na, state.scoreA, room]
-        );
-        if (state.b) {
-          await conn.execute(
-            'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
-            [gameId, state.b, nb, state.scoreB, room]
-          );
-        }
-      } else if (state?.kind === 'ttt' && state.winner && state.winner !== 'draw') {
+        scores.push({ username: na, score: Number(state.scoreA) || 0 });
+        if (state.b) scores.push({ username: nb, score: Number(state.scoreB) || 0 });
+      } else if (state?.kind === 'ttt') {
         const nx = await nameOf(state.x);
         const no = await nameOf(state.o);
-        const xWin = state.winner === 'x' ? 1 : 0;
+        const xWin = state.winner === 'x' ? 1 : state.winner === 'o' ? 0 : 0;
+        const oWin = state.winner === 'o' ? 1 : 0;
         scores.push({ username: nx, score: xWin });
-        if (state.o) scores.push({ username: no, score: 1 - xWin });
-        await conn.execute(
-          'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
-          [gameId, state.x, nx, xWin, room]
-        );
-        if (state.o) {
+        if (state.o) scores.push({ username: no, score: oWin });
+      }
+      const title = gameId === 'rps' ? 'Rock paper scissors' : gameId === 'ttt' ? 'Tic-tac-toe' : gameId;
+      for (const s of scores) {
+        try {
           await conn.execute(
             'INSERT INTO mt_game_scores (game_id, email, username, score, room) VALUES (?,?,?,?,?)',
-            [gameId, state.o, no, 1 - xWin, room]
+            [gameId, null, s.username, s.score, room]
           );
+        } catch {
+          try {
+            await conn.execute('INSERT INTO mt_game_scores (game_id, email, username, score) VALUES (?,?,?,?)', [
+              gameId,
+              null,
+              s.username,
+              s.score,
+            ]);
+          } catch {
+            /* keep going — archive still writes */
+          }
         }
       }
-      const payload = JSON.stringify({
-        game_id: gameId,
-        title: gameId === 'rps' ? 'Rock paper scissors' : gameId === 'ttt' ? 'Tic-tac-toe' : gameId,
-        scores,
-      }).slice(0, 800);
-      const [dup] = await conn.execute(
-        `SELECT id FROM mt_crypto_chat
-         WHERE room = ? AND kind = 'match' AND created_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
-         LIMIT 1`,
-        [room]
-      );
-      if (!(dup as object[]).length && scores.length) {
+      const payload = JSON.stringify({ game_id: gameId, title, scores });
+      try {
+        await conn.execute(
+          'INSERT INTO mt_chat_matches (room, game_id, title, scores_json) VALUES (?,?,?,?)',
+          [room, gameId, title, payload]
+        );
+      } catch (err) {
+        console.error('match archive', err);
+      }
+      try {
         await conn.execute(
           'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',
-          [room, me.username, payload, 'match', me.email]
+          [room, me.username, payload.slice(0, 800), 'match', me.email]
         );
+      } catch (err) {
+        console.error('match chat', err);
       }
       await conn.execute(
         "UPDATE mt_chat_room_games SET status = 'closed' WHERE room = ? AND game_id IN ('rps','ttt') AND status = 'open'",
         [room]
       );
-      return Response.json({ ok: true, scores, ended: true });
+      return Response.json({ ok: true, scores, title, ended: true });
     }
 
     if (action === 'close') {
