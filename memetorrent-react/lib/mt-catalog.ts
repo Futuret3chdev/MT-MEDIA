@@ -132,7 +132,7 @@ export const CATALOG: CatalogGame[] = [
     status: 'live',
     play: '/games/unix/fruitninja/index.html',
     img: '/games/covers/fruitninja.jpg',
-    blurb: 'Swipe the blade. Combos, bombs, three lives. Works on phone — no GitHub fruit images.',
+    blurb: 'High tosses, fat swipe, 5 lives. Freeze / gold / heart specials. Wallet unlocks the $MT gold blade.',
   },
   {
     id: 'dash',
