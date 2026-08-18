@@ -2,12 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['mysql2'],
-  async rewrites() {
-    return [
-      { source: '/casino', destination: '/casino-floor/index.html' },
-      { source: '/casino/', destination: '/casino-floor/index.html' },
-    ];
-  },
   async redirects() {
     const folders = [
       '/games/unix/tap',
