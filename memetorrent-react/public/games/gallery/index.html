@@ -69,15 +69,36 @@
     #panel .row { display: flex; gap: 8px; }
     #panel .row > * { flex: 1; }
     button.ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.2); }
+    #bagBar { position: fixed; top: calc(58px + env(safe-area-inset-top)); left: 10px; z-index: 18; font-size: 12px; background: rgba(0,0,0,.55); padding: 6px 10px; border-radius: 999px; }
+    #act { position: fixed; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 16; display: none; }
+    #act.show { display: block; }
+    .sheet { display: none; }
+    .sheet.open { display: block; }
+    .sku { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 13px; }
+    .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; }
+    #online { opacity: .8; font-size: 12px; }
+    #rps { display: none; position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.7); align-items: center; justify-content: center; }
+    #rps.open { display: flex; }
+    #rps .card { background: #10261c; padding: 18px; border-radius: 16px; text-align: center; width: min(92vw, 320px); }
+    #rps button { margin: 6px; }
   </style>
 </head>
 <body>
   <div id="hud">
     <b>MT WORLD</b>
     <span id="place">Plaza</span>
+    <span id="online">1 in world</span>
+    <button id="btnBag">Bag</button>
+    <button id="btnShop">Shop</button>
+    <button id="btnJob">Job</button>
+    <button id="btnDress">Dress</button>
+    <button id="btnHome">House</button>
+    <button id="btnSocial">People</button>
     <button id="hang">Hang art</button>
     <a href="/catalog/mt-world-gallery">Catalog</a>
   </div>
+  <div id="bagBar">Wood 0 · Fish 0 · ¢0</div>
+  <button id="act" class="fab">Do</button>
   <div id="hint">WASD walk · mouse look · click a frame to hang art</div>
   <div id="joyL" class="pad"><div id="joyKnob"></div></div>
   <div id="lookHint">drag to look</div>
@@ -94,6 +115,67 @@
       </div>
     </div>
   </div>
+  <div id="life" class="panel" style="display:none;position:fixed;inset:0;z-index:32;background:rgba(0,0,0,.72);align-items:flex-end;justify-content:center;">
+    <div class="card" style="width:min(92vw,440px);background:#10261c;border:1px solid rgba(25,211,126,.35);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:78dvh;overflow:auto;">
+      <div id="sheetBag" class="sheet">
+        <b>Bag</b>
+        <div id="bagList"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="craftMeal">Grill fish (2 fish + 1 wood)</button>
+        </div>
+      </div>
+      <div id="sheetShop" class="sheet">
+        <b>Plaza shop</b>
+        <p style="opacity:.7;font-size:12px">Free tools. $MT exclusives need a connected wallet.</p>
+        <div id="shopList"></div>
+        <button id="btnWallet" class="ghost" style="margin-top:10px;width:100%">Connect wallet for $MT exclusives</button>
+      </div>
+      <div id="sheetJob" class="sheet">
+        <b>Jobs board</b>
+        <div class="sku"><span>Lumberjack — deliver 8 wood</span><button id="jobWood">Take</button></div>
+        <div class="sku"><span>Fisher — deliver 6 fish</span><button id="jobFish">Take</button></div>
+        <div class="sku"><span>Bartender — serve at a bar</span><button id="jobBar">Take</button></div>
+        <div id="jobStatus" style="margin-top:8px;opacity:.8"></div>
+      </div>
+      <div id="sheetDress" class="sheet">
+        <b>Dress your avatar</b>
+        <p style="opacity:.7;font-size:12px">Others see this on you in the world.</p>
+        <div>Skin</div>
+        <div class="row" id="skinRow"></div>
+        <div>Shirt</div>
+        <div class="row" id="shirtRow"></div>
+        <label class="sku"><span>Hat</span><input type="checkbox" id="hatOn" /></label>
+        <label class="sku"><span>Heart glasses ($MT)</span><input type="checkbox" id="accHeart" /></label>
+      </div>
+      <div id="sheetHome" class="sheet">
+        <b>House</b>
+        <p style="opacity:.7;font-size:12px">Buy with coins, rent cheaper, or list for housemates.</p>
+        <div class="sku"><span>Rent a cabin — 40¢</span><button id="rentHome">Rent</button></div>
+        <div class="sku"><span>Buy a house — 120¢</span><button id="buyHome">Buy</button></div>
+        <div class="sku"><span>$MT villa (exclusive)</span><button id="buyVilla">Villa</button></div>
+        <label class="sku"><span>Looking for housemates</span><input type="checkbox" id="seekMates" /></label>
+        <div id="homeStatus" style="margin-top:8px;opacity:.8"></div>
+      </div>
+      <div id="sheetSocial" class="sheet">
+        <b>People nearby</b>
+        <div id="nearList"></div>
+        <div id="friendList" style="margin-top:10px"></div>
+      </div>
+      <button class="ghost" id="lifeClose" style="width:100%;margin-top:12px">Close</button>
+    </div>
+  </div>
+  <div id="rps">
+    <div class="card">
+      <b id="rpsTitle">Play together</b>
+      <p id="rpsSub">Rock · paper · scissors</p>
+      <div>
+        <button data-rps="rock">Rock</button>
+        <button data-rps="paper">Paper</button>
+        <button data-rps="scissors">Scissors</button>
+      </div>
+      <button class="ghost" id="rpsClose">Close</button>
+    </div>
+  </div>
   <script type="importmap">
     { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js" } }
   </script>
@@ -102,7 +184,8 @@ import * as THREE from 'three';
 
 const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
 const hint = document.getElementById('hint');
-if (coarse) hint.textContent = 'Left stick walk · right side drag look · Jump · Hang art';
+if (coarse) hint.textContent = 'Stick walk · drag look · Jump · Do to chop, fish, or claim a stand';
+else hint.textContent = 'WASD · mouse · Space jump on blocks · E to use tool · pets follow you';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87b8e8);
@@ -255,6 +338,10 @@ function tree(x, z) {
   box(2.2, 2.2, 2.2, x, 3.1, z, 0x2f7a3a, { ghost: true });
 }
 [[-8, 8], [8, 8], [-8, -8], [8, -8], [-20, 12], [20, -12]].forEach(([x, z]) => tree(x, z));
+box(3.2, 2.2, 2.2, 6, 1.1, 6, 0x2a2118, { ghost: true });
+places.push({ name: 'Shop', x: 6, z: 6, r: 3.2 });
+box(2.6, 2.4, 2.6, -6, 1.2, 6, 0x7a2a44, { ghost: true });
+places.push({ name: 'Wardrobe', x: -6, z: 6, r: 3 });
 
 const KEY = 'mt-world-gallery-art';
 function loadArt() {
@@ -275,6 +362,411 @@ const player = { x: 0, y: 1.65, z: 8, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, gro
 const move = { x: 0, z: 0 };
 const keys = {};
 let jumping = false;
+const EYE = 1.65;
+const SID = localStorage.getItem('mtw-sid') || (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()));
+localStorage.setItem('mtw-sid', SID);
+const INV_KEY = 'mtw-inv';
+function loadInv() {
+  try {
+    return Object.assign({
+      wood: 0, fish: 0, coins: 12, food: 0,
+      axe: false, rod: false, gold_axe: false, neon_rod: false, bar_kit: false, villa: false,
+      tool: '',
+      pet: 'cub', petHunger: 80,
+      pets: { cub: true },
+      body: 'e8c39e', shirt: '1a3d2a', hat: false, acc: 'none',
+      wallet: '', name: 'Guest'
+    }, JSON.parse(localStorage.getItem(INV_KEY) || '{}'));
+  } catch { return { wood: 0, fish: 0, coins: 12, pet: 'cub', petHunger: 80, pets: { cub: true }, body: 'e8c39e', shirt: '1a3d2a', tool: '' }; }
+}
+const inv = loadInv();
+function saveInv() { localStorage.setItem(INV_KEY, JSON.stringify(inv)); }
+function toast(msg) { const h = document.getElementById('hint'); if (h) h.textContent = msg; }
+function paintBag() {
+  const el = document.getElementById('bagBar');
+  if (el) el.textContent = `Wood ${inv.wood} · Fish ${inv.fish} · ¢${inv.coins} · ${inv.tool || 'no tool'} · ${inv.pet} ${Math.round(inv.petHunger)}%`;
+  const list = document.getElementById('bagList');
+  if (list) {
+    list.innerHTML = `
+      <div class="sku"><span>Wood ${inv.wood}</span></div>
+      <div class="sku"><span>Fish ${inv.fish}</span><button onclick="window.mtwFeed()">Feed pet</button></div>
+      <div class="sku"><span>Grilled ${inv.food || 0}</span></div>
+      <div class="sku"><span>Axe</span><button onclick="window.mtwEquip('axe')" ${inv.axe||inv.gold_axe?'':'disabled'}>${inv.tool==='axe'||inv.tool==='gold_axe'?'Using':'Equip'}</button></div>
+      <div class="sku"><span>Rod</span><button onclick="window.mtwEquip('rod')" ${inv.rod||inv.neon_rod?'':'disabled'}>${inv.tool==='rod'||inv.tool==='neon_rod'?'Using':'Equip'}</button></div>
+      <div class="sku"><span>Pet: ${inv.pet} · hunger ${Math.round(inv.petHunger)}</span></div>`;
+  }
+  paintShop();
+}
+const SHOP = [
+  { id: 'axe', name: 'Wooden axe', cost: 0, mt: false },
+  { id: 'rod', name: 'Fishing rod', cost: 0, mt: false },
+  { id: 'gold_axe', name: 'Gold axe', cost: 5, mt: true },
+  { id: 'neon_rod', name: 'Neon rod', cost: 5, mt: true },
+  { id: 'bar_kit', name: 'Bar license', cost: 8, mt: true },
+  { id: 'pet_dragon', name: 'Dragon pet', cost: 15, mt: true, pet: 'dragon' },
+  { id: 'pet_phoenix', name: 'Phoenix pet', cost: 12, mt: true, pet: 'phoenix' },
+  { id: 'pet_wolf', name: 'Shadow wolf', cost: 10, mt: true, pet: 'wolf' },
+  { id: 'pet_unicorn', name: 'Unicorn', cost: 12, mt: true, pet: 'unicorn' },
+];
+function paintShop() {
+  const el = document.getElementById('shopList');
+  if (!el) return;
+  el.innerHTML = SHOP.map((s) => {
+    const owned = s.pet ? inv.pets && inv.pets[s.pet] : inv[s.id];
+    return `<div class="sku"><span>${s.name} ${s.mt ? '· $MT' : '· free'}</span><button ${owned ? 'disabled' : ''} onclick="window.mtwBuy('${s.id}')">${owned ? 'Owned' : (s.mt ? 'Buy $MT' : 'Take')}</button></div>`;
+  }).join('');
+}
+window.mtwEquip = (kind) => {
+  if (kind === 'axe') inv.tool = inv.gold_axe ? 'gold_axe' : (inv.axe ? 'axe' : '');
+  if (kind === 'rod') inv.tool = inv.neon_rod ? 'neon_rod' : (inv.rod ? 'rod' : '');
+  saveInv(); paintBag(); toast('Using ' + (inv.tool || 'hands'));
+};
+window.mtwFeed = () => {
+  if (inv.fish < 1 && inv.food < 1) { toast('Need fish or grilled food'); return; }
+  if (inv.food > 0) inv.food--; else inv.fish--;
+  inv.petHunger = Math.min(100, inv.petHunger + 35);
+  saveInv(); paintBag(); toast(inv.pet + ' is happier');
+};
+window.mtwBuy = async (id) => {
+  const s = SHOP.find((x) => x.id === id);
+  if (!s) return;
+  if (s.mt && !inv.wallet) { toast('Connect wallet for $MT exclusives'); return; }
+  if (s.pet) {
+    inv.pets = inv.pets || {};
+    inv.pets[s.pet] = true;
+    inv.pet = s.pet;
+    inv.petHunger = 100;
+  } else inv[s.id] = true;
+  if (id === 'axe' || id === 'gold_axe') inv.tool = id;
+  if (id === 'rod' || id === 'neon_rod') inv.tool = id;
+  saveInv(); paintBag(); toast('Got ' + s.name);
+};
+async function connectWallet() {
+  const p = window.phantom?.solana || window.solflare || window.solana;
+  if (!p?.connect) { toast('Install Phantom or Solflare'); return; }
+  const res = await p.connect();
+  const pk = res?.publicKey || p.publicKey;
+  inv.wallet = pk && (pk.toString ? pk.toString() : String(pk));
+  saveInv(); toast('Wallet ' + (inv.wallet || '').slice(0, 4) + '…');
+}
+
+const PETS = {
+  cub: { color: 0x19d37e, s: 0.35, y: 0.35 },
+  dragon: { color: 0x7c3aed, s: 0.55, y: 0.7 },
+  phoenix: { color: 0xff6a00, s: 0.45, y: 0.9 },
+  wolf: { color: 0x334155, s: 0.42, y: 0.4 },
+  unicorn: { color: 0xf9a8d4, s: 0.45, y: 0.5 },
+};
+const myPet = { g: new THREE.Group(), x: 1, z: 10 };
+function buildPet() {
+  myPet.g.clear();
+  const spec = PETS[inv.pet] || PETS.cub;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(spec.s * 1.4, spec.s, spec.s * 2), new THREE.MeshLambertMaterial({ color: spec.color }));
+  body.position.y = spec.y;
+  myPet.g.add(body);
+  if (inv.pet === 'dragon' || inv.pet === 'phoenix') {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(spec.s * 2.2, 0.08, spec.s), new THREE.MeshLambertMaterial({ color: spec.color }));
+    wing.position.set(0, spec.y + 0.15, 0);
+    myPet.g.add(wing);
+  }
+  if (inv.pet === 'unicorn') {
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.35, 6), new THREE.MeshLambertMaterial({ color: 0xfff1a8 }));
+    horn.position.set(0, spec.y + 0.4, spec.s * 0.6);
+    myPet.g.add(horn);
+  }
+  scene.add(myPet.g);
+}
+buildPet();
+
+const others = new Map();
+function avatarMesh(p) {
+  const g = new THREE.Group();
+  const legs = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.7, 4, 8), new THREE.MeshLambertMaterial({ color: parseInt(p.body || 'e8c39e', 16) }));
+  legs.position.y = 0.7;
+  const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 0.35), new THREE.MeshLambertMaterial({ color: parseInt(p.shirt || '1a3d2a', 16) }));
+  shirt.position.y = 1.15;
+  g.add(legs, shirt);
+  if (p.hat) {
+    const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.18, 8), new THREE.MeshLambertMaterial({ color: 0x111 }));
+    hat.position.y = 1.62;
+    g.add(hat);
+  }
+  const tag = document.createElement('div');
+  tag.textContent = p.username || 'Guest';
+  tag.style.cssText = 'position:absolute;color:#fff;font:700 11px system-ui;text-shadow:0 1px 2px #000;pointer-events:none';
+  document.body.appendChild(tag);
+  g.userData.tag = tag;
+  scene.add(g);
+  return g;
+}
+
+const CS = 32;
+const chunks = new Map();
+const nodes = [];
+function hash(cx, cz) { return Math.abs(Math.sin(cx * 127.1 + cz * 311.7) * 43758.5453) % 1; }
+function loadChunk(cx, cz) {
+  const key = cx + ',' + cz;
+  if (chunks.has(key) || (cx === 0 && cz === 0)) return;
+  const g = new THREE.Group();
+  const h = hash(cx, cz);
+  const ox = cx * CS, oz = cz * CS;
+  const ground = new THREE.Mesh(new THREE.BoxGeometry(CS, 1, CS), new THREE.MeshLambertMaterial({ color: h > 0.72 ? 0x3d7ea6 : 0x4aa14a }));
+  ground.position.set(ox + CS / 2, -0.5, oz + CS / 2);
+  g.add(ground);
+  if (h > 0.72) {
+    nodes.push({ type: 'water', x: ox + CS / 2, z: oz + CS / 2, r: 10 });
+  } else {
+    const n = 3 + Math.floor(h * 4);
+    for (let i = 0; i < n; i++) {
+      const tx = ox + 4 + ((h * 17 + i * 9) % (CS - 8));
+      const tz = oz + 4 + ((h * 29 + i * 13) % (CS - 8));
+      const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2, 0.5), new THREE.MeshLambertMaterial({ color: 0x6b4423 }));
+      trunk.position.set(tx, 1, tz);
+      const leaf = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshLambertMaterial({ color: 0x2f7a3a }));
+      leaf.position.set(tx, 3, tz);
+      g.add(trunk, leaf);
+      nodes.push({ type: 'tree', x: tx, z: tz, r: 2.2, mesh: g, dead: false, trunk, leaf });
+    }
+  }
+  scene.add(g);
+  chunks.set(key, g);
+}
+function ensureChunks() {
+  const cx = Math.floor(player.x / CS), cz = Math.floor(player.z / CS);
+  for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) loadChunk(cx + i, cz + j);
+}
+
+const STANDS = [];
+for (let i = 0; i < 8; i++) {
+  const a = (i / 8) * Math.PI * 2 + 0.4;
+  const x = Math.cos(a) * 34, z = Math.sin(a) * 34;
+  box(2.4, 2.1, 2.4, x, 1.05, z, 0x243044, { ghost: true });
+  box(2.6, 0.15, 0.15, x, 2.3, z, 0x19d37e, { ghost: true });
+  STANDS.push({ slot: i, x, z });
+  places.push({ name: 'Stand ' + (i + 1), x, z, r: 3 });
+}
+
+function topUnder(nx, nz, feet) {
+  let best = 0;
+  for (const c of colliders) {
+    if (nx > c.min.x - 0.22 && nx < c.max.x + 0.22 && nz > c.min.z - 0.22 && nz < c.max.z + 0.22) {
+      if (c.max.y <= feet + 0.45 && c.max.y > best) best = c.max.y;
+    }
+  }
+  return best;
+}
+function blockedSolid(nx, ny, nz) {
+  const feet = ny - EYE;
+  const body = new THREE.Box3().setFromCenterAndSize(
+    new THREE.Vector3(nx, feet + 0.82, nz),
+    new THREE.Vector3(0.48, 1.55, 0.48)
+  );
+  return colliders.some((c) => c.intersectsBox(body) && c.max.y > feet + 0.45);
+}
+
+let job = localStorage.getItem('mtw-job') || '';
+function nearestNode(type) {
+  let best = null, bd = 9;
+  nodes.forEach((n) => {
+    if (type && n.type !== type) return;
+    if (n.dead) return;
+    const d = Math.hypot(n.x - player.x, n.z - player.z);
+    if (d < n.r && d < bd) { bd = d; best = n; }
+  });
+  return best;
+}
+function nearestPlayer() {
+  let best = null, bd = 4;
+  others.forEach((o, sid) => {
+    if (sid === SID) return;
+    const d = Math.hypot(o.x - player.x, o.z - player.z);
+    if (d < bd) { bd = d; best = o; }
+  });
+  return best;
+}
+function doInteract() {
+  const here = document.getElementById('place').textContent;
+  const tree = nearestNode('tree');
+  const water = nearestNode('water');
+  const near = nearestPlayer();
+  if (tree) {
+    if (inv.tool !== 'axe' && inv.tool !== 'gold_axe') { toast('Equip an axe to cut wood'); return; }
+    tree.dead = true;
+    if (tree.trunk) tree.trunk.visible = false;
+    if (tree.leaf) tree.leaf.visible = false;
+    inv.wood += inv.tool === 'gold_axe' ? 3 : 2;
+    saveInv(); paintBag(); toast('+' + (inv.tool === 'gold_axe' ? 3 : 2) + ' wood');
+    setTimeout(() => { tree.dead = false; if (tree.trunk) tree.trunk.visible = true; if (tree.leaf) tree.leaf.visible = true; }, 25000);
+    return;
+  }
+  if (water) {
+    if (inv.tool !== 'rod' && inv.tool !== 'neon_rod') { toast('Equip a rod to fish'); return; }
+    if (Math.random() < (inv.tool === 'neon_rod' ? 0.85 : 0.55)) {
+      inv.fish += 1;
+      saveInv(); paintBag(); toast('Caught a fish');
+    } else toast('It got away');
+    return;
+  }
+  if (here.startsWith('Stand')) {
+    const slot = Number(here.replace('Stand ', '')) - 1;
+    const title = prompt('Business name for this stand');
+    if (!title) return;
+    const pitch = prompt('One-line pitch') || '';
+    const url = prompt('Link (optional)') || '';
+    fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'stand', slot, name: inv.name, title, pitch, url }) }).catch(() => {});
+    toast('Stand ' + (slot + 1) + ' is yours');
+    return;
+  }
+  if (near) {
+    openSheet('sheetSocial');
+    return;
+  }
+  pickFrame();
+}
+
+function openSheet(id) {
+  const life = document.getElementById('life');
+  life.style.display = 'flex';
+  document.querySelectorAll('.sheet').forEach((s) => s.classList.remove('open'));
+  document.getElementById(id).classList.add('open');
+  if (id === 'sheetBag') paintBag();
+  if (id === 'sheetShop') paintShop();
+  if (id === 'sheetSocial') paintSocial();
+  if (id === 'sheetDress') paintDress();
+}
+function paintDress() {
+  const skins = ['e8c39e', '8d5524', 'c68642', 'f1c27d', 'ffdbac'];
+  const shirts = ['1a3d2a', '1d4ed8', 'b91c1c', '111827', 'f59e0b', '19d37e'];
+  const sk = document.getElementById('skinRow');
+  const sh = document.getElementById('shirtRow');
+  if (sk) sk.innerHTML = skins.map((c) => `<div class="swatch" style="background:#${c}" onclick="window.mtwSkin('${c}')"></div>`).join('');
+  if (sh) sh.innerHTML = shirts.map((c) => `<div class="swatch" style="background:#${c}" onclick="window.mtwShirt('${c}')"></div>`).join('');
+  const hat = document.getElementById('hatOn');
+  const acc = document.getElementById('accHeart');
+  if (hat) hat.checked = !!inv.hat;
+  if (acc) acc.checked = inv.acc === 'heart';
+}
+window.mtwSkin = (c) => { inv.body = c; saveInv(); toast('Skin saved — others will see it'); };
+window.mtwShirt = (c) => { inv.shirt = c; saveInv(); toast('Shirt saved'); };
+function paintSocial() {
+  const near = nearestPlayer();
+  const el = document.getElementById('nearList');
+  if (!el) return;
+  if (!near) { el.innerHTML = '<div style="opacity:.7">Nobody in reach. Walk up to someone.</div>'; return; }
+  el.innerHTML = `<div class="sku"><span>${near.username}</span></div>
+    <div class="row">
+      <button onclick="window.mtwSocial('${near.username}','friend')">Add friend</button>
+      <button onclick="window.mtwSocial('${near.username}','love')">Heart</button>
+      <button onclick="window.mtwPlay('${near.username}')">Play RPS</button>
+    </div>`;
+}
+window.mtwSocial = (other, kind) => {
+  fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'social', name: inv.name, other, kind }) })
+    .then((r) => r.json()).then((d) => toast(d.status === 'ok' ? (kind === 'love' ? 'It is love' : 'You are friends') : 'Request sent')).catch(() => {});
+};
+window.mtwPlay = (other) => {
+  fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'party', name: inv.name, other, state: 'invite' }) }).catch(() => {});
+  document.getElementById('rps').classList.add('open');
+  document.getElementById('rpsTitle').textContent = 'Play with ' + other;
+};
+
+fetch('/api/portal/me', { credentials: 'include' }).then((r) => r.json()).then((d) => {
+  if (d.user?.username) { inv.name = d.user.username; saveInv(); }
+}).catch(() => {});
+
+function syncWorld() {
+  fetch('/api/games/world', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'here', sid: SID, name: inv.name, x: player.x, z: player.z, yaw: player.yaw,
+      body: inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc
+    })
+  }).catch(() => {});
+  fetch('/api/games/world?me=' + encodeURIComponent(inv.name), { credentials: 'include' })
+    .then((r) => r.json())
+    .then((d) => {
+      const seen = new Set();
+      (d.players || []).forEach((p) => {
+        if (p.sid === SID) return;
+        seen.add(p.sid);
+        let o = others.get(p.sid);
+        if (!o) { o = { ...p, mesh: avatarMesh(p) }; others.set(p.sid, o); }
+        o.x = p.x; o.z = p.z; o.username = p.username;
+        if (o.mesh) {
+          o.mesh.position.set(p.x, 0, p.z);
+          o.mesh.rotation.y = p.yaw || 0;
+          if (o.mesh.userData.tag) {
+            const v = o.mesh.position.clone(); v.y = 2.1; v.project(camera);
+            o.mesh.userData.tag.style.left = ((v.x * 0.5 + 0.5) * innerWidth) + 'px';
+            o.mesh.userData.tag.style.top = ((-v.y * 0.5 + 0.5) * innerHeight) + 'px';
+          }
+        }
+      });
+      others.forEach((o, id) => {
+        if (!seen.has(id)) {
+          if (o.mesh) scene.remove(o.mesh);
+          if (o.mesh?.userData.tag) o.mesh.userData.tag.remove();
+          others.delete(id);
+        }
+      });
+      const n = 1 + others.size;
+      const on = document.getElementById('online');
+      if (on) on.textContent = n + ' in world';
+    }).catch(() => {});
+}
+
+document.getElementById('btnBag').onclick = () => openSheet('sheetBag');
+document.getElementById('btnShop').onclick = () => openSheet('sheetShop');
+document.getElementById('btnJob').onclick = () => openSheet('sheetJob');
+document.getElementById('btnDress').onclick = () => openSheet('sheetDress');
+document.getElementById('btnHome').onclick = () => openSheet('sheetHome');
+document.getElementById('btnSocial').onclick = () => openSheet('sheetSocial');
+document.getElementById('lifeClose').onclick = () => { document.getElementById('life').style.display = 'none'; };
+document.getElementById('btnWallet').onclick = connectWallet;
+document.getElementById('craftMeal').onclick = () => {
+  if (inv.fish < 2 || inv.wood < 1) { toast('Need 2 fish and 1 wood'); return; }
+  inv.fish -= 2; inv.wood -= 1; inv.food = (inv.food || 0) + 1; saveInv(); paintBag(); toast('Grilled a fish');
+};
+document.getElementById('hatOn').onchange = (e) => { inv.hat = e.target.checked; saveInv(); };
+document.getElementById('accHeart').onchange = (e) => { inv.acc = e.target.checked ? 'heart' : 'none'; saveInv(); };
+document.getElementById('jobWood').onclick = () => { job = 'wood'; localStorage.setItem('mtw-job', job); toast('Bring 8 wood back to the plaza shop'); };
+document.getElementById('jobFish').onclick = () => { job = 'fish'; localStorage.setItem('mtw-job', job); toast('Bring 6 fish back to the plaza shop'); };
+document.getElementById('jobBar').onclick = () => { job = 'bar'; localStorage.setItem('mtw-job', job); toast('Serve at a bar or open yours'); };
+document.getElementById('rentHome').onclick = () => {
+  if (inv.coins < 40) { toast('Need 40¢'); return; }
+  inv.coins -= 40; saveInv(); paintBag();
+  fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'house', name: inv.name, kind: 'rent', title: inv.name + ' rental', x: player.x, z: player.z, seeking: document.getElementById('seekMates').checked }) }).catch(() => {});
+  toast('Rented a cabin here');
+};
+document.getElementById('buyHome').onclick = () => {
+  if (inv.coins < 120) { toast('Need 120¢'); return; }
+  inv.coins -= 120; saveInv(); paintBag();
+  fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'house', name: inv.name, kind: 'buy', title: inv.name + "'s house", x: player.x, z: player.z, seeking: document.getElementById('seekMates').checked }) }).catch(() => {});
+  toast('Bought a house here');
+};
+document.getElementById('buyVilla').onclick = () => {
+  if (!inv.wallet) { toast('Wallet for $MT villa'); return; }
+  fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'house', name: inv.name, kind: 'buy', title: inv.name + ' villa', x: player.x, z: player.z }) }).catch(() => {});
+  toast('Villa marked');
+};
+document.getElementById('act').onclick = doInteract;
+document.getElementById('rpsClose').onclick = () => document.getElementById('rps').classList.remove('open');
+document.querySelectorAll('[data-rps]').forEach((b) => b.onclick = () => {
+  toast('You played ' + b.getAttribute('data-rps'));
+  document.getElementById('rps').classList.remove('open');
+});
+
+let lastSync = 0;
+let hungerT = 0;
+paintBag();
+setInterval(syncWorld, 1200);
+syncWorld();
 
 addEventListener('keydown', (e) => {
   keys[e.code] = true;
@@ -394,11 +886,7 @@ document.getElementById('jump').ontouchstart = (e) => { jumping = true; e.preven
 document.getElementById('jump').onclick = () => { jumping = true; };
 
 function blocked(nx, ny, nz) {
-  const body = new THREE.Box3().setFromCenterAndSize(
-    new THREE.Vector3(nx, ny, nz),
-    new THREE.Vector3(0.55, 1.6, 0.55)
-  );
-  return colliders.some((c) => c.intersectsBox(body));
+  return blockedSolid(nx, ny, nz);
 }
 
 function tick() {
@@ -416,23 +904,58 @@ function tick() {
   const dt = 1 / 60;
   const nx = player.x + wishX * speed * dt;
   const nz = player.z + wishZ * speed * dt;
-  if (!blocked(nx, player.y, player.z)) player.x = nx;
-  if (!blocked(player.x, player.y, nz)) player.z = nz;
-  player.x = Math.max(-38, Math.min(38, player.x));
-  player.z = Math.max(-38, Math.min(38, player.z));
+  if (!blockedSolid(nx, player.y, player.z)) player.x = nx;
+  if (!blockedSolid(player.x, player.y, nz)) player.z = nz;
 
   if ((keys['Space'] || jumping) && player.grounded) {
-    player.vy = 6.2;
+    player.vy = 6.6;
     player.grounded = false;
   }
   jumping = false;
-  player.vy -= 18 * dt;
-  const ny = player.y + player.vy * dt;
-  if (ny <= 1.65) {
-    player.y = 1.65;
+  if (keys['KeyE']) { keys['KeyE'] = false; doInteract(); }
+  player.vy -= 22 * dt;
+  if (player.vy > 0 && blockedSolid(player.x, player.y + player.vy * dt + 0.1, player.z)) player.vy = 0;
+  const nextY = player.y + player.vy * dt;
+  const feet = nextY - EYE;
+  const floor = topUnder(player.x, player.z, feet + 0.2);
+  if (player.vy <= 0 && feet <= floor + 0.08) {
+    player.y = floor + EYE;
     player.vy = 0;
     player.grounded = true;
-  } else player.y = ny;
+  } else {
+    player.y = nextY;
+    player.grounded = false;
+  }
+
+  ensureChunks();
+  const act = document.getElementById('act');
+  const can = !!(nearestNode('tree') || nearestNode('water') || nearestPlayer() || (document.getElementById('place').textContent || '').startsWith('Stand'));
+  if (act) act.classList.toggle('show', can || coarse);
+
+  const back = 1.4;
+  const tx = player.x - Math.sin(player.yaw) * back;
+  const tz = player.z - Math.cos(player.yaw) * back;
+  const hungry = inv.petHunger < 15;
+  const follow = hungry ? 0.02 : 0.08;
+  myPet.x += (tx - myPet.x) * follow;
+  myPet.z += (tz - myPet.z) * follow;
+  myPet.g.position.set(myPet.x, hungry ? 0 : 0.05 + Math.sin(Date.now() / 180) * 0.05, myPet.z);
+  myPet.g.visible = true;
+  hungerT += dt;
+  if (hungerT > 8) {
+    hungerT = 0;
+    inv.petHunger = Math.max(0, inv.petHunger - 1.5);
+    saveInv();
+    paintBag();
+    if (inv.petHunger < 20) toast('Feed your ' + inv.pet);
+  }
+
+  if (job === 'wood' && inv.wood >= 8 && Math.hypot(player.x, player.z) < 8) {
+    inv.wood -= 8; inv.coins += 18; job = ''; localStorage.removeItem('mtw-job'); saveInv(); paintBag(); toast('Lumberjack paid +18¢');
+  }
+  if (job === 'fish' && inv.fish >= 6 && Math.hypot(player.x, player.z) < 8) {
+    inv.fish -= 6; inv.coins += 16; job = ''; localStorage.removeItem('mtw-job'); saveInv(); paintBag(); toast('Fisher paid +16¢');
+  }
 
   camera.position.set(player.x, player.y, player.z);
   camera.rotation.order = 'YXZ';

@@ -29,7 +29,7 @@ export const CATALOG: CatalogGame[] = [
     status: 'live',
     play: '/games/gallery/index.html',
     img: '/games/covers/gallery.jpg',
-    blurb: 'MT Craft, bigger: walk the plaza into a gallery, museum, studio, and craft hall. Hang your art. Works on phone.',
+    blurb: 'Live MT WORLD: other players, dress-up, pets (free cub + $MT dragons), chop, fish, jobs, houses, friends, and spaced business stands. Phone ready.',
   },
   {
     id: 'soccer-pro',
