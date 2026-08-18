@@ -1,18 +1,26 @@
 import { NextRequest } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
+import bcrypt from 'bcryptjs';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
 import { awardClaimableMt, saveGameWallet } from '@/lib/award-claim';
 import { WALLET_RE } from '@/lib/rewards-db';
 
 const SECRET = process.env.EMOJI_STAFF_SECRET || 'mt-emoji-staff-v1';
+const PIN = process.env.EMOJI_STAFF_PIN || '376937';
+const PASS_HASH =
+  process.env.EMOJI_STAFF_HASH || '$2b$10$MLq2YyrbFq.1PZ92oQ9IiezGi4LlvmQLjVSO7/RvwbvMlT4UB1zqu';
 
 function token(kind: string) {
   return createHmac('sha256', SECRET).update(kind).digest('hex');
 }
 
-function isStaff(request: NextRequest) {
-  const cookies = [request.cookies.get('mt_emoji_staff')?.value, request.cookies.get('mt_royale_staff')?.value];
-  const wants = [token('emoji-ok'), token('royale-ok')];
+export function isNightStaff(request: NextRequest) {
+  const cookies = [
+    request.cookies.get('mt_night_staff')?.value,
+    request.cookies.get('mt_emoji_staff')?.value,
+    request.cookies.get('mt_royale_staff')?.value,
+  ];
+  const wants = [token('night-ok'), token('emoji-ok'), token('royale-ok')];
   return cookies.some((raw) =>
     wants.some((want) => {
       try {
@@ -24,6 +32,10 @@ function isStaff(request: NextRequest) {
   );
 }
 
+function isStaff(request: NextRequest) {
+  return isNightStaff(request);
+}
+
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown>;
   try {
@@ -32,6 +44,18 @@ export async function POST(request: NextRequest) {
     return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
   }
   const action = String(body.action || '');
+
+  if (action === 'login') {
+    const pinOk = String(body.pin || '') === PIN;
+    const passOk = await bcrypt.compare(String(body.password || ''), PASS_HASH);
+    if (!pinOk || !passOk) return Response.json({ ok: false, error: 'Wrong pin or password' }, { status: 401 });
+    const res = Response.json({ ok: true, staff: true });
+    res.headers.append(
+      'Set-Cookie',
+      `mt_night_staff=${token('night-ok')}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`
+    );
+    return res;
+  }
 
   if (action === 'wallet') {
     const me = await userBySession(await readSessionToken());
@@ -63,4 +87,8 @@ export async function POST(request: NextRequest) {
   }
 
   return Response.json({ ok: false, error: 'Unknown action' }, { status: 400 });
+}
+
+export async function GET(request: NextRequest) {
+  return Response.json({ ok: true, staff: isStaff(request) });
 }
