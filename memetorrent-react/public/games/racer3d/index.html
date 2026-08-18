@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>MT Racer</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #05070c; color: #e8fff4; font-family: system-ui, sans-serif; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; }
+    #hud { position: fixed; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; font-weight: 800; letter-spacing: .06em; pointer-events: none; z-index: 4; }
+    #spd { color: #19d37e; font-size: 22px; }
+    #menu {
+      position: fixed; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at 50% 30%, rgba(25,211,126,.18), rgba(5,7,12,.94));
+    }
+    .card { width: min(92vw, 420px); text-align: center; padding: 22px; }
+    .card h1 { margin: 0 0 8px; color: #19d37e; letter-spacing: .12em; }
+    .sw { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
+    .sw i { width: 28px; height: 28px; border-radius: 50%; display: block; cursor: pointer; border: 2px solid #fff3; }
+    .sw i.on { border-color: #19d37e; }
+    button { min-height: 46px; padding: 10px 18px; border: 0; border-radius: 999px; background: #19d37e; color: #04140c; font-weight: 900; cursor: pointer; }
+    #hint { position: fixed; bottom: 12px; width: 100%; text-align: center; font-size: 12px; opacity: .65; z-index: 4; }
+  </style>
+  <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js" } }</script>
+</head>
+<body>
+  <div id="hud"><div id="spd">0 KM/H</div><div id="dist">0 m · $MT 0</div></div>
+  <div id="hint">A/D or arrows to steer · hold W / ↑ to gas · Space nitro if you have $MT</div>
+  <div id="menu">
+    <div class="card">
+      <h1>MT RACER</h1>
+      <p>Night highway. Pass traffic. Grab $MT. Nitro on Space.</p>
+      <div class="sw">
+        <i data-c="19d37e" class="on" style="background:#19d37e"></i>
+        <i data-c="38bdf8" style="background:#38bdf8"></i>
+        <i data-c="fbbf24" style="background:#fbbf24"></i>
+        <i data-c="fb7185" style="background:#fb7185"></i>
+        <i data-c="e5e7eb" style="background:#e5e7eb"></i>
+      </div>
+      <button id="go">Light it up</button>
+    </div>
+  </div>
+  <audio id="engine" src="/games/unix/racer/music/racer.mp3" loop></audio>
+  <script type="module">
+import * as THREE from 'three';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x070b14);
+scene.fog = new THREE.Fog(0x070b14, 18, 90);
+const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.1, 140);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0x88aacc, 0x081018, 0.85));
+const sun = new THREE.DirectionalLight(0xffe6b0, 0.55);
+sun.position.set(-10, 20, 8);
+scene.add(sun);
+
+const road = new THREE.Group();
+scene.add(road);
+const segs = [];
+for (let i = 0; i < 40; i++) {
+  const slab = new THREE.Mesh(
+    new THREE.BoxGeometry(8, 0.2, 6),
+    new THREE.MeshLambertMaterial({ color: i % 2 ? 0x1a1f2a : 0x151922 })
+  );
+  slab.position.set(0, 0, -i * 6);
+  const line = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 2.2), new THREE.MeshBasicMaterial({ color: 0xfff3b0 }));
+  line.position.set(0, 0.12, -i * 6);
+  const l = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.35, 6), new THREE.MeshBasicMaterial({ color: 0x19d37e }));
+  l.position.set(-4.1, 0.2, -i * 6);
+  const r = l.clone(); r.position.x = 4.1;
+  scene.add(slab, line, l, r);
+  segs.push({ slab, line, l, r, z: -i * 6 });
+}
+
+function building(x, z, h, c) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(2.2, h, 2.2), new THREE.MeshLambertMaterial({ color: c }));
+  m.position.set(x, h / 2, z);
+  scene.add(m);
+  return m;
+}
+const props = [];
+for (let i = 0; i < 24; i++) {
+  const z = -i * 10 - 8;
+  props.push(building(-8 - Math.random() * 6, z, 3 + Math.random() * 10, 0x12201a));
+  props.push(building(8 + Math.random() * 6, z, 3 + Math.random() * 10, 0x1a1530));
+}
+
+function carMesh(color) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.38, 2.2), new THREE.MeshPhongMaterial({ color, shininess: 70 }));
+  body.position.y = 0.38;
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.32, 1.0), new THREE.MeshPhongMaterial({ color: 0x0b1220, shininess: 90 }));
+  cabin.position.set(0, 0.68, -0.15);
+  const lightL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.08), new THREE.MeshBasicMaterial({ color: 0xfff2b0 }));
+  lightL.position.set(-0.38, 0.38, 1.12);
+  const lightR = lightL.clone(); lightR.position.x = 0.38;
+  g.add(body, cabin, lightL, lightR);
+  scene.add(g);
+  return g;
+}
+
+let carColor = 0x19d37e;
+document.querySelectorAll('.sw i').forEach((el) => {
+  el.onclick = () => {
+    document.querySelectorAll('.sw i').forEach((x) => x.classList.remove('on'));
+    el.classList.add('on');
+    carColor = parseInt(el.getAttribute('data-c'), 16);
+  };
+});
+
+const player = { mesh: null, x: 0, z: 0, vx: 0, speed: 0 };
+const traffic = [];
+const coins = [];
+function spawnTraffic() {
+  traffic.forEach((t) => scene.remove(t.mesh));
+  traffic.length = 0;
+  const cols = [0xfb7185, 0x38bdf8, 0xfbbf24, 0xa78bfa];
+  for (let i = 0; i < 8; i++) {
+    const m = carMesh(cols[i % cols.length]);
+    const o = { mesh: m, x: [-2.2, 0, 2.2][i % 3], z: -20 - i * 14, spd: 8 + Math.random() * 6 };
+    traffic.push(o);
+  }
+}
+
+function makeCoin(z, x) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.08, 12), new THREE.MeshPhongMaterial({ color: 0x19d37e }));
+  m.rotation.x = Math.PI / 2;
+  scene.add(m);
+  coins.push({ mesh: m, x, z });
+}
+
+const keys = {};
+addEventListener('keydown', (e) => { keys[e.code] = true; });
+addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+let playing = false, dist = 0, mt = 0, nitro = 0, last = performance.now();
+const engine = document.getElementById('engine');
+
+document.getElementById('go').onclick = () => {
+  if (player.mesh) scene.remove(player.mesh);
+  player.mesh = carMesh(carColor);
+  player.x = 0; player.z = 0; player.vx = 0; player.speed = 12;
+  spawnTraffic();
+  coins.forEach((c) => scene.remove(c.mesh));
+  coins.length = 0;
+  for (let i = 0; i < 12; i++) makeCoin(-15 - i * 18, [-2.2, 0, 2.2][i % 3]);
+  dist = 0; mt = 0; nitro = 0; playing = true;
+  document.getElementById('menu').style.display = 'none';
+  engine.volume = 0.28; engine.play().catch(() => {});
+};
+
+function beep(f) {
+  try {
+    const ac = beep.ac || (beep.ac = new (window.AudioContext || window.webkitAudioContext)());
+    const o = ac.createOscillator(); const g = ac.createGain();
+    o.frequency.value = f; g.gain.value = 0.04;
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.07);
+  } catch {}
+}
+
+function tick(now) {
+  const dt = Math.min(0.033, (now - last) / 1000);
+  last = now;
+  if (playing) {
+    if (keys['KeyA'] || keys['ArrowLeft']) player.vx -= 18 * dt;
+    if (keys['KeyD'] || keys['ArrowRight']) player.vx += 18 * dt;
+    player.vx *= 0.88;
+    player.x = Math.max(-2.8, Math.min(2.8, player.x + player.vx * dt));
+    const gas = keys['KeyW'] || keys['ArrowUp'] ? 1 : 0.35;
+    if (keys['Space'] && mt > 0) { nitro = 2.2; mt -= 4 * dt; beep(220); }
+    if (nitro > 0) nitro -= dt;
+    player.speed = THREE.MathUtils.lerp(player.speed, 16 + gas * 22 + (nitro > 0 ? 18 : 0), 0.08);
+    const dz = player.speed * dt;
+    dist += dz * 4;
+    segs.forEach((s) => {
+      s.z += dz;
+      if (s.z > 8) s.z -= 40 * 6;
+      s.slab.position.z = s.z;
+      s.line.position.z = s.z;
+      s.l.position.z = s.z;
+      s.r.position.z = s.z;
+    });
+    props.forEach((b, i) => {
+      b.position.z += dz;
+      if (b.position.z > 10) b.position.z -= 240;
+    });
+    traffic.forEach((t) => {
+      t.z += (player.speed - t.spd) * dt;
+      if (t.z > 12) { t.z -= 120; t.x = [-2.2, 0, 2.2][Math.floor(Math.random() * 3)]; }
+      t.mesh.position.set(t.x, 0.35, t.z);
+      if (Math.abs(t.x - player.x) < 1.1 && Math.abs(t.z - player.z) < 2.1) {
+        player.speed *= 0.45;
+        beep(90);
+      }
+    });
+    coins.forEach((c) => {
+      c.z += player.speed * dt;
+      if (c.z > 10) c.z -= 220;
+      c.mesh.position.set(c.x, 0.7, c.z);
+      c.mesh.rotation.z += dt * 4;
+      if (Math.abs(c.x - player.x) < 0.8 && Math.abs(c.z) < 1.4) {
+        mt += 1;
+        c.z -= 80;
+        beep(660);
+      }
+    });
+    player.mesh.position.set(player.x, 0.35, 0);
+    player.mesh.rotation.z = -player.vx * 0.03;
+    camera.position.set(player.x * 0.35, 3.2, 6.4);
+    camera.lookAt(player.x * 0.2, 0.6, -8);
+    engine.playbackRate = 0.85 + player.speed / 80;
+    document.getElementById('spd').textContent = Math.round(player.speed * 9) + ' KM/H';
+    document.getElementById('dist').textContent = Math.round(dist) + ' m · $MT ' + Math.floor(mt);
+    if (leftBehind()) { /* keep running */ }
+  } else {
+    camera.position.set(0, 4, 8);
+    camera.lookAt(0, 0.4, -10);
+  }
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+function leftBehind() { return false; }
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+requestAnimationFrame(tick);
+
+addEventListener('visibilitychange', () => {
+  if (document.hidden) engine.pause();
+});
+window.addEventListener('beforeunload', () => {
+  if (playing) {
+    fetch('/api/scores', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_id: 'racer', score: Math.round(dist) })
+    }).catch(() => {});
+  }
+});
+setInterval(() => {
+  if (playing && dist > 0) {
+    fetch('/api/scores', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_id: 'racer', score: Math.round(dist) })
+    }).catch(() => {});
+  }
+}, 15000);
+  </script>
+</body>
+</html>

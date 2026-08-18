@@ -118,12 +118,12 @@ export const CATALOG: CatalogGame[] = [
   },
   {
     id: 'racer',
-    name: 'Racer',
+    name: 'MT Racer',
     kind: 'p2e',
     status: 'live',
-    play: '/games/racer/index.html',
+    play: '/racer',
     img: '/games/covers/racer.jpg',
-    blurb: 'Race results feed the P2E board.',
+    blurb: '3D night highway. Choose a car, pass traffic, $MT nitro. Wallet + staff award.',
   },
   {
     id: 'fruit',
