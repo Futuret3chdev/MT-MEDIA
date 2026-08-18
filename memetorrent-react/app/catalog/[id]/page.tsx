@@ -16,6 +16,7 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
   const g = getGame(id);
   if (!g) notFound();
   const external = g.play.startsWith('http');
+  const needsShell = !external && (g.play.includes('/games/') || g.play.endsWith('.html'));
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
       <div className="flex flex-wrap gap-4 text-sm">

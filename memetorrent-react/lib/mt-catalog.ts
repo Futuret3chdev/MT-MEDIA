@@ -135,6 +135,15 @@ export const CATALOG: CatalogGame[] = [
     blurb: 'High tosses, fat swipe, 5 lives. Freeze / gold / heart specials. Wallet unlocks the $MT gold blade.',
   },
   {
+    id: 'emoji',
+    name: 'Emoji Guess',
+    kind: 'arcade',
+    status: 'live',
+    play: '/emoji',
+    img: '/games/covers/emoji.jpg',
+    blurb: 'Community night. Decode the emoji. Streaks go neon $MT. Staff set the prize from the desk.',
+  },
+  {
     id: 'dash',
     name: 'Dash',
     kind: 'p2e',

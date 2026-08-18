@@ -3,6 +3,7 @@ import PlayLink from '@/components/auth/PlayLink';
 
 export default function GameCard({ game }: { game: CatalogGame }) {
   const external = game.play.startsWith('http');
+  const needsShell = !external && (game.play.includes('/games/') || game.play.endsWith('.html'));
   return (
     <article className="rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/70 flex flex-col">
       <a href={`/catalog/${game.id}`} className="block h-44 bg-black/50 shrink-0">
@@ -24,7 +25,7 @@ export default function GameCard({ game }: { game: CatalogGame }) {
         </div>
         <div className="mt-auto flex gap-2">
           <PlayLink
-            href={external ? game.play : `/play/${game.id}`}
+            href={external ? game.play : needsShell ? `/play/${game.id}` : game.play}
             external={external}
             className="inline-flex items-center justify-center font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm"
           >
