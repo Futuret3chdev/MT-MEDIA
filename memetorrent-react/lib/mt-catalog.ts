@@ -43,12 +43,12 @@ export const CATALOG: CatalogGame[] = [
   },
   {
     id: 'puck',
-    name: 'Puck',
+    name: 'MT Puck',
     kind: 'p2e',
     status: 'live',
-    play: '/games/unix/puck/index.html',
+    play: '/puck',
     img: '/games/covers/puck.jpg',
-    blurb: 'Ice hockey from the bot catalog.',
+    blurb: '3D rink. You skate the puck, crowd in the stands, hit sounds. Wallet + staff award.',
   },
   {
     id: 'mte-pop',
