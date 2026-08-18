@@ -20,7 +20,7 @@ export const CATALOG: CatalogGame[] = [
     status: 'live',
     play: '/games/pocket/index.html',
     img: '/games/covers/clubpool.jpg',
-    blurb: 'Clubpool: live 8-ball or 9-ball, Club AI if the seat is empty, wallet + $MT stakes, FreeToUse EDM, rematch, and challenge from Chat.',
+    blurb: 'Live 8-ball in the club. Wallet connect, free tables or $MT stakes, Pixabay EDM, Quick Match, rematch, and challenge from Chat.',
   },
   {
     id: 'mt-world-gallery',

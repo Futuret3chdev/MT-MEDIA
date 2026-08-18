@@ -33,27 +33,15 @@ body {
 /* GAME AREA */
 #gameContainer {
     position: absolute;
-    top: 58px;
+    top: 40px; /* push below HUD */
     left: 0;
     width: 100%;
-    height: calc(100vh - 58px);
+    height: calc(100vh - 60px);
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #07140e;
-    overflow: hidden;
-    z-index: 1;
-    pointer-events: none;
-}
-
-#tableStage {
-    position: relative;
-    width: min(900px, 94vw);
-    height: min(450px, 56vh, calc(94vw / 2));
-    background: #0d5016;
-    border: 8px solid #3d2314;
-    box-shadow: 0 0 0 3px #1a0e08, 0 18px 50px rgba(0,0,0,0.65);
-    pointer-events: auto;
+    background: #0a0a0a;
+	 overflow: hidden;
 }
 
 /* CANVAS */
@@ -62,7 +50,8 @@ body {
     height: 100%;
     display: block;
     touch-action: none;
-    background: #0d5016;
+	max-width: 100%;
+    max-height: 100%;
 }
 
 /* =========================
@@ -73,16 +62,15 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    min-height: 52px;
+    height: 50px;
 
-    background: rgba(0,0,0,0.92);
+    background: rgba(0,0,0,0.85); /* 🔥 proper */
     backdrop-filter: blur(8px);
 
     display: flex;
     align-items: center;
     padding: 0 12px;
-    z-index: 400;
-    pointer-events: auto;
+    z-index: 100;
 }
 
 /* HUD layout */
@@ -320,7 +308,7 @@ button:active {
     gap: 10px;
 
     overflow-y: auto;
-    z-index: 360;
+    z-index: 200;
 }
 
 #menuOverlay input {
@@ -744,41 +732,20 @@ button.primary {
 /* =========================
    ORIENTATION NOTICE
 ========================= */
-#orientationNotice { display: none !important; }
-.player-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.player-av {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #111;
-    border: 1px solid rgba(255,255,255,0.2);
-}
-#nowPlaying {
+#orientationNotice {
     position: fixed;
-    left: 12px;
-    bottom: 58px;
-    z-index: 40;
-    pointer-events: none;
-    font-size: 11px;
-    color: #b8f2e6;
-    background: rgba(0,0,0,0.55);
-    padding: 6px 10px;
-    border-radius: 999px;
-    max-width: 60vw;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-#replayBtn {
-    min-width: auto;
-    height: 34px;
-    padding: 0 10px;
-    font-size: 12px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    color: white;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 999;
+    padding: 20px;
 }
 
 #musicControls {
@@ -884,14 +851,12 @@ button.primary {
 
 #mtDJWrap {
     position: fixed;
-    bottom: 12px;
-    left: 12px;
+    bottom: 50%;
+	left:20px;
+   flex-direction: ;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    z-index: 50;
-    max-width: 220px;
-    pointer-events: auto;
+    align-items: center;
+    z-index: 99999;
 }
 
 /* PLAYER PANEL */
@@ -1181,7 +1146,7 @@ button.ghost {
         </div>
     </div>
 </div>
-<div id="nowPlaying">Now playing · FreeToUse EDM</div>
+<div id="orientationNotice">⚠️ Please rotate your device to landscape for best experience</div>
 
 
 <!-- TOP BAR -->
@@ -1199,7 +1164,6 @@ button.ghost {
     <!-- CENTER (GAME UI) -->
     <div class="hud-center">
         <div class="player-info" id="player1">
-            <img class="player-av" id="player1Av" alt="" src="/games/default-avatar.svg">
             <span id="player1Name" class="player-name-line">Player 1</span>
             <div class="ball-display" id="p1Display"></div>
             <div class="turn-indicator" id="p1Turn" style="display:none;"></div>
@@ -1214,7 +1178,6 @@ button.ghost {
         </div>
 
         <div class="player-info" id="player2">
-            <img class="player-av" id="player2Av" alt="" src="/games/default-avatar.svg">
             <span id="player2Name" class="player-name-line">Player 2</span>
             <div class="ball-display" id="p2Display"></div>
             <div class="turn-indicator" id="p2Turn" style="display:none;"></div>
@@ -1225,8 +1188,6 @@ button.ghost {
 
     <!-- RIGHT (MENU) -->
     <div class="hud-right">
-        <button id="replayBtn" class="top-btn" onclick="replayLastShot()">Replay</button>
-        <button class="top-btn" onclick="playMusic()">♪</button>
         <button id="menuBtn" class="top-btn">
             <div class="menu-icon">
                 <span></span>
@@ -1241,9 +1202,7 @@ button.ghost {
 <!-- GAME -->
 <div id="gameContainer">
 
-    <div id="tableStage">
-        <canvas id="gameCanvas" width="900" height="450"></canvas>
-    </div>
+    <canvas id="gameCanvas"></canvas>
 
 </div>
 
@@ -1263,13 +1222,6 @@ button.ghost {
                 <button class="full" id="btnWallet" onclick="connectPocketWallet()">Connect wallet</button>
             </div>
             <div class="menu-status" id="walletStatus">Wallet off · free tables still play</div>
-            <label class="stake-label">Game
-                <select id="modeSelect">
-                    <option value="8ball">8-ball</option>
-                    <option value="9ball">9-ball</option>
-                    <option value="race">First to 3</option>
-                </select>
-            </label>
             <label class="stake-label">Table stake
                 <select id="stakeSelect" onchange="onStakeChange()">
                     <option value="0">Free play</option>
@@ -1279,10 +1231,7 @@ button.ghost {
                     <option value="25">25 $MT</option>
                 </select>
             </label>
-            <label class="friend-item"><input type="checkbox" id="listedTable" checked> Listed table</label>
-            <label class="friend-item"><input type="checkbox" id="friendsOnly"> Friends only</label>
             <button class="full quick" onclick="quickMatch()">Quick Match</button>
-            <button class="full ghost" onclick="startAiMatch()">Play Club AI</button>
             <input id="roomCode" placeholder="Table code (optional)">
 
             <button class="full" onclick="createRoom()">Create table</button>
@@ -1314,9 +1263,7 @@ button.ghost {
                 <button onclick="pauseMusic()">Pause</button>
                 <button onclick="nextTrack()">Next</button>
             </div>
-            <div class="menu-status" id="trackNow">FreeToUse EDM</div>
-            <a class="menu-status" href="https://freetouse.com/music/category/edm" target="_blank" rel="noopener">freetouse.com/edm</a>
-            <a class="menu-status" href="https://uppbeat.io/music/category/electronic/edm/house" target="_blank" rel="noopener">More house on Uppbeat</a>
+            <div class="menu-status" id="trackNow">Club Night</div>
         </div>
     </div>
 
@@ -1404,11 +1351,6 @@ checkOrientation();
     let pendingWatch = false;
     let tableStake = 0;
     let pocketWallet = { address: '', type: '' };
-    let tableMode = '8ball';
-    let raceScore = { 1: 0, 2: 0 };
-    let lastShot = null;
-    let replaying = false;
-    let myAvatar = '';
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -1459,7 +1401,7 @@ resizeCanvas();
     const TABLE_HEIGHT = canvas.height - 50;
     const TABLE_X = 50;
     const TABLE_Y = 25;
-    const POCKET_RADIUS = 28;
+    const POCKET_RADIUS = 25;
     const MAX_POWER = 22;
 
     let gameState = {
@@ -1521,8 +1463,7 @@ function renderFriends() {
         const p2 = players.find(p => p.number === 2);
 
         document.getElementById("player1Name").textContent = p1 ? p1.name : "Player 1";
-        document.getElementById("player2Name").textContent = p2 ? p2.name : (gameState.ai ? "Club AI" : "Player 2");
-        syncPlayerAvatars();
+        document.getElementById("player2Name").textContent = p2 ? p2.name : "Player 2";
     }
 
 function renderRoomList(rooms) {
@@ -1738,27 +1679,11 @@ function createRoomWithCode(roomCode) {
         socket.emit("leaveRoom", { roomCode: multiplayer.roomCode });
     }
     setTimeout(() => {
-        tableMode = (document.getElementById('modeSelect') || {}).value || '8ball';
-        fetch('/api/games/clubpool', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'open',
-                code,
-                stake: tableStake,
-                mode: tableMode,
-                listed: !!(document.getElementById('listedTable') || {}).checked,
-                friendsOnly: !!(document.getElementById('friendsOnly') || {}).checked,
-                hostName: playerName
-            })
-        }).catch(() => {});
         socket.emit("createRoom", {
             roomCode: code,
             playerName,
             stake: tableStake,
-            wallet: pocketWallet.address || null,
-            avatar: myAvatar || null
+            wallet: pocketWallet.address || null
         });
         toggleMenu();
         setRoomStatus("Waiting for opponent...");
@@ -1775,7 +1700,7 @@ function quickMatch() {
         joinRoomByCode(open.roomCode);
         return;
     }
-    startAiMatch();
+    createRoomWithCode(randomTableCode());
 }
 
     function createRoom() {
@@ -2090,7 +2015,7 @@ function prepareToSwitchRooms() {
         });
         balls.push(cueBall);
 
-        const eightConfig = [
+        const ballConfig = [
             {num: 1, color: '#FFD700', type: 'solid'},
             {num: 2, color: '#0066CC', type: 'solid'},
             {num: 3, color: '#FF0000', type: 'solid'},
@@ -2107,47 +2032,33 @@ function prepareToSwitchRooms() {
             {num: 14, color: '#006600', type: 'stripe'},
             {num: 15, color: '#8B4513', type: 'stripe'}
         ];
-        const nineConfig = [
-            {num: 1, color: '#FFD700', type: 'solid'},
-            {num: 2, color: '#0066CC', type: 'solid'},
-            {num: 3, color: '#FF0000', type: 'solid'},
-            {num: 4, color: '#800080', type: 'solid'},
-            {num: 9, color: '#111111', type: '9ball'},
-            {num: 5, color: '#FF6600', type: 'solid'},
-            {num: 6, color: '#006600', type: 'solid'},
-            {num: 7, color: '#8B4513', type: 'solid'},
-            {num: 8, color: '#000000', type: 'solid'}
-        ];
-        const ballConfig = tableMode === '9ball' ? nineConfig : eightConfig;
 
         const startX = 600;
         const startY = canvas.height / 2;
         const spacing = BALL_RADIUS * 2.1;
         let row = 0;
-        const rows = tableMode === '9ball' ? 5 : 5;
 
-        for (let i = 0; i < rows; i++) {
-            const cols = tableMode === '9ball' ? (i < 3 ? i + 1 : 5 - i) : (i + 1);
-            for (let j = 0; j < cols; j++) {
-                const index = balls.length - 1;
-                if (index >= ballConfig.length) continue;
-                const x = startX + i * spacing * 0.866;
-                const y = startY + (j - (cols - 1) / 2) * spacing;
-                const cfg = ballConfig[index];
-                if (!cfg) continue;
-                const ball = Bodies.circle(x, y, BALL_RADIUS, {
-                    restitution: 0.95,
-                    friction: 0.005,
-                    frictionAir: 0.008,
-                    density: 0.001,
-                    label: `ball-${cfg.num}`,
-                    ballNumber: cfg.num,
-                    ballType: cfg.type,
-                    render: {fillStyle: cfg.color}
-                });
-                balls.push(ball);
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j <= i; j++) {
+                const index = row + j;
+                if (index < ballConfig.length) {
+                    const x = startX + i * spacing * 0.866;
+                    const y = startY + (j - i / 2) * spacing;
+
+                    const ball = Bodies.circle(x, y, BALL_RADIUS, {
+                        restitution: 0.95,
+                        friction: 0.005,
+                        frictionAir: 0.008,
+                        density: 0.001,
+                        label: `ball-${ballConfig[index].num}`,
+                        ballNumber: ballConfig[index].num,
+                        ballType: ballConfig[index].type,
+                        render: {fillStyle: ballConfig[index].color}
+                    });
+                    balls.push(ball);
+                }
             }
-            row += cols;
+            row += i + 1;
         }
 
         World.add(engine.world, balls);
@@ -2199,20 +2110,18 @@ function prepareToSwitchRooms() {
     ];
 
     pocketPositions.forEach(pos => {
-        ctx.beginPath();
-        ctx.arc(pos[0], pos[1], POCKET_RADIUS + 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#5a3218';
-        ctx.fill();
-        const pocketGradient = ctx.createRadialGradient(pos[0], pos[1], 2, pos[0], pos[1], POCKET_RADIUS);
-        pocketGradient.addColorStop(0, '#000');
-        pocketGradient.addColorStop(0.75, '#111');
-        pocketGradient.addColorStop(1, '#2a1810');
+        const pocketGradient = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], POCKET_RADIUS);
+        pocketGradient.addColorStop(0, '#000000');
+        pocketGradient.addColorStop(0.7, '#1a1a1a');
+        pocketGradient.addColorStop(1, '#333333');
+
         ctx.fillStyle = pocketGradient;
         ctx.beginPath();
         ctx.arc(pos[0], pos[1], POCKET_RADIUS, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#c4a574';
-        ctx.lineWidth = 3;
+
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 2;
         ctx.stroke();
     });
 
@@ -2468,12 +2377,6 @@ ctx.restore();
     const dy = mousePos.y - cueBall.position.y;
     const angle = Math.atan2(dy, dx);
 
-    lastShot = {
-        power: shotPower,
-        angle,
-        english: { x: english.x, y: english.y },
-        balls: serializeBalls()
-    };
     const breakMul = gameState.breakShot ? 1.45 : 1;
     const force = Math.min(shotPower / 10, MAX_POWER) * 0.012 * breakMul;
     const hit = {
@@ -2588,16 +2491,6 @@ function showWaitingState(roomCode) {
 
         gameState.validShot = false;
         setMessage(`❌ Scratch! ${getOtherPlayerName()}'s turn`);
-    } else if (ball.label === 'ball-9' && tableMode === '9ball') {
-        gameState.gameOver = true;
-        const winnerName = getCurrentPlayerName();
-        const finalMessage = `🎉 ${winnerName} pockets the 9!`;
-        setMessage(finalMessage);
-        playSound(800, 0.5, 'square', 0.3);
-        finishRack(true, winnerName, finalMessage);
-        World.remove(engine.world, ball);
-        const ix = balls.indexOf(ball);
-        if (ix > -1) balls.splice(ix, 1);
     } else if (ball.label === 'ball-8') {
         const playerGroup = gameState[`player${gameState.currentPlayer}Group`];
 
@@ -2612,7 +2505,7 @@ function showWaitingState(roomCode) {
             finalMessage = `🎉 ${winnerName} Wins!`;
             setMessage(finalMessage);
             playSound(800, 0.5, 'square', 0.3);
-            finishRack(true, winnerName, finalMessage);
+            recordPocketResult(true, winnerName);
         } else {
             gameState.gameOver = true;
             winnerName = getOtherPlayerName();
@@ -2620,12 +2513,13 @@ function showWaitingState(roomCode) {
             finalMessage = `💀 ${winnerName} Wins!`;
             setMessage(finalMessage);
             playSound(200, 0.5, 'sawtooth', 0.3);
-            finishRack(false, winnerName, finalMessage);
+            recordPocketResult(false, winnerName);
         }
 
         World.remove(engine.world, ball);
         const index = balls.indexOf(ball);
         if (index > -1) balls.splice(index, 1);
+        showWin(finalMessage, tableStake > 0 ? (tableStake + ' $MT on the cloth') : 'Rematch keeps this table.');
 
         if (multiplayer.connected) {
             const snapshot = {
@@ -2795,28 +2689,6 @@ function endTurn() {
     }
 
     if (gameState.gameOver) return;
-
-    if (gameState.ai && gameState.currentPlayer === 1 && !gameState.validShot) {
-        gameState.currentPlayer = 2;
-        updatePlayerDisplay();
-        setTimeout(aiTakeShot, 700);
-        gameState.breakShot = false;
-        gameState.pocketedThisTurn = [];
-        gameState.firstHit = null;
-        gameState.validShot = false;
-        return;
-    }
-    if (gameState.ai && gameState.currentPlayer === 2) {
-        if (gameState.validShot) {
-            setTimeout(aiTakeShot, 700);
-            gameState.breakShot = false;
-            gameState.pocketedThisTurn = [];
-            gameState.firstHit = null;
-            return;
-        }
-        gameState.currentPlayer = 1;
-        updatePlayerDisplay();
-    }
 
     gameState.breakShot = false;
     gameState.ballsMoving = false;
@@ -3003,7 +2875,6 @@ function toggleChat(e) {
 }
 
     function resetGame(emitReset = true) {
-        const keepAi = !!gameState.ai;
         gameState = {
             currentPlayer: 1,
             player1Group: null,
@@ -3014,8 +2885,7 @@ function toggleChat(e) {
             pocketedThisTurn: [],
             validShot: false,
             breakShot: true,
-            consecutiveFouls: {1: 0, 2: 0},
-            ai: keepAi
+            consecutiveFouls: {1: 0, 2: 0}
         };
 
         hideWin();
@@ -3156,12 +3026,14 @@ document.addEventListener("click", (e) => {
 });
 
 const musicTracks = [
-    { name: "Future", src: "/games/pocket/sounds/edm/future.mp3", credit: "FreeToUse EDM" },
-    { name: "Keep It Cool", src: "/games/pocket/sounds/edm/keep-it-cool.mp3", credit: "FreeToUse EDM" },
-    { name: "Energy", src: "/games/pocket/sounds/edm/energy.mp3", credit: "FreeToUse EDM" },
-    { name: "High", src: "/games/pocket/sounds/edm/high.mp3", credit: "FreeToUse EDM" },
-    { name: "Keep Pushing", src: "/games/pocket/sounds/edm/keep-pushing.mp3", credit: "FreeToUse EDM" },
-    { name: "Back To Life", src: "/games/pocket/sounds/edm/back-to-life.mp3", credit: "FreeToUse EDM" }
+    { name: "Night Pulse", src: "sounds/edm/night-pulse.mp3", credit: "Pixabay EDM" },
+    { name: "Club Voltage", src: "sounds/edm/club-voltage.mp3", credit: "Pixabay EDM" },
+    { name: "Bassline Drive", src: "sounds/edm/bassline-drive.mp3", credit: "Pixabay EDM" },
+    { name: "Neon Drop", src: "sounds/edm/neon-drop.mp3", credit: "Pixabay EDM" },
+    { name: "Afterhours", src: "sounds/edm/afterhours.mp3", credit: "Pixabay EDM" },
+    { name: "Club Night", src: "sounds/beat1.mp3", credit: "MT table" },
+    { name: "Late Felt", src: "sounds/beat2.mp3", credit: "MT table" },
+    { name: "Green Rail", src: "sounds/beat3.mp3", credit: "MT table" }
 ];
 
 let currentTrackIndex = 0;
@@ -3204,21 +3076,24 @@ function fillTrackPick() {
 
 function playMusic() {
     if (!musicAudio) initMusic();
-    if (!musicAudio.src) loadTrack(currentTrackIndex);
 
+    // 🔥 FIX: resume audio context (required on mobile + Chrome)
     if (audioCtx && audioCtx.state === "suspended") {
         audioCtx.resume();
     }
 
+    setupAudioAnalyser();
+
     musicAudio.play().then(() => {
-        try { setupAudioAnalyser(); } catch (e) { /* already wired */ }
         updateTrackUI();
         startVisualizer();
+
+        // ✅ move DJ activation HERE (after play success)
         const dj = document.getElementById("mtDJ");
         if (dj) dj.classList.add("active");
+
     }).catch(err => {
         console.warn("Play failed:", err);
-        setMessage('Music blocked — tap Play again');
     });
 }
 
@@ -3272,8 +3147,6 @@ function updateTrackUI() {
     if (sel) sel.selectedIndex = currentTrackIndex;
     const el = document.querySelector(".track-name");
     if (el) el.textContent = track.name;
-    const np = document.getElementById('nowPlaying');
-    if (np) np.textContent = 'Now playing · ' + track.name + ' · FreeToUse';
 }
 
 function ladderRead() {
@@ -3404,120 +3277,6 @@ async function connectPocketWallet() {
     setMessage(last);
 }
 
-function setPlayerAvatar(slot, url) {
-    const el = document.getElementById('player' + slot + 'Av');
-    if (!el) return;
-    el.src = url || '/games/default-avatar.svg';
-}
-
-function syncPlayerAvatars() {
-    const n1 = (document.getElementById('player1Name') || {}).textContent || '';
-    const n2 = (document.getElementById('player2Name') || {}).textContent || '';
-    const names = [n1, n2].filter(n => n && n !== 'Player 1' && n !== 'Player 2' && n !== 'Club AI');
-    if (gameState.ai) setPlayerAvatar(2, '/games/default-avatar.svg');
-    if (myAvatar) {
-        const me = (document.getElementById('playerName') || {}).value || '';
-        if (n1 === me) setPlayerAvatar(1, myAvatar);
-        if (n2 === me) setPlayerAvatar(2, myAvatar);
-    }
-    if (!names.length) return;
-    fetch('/api/games/clubpool?names=' + encodeURIComponent(names.join(',')), { credentials: 'include' })
-        .then(r => r.json())
-        .then(d => {
-            (d.avatars || []).forEach((row) => {
-                if (row.username === n1 && row.avatar_url) setPlayerAvatar(1, row.avatar_url);
-                if (row.username === n2 && row.avatar_url) setPlayerAvatar(2, row.avatar_url);
-            });
-        })
-        .catch(() => {});
-}
-
-function currentMode() {
-    return (document.getElementById('modeSelect') || {}).value || tableMode || '8ball';
-}
-
-function startAiMatch() {
-    ensureName();
-    tableMode = currentMode();
-    gameState.ai = true;
-    multiplayer.connected = false;
-    multiplayer.roomCode = null;
-    multiplayer.spectator = false;
-    document.getElementById('player1Name').textContent = ensureName();
-    document.getElementById('player2Name').textContent = 'Club AI';
-    setPlayerAvatar(1, myAvatar || '/games/default-avatar.svg');
-    setPlayerAvatar(2, '/games/default-avatar.svg');
-    raceScore = { 1: 0, 2: 0 };
-    resetGame(false);
-    toggleMenu();
-    setMessage(tableMode === '9ball' ? 'Club AI · 9-ball. You break.' : 'Club AI sat down. You break.');
-}
-
-function aiTakeShot() {
-    if (!gameState.ai || gameState.gameOver || !cueBall) return;
-    gameState.currentPlayer = 2;
-    const target = balls.find(b => b !== cueBall && b.label !== 'cueBall');
-    if (!target) return;
-    const angle = Math.atan2(target.position.y - cueBall.position.y, target.position.x - cueBall.position.x);
-    const jitter = (Math.random() - 0.5) * 0.18;
-    const power = 8 + Math.random() * 8;
-    mousePos.x = cueBall.position.x + Math.cos(angle + jitter) * 80;
-    mousePos.y = cueBall.position.y + Math.sin(angle + jitter) * 80;
-    shotPower = power;
-    shoot();
-}
-
-function finishRack(won, winnerName, title) {
-    if (tableMode === 'race') {
-        const seat = winnerName === (document.getElementById('player1Name') || {}).textContent ? 1 : 2;
-        raceScore[seat] = (raceScore[seat] || 0) + 1;
-        if (raceScore[1] < 3 && raceScore[2] < 3) {
-            gameState.gameOver = false;
-            setMessage(title + `  ${raceScore[1]}–${raceScore[2]}`);
-            setTimeout(() => resetGame(false), 900);
-            return;
-        }
-        title = `First to 3 · ${winnerName} ${raceScore[1]}–${raceScore[2]}`;
-    }
-    recordPocketResult(won, winnerName);
-    showWin(title, tableStake > 0 ? (tableStake + ' $MT on the cloth') : 'Rematch or sit Club AI again.');
-    if (tableStake > 0 && pocketWallet.address && won) {
-        fetch('/api/games/clubpool', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'payout',
-                code: multiplayer.roomCode || 'ai',
-                winnerWallet: pocketWallet.address
-            })
-        }).catch(() => {});
-    }
-}
-
-function replayLastShot() {
-    if (!lastShot || !lastShot.balls || replaying) {
-        setMessage('No shot to replay yet');
-        return;
-    }
-    replaying = true;
-    const keep = lastShot;
-    createBalls();
-    keep.balls.forEach((snap, i) => {
-        if (!balls[i]) return;
-        Body.setPosition(balls[i], { x: snap.x, y: snap.y });
-        Body.setVelocity(balls[i], { x: 0, y: 0 });
-    });
-    const force = Math.min(keep.power / 10, MAX_POWER) * 0.012;
-    Body.applyForce(cueBall, cueBall.position, {
-        x: Math.cos(keep.angle) * force,
-        y: Math.sin(keep.angle) * force
-    });
-    gameState.ballsMoving = true;
-    setTimeout(() => { replaying = false; }, 4000);
-    setMessage('Replay');
-}
-
 function bootPocket() {
     fillTrackPick();
     bindEnglishPad();
@@ -3533,11 +3292,6 @@ function bootPocket() {
                 nameEl.value = d.user.username;
                 localStorage.setItem('mt-pocket-name', d.user.username);
             }
-            if (d.user?.avatar_url) {
-                myAvatar = d.user.avatar_url;
-                setPlayerAvatar(1, myAvatar);
-            }
-            syncPlayerAvatars();
         })
         .catch(() => {});
 }
@@ -3545,8 +3299,6 @@ function bootPocket() {
 let analyser, dataArray;
 
 function initializeAudio() {
-    setupAudioAnalyser();
-    return;
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 64; // Set FFT size for frequency data
@@ -3655,7 +3407,7 @@ function startVisualizer() {
             <hr>
 
             <p class="brand">Futuret3ch × MemeTorrent</p>
-            <p class="eco">Clubpool · Club AI · FreeToUse EDM</p>
+            <p class="eco">MT WORLD · wallet + $MT stakes · Pixabay EDM</p>
         </div>
     </div>
 </div>
