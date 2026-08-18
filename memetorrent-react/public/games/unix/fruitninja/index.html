@@ -18,7 +18,26 @@
     }
     #hud .logo { color: var(--mt); }
     #score { color: var(--gold); }
-    #combo { color: #7af0ff; min-width: 70px; }
+    #combo {
+      color: #19d37e; min-width: 86px;
+      text-shadow: 0 0 8px #19d37e, 0 0 18px #19d37e;
+    }
+    #combo.on {
+      font-size: 22px;
+      animation: mt-pulse 0.35s ease-out;
+    }
+    @keyframes mt-pulse {
+      from { transform: scale(1.6); text-shadow: 0 0 22px #5cffb0, 0 0 40px #19d37e; }
+      to { transform: scale(1); }
+    }
+    #comboFlash {
+      position: fixed; inset: 0; pointer-events: none; z-index: 6;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; letter-spacing: .08em; color: #19d37e;
+      text-shadow: 0 0 16px #19d37e, 0 0 40px #19d37e, 0 0 70px #0b8a4e;
+      opacity: 0; transition: opacity .15s;
+    }
+    #comboFlash.show { opacity: 1; }
     #fx { color: #c4b5fd; font-size: 12px; }
     #lives { margin-left: auto; letter-spacing: 2px; }
     #pauseBtn {
@@ -65,6 +84,7 @@
     <span id="lives">♥♥♥♥♥</span>
     <button id="pauseBtn" type="button">Pause</button>
   </div>
+  <div id="comboFlash"></div>
   <div id="hint">Swipe wide — fruit fly high · 5 lives · bombs cost a life · gold / freeze / heart are specials</div>
   <div id="menu">
     <div class="card">
@@ -120,6 +140,8 @@ const FRUITS = [
   { name: 'lemon', c: '#f4d35e', inner: '#fff3b0', r: 32, pts: 6 },
   { name: 'grape', c: '#7b2cbf', inner: '#c77dff', r: 28, pts: 12 },
   { name: 'berry', c: '#ff006e', inner: '#ffc2d1', r: 26, pts: 15 },
+  { name: 'pineapple', c: '#f4a259', inner: '#ffe08a', r: 40, pts: 14, shape: 'pine' },
+  { name: 'banana', c: '#ffe066', inner: '#fff3b0', r: 30, pts: 9, shape: 'banana' },
 ];
 
 const wallet = { addr: localStorage.getItem('mt-fruit-wallet') || '' };
@@ -221,7 +243,7 @@ function splitFruit(it, x1, y1, x2, y2) {
   const ang = Math.atan2(y2 - y1, x2 - x1);
   const nx = -Math.sin(ang);
   const ny = Math.cos(ang);
-  const kick = 260 + Math.random() * 80;
+  const kick = 340 + Math.random() * 120;
   for (const side of [-1, 1]) {
     state.halves.push({
       x: it.x + nx * side * 6,
@@ -240,8 +262,9 @@ function splitFruit(it, x1, y1, x2, y2) {
   }
 }
 
-function hitPad() {
-  return (wallet.addr ? 2.15 : 1.7) * Math.max(1, W / 900);
+function hitPad(it) {
+  const base = Math.max(it.r, 42 * Math.max(1, W / 900));
+  return base * (wallet.addr ? 1.35 : 1.2);
 }
 
 function slash(x1, y1, x2, y2) {
@@ -253,13 +276,14 @@ function slash(x1, y1, x2, y2) {
     let hit = false;
     for (let s = 0; s < steps; s++) {
       const a = s / steps, b = (s + 1) / steps;
-      if (sliceLine(x1 + (x2 - x1) * a, y1 + (y2 - y1) * a, x1 + (x2 - x1) * b, y1 + (y2 - y1) * b, it.x, it.y, it.r * hitPad())) {
+      if (sliceLine(x1 + (x2 - x1) * a, y1 + (y2 - y1) * a, x1 + (x2 - x1) * b, y1 + (y2 - y1) * b, it.x, it.y, hitPad(it))) {
         hit = true; break;
       }
     }
     if (!hit) return;
     it.live = false;
     splitFruit(it, x1, y1, x2, y2);
+    it.y = H + 400;
     if (it.kind === 'bomb') {
       burst(it.x, it.y, '#222', 18);
       burst(it.x, it.y, '#ff3d7f', 10);
@@ -282,9 +306,20 @@ function slash(x1, y1, x2, y2) {
     state.score += pts;
     pop(it.x, it.y, '+' + pts);
     state.combo += 1;
-    state.comboT = 1.1;
+    state.comboT = 1.4;
+    if (state.combo >= 2) flashCombo(state.combo);
   });
   if (hits) { ping(); paintHud(); }
+}
+
+function flashCombo(n) {
+  const el = document.getElementById('comboFlash');
+  const hud = document.getElementById('combo');
+  el.textContent = n >= 3 ? ('$MT COMBO x' + n) : ('COMBO x' + n);
+  el.classList.add('show');
+  hud.classList.add('on');
+  clearTimeout(flashCombo.t);
+  flashCombo.t = setTimeout(() => { el.classList.remove('show'); hud.classList.remove('on'); }, 420);
 }
 
 function ping() {
@@ -370,59 +405,96 @@ canvas.addEventListener('touchstart', down, { passive: false });
 canvas.addEventListener('touchmove', move, { passive: false });
 addEventListener('touchend', up);
 
+function fruitColors(it) {
+  let c = it.f.c, inner = it.f.inner;
+  if (it.kind === 'freeze') { c = '#38bdf8'; inner = '#e0f2fe'; }
+  if (it.kind === 'gold') { c = '#fbbf24'; inner = '#fff7cc'; }
+  if (it.kind === 'heart') { c = '#fb7185'; inner = '#ffe4e6'; }
+  if (it.kind === 'bomb') { c = '#1a1a1a'; inner = '#ff3d7f'; }
+  return { c, inner };
+}
+
+function paintFruitBody(it) {
+  const { c, inner } = fruitColors(it);
+  const r = it.r;
+  if (it.kind === 'bomb') {
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ff3d7f';
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0, -r * 0.7); ctx.quadraticCurveTo(r * 0.4, -r * 1.1, r * 0.15, -r * 1.35); ctx.stroke();
+    return;
+  }
+  if (it.f.shape === 'pine') {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 1.05);
+    ctx.lineTo(r * 0.62, r * 0.85);
+    ctx.lineTo(-r * 0.62, r * 0.85);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = inner;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.55);
+    ctx.lineTo(r * 0.32, r * 0.55);
+    ctx.lineTo(-r * 0.32, r * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#2f9e44';
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.05);
+      ctx.lineTo(i * r * 0.18, -r * 1.45);
+      ctx.lineTo(i * r * 0.08, -r * 1.05);
+      ctx.fill();
+    }
+    return;
+  }
+  ctx.fillStyle = c;
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = inner;
+  ctx.globalAlpha = 0.55;
+  ctx.beginPath(); ctx.ellipse(-r * 0.15, -r * 0.1, r * 0.45, r * 0.55, -0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#2f9e44';
+  ctx.beginPath(); ctx.ellipse(r * 0.15, -r * 0.85, r * 0.28, r * 0.16, 0.6, 0, Math.PI * 2); ctx.fill();
+}
+
 function drawFruit(it) {
+  if (!it.live) return;
   ctx.save();
   ctx.translate(it.x, it.y);
   ctx.rotate(it.rot);
-  if (it.kind === 'bomb') {
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath(); ctx.arc(0, 0, it.r, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ff3d7f';
-    ctx.beginPath(); ctx.arc(0, 0, it.r * 0.22, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(0, -it.r * 0.7); ctx.quadraticCurveTo(it.r * 0.4, -it.r * 1.1, it.r * 0.15, -it.r * 1.35); ctx.stroke();
-  } else {
-    let c = it.f.c, inner = it.f.inner;
-    if (it.kind === 'freeze') { c = '#38bdf8'; inner = '#e0f2fe'; }
-    if (it.kind === 'gold') { c = '#fbbf24'; inner = '#fff7cc'; }
-    if (it.kind === 'heart') { c = '#fb7185'; inner = '#ffe4e6'; }
-    ctx.fillStyle = c;
-    ctx.beginPath(); ctx.arc(0, 0, it.r, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = inner;
-    ctx.globalAlpha = 0.55;
-    ctx.beginPath(); ctx.ellipse(-it.r * 0.15, -it.r * 0.1, it.r * 0.45, it.r * 0.55, -0.4, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#2f9e44';
-    ctx.beginPath(); ctx.ellipse(it.r * 0.15, -it.r * 0.85, it.r * 0.28, it.r * 0.16, 0.6, 0, Math.PI * 2); ctx.fill();
-  }
+  paintFruitBody(it);
   ctx.restore();
 }
 
 function drawHalf(h) {
+  const { c, inner } = fruitColors(h);
   ctx.save();
   ctx.translate(h.x, h.y);
-  ctx.rotate(h.cut);
+  ctx.rotate(h.cut + (h.side > 0 ? 0 : Math.PI));
   ctx.beginPath();
-  ctx.rect(h.side > 0 ? -2 : -h.r, -h.r - 2, h.r + 2, h.r * 2 + 4);
-  ctx.clip();
-  ctx.rotate(-h.cut + h.rot);
-  let c = h.f.c, inner = h.f.inner;
-  if (h.kind === 'freeze') { c = '#38bdf8'; inner = '#e0f2fe'; }
-  if (h.kind === 'gold') { c = '#fbbf24'; inner = '#fff7cc'; }
-  if (h.kind === 'heart') { c = '#fb7185'; inner = '#ffe4e6'; }
-  if (h.kind === 'bomb') { c = '#1a1a1a'; inner = '#ff3d7f'; }
+  ctx.arc(0, 0, h.r, -Math.PI / 2, Math.PI / 2, false);
+  ctx.lineTo(0, 0);
+  ctx.closePath();
   ctx.fillStyle = c;
-  ctx.beginPath(); ctx.arc(0, 0, h.r, 0, Math.PI * 2); ctx.fill();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, 0, h.r * 0.78, -Math.PI / 2, Math.PI / 2, false);
+  ctx.lineTo(0, 0);
+  ctx.closePath();
   ctx.fillStyle = inner;
-  ctx.globalAlpha = 0.7;
-  ctx.beginPath(); ctx.ellipse(-h.r * 0.12, 0, h.r * 0.4, h.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.restore();
-  ctx.save();
-  ctx.translate(h.x, h.y);
-  ctx.rotate(h.cut);
-  ctx.fillStyle = inner || '#ffe4c4';
-  ctx.fillRect(-3, -h.r * 0.92, 6, h.r * 1.84);
+  ctx.fill();
+  ctx.fillStyle = inner;
+  ctx.fillRect(-4, -h.r, 8, h.r * 2);
+  ctx.fillStyle = '#3d2314';
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.arc(2, i * h.r * 0.28, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -490,18 +562,24 @@ function tick(now) {
   state.items.forEach(drawFruit);
   state.halves.forEach(drawHalf);
   ctx.lineCap = 'round';
-  const blade = wallet.addr ? 'rgba(25,211,126,' : 'rgba(122,240,255,';
+  const neon = state.combo >= 2 || wallet.addr;
+  const blade = neon ? 'rgba(25,211,126,' : 'rgba(122,240,255,';
   state.trail.forEach((t) => {
     ctx.strokeStyle = blade + Math.max(0, t.t * 5) + ')';
-    ctx.lineWidth = (wallet.addr ? 14 : 11) * devicePixelRatio;
+    ctx.lineWidth = ((neon ? 15 : 11)) * devicePixelRatio;
     ctx.beginPath(); ctx.moveTo(t.x1, t.y1); ctx.lineTo(t.x2, t.y2); ctx.stroke();
   });
   ctx.font = (16 * devicePixelRatio) + 'px system-ui';
   ctx.textAlign = 'center';
   state.pops.forEach((p) => {
     ctx.globalAlpha = Math.max(0, p.t);
-    ctx.fillStyle = '#ffe08a';
+    ctx.fillStyle = state.combo >= 2 ? '#19d37e' : '#ffe08a';
+    if (state.combo >= 2) {
+      ctx.shadowColor = '#19d37e';
+      ctx.shadowBlur = 18;
+    }
     ctx.fillText(p.text, p.x, p.y);
+    ctx.shadowBlur = 0;
   });
   ctx.globalAlpha = 1;
   requestAnimationFrame(tick);
