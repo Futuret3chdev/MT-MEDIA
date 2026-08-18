@@ -144,6 +144,15 @@ export const CATALOG: CatalogGame[] = [
     blurb: 'Community night. Decode the emoji. Streaks go neon $MT. Staff set the prize from the desk.',
   },
   {
+    id: 'emoji-royale',
+    name: 'Emoji Royale',
+    kind: 'multiplayer',
+    status: 'live',
+    play: '/royale',
+    img: '/games/covers/royale.jpg',
+    blurb: 'Live pit. One card, one clock, whole room locks in. Staff run live + prize. Own board.',
+  },
+  {
     id: 'dash',
     name: 'Dash',
     kind: 'p2e',
