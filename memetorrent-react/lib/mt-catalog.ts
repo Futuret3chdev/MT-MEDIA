@@ -170,17 +170,6 @@ export const CATALOG: CatalogGame[] = [
     img: '/games/covers/pocket.jpg',
     blurb: 'Sideload client. Needs a portal developer license.',
   },
-  {
-    id: 'poker-stars',
-    name: 'Poker Stars',
-    kind: 'adult',
-    status: 'live',
-    play: 'https://poker-stars.vercel.app',
-    img: '/games/covers/poker-stars.png',
-    blurb: '18+ tables from the MT house set. Score Cekih and card play.',
-    source: 'https://github.com/Futuret3chdev/poker-stars',
-    rated: '18+',
-  },
 ];
 
 export function getGame(id: string) {
