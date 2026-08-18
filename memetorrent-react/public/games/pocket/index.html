@@ -33,31 +33,33 @@ body {
 /* GAME AREA */
 #gameContainer {
     position: absolute;
-    top: 50px;
+    top: 58px;
     left: 0;
     width: 100%;
-    height: calc(100vh - 50px);
+    height: calc(100vh - 58px);
     display: flex;
     justify-content: center;
     align-items: center;
     background: #07140e;
-	 overflow: hidden;
+    overflow: hidden;
+    z-index: 1;
+    pointer-events: none;
 }
 
 #tableStage {
     position: relative;
-    width: min(100vw, calc((100vh - 70px) * 2));
-    max-height: calc(100vh - 70px);
+    width: min(900px, 94vw);
+    height: min(450px, 56vh, calc(94vw / 2));
     background: #0d5016;
-    border: 10px solid #3d2314;
+    border: 8px solid #3d2314;
     box-shadow: 0 0 0 3px #1a0e08, 0 18px 50px rgba(0,0,0,0.65);
+    pointer-events: auto;
 }
 
 /* CANVAS */
 #gameCanvas {
     width: 100%;
-    height: auto;
-    aspect-ratio: 2 / 1;
+    height: 100%;
     display: block;
     touch-action: none;
     background: #0d5016;
@@ -71,15 +73,16 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 50px;
+    min-height: 52px;
 
-    background: rgba(0,0,0,0.85); /* 🔥 proper */
+    background: rgba(0,0,0,0.92);
     backdrop-filter: blur(8px);
 
     display: flex;
     align-items: center;
     padding: 0 12px;
-    z-index: 100;
+    z-index: 400;
+    pointer-events: auto;
 }
 
 /* HUD layout */
@@ -317,7 +320,7 @@ button:active {
     gap: 10px;
 
     overflow-y: auto;
-    z-index: 200;
+    z-index: 360;
 }
 
 #menuOverlay input {
@@ -759,7 +762,8 @@ button.primary {
     position: fixed;
     left: 12px;
     bottom: 58px;
-    z-index: 80;
+    z-index: 40;
+    pointer-events: none;
     font-size: 11px;
     color: #b8f2e6;
     background: rgba(0,0,0,0.55);
@@ -880,12 +884,14 @@ button.primary {
 
 #mtDJWrap {
     position: fixed;
-    bottom: 50%;
-	left:20px;
-   flex-direction: ;
+    bottom: 12px;
+    left: 12px;
     display: flex;
-    align-items: center;
-    z-index: 99999;
+    flex-direction: column;
+    align-items: flex-start;
+    z-index: 50;
+    max-width: 220px;
+    pointer-events: auto;
 }
 
 /* PLAYER PANEL */
@@ -1220,6 +1226,7 @@ button.ghost {
     <!-- RIGHT (MENU) -->
     <div class="hud-right">
         <button id="replayBtn" class="top-btn" onclick="replayLastShot()">Replay</button>
+        <button class="top-btn" onclick="playMusic()">♪</button>
         <button id="menuBtn" class="top-btn">
             <div class="menu-icon">
                 <span></span>
@@ -1452,7 +1459,7 @@ resizeCanvas();
     const TABLE_HEIGHT = canvas.height - 50;
     const TABLE_X = 50;
     const TABLE_Y = 25;
-    const POCKET_RADIUS = 25;
+    const POCKET_RADIUS = 28;
     const MAX_POWER = 22;
 
     let gameState = {
@@ -2127,6 +2134,7 @@ function prepareToSwitchRooms() {
                 const x = startX + i * spacing * 0.866;
                 const y = startY + (j - (cols - 1) / 2) * spacing;
                 const cfg = ballConfig[index];
+                if (!cfg) continue;
                 const ball = Bodies.circle(x, y, BALL_RADIUS, {
                     restitution: 0.95,
                     friction: 0.005,
@@ -2191,18 +2199,20 @@ function prepareToSwitchRooms() {
     ];
 
     pocketPositions.forEach(pos => {
-        const pocketGradient = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], POCKET_RADIUS);
-        pocketGradient.addColorStop(0, '#000000');
-        pocketGradient.addColorStop(0.7, '#1a1a1a');
-        pocketGradient.addColorStop(1, '#333333');
-
+        ctx.beginPath();
+        ctx.arc(pos[0], pos[1], POCKET_RADIUS + 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#5a3218';
+        ctx.fill();
+        const pocketGradient = ctx.createRadialGradient(pos[0], pos[1], 2, pos[0], pos[1], POCKET_RADIUS);
+        pocketGradient.addColorStop(0, '#000');
+        pocketGradient.addColorStop(0.75, '#111');
+        pocketGradient.addColorStop(1, '#2a1810');
         ctx.fillStyle = pocketGradient;
         ctx.beginPath();
         ctx.arc(pos[0], pos[1], POCKET_RADIUS, 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.strokeStyle = '#654321';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#c4a574';
+        ctx.lineWidth = 3;
         ctx.stroke();
     });
 
