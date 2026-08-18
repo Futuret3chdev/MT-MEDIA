@@ -249,7 +249,7 @@ import * as THREE from 'three';
 const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
 const hint = document.getElementById('hint');
 if (coarse) hint.textContent = 'Stick walk · drag look · Jump · Do to chop, fish, or claim a stand';
-else hint.textContent = 'WASD · mouse · Space jump on blocks · E to use tool · pets follow you';
+else hint.textContent = 'Woods east of the gallery · pond west of the studio · E / Do with an axe or rod';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87b8e8);
@@ -396,12 +396,44 @@ box(0.9, 1.3, 0.9, 2.4, 0.7, 15.5, 0x555, { ghost: true });
 addFrame(0, 2.1, 18.7, Math.PI, 'c1');
 addFrame(-3, 2.1, 18.7, Math.PI, 'c2');
 
-// Trees
-function tree(x, z) {
-  box(0.5, 2, 0.5, x, 1, z, 0x6b4423, { ghost: true });
-  box(2.2, 2.2, 2.2, x, 3.1, z, 0x2f7a3a, { ghost: true });
+const nodes = [];
+const pondFish = [];
+function plantTree(x, z) {
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.22, 0.32, 2.2, 7),
+    new THREE.MeshLambertMaterial({ color: 0x6b4423 })
+  );
+  trunk.position.set(x, 1.1, z);
+  const leaf = new THREE.Mesh(
+    new THREE.ConeGeometry(1.35, 2.6, 8),
+    new THREE.MeshLambertMaterial({ color: 0x2f8a3a })
+  );
+  leaf.position.set(x, 3.1, z);
+  scene.add(trunk, leaf);
+  nodes.push({ type: 'tree', x, z, r: 2.4, dead: false, trunk, leaf });
 }
-[[-8, 8], [8, 8], [-8, -8], [8, -8], [-20, 12], [20, -12]].forEach(([x, z]) => tree(x, z));
+function makePond(x, z, r = 6) {
+  const water = new THREE.Mesh(
+    new THREE.CylinderGeometry(r, r, 0.25, 20),
+    new THREE.MeshLambertMaterial({ color: 0x1d7ec4, transparent: true, opacity: 0.85 })
+  );
+  water.position.set(x, 0.08, z);
+  scene.add(water);
+  places.push({ name: 'Pond', x, z, r: r + 1.2 });
+  nodes.push({ type: 'water', x, z, r: r + 0.4 });
+  for (let i = 0; i < 5; i++) {
+    const fish = new THREE.Mesh(
+      new THREE.ConeGeometry(0.12, 0.45, 5),
+      new THREE.MeshLambertMaterial({ color: i % 2 ? 0xff8a3d : 0xe8e8e8 })
+    );
+    fish.rotation.x = Math.PI / 2;
+    scene.add(fish);
+    pondFish.push({ mesh: fish, ox: x, oz: z, r: r - 1.2, t: i * 1.2 });
+  }
+}
+[[-8, 8], [8, 8], [-8, -8], [8, -8], [-20, 12], [20, -12]].forEach(([x, z]) => plantTree(x, z));
+[[24, 4], [26, 8], [28, 2], [22, 10], [27, -2], [25, 12]].forEach(([x, z]) => plantTree(x, z));
+makePond(-24, 8, 6.2);
 box(3.2, 2.2, 2.2, 6, 1.1, 6, 0x2a2118, { ghost: true });
 places.push({ name: 'Shop', x: 6, z: 6, r: 3.2 });
 box(2.6, 2.4, 2.6, -6, 1.2, 6, 0x7a2a44, { ghost: true });
@@ -526,6 +558,7 @@ window.mtwBuy = async (id) => {
     inv.pets[s.pet] = true;
     inv.pet = s.pet;
     inv.petHunger = 100;
+    buildPet();
   } else inv[s.id] = true;
   if (id === 'axe' || id === 'gold_axe') inv.tool = id;
   if (id === 'rod' || id === 'neon_rod') inv.tool = id;
@@ -556,29 +589,63 @@ async function connectWallet(type) {
   }
 }
 
-const PETS = {
-  cub: { color: 0x19d37e, s: 0.35, y: 0.35 },
-  dragon: { color: 0x7c3aed, s: 0.55, y: 0.7 },
-  phoenix: { color: 0xff6a00, s: 0.45, y: 0.9 },
-  wolf: { color: 0x334155, s: 0.42, y: 0.4 },
-  unicorn: { color: 0xf9a8d4, s: 0.45, y: 0.5 },
-};
 const myPet = { g: new THREE.Group(), x: 1, z: 10 };
+function addMesh(g, geo, color, x, y, z, rx, ry, rz) {
+  const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color }));
+  m.position.set(x, y, z);
+  if (rx) m.rotation.x = rx;
+  if (ry) m.rotation.y = ry;
+  if (rz) m.rotation.z = rz;
+  g.add(m);
+  return m;
+}
 function buildPet() {
   myPet.g.clear();
-  const spec = PETS[inv.pet] || PETS.cub;
-  const body = new THREE.Mesh(new THREE.BoxGeometry(spec.s * 1.4, spec.s, spec.s * 2), new THREE.MeshLambertMaterial({ color: spec.color }));
-  body.position.y = spec.y;
-  myPet.g.add(body);
-  if (inv.pet === 'dragon' || inv.pet === 'phoenix') {
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(spec.s * 2.2, 0.08, spec.s), new THREE.MeshLambertMaterial({ color: spec.color }));
-    wing.position.set(0, spec.y + 0.15, 0);
-    myPet.g.add(wing);
-  }
-  if (inv.pet === 'unicorn') {
-    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.35, 6), new THREE.MeshLambertMaterial({ color: 0xfff1a8 }));
-    horn.position.set(0, spec.y + 0.4, spec.s * 0.6);
-    myPet.g.add(horn);
+  const g = myPet.g;
+  const kind = inv.pet || 'cub';
+  if (kind === 'wolf') {
+    addMesh(g, new THREE.SphereGeometry(0.22, 10, 8), 0x4b5563, 0, 0.38, 0);
+    addMesh(g, new THREE.SphereGeometry(0.16, 10, 8), 0x374151, 0, 0.48, 0.28);
+    addMesh(g, new THREE.ConeGeometry(0.07, 0.16, 6), 0x1f2937, 0, 0.42, 0.4, Math.PI / 2);
+    addMesh(g, new THREE.ConeGeometry(0.07, 0.14, 5), 0x111827, -0.08, 0.64, 0.24);
+    addMesh(g, new THREE.ConeGeometry(0.07, 0.14, 5), 0x111827, 0.08, 0.64, 0.24);
+    addMesh(g, new THREE.CapsuleGeometry(0.05, 0.16, 3, 6), 0x374151, -0.12, 0.16, 0.1);
+    addMesh(g, new THREE.CapsuleGeometry(0.05, 0.16, 3, 6), 0x374151, 0.12, 0.16, 0.1);
+    addMesh(g, new THREE.CapsuleGeometry(0.05, 0.16, 3, 6), 0x374151, -0.12, 0.16, -0.12);
+    addMesh(g, new THREE.CapsuleGeometry(0.05, 0.16, 3, 6), 0x374151, 0.12, 0.16, -0.12);
+    addMesh(g, new THREE.ConeGeometry(0.05, 0.28, 5), 0x4b5563, 0, 0.4, -0.32, Math.PI / 2);
+  } else if (kind === 'dragon') {
+    addMesh(g, new THREE.SphereGeometry(0.22, 10, 8), 0x6d28d9, 0, 0.55, 0);
+    addMesh(g, new THREE.SphereGeometry(0.14, 8, 8), 0x5b21b6, 0, 0.72, 0.28);
+    addMesh(g, new THREE.ConeGeometry(0.08, 0.22, 5), 0x4c1d95, 0, 0.68, 0.42, Math.PI / 2);
+    addMesh(g, new THREE.ConeGeometry(0.05, 0.16, 5), 0xfbbf24, -0.06, 0.88, 0.26);
+    addMesh(g, new THREE.ConeGeometry(0.05, 0.16, 5), 0xfbbf24, 0.06, 0.88, 0.26);
+    addMesh(g, new THREE.PlaneGeometry(0.7, 0.35), 0x7c3aed, -0.32, 0.62, 0, 0.3, 0, 0.5);
+    addMesh(g, new THREE.PlaneGeometry(0.7, 0.35), 0x7c3aed, 0.32, 0.62, 0, 0.3, 0, -0.5);
+    addMesh(g, new THREE.ConeGeometry(0.07, 0.45, 5), 0x5b21b6, 0, 0.5, -0.38, Math.PI / 2);
+  } else if (kind === 'phoenix') {
+    addMesh(g, new THREE.SphereGeometry(0.16, 10, 8), 0xff6a00, 0, 0.7, 0);
+    addMesh(g, new THREE.SphereGeometry(0.11, 8, 8), 0xff9f1c, 0, 0.82, 0.16);
+    addMesh(g, new THREE.ConeGeometry(0.04, 0.12, 5), 0xfbbf24, 0, 0.78, 0.26, Math.PI / 2);
+    addMesh(g, new THREE.PlaneGeometry(0.8, 0.28), 0xff3d00, -0.28, 0.74, 0, 0.4, 0, 0.4);
+    addMesh(g, new THREE.PlaneGeometry(0.8, 0.28), 0xff3d00, 0.28, 0.74, 0, 0.4, 0, -0.4);
+    addMesh(g, new THREE.ConeGeometry(0.08, 0.36, 5), 0xffb703, 0, 0.55, -0.22, 1.2);
+  } else if (kind === 'unicorn') {
+    addMesh(g, new THREE.SphereGeometry(0.2, 10, 8), 0xfce7f3, 0, 0.42, 0);
+    addMesh(g, new THREE.SphereGeometry(0.14, 8, 8), 0xffe4f0, 0, 0.55, 0.26);
+    addMesh(g, new THREE.ConeGeometry(0.045, 0.28, 6), 0xfde68a, 0, 0.78, 0.28);
+    addMesh(g, new THREE.CapsuleGeometry(0.045, 0.18, 3, 6), 0xf9a8d4, -0.1, 0.18, 0.1);
+    addMesh(g, new THREE.CapsuleGeometry(0.045, 0.18, 3, 6), 0xf9a8d4, 0.1, 0.18, 0.1);
+    addMesh(g, new THREE.CapsuleGeometry(0.045, 0.18, 3, 6), 0xf9a8d4, -0.1, 0.18, -0.1);
+    addMesh(g, new THREE.CapsuleGeometry(0.045, 0.18, 3, 6), 0xf9a8d4, 0.1, 0.18, -0.1);
+    addMesh(g, new THREE.ConeGeometry(0.04, 0.26, 5), 0xf9a8d4, 0, 0.48, -0.28, Math.PI / 2);
+  } else {
+    addMesh(g, new THREE.SphereGeometry(0.22, 10, 8), 0x19d37e, 0, 0.28, 0);
+    addMesh(g, new THREE.SphereGeometry(0.16, 10, 8), 0x34d399, 0, 0.42, 0.18);
+    addMesh(g, new THREE.SphereGeometry(0.04, 6, 6), 0x111, -0.06, 0.48, 0.28);
+    addMesh(g, new THREE.SphereGeometry(0.04, 6, 6), 0x111, 0.06, 0.48, 0.28);
+    addMesh(g, new THREE.CapsuleGeometry(0.04, 0.1, 3, 6), 0x059669, -0.1, 0.12, 0.08);
+    addMesh(g, new THREE.CapsuleGeometry(0.04, 0.1, 3, 6), 0x059669, 0.1, 0.12, 0.08);
   }
   scene.add(myPet.g);
 }
@@ -608,7 +675,6 @@ function avatarMesh(p) {
 
 const CS = 32;
 const chunks = new Map();
-const nodes = [];
 function hash(cx, cz) { return Math.abs(Math.sin(cx * 127.1 + cz * 311.7) * 43758.5453) % 1; }
 function loadChunk(cx, cz) {
   const key = cx + ',' + cz;
@@ -620,16 +686,29 @@ function loadChunk(cx, cz) {
   ground.position.set(ox + CS / 2, -0.5, oz + CS / 2);
   g.add(ground);
   if (h > 0.72) {
-    nodes.push({ type: 'water', x: ox + CS / 2, z: oz + CS / 2, r: 10 });
+    const wx = ox + CS / 2, wz = oz + CS / 2;
+    const pool = new THREE.Mesh(
+      new THREE.CylinderGeometry(7, 7, 0.3, 16),
+      new THREE.MeshLambertMaterial({ color: 0x1d7ec4, transparent: true, opacity: 0.85 })
+    );
+    pool.position.set(wx, 0.1, wz);
+    g.add(pool);
+    nodes.push({ type: 'water', x: wx, z: wz, r: 8 });
+    for (let i = 0; i < 3; i++) {
+      const fish = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.4, 5), new THREE.MeshLambertMaterial({ color: 0xff8a3d }));
+      fish.rotation.x = Math.PI / 2;
+      g.add(fish);
+      pondFish.push({ mesh: fish, ox: wx, oz: wz, r: 5, t: i });
+    }
   } else {
     const n = 3 + Math.floor(h * 4);
     for (let i = 0; i < n; i++) {
       const tx = ox + 4 + ((h * 17 + i * 9) % (CS - 8));
       const tz = oz + 4 + ((h * 29 + i * 13) % (CS - 8));
-      const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2, 0.5), new THREE.MeshLambertMaterial({ color: 0x6b4423 }));
-      trunk.position.set(tx, 1, tz);
-      const leaf = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshLambertMaterial({ color: 0x2f7a3a }));
-      leaf.position.set(tx, 3, tz);
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 2.1, 7), new THREE.MeshLambertMaterial({ color: 0x6b4423 }));
+      trunk.position.set(tx, 1.05, tz);
+      const leaf = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2.4, 8), new THREE.MeshLambertMaterial({ color: 0x2f8a3a }));
+      leaf.position.set(tx, 2.9, tz);
       g.add(trunk, leaf);
       nodes.push({ type: 'tree', x: tx, z: tz, r: 2.2, mesh: g, dead: false, trunk, leaf });
     }
@@ -1052,7 +1131,13 @@ function tick() {
   myPet.x += (tx - myPet.x) * follow;
   myPet.z += (tz - myPet.z) * follow;
   myPet.g.position.set(myPet.x, hungry ? 0 : 0.05 + Math.sin(Date.now() / 180) * 0.05, myPet.z);
+  myPet.g.rotation.y = player.yaw;
   myPet.g.visible = true;
+  pondFish.forEach((f) => {
+    f.t += 0.035;
+    f.mesh.position.set(f.ox + Math.cos(f.t) * f.r, 0.22 + Math.sin(f.t * 3) * 0.06, f.oz + Math.sin(f.t * 0.85) * f.r);
+    f.mesh.rotation.y = -f.t;
+  });
   hungerT += dt;
   if (hungerT > 8) {
     hungerT = 0;
