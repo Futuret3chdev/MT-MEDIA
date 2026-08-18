@@ -199,12 +199,12 @@ export const CATALOG: CatalogGame[] = [
   },
   {
     id: 'dash',
-    name: 'Dash',
+    name: 'MT Dash',
     kind: 'p2e',
     status: 'live',
-    play: '/games/unix/dash/index.html',
+    play: '/dash',
     img: '/games/covers/dash.jpg',
-    blurb: 'Endless runner. Distance on the season board.',
+    blurb: 'Neon jumper. Green pads, gold boosts, pink breaks, $MT coins, rugs. Wallet + staff award.',
   },
   {
     id: 'chicken',
