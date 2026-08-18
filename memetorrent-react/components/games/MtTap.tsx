@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import NightDesk from '@/components/games/NightDesk';
 import NightWallet from '@/components/games/NightWallet';
 
-type Mode = 'classic' | 'frenzy' | 'zen' | 'sudden' | 'boss' | 'blitz';
+type Mode = 'levels' | 'classic' | 'frenzy' | 'zen' | 'sudden' | 'boss' | 'blitz';
 type Dot = { id: number; x: number; y: number; r: number; k: 'mt' | 'rug' | 'gold' | 'heart' | 'freeze' | 'boss'; life: number; max: number; hp?: number };
 
 export default function MtTap() {
   const ref = useRef<HTMLCanvasElement>(null);
-  const [mode, setMode] = useState<Mode>('classic');
+  const [mode, setMode] = useState<Mode>('levels');
   const [playing, setPlaying] = useState(false);
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
@@ -17,6 +17,27 @@ export default function MtTap() {
   const [time, setTime] = useState(30);
   const [flash, setFlash] = useState('');
   const [fx, setFx] = useState('');
+  const [level, setLevel] = useState(1);
+  const [goal, setGoal] = useState(5);
+  const [cleared, setCleared] = useState(false);
+  const stopRef = useRef(false);
+
+  function spec(n: number) {
+    return { time: Math.min(18, 8 + n), goal: 4 + n, rugs: Math.min(0.3, 0.1 + n * 0.012) };
+  }
+
+  function pickMode(m: Mode) {
+    stopRef.current = true;
+    setPlaying(false);
+    setCleared(false);
+    setMode(m);
+  }
+
+  function stopPlay() {
+    stopRef.current = true;
+    setPlaying(false);
+    setCleared(false);
+  }
   const wallet = typeof window !== 'undefined' ? localStorage.getItem('mt-racer-wallet') || localStorage.getItem('mt-fruit-wallet') || '' : '';
 
   useEffect(() => {
@@ -25,6 +46,7 @@ export default function MtTap() {
 
   useEffect(() => {
     if (!playing) return;
+    stopRef.current = false;
     const c = ref.current;
     if (!c) return;
     const ctx = c.getContext('2d');
@@ -37,7 +59,13 @@ export default function MtTap() {
     };
     size();
     const dots: Dot[] = [];
-    let pts = 0, lives = mode === 'sudden' ? 1 : 3, left = mode === 'zen' ? 999 : mode === 'frenzy' ? 20 : mode === 'blitz' ? 12 : mode === 'boss' ? 45 : 30;
+    const lv = spec(level);
+    let pts = score;
+    let lives = mode === 'sudden' ? 1 : 3;
+    let left = mode === 'zen' ? 9999 : mode === 'frenzy' ? 20 : mode === 'blitz' ? 12 : mode === 'boss' ? 45 : mode === 'levels' ? lv.time : 30;
+    let taps = 0;
+    setGoal(lv.goal);
+    setTime(left);
     let freeze = 0, x2 = 0;
     let cmb = 0, spawn = 0, nid = 1, last = performance.now();
     let on = true;
@@ -56,7 +84,7 @@ export default function MtTap() {
       const roll = Math.random();
       let k: Dot['k'] = 'mt';
       if (mode === 'boss' && !dots.some((d) => d.k === 'boss') && roll < 0.35) k = 'boss';
-      else if (roll < 0.12) k = 'rug';
+      else if (roll < (mode === 'levels' ? lv.rugs : 0.12)) k = 'rug';
       else if (roll < 0.2) k = 'gold';
       else if (roll < 0.25) k = 'heart';
       else if (roll < 0.29) k = 'freeze';
@@ -96,7 +124,16 @@ export default function MtTap() {
             if (d.k === 'gold') x2 = 6;
             const add = d.k === 'gold' ? 5 : 1;
             cmb += 1;
+            taps += 1;
             pts += (add + Math.max(0, cmb - 1)) * (x2 > 0 ? 2 : 1);
+            if (mode === 'levels' && taps >= lv.goal) {
+              setScore(pts);
+              setCleared(true);
+              setPlaying(false);
+              stopRef.current = true;
+              setFlash('LEVEL ' + level);
+              return;
+            }
             ping(d.k === 'gold' ? 880 : 520 + Math.min(cmb, 10) * 30);
             if (cmb >= 10) setFlash('$MT');
             else if (cmb >= 2) setFlash('$MT x' + cmb);
@@ -130,7 +167,7 @@ export default function MtTap() {
     };
     c.addEventListener('pointerdown', ptr);
     const loop = (now: number) => {
-      if (!on) return;
+      if (!on || stopRef.current) return;
       const raw = Math.min(0.033, (now - last) / 1000);
       last = now;
       if (freeze > 0) freeze = Math.max(0, freeze - raw);
@@ -209,12 +246,11 @@ export default function MtTap() {
         </div>
       )}
       <div className="flex flex-wrap gap-2 mb-3">
-        {(['classic', 'frenzy', 'zen', 'sudden', 'boss', 'blitz'] as Mode[]).map((m) => (
+        {(['levels', 'classic', 'frenzy', 'zen', 'sudden', 'boss', 'blitz'] as Mode[]).map((m) => (
           <button
             key={m}
             type="button"
-            disabled={playing}
-            onClick={() => setMode(m)}
+            onClick={() => pickMode(m)}
             className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase ${
               mode === m ? 'bg-emerald-400 text-black' : 'border border-white/15'
             }`}
@@ -230,18 +266,46 @@ export default function MtTap() {
           {combo >= 2 && <span className="ml-2 font-black text-emerald-400">$MT x{combo}</span>}
           {fx && <span className="ml-2 text-emerald-300">{fx}</span>}
           <span className="opacity-50 ml-3">best {best}</span>
+          {mode === 'levels' && (
+            <span className="ml-3 text-emerald-300">
+              Lv {level} · {goal} taps
+            </span>
+          )}
           {playing && mode !== 'zen' && <span className="ml-3 opacity-60">{Math.ceil(time)}s</span>}
         </div>
-        <button
-          type="button"
-          onClick={() => { setScore(0); setCombo(0); setPlaying(true); }}
-          className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2"
-        >
-          {playing ? 'Tapping…' : 'Tap on'}
-        </button>
+        <div className="flex gap-2">
+          {playing && (
+            <button type="button" onClick={stopPlay} className="rounded-full border border-white/20 px-4 py-2">
+              Stop
+            </button>
+          )}
+          {cleared && mode === 'levels' && (
+            <button
+              type="button"
+              onClick={() => { setLevel((n) => n + 1); setCleared(false); setPlaying(true); }}
+              className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2"
+            >
+              Level {level + 1}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              stopRef.current = false;
+              if (mode === 'levels' && !cleared && !playing) setScore(0);
+              if (mode !== 'levels') setScore(0);
+              setCombo(0);
+              setCleared(false);
+              setPlaying(true);
+            }}
+            className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2"
+          >
+            {playing ? 'Tapping…' : cleared ? 'Replay level' : mode === 'levels' ? `Start level ${level}` : 'Tap on'}
+          </button>
+        </div>
       </div>
       <p className="mt-2 text-xs opacity-50">
-        Classic 30s · Frenzy fast · Zen endless · Sudden 1 life · Boss smash the purple · Blitz 12s.
+        Levels (tap goal + clock) · Classic · Frenzy · Zen (hit Stop to leave) · Sudden · Boss · Blitz.
         Green MT · gold $ · pink + life · blue freeze · purple boss. Wallet = fatter taps.
       </p>
       <div className="mt-6 max-w-md">
