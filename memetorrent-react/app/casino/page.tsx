@@ -23,7 +23,7 @@ export default function CasinoPage() {
         <div className="uppercase text-xs tracking-[3px] text-emerald-400 mb-2">18+</div>
         <h1 className="text-3xl font-semibold mb-3">Adult games</h1>
         <p className="text-sm opacity-70 mb-6">
-          This section is for people 18 or older. No titles are listed here right now.
+          This section is for people 18 or older. Eleven floor games from Nova Mirage.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <button
