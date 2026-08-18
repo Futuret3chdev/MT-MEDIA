@@ -24,7 +24,7 @@ export default function Footer() {
           <a href="/donations" className="hover:text-white">Donations</a>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto mt-4 text-[10px] text-white/40">No third-party bridges. No third-party wallets. No third-party custody. The best chain is the one you fully own.</div>
+      <div className="max-w-7xl mx-auto mt-4 text-[10px] text-white/40">Built here. Hosted here. Keys stay with you.</div>
     </footer>
   );
 }
