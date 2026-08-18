@@ -19,7 +19,7 @@ export default function RacerPage() {
       <div className="text-xs uppercase tracking-[3px] text-emerald-400 mb-2">Night highway</div>
       <h1 className="text-4xl font-semibold tracking-tight mb-2">MT Racer</h1>
       <p className="opacity-70 mb-6 max-w-2xl">
-        Pick a body colour. Hit the highway. Pass traffic, bag $MT, Space for nitro. Same wallet and staff desk as the other nights.
+        Pick a map. Pimp the car — spoiler and glow are free; gold rims, dragon wing, $MT hood, Alpine and Gold Coast are $MT exclusive.
       </p>
       <iframe
         src="/games/racer3d/index.html"

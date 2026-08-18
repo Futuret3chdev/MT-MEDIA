@@ -13,11 +13,18 @@
       position: fixed; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center;
       background: radial-gradient(circle at 50% 30%, rgba(25,211,126,.18), rgba(5,7,12,.94));
     }
-    .card { width: min(92vw, 420px); text-align: center; padding: 22px; }
+    .card { width: min(94vw, 480px); text-align: center; padding: 18px 16px; max-height: 92dvh; overflow: auto; }
     .card h1 { margin: 0 0 8px; color: #19d37e; letter-spacing: .12em; }
     .sw { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
     .sw i { width: 28px; height: 28px; border-radius: 50%; display: block; cursor: pointer; border: 2px solid #fff3; }
     .sw i.on { border-color: #19d37e; }
+    .pick { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 12px; }
+    .pick button { min-height: 36px; padding: 6px 10px; font-size: 11px; background: #163226; color: #e8fff4; }
+    .pick button.on { background: #19d37e; color: #04140c; }
+    .pick button.lock { opacity: .55; }
+    .tag { font-size: 9px; color: #fbbf24; display: block; }
+    .lab { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; opacity: .55; margin-top: 8px; }
+    .wallet { margin: 10px 0; padding: 10px; border-radius: 12px; border: 1px solid rgba(25,211,126,.35); text-align: left; font-size: 12px; }
     button { min-height: 46px; padding: 10px 18px; border: 0; border-radius: 999px; background: #19d37e; color: #04140c; font-weight: 900; cursor: pointer; }
     #hint { position: fixed; bottom: 12px; width: 100%; text-align: center; font-size: 12px; opacity: .65; z-index: 4; }
   </style>
@@ -29,13 +36,28 @@
   <div id="menu">
     <div class="card">
       <h1>MT RACER</h1>
-      <p>Night highway. Pass traffic. Grab $MT. Nitro on Space.</p>
+      <p>Pick a map. Pimp the ride. Some parts are free. Gold ones are $MT exclusive.</p>
+      <div class="lab">Map</div>
+      <div class="pick" id="maps"></div>
+      <div class="lab">Paint</div>
       <div class="sw">
         <i data-c="19d37e" class="on" style="background:#19d37e"></i>
         <i data-c="38bdf8" style="background:#38bdf8"></i>
         <i data-c="fbbf24" style="background:#fbbf24"></i>
         <i data-c="fb7185" style="background:#fb7185"></i>
         <i data-c="e5e7eb" style="background:#e5e7eb"></i>
+      </div>
+      <div class="lab">Pimp</div>
+      <div class="pick" id="kits"></div>
+      <div class="wallet">
+        <b style="color:#19d37e">$MT exclusive</b>
+        <p id="wmsg">Connect in this box to unlock Alpine, Gold Coast, gold rims, dragon wing, $MT hood.</p>
+        <div class="pick">
+          <button type="button" data-w="phantom">Phantom</button>
+          <button type="button" data-w="solflare">Solflare</button>
+          <button type="button" data-w="backpack">Backpack</button>
+        </div>
+        <div id="waddr"></div>
       </div>
       <button id="go">Light it up</button>
     </div>
@@ -53,9 +75,93 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0x88aacc, 0x081018, 0.85));
+const hemi = scene.children.find((c) => c.isHemisphereLight);
 const sun = new THREE.DirectionalLight(0xffe6b0, 0.55);
 sun.position.set(-10, 20, 8);
 scene.add(sun);
+
+const MAPS = {
+  city: { name: 'Night City', mt: false, fog: 0x070b14, sky: 0x070b14, roadA: 0x1a1f2a, roadB: 0x151922, rail: 0x19d37e, line: 0xfff3b0, b1: 0x12201a, b2: 0x1a1530 },
+  desert: { name: 'Desert Strip', mt: false, fog: 0x2a1a0c, sky: 0x3d2610, roadA: 0x4a3720, roadB: 0x3a2a18, rail: 0xfbbf24, line: 0xffe08a, b1: 0x6b4423, b2: 0x8b5a2b },
+  neon: { name: 'Neon Grid', mt: false, fog: 0x120418, sky: 0x0a0210, roadA: 0x1a0820, roadB: 0x100616, rail: 0xff3d7f, line: 0x7af0ff, b1: 0x2a0840, b2: 0x081a2a },
+  alpine: { name: 'Alpine Pass', mt: true, fog: 0xb8d4e8, sky: 0x8eb4d4, roadA: 0x9aa3ad, roadB: 0x7d868f, rail: 0xffffff, line: 0x19d37e, b1: 0xe8eef4, b2: 0xcfd8e3 },
+  gold: { name: 'Gold Coast', mt: true, fog: 0x1a1408, sky: 0x140e06, roadA: 0x2a220e, roadB: 0x1c1808, rail: 0xfbbf24, line: 0xffe566, b1: 0x3d2e0a, b2: 0x5c4a12 },
+};
+const KITS = {
+  spoiler: { name: 'Spoiler', mt: false },
+  glow: { name: 'Underglow', mt: false },
+  rims: { name: 'White rims', mt: false },
+  goldrims: { name: 'Gold rims', mt: true },
+  wing: { name: 'Dragon wing', mt: true },
+  hood: { name: '$MT hood', mt: true },
+};
+let mapId = 'city';
+const kitOn = { spoiler: false, glow: false, rims: false, goldrims: false, wing: false, hood: false };
+let walletAddr = localStorage.getItem('mt-racer-wallet') || localStorage.getItem('mt-fruit-wallet') || '';
+
+function hasWallet() { return !!walletAddr; }
+
+function applyMap(id) {
+  const m = MAPS[id];
+  if (!m) return;
+  if (m.mt && !hasWallet()) return;
+  mapId = id;
+  scene.background.setHex(m.sky);
+  scene.fog.color.setHex(m.fog);
+  segs.forEach((s, i) => {
+    s.slab.material.color.setHex(i % 2 ? m.roadA : m.roadB);
+    s.line.material.color.setHex(m.line);
+    s.l.material.color.setHex(m.rail);
+    s.r.material.color.setHex(m.rail);
+  });
+  props.forEach((b, i) => b.material.color.setHex(i % 2 ? m.b1 : m.b2));
+  document.querySelectorAll('#maps button').forEach((b) => b.classList.toggle('on', b.dataset.map === id));
+}
+
+async function connectW(type) {
+  const p = type === 'solflare' ? window.solflare : type === 'backpack' ? window.backpack : (window.phantom?.solana || window.solana);
+  const msg = document.getElementById('wmsg');
+  if (!p?.connect) { msg.textContent = 'Install Phantom, Solflare, or Backpack, then tap here.'; return; }
+  try {
+    const res = await p.connect();
+    const pk = res?.publicKey || p.publicKey;
+    walletAddr = pk && (pk.toString ? pk.toString() : String(pk));
+    localStorage.setItem('mt-racer-wallet', walletAddr || '');
+    document.getElementById('waddr').textContent = 'Connected · ' + walletAddr.slice(0, 4) + '…' + walletAddr.slice(-4);
+    msg.textContent = '$MT exclusive maps and parts unlocked.';
+    paintPicks();
+  } catch (e) {
+    msg.textContent = e?.message || 'Wallet closed.';
+  }
+}
+document.querySelectorAll('[data-w]').forEach((b) => b.onclick = () => connectW(b.getAttribute('data-w')));
+if (walletAddr) {
+  document.getElementById('waddr').textContent = 'Connected · ' + walletAddr.slice(0, 4) + '…';
+  document.getElementById('wmsg').textContent = '$MT exclusive maps and parts unlocked.';
+}
+
+function paintPicks() {
+  const maps = document.getElementById('maps');
+  maps.innerHTML = Object.entries(MAPS).map(([id, m]) =>
+    `<button type="button" data-map="${id}" class="${mapId===id?'on':''} ${m.mt && !hasWallet()?'lock':''}">${m.name}${m.mt?'<span class="tag">$MT EXCLUSIVE</span>':''}</button>`
+  ).join('');
+  maps.querySelectorAll('button').forEach((b) => b.onclick = () => {
+    const m = MAPS[b.dataset.map];
+    if (m.mt && !hasWallet()) { document.getElementById('wmsg').textContent = 'Connect wallet in this box for $MT exclusive maps.'; return; }
+    applyMap(b.dataset.map);
+  });
+  const kits = document.getElementById('kits');
+  kits.innerHTML = Object.entries(KITS).map(([id, k]) =>
+    `<button type="button" data-kit="${id}" class="${kitOn[id]?'on':''} ${k.mt && !hasWallet()?'lock':''}">${k.name}${k.mt?'<span class="tag">$MT EXCLUSIVE</span>':''}</button>`
+  ).join('');
+  kits.querySelectorAll('button').forEach((b) => b.onclick = () => {
+    const k = KITS[b.dataset.kit];
+    if (k.mt && !hasWallet()) { document.getElementById('wmsg').textContent = 'Connect wallet in this box for $MT exclusive parts.'; return; }
+    kitOn[b.dataset.kit] = !kitOn[b.dataset.kit];
+    paintPicks();
+  });
+}
+paintPicks();
 
 const road = new THREE.Group();
 scene.add(road);
@@ -88,16 +194,38 @@ for (let i = 0; i < 24; i++) {
   props.push(building(8 + Math.random() * 6, z, 3 + Math.random() * 10, 0x1a1530));
 }
 
-function carMesh(color) {
+function carMesh(color, kit = {}) {
   const g = new THREE.Group();
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.38, 2.2), new THREE.MeshPhongMaterial({ color, shininess: 70 }));
   body.position.y = 0.38;
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.32, 1.0), new THREE.MeshPhongMaterial({ color: 0x0b1220, shininess: 90 }));
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.32, 1.0), new THREE.MeshPhongMaterial({ color: kit.hood ? 0x19d37e : 0x0b1220, shininess: 90 }));
   cabin.position.set(0, 0.68, -0.15);
   const lightL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.08), new THREE.MeshBasicMaterial({ color: 0xfff2b0 }));
   lightL.position.set(-0.38, 0.38, 1.12);
   const lightR = lightL.clone(); lightR.position.x = 0.38;
   g.add(body, cabin, lightL, lightR);
+  const rimC = kit.goldrims ? 0xfbbf24 : kit.rims ? 0xf8fafc : 0x111;
+  [[-0.5, 0.18, 0.7], [0.5, 0.18, 0.7], [-0.5, 0.18, -0.7], [0.5, 0.18, -0.7]].forEach(([x, y, z]) => {
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.14, 10), new THREE.MeshLambertMaterial({ color: rimC }));
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(x, y, z);
+    g.add(wheel);
+  });
+  if (kit.spoiler) {
+    const sp = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.08, 0.28), new THREE.MeshLambertMaterial({ color: 0x111 }));
+    sp.position.set(0, 0.82, -1.05);
+    g.add(sp);
+  }
+  if (kit.glow) {
+    const ug = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.04, 2.3), new THREE.MeshBasicMaterial({ color: 0x19d37e, transparent: true, opacity: 0.55 }));
+    ug.position.y = 0.12;
+    g.add(ug);
+  }
+  if (kit.wing) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.06, 0.7), new THREE.MeshLambertMaterial({ color: 0x6d28d9 }));
+    wing.position.set(0, 0.95, -0.2);
+    g.add(wing);
+  }
   scene.add(g);
   return g;
 }
@@ -140,8 +268,9 @@ let playing = false, dist = 0, mt = 0, nitro = 0, last = performance.now();
 const engine = document.getElementById('engine');
 
 document.getElementById('go').onclick = () => {
+  applyMap(mapId);
   if (player.mesh) scene.remove(player.mesh);
-  player.mesh = carMesh(carColor);
+  player.mesh = carMesh(carColor, kitOn);
   player.x = 0; player.z = 0; player.vx = 0; player.speed = 12;
   spawnTraffic();
   coins.forEach((c) => scene.remove(c.mesh));
