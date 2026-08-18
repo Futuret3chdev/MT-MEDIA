@@ -82,12 +82,12 @@ export const CATALOG: CatalogGame[] = [
   },
   {
     id: 'tap',
-    name: 'Tap Tap',
+    name: 'MT Tap',
     kind: 'p2e',
     status: 'live',
-    play: '/games/unix/tap/index.html',
+    play: '/tap',
     img: '/games/covers/tap.jpg',
-    blurb: 'Core TAP loop from the bot.',
+    blurb: 'Six modes. Green MT, gold, freeze, boss. Combos light $MT. Wallet + staff award.',
   },
   {
     id: 'pacman',
