@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import NoticeBell from '@/components/nav/NoticeBell';
+import LiveScoreIcon from '@/components/nav/LiveScoreIcon';
 import { LINKS } from '@/lib/constants';
 import { Connection, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import servicesData from '@/app/status/services.json';
@@ -392,6 +393,7 @@ export default function Navbar() {
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {portalUser ? (
               <>
+                <LiveScoreIcon />
                 <NoticeBell />
                 <button
                   type="button"
@@ -417,6 +419,7 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                <LiveScoreIcon />
                 <button
                   type="button"
                   onClick={() => openAuth('login')}
