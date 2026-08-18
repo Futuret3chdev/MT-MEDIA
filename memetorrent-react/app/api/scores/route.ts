@@ -20,11 +20,32 @@ async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
   } catch {
     /* exists */
   }
+  try {
+    await conn.execute('ALTER TABLE mt_game_scores ADD INDEX game_time (game_id, created_at)');
+  } catch {
+    /* exists */
+  }
+  try {
+    await conn.execute('ALTER TABLE mt_game_scores ADD INDEX user_lookup (username)');
+  } catch {
+    /* exists */
+  }
+}
+
+function periodSql(period: string) {
+  if (period === 'day') return 'AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)';
+  if (period === 'week') return 'AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+  if (period === 'month') return 'AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
+  return '';
 }
 
 export async function GET(request: NextRequest) {
   const gameId = request.nextUrl.searchParams.get('game_id') || 'tap';
   const mine = request.nextUrl.searchParams.get('mine') === '1';
+  const period = (request.nextUrl.searchParams.get('period') || 'all').toLowerCase();
+  const q = String(request.nextUrl.searchParams.get('q') || '').trim().slice(0, 40);
+  const limit = Math.max(1, Math.min(100, Number(request.nextUrl.searchParams.get('limit')) || 50));
+  const offset = Math.max(0, Number(request.nextUrl.searchParams.get('offset')) || 0);
   const conn = await getUserDb();
   try {
     await ensure(conn);
@@ -36,6 +57,13 @@ export async function GET(request: NextRequest) {
         [user.email]
       );
       return Response.json({ ok: true, scores: rows });
+    }
+    if (request.nextUrl.searchParams.get('games') === '1') {
+      const [rows] = await conn.execute(
+        `SELECT game_id, COUNT(*) AS plays, COUNT(DISTINCT username) AS players
+         FROM mt_game_scores GROUP BY game_id ORDER BY plays DESC`
+      );
+      return Response.json({ ok: true, games: rows });
     }
     const room = request.nextUrl.searchParams.get('room');
     if (room) {
@@ -50,11 +78,44 @@ export async function GET(request: NextRequest) {
       );
       return Response.json({ ok: true, game_id: gameId, room, scores: rows });
     }
-    const [rows] = await conn.execute(
-      'SELECT id, game_id, username, score, created_at FROM mt_game_scores WHERE game_id = ? ORDER BY score DESC, id DESC LIMIT 25',
-      [gameId]
+    const time = periodSql(period);
+    const params: Array<string | number> = [];
+    let where = 'WHERE 1=1';
+    if (gameId && gameId !== 'all') {
+      where += ' AND game_id = ?';
+      params.push(gameId);
+    }
+    where += ` ${time}`;
+    if (q) {
+      where += ' AND username LIKE ?';
+      params.push(`%${q.replace(/[%_]/g, '')}%`);
+    }
+    const [countRows] = await conn.execute(
+      `SELECT COUNT(*) AS n FROM (
+         SELECT username FROM mt_game_scores ${where} GROUP BY username
+       ) t`,
+      params
     );
-    return Response.json({ ok: true, game_id: gameId, scores: rows });
+    const total = Number((countRows as { n: number }[])[0]?.n || 0);
+    const [rows] = await conn.execute(
+      `SELECT username, MAX(score) AS score, MAX(created_at) AS created_at
+       FROM mt_game_scores
+       ${where}
+       GROUP BY username
+       ORDER BY score DESC, created_at ASC
+       LIMIT ${limit} OFFSET ${offset}`,
+      params
+    );
+    return Response.json({
+      ok: true,
+      game_id: gameId,
+      period,
+      q,
+      total,
+      limit,
+      offset,
+      scores: rows,
+    });
   } catch (err) {
     console.error('scores get', err);
     return Response.json({ ok: false, error: 'Scores unavailable' }, { status: 500 });

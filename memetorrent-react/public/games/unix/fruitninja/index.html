@@ -32,12 +32,26 @@
     }
     #comboFlash {
       position: fixed; inset: 0; pointer-events: none; z-index: 6;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; letter-spacing: .08em; color: #19d37e;
-      text-shadow: 0 0 16px #19d37e, 0 0 40px #19d37e, 0 0 70px #0b8a4e;
-      opacity: 0; transition: opacity .15s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-weight: 900; letter-spacing: .12em; color: #19d37e;
+      text-shadow: 0 0 18px #19d37e, 0 0 48px #19d37e, 0 0 90px #0b8a4e;
+      opacity: 0; transition: opacity .12s;
+      text-align: center;
+      text-transform: uppercase;
     }
     #comboFlash.show { opacity: 1; }
+    #comboFlash.mid { font-size: clamp(42px, 10vw, 88px); }
+    #comboFlash.big { font-size: clamp(56px, 14vw, 120px); }
+    #comboFlash.huge {
+      font-size: clamp(72px, 22vw, 200px);
+      animation: mt-bloom 0.55s ease-out;
+    }
+    #comboFlash small { display: block; font-size: 0.28em; letter-spacing: .28em; opacity: .9; }
+    @keyframes mt-bloom {
+      0% { transform: scale(0.55); filter: brightness(2); }
+      60% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
     #fx { color: #c4b5fd; font-size: 12px; }
     #lives { margin-left: auto; letter-spacing: 2px; }
     #pauseBtn {
@@ -315,11 +329,25 @@ function slash(x1, y1, x2, y2) {
 function flashCombo(n) {
   const el = document.getElementById('comboFlash');
   const hud = document.getElementById('combo');
-  el.textContent = n >= 3 ? ('$MT COMBO x' + n) : ('COMBO x' + n);
+  el.classList.remove('mid', 'big', 'huge');
+  if (n >= 10) {
+    el.classList.add('huge');
+    el.innerHTML = '$MT<small>COMBO x' + n + '</small>';
+  } else if (n >= 5) {
+    el.classList.add('big');
+    el.innerHTML = '$MT<small>x' + n + '</small>';
+  } else {
+    el.classList.add('mid');
+    el.innerHTML = '$MT x' + n;
+  }
   el.classList.add('show');
   hud.classList.add('on');
+  hud.textContent = '$MT x' + n;
   clearTimeout(flashCombo.t);
-  flashCombo.t = setTimeout(() => { el.classList.remove('show'); hud.classList.remove('on'); }, 420);
+  flashCombo.t = setTimeout(() => {
+    el.classList.remove('show');
+    hud.classList.remove('on');
+  }, n >= 10 ? 900 : n >= 5 ? 650 : 420);
 }
 
 function ping() {
@@ -337,7 +365,7 @@ function ping() {
 
 function paintHud() {
   document.getElementById('score').textContent = state.score;
-  document.getElementById('combo').textContent = state.combo > 1 ? ('x' + state.combo) : '';
+  document.getElementById('combo').textContent = state.combo > 1 ? ('$MT x' + state.combo) : '';
   const fx = [];
   if (state.gold > 0) fx.push('x2');
   if (state.slow > 0) fx.push('SLOW');

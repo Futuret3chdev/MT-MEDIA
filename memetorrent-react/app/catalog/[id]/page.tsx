@@ -43,8 +43,8 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
             >
               Play
             </PlayLink>
-            <Link href="/p2e" className="px-5 py-2 rounded-full border border-white/15 text-sm">
-              P2E board
+            <Link href={`/boards?game=${encodeURIComponent(g.id)}`} className="px-5 py-2 rounded-full border border-white/15 text-sm">
+              {g.name} board
             </Link>
             <Link href="/portal" className="px-5 py-2 rounded-full border border-white/15 text-sm">
               Library

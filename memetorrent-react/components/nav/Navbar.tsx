@@ -211,6 +211,7 @@ export default function Navbar() {
             <a href="/#utilities" className="opacity-70 hover:opacity-100">UTILITIES</a>
             <a href="/#tap" className="opacity-70 hover:opacity-100">TAP</a>
             <a href="/catalog" className="opacity-70 hover:opacity-100">GAMES</a>
+            <a href="/boards" className="opacity-70 hover:opacity-100">BOARDS</a>
             <a href="/developers" className="opacity-70 hover:opacity-100">API</a>
             <a
               href="/casino"
@@ -262,6 +263,7 @@ export default function Navbar() {
           <a href="/#utilities" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">UTILITIES</a>
           <a href="/#tap" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAP</a>
           <a href="/catalog" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">GAMES</a>
+          <a href="/boards" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">BOARDS</a>
           <a href="/developers" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">API</a>
           <a
             href="/casino"

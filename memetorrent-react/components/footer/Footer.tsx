@@ -9,6 +9,7 @@ export default function Footer() {
           <a href="/status" className="hover:text-white">Status</a>
           <a href="/portal" className="hover:text-white">Portal</a>
           <a href="/catalog" className="hover:text-white">Games</a>
+          <a href="/boards" className="hover:text-white">Boards</a>
           <a href="/studio" className="hover:text-white">Studio</a>
           <a href="/login?next=/chat" className="hover:text-white">Chat</a>
           <a href="/casino" className="hover:text-white">18+ games</a>

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import GameCard from '@/components/games/GameCard';
-import TapBoard from '@/components/games/TapBoard';
+import ScoreBoards from '@/components/games/ScoreBoards';
 import { getGame, p2eGames } from '@/lib/mt-catalog';
 
 const WORLD = ['clubpool', 'mt-world-gallery']
@@ -32,7 +32,9 @@ export default function P2EPage() {
           <GameCard key={g.id} game={g} />
         ))}
       </div>
-      <TapBoard />
+      <div className="mt-12">
+        <ScoreBoards initialGame="tap" />
+      </div>
     </div>
   );
 }
