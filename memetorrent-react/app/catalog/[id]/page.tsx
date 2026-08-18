@@ -4,7 +4,11 @@ import { CATALOG, getGame } from '@/lib/mt-catalog';
 import PlayLink from '@/components/auth/PlayLink';
 
 export function generateStaticParams() {
-  return CATALOG.map((g) => ({ id: g.id }));
+  return [
+    ...CATALOG.map((g) => ({ id: g.id })),
+    { id: 'mt-world-pocket' },
+    { id: 'pocket' },
+  ];
 }
 
 export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {

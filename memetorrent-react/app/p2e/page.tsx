@@ -3,7 +3,7 @@ import GameCard from '@/components/games/GameCard';
 import TapBoard from '@/components/games/TapBoard';
 import { getGame, p2eGames } from '@/lib/mt-catalog';
 
-const WORLD = ['mt-world-pocket', 'mt-world-gallery']
+const WORLD = ['clubpool', 'mt-world-gallery']
   .map((id) => getGame(id))
   .filter(Boolean);
 

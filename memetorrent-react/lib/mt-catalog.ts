@@ -14,13 +14,13 @@ export type CatalogGame = {
 
 export const CATALOG: CatalogGame[] = [
   {
-    id: 'mt-world-pocket',
-    name: 'MT WORLD — Pocket',
+    id: 'clubpool',
+    name: 'Clubpool',
     kind: 'p2e',
     status: 'live',
     play: '/games/pocket/index.html',
-    img: '/games/covers/pocket.jpg',
-    blurb: 'Live 8-ball. Wallet connect, free tables or $MT stakes, Pixabay EDM on the cloth, Quick Match, rematch, and challenge from Chat.',
+    img: '/games/covers/clubpool.jpg',
+    blurb: 'Live 8-ball in the club. Wallet connect, free tables or $MT stakes, Pixabay EDM, Quick Match, rematch, and challenge from Chat.',
   },
   {
     id: 'mt-world-gallery',
@@ -172,8 +172,14 @@ export const CATALOG: CatalogGame[] = [
   },
 ];
 
+const GAME_ALIASES: Record<string, string> = {
+  'mt-world-pocket': 'clubpool',
+  pocket: 'clubpool',
+};
+
 export function getGame(id: string) {
-  return CATALOG.find((g) => g.id === id);
+  const key = GAME_ALIASES[id] || id;
+  return CATALOG.find((g) => g.id === key);
 }
 
 export function liveGames() {

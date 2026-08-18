@@ -70,7 +70,7 @@ export default function GameDock({
       if (g?.play) url = g.play;
       else if (s.game_id === 'tap') url = '/games/unix/tap/index.html';
     }
-    if (s.game_id === 'mt-world-pocket' && url && !/[?&]table=/.test(url)) {
+    if ((s.game_id === 'mt-world-pocket' || s.game_id === 'clubpool') && url && !/[?&]table=/.test(url)) {
       url += `${url.includes('?') ? '&' : '?'}table=POCK-${s.id}`;
     }
     return url;

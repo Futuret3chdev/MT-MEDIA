@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
         room,
       ]);
       let play = kind !== 'ttt' && kind !== 'rps' ? getGame(kind)?.play || '' : '';
-      if (gameId === 'mt-world-pocket') {
+      if (gameId === 'mt-world-pocket' || gameId === 'clubpool') {
         const table = `POCK-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
         play = `/games/pocket/index.html?table=${table}`;
       }
