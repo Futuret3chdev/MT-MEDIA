@@ -214,14 +214,15 @@ export default function Navbar() {
             <a href="/developers" className="opacity-70 hover:opacity-100">API</a>
             <a
               href="/casino"
-              title="18+ games"
-              className="relative inline-flex items-center justify-center w-8 h-8 rounded-lg border border-amber-400/40 text-base hover:bg-amber-400/10"
-              aria-label="18+ casino games"
+              title="$MT casino 18+"
+              className="inline-flex items-center justify-center shrink-0"
+              aria-label="$MT casino 18+"
             >
-              🎰
-              <span className="absolute -top-1.5 -right-2 text-[8px] font-bold leading-none px-1 py-0.5 rounded bg-amber-400 text-black">
-                18+
-              </span>
+              <img
+                src="/icons/casino-mt-18.png"
+                alt="$MT 18+"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover"
+              />
             </a>
             <a
               href="/claims"
@@ -262,6 +263,15 @@ export default function Navbar() {
           <a href="/#tap" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAP</a>
           <a href="/catalog" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">GAMES</a>
           <a href="/developers" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">API</a>
+          <a
+            href="/casino"
+            onClick={() => setMobileMenuOpen(false)}
+            className="py-1 inline-flex items-center gap-2 opacity-90 hover:opacity-100"
+          >
+            <span>🎰</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-400 text-black">18+</span>
+            Casino
+          </a>
           <a
             href="/claims"
             onClick={() => setMobileMenuOpen(false)}
