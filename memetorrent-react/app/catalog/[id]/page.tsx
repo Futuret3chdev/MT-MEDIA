@@ -17,6 +17,9 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
       <div className="flex flex-wrap gap-4 text-sm">
         <Link href="/" className="opacity-70 hover:opacity-100">← Home</Link>
         <Link href="/catalog" className="opacity-70 hover:opacity-100">← Games</Link>
+        {g.rated === '18+' && (
+          <Link href="/casino" className="opacity-70 hover:opacity-100">← 18+ games</Link>
+        )}
       </div>
       <div className="mt-4 rounded-3xl overflow-hidden border border-white/10">
         <div className="h-56 sm:h-72 bg-black">
@@ -24,7 +27,7 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
         </div>
         <div className="p-6 sm:p-8" style={{ background: 'var(--card)' }}>
           <div className="text-[11px] uppercase tracking-[2px] text-emerald-400 mb-2">
-            {g.kind} · {g.status}
+            {g.rated === '18+' ? '18+' : g.kind} · {g.status}
           </div>
           <h1 className="text-4xl font-semibold tracking-tight mb-3">{g.name}</h1>
           <p className="opacity-70 max-w-2xl mb-6">{g.blurb}</p>

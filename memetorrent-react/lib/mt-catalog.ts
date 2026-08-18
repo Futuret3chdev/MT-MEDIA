@@ -1,4 +1,4 @@
-export type GameKind = 'arcade' | 'p2e' | 'action' | 'multiplayer' | 'studio';
+export type GameKind = 'arcade' | 'p2e' | 'action' | 'multiplayer' | 'studio' | 'adult';
 
 export type CatalogGame = {
   id: string;
@@ -9,6 +9,7 @@ export type CatalogGame = {
   img: string;
   blurb: string;
   source?: string;
+  rated?: '18+';
 };
 
 export const CATALOG: CatalogGame[] = [
@@ -169,6 +170,17 @@ export const CATALOG: CatalogGame[] = [
     img: '/games/covers/pocket.jpg',
     blurb: 'Sideload client. Needs a portal developer license.',
   },
+  {
+    id: 'poker-stars',
+    name: 'Poker Stars',
+    kind: 'adult',
+    status: 'live',
+    play: 'https://poker-stars.vercel.app',
+    img: '/games/covers/poker-stars.png',
+    blurb: '18+ tables from the MT house set. Score Cekih and card play.',
+    source: 'https://github.com/Futuret3chdev/poker-stars',
+    rated: '18+',
+  },
 ];
 
 export function getGame(id: string) {
@@ -176,15 +188,21 @@ export function getGame(id: string) {
 }
 
 export function liveGames() {
-  return CATALOG.filter((g) => g.status !== 'soon');
+  return CATALOG.filter((g) => g.status !== 'soon' && g.rated !== '18+');
 }
 
 export function p2eGames() {
   return CATALOG.filter(
-    (g) => g.kind === 'p2e' || g.kind === 'arcade' || g.kind === 'action' || g.kind === 'multiplayer'
+    (g) =>
+      g.rated !== '18+' &&
+      (g.kind === 'p2e' || g.kind === 'arcade' || g.kind === 'action' || g.kind === 'multiplayer')
   );
 }
 
 export function casinoGames() {
-  return CATALOG.filter((g) => g.kind === 'multiplayer');
+  return CATALOG.filter((g) => g.rated === '18+' || g.kind === 'adult');
+}
+
+export function familyGames() {
+  return CATALOG.filter((g) => g.rated !== '18+' && g.kind !== 'adult');
 }

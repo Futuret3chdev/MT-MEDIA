@@ -14,7 +14,7 @@ const FEATURED = ['mt-world-pocket', 'mt-world-gallery', 'soccer-pro', 'puck', '
 
 export default function TapEcosystem() {
   const featured = FEATURED.map((id) => CATALOG.find((g) => g.id === id)).filter(Boolean);
-  const rest = CATALOG.filter((g) => !FEATURED.includes(g.id));
+  const rest = CATALOG.filter((g) => !FEATURED.includes(g.id) && g.rated !== '18+' && g.kind !== 'adult');
 
   return (
     <section id="tap" className="py-12 sm:py-20 border-t border-white/10 bg-black">

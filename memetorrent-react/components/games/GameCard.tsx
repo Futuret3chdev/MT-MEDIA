@@ -17,7 +17,7 @@ export default function GameCard({ game }: { game: CatalogGame }) {
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold text-lg leading-tight">{game.name}</h3>
             <span className="text-[10px] uppercase tracking-wider text-emerald-400 shrink-0">
-              {game.kind}
+              {game.rated === '18+' ? '18+' : game.kind}
             </span>
           </div>
           <p className="text-sm opacity-70 mt-1">{game.blurb}</p>

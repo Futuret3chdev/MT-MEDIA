@@ -108,7 +108,7 @@ export default function RoomGame({
           >
             Rock paper scissors
           </button>
-          {CATALOG.filter((g) => g.status === 'live').map((g) => (
+          {CATALOG.filter((g) => g.status === 'live' && g.rated !== '18+' && g.kind !== 'adult').map((g) => (
             <button
               key={g.id}
               type="button"
