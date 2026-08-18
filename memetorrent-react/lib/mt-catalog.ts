@@ -127,12 +127,12 @@ export const CATALOG: CatalogGame[] = [
   },
   {
     id: 'fruit',
-    name: 'Fruit Ninja',
+    name: 'MT Fruit',
     kind: 'arcade',
     status: 'live',
     play: '/games/unix/fruitninja/index.html',
     img: '/games/covers/fruitninja.jpg',
-    blurb: 'Slice combos. Arcade score.',
+    blurb: 'Swipe the blade. Combos, bombs, three lives. Works on phone — no GitHub fruit images.',
   },
   {
     id: 'dash',
