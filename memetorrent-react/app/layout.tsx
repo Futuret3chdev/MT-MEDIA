@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-build="2026-08-18-casino-chrome">
+    <html lang="en" data-build="2026-08-18-casino-chrome-fix">
       <head>
         {/* Font Awesome for social icons in original brand colors */}
         <link 
@@ -28,9 +28,11 @@ export default function RootLayout({
       <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
         <WalletAdapterProvider>
           <MtTracker />
-          <Navbar />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </WalletAdapterProvider>
       </body>
     </html>
