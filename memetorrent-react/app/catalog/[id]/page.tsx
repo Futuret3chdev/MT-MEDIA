@@ -37,7 +37,7 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
           <p className="opacity-70 max-w-2xl mb-6">{g.blurb}</p>
           <div className="flex flex-wrap gap-3">
             <PlayLink
-              href={g.play}
+              href={external ? g.play : `/play/${g.id}`}
               external={external}
               className="font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-5 py-2 rounded-full text-sm"
             >
