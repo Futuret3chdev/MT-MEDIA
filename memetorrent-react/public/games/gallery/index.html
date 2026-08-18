@@ -489,10 +489,22 @@ function paintBag() {
       <div class="sku"><span>Grilled ${inv.food || 0}</span></div>
       <div class="sku"><span>Axe</span><button onclick="window.mtwEquip('axe')" ${inv.axe||inv.gold_axe?'':'disabled'}>${inv.tool==='axe'||inv.tool==='gold_axe'?'Using':'Equip'}</button></div>
       <div class="sku"><span>Rod</span><button onclick="window.mtwEquip('rod')" ${inv.rod||inv.neon_rod?'':'disabled'}>${inv.tool==='rod'||inv.tool==='neon_rod'?'Using':'Equip'}</button></div>
-      <div class="sku"><span>Pet: ${inv.pet} · hunger ${Math.round(inv.petHunger)}</span></div>`;
+      <div class="sku"><span>Active pet: ${inv.pet} · hunger ${Math.round(inv.petHunger)}</span></div>
+      <div style="margin-top:8px;font-size:12px;opacity:.75">Walk a pet you own</div>
+      ${['cub','wolf','dragon','phoenix','unicorn'].filter((k) => k === 'cub' || (inv.pets && inv.pets[k])).map((k) =>
+        `<div class="sku"><span>${k}</span><button onclick="window.mtwPet('${k}')">${inv.pet===k?'Following':'Walk'}</button></div>`
+      ).join('')}`;
   }
   paintShop();
 }
+window.mtwPet = (kind) => {
+  if (kind !== 'cub' && !(inv.pets && inv.pets[kind])) { toast('Buy that pet first'); return; }
+  inv.pet = kind;
+  saveInv();
+  buildPet();
+  paintBag();
+  toast(kind + ' is following you');
+};
 const SHOP = [
   { id: 'axe', name: 'Wooden axe', cost: 0, mt: false },
   { id: 'rod', name: 'Fishing rod', cost: 0, mt: false },
@@ -508,8 +520,11 @@ function paintShop() {
   const el = document.getElementById('shopList');
   if (!el) return;
   el.innerHTML = SHOP.map((s) => {
-    const owned = s.pet ? inv.pets && inv.pets[s.pet] : inv[s.id];
-    return `<div class="sku"><span>${s.name} ${s.mt ? '· $MT' : '· free'}</span><button ${owned ? 'disabled' : ''} onclick="window.mtwBuy('${s.id}')">${owned ? 'Owned' : (s.mt ? 'Buy $MT' : 'Take')}</button></div>`;
+    const owned = s.pet ? (s.pet === 'cub' || (inv.pets && inv.pets[s.pet])) : inv[s.id];
+    if (s.pet && owned) {
+      return `<div class="sku"><span>${s.name} · owned</span><button onclick="window.mtwPet('${s.pet}')">${inv.pet===s.pet?'Following':'Walk'}</button></div>`;
+    }
+    return `<div class="sku"><span>${s.name} ${s.mt ? '· $MT' : '· free'}</span><button onclick="window.mtwBuy('${s.id}')">${s.mt ? 'Buy $MT' : 'Take'}</button></div>`;
   }).join('');
 }
 window.mtwEquip = (kind) => {
@@ -654,19 +669,41 @@ buildPet();
 const others = new Map();
 function avatarMesh(p) {
   const g = new THREE.Group();
-  const legs = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.7, 4, 8), new THREE.MeshLambertMaterial({ color: parseInt(p.body || 'e8c39e', 16) }));
-  legs.position.y = 0.7;
-  const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 0.35), new THREE.MeshLambertMaterial({ color: parseInt(p.shirt || '1a3d2a', 16) }));
-  shirt.position.y = 1.15;
-  g.add(legs, shirt);
+  const skin = parseInt(p.body || 'e8c39e', 16);
+  const cloth = parseInt(p.shirt || '1a3d2a', 16);
+  const pants = 0x1e293b;
+  const mat = (c) => new THREE.MeshLambertMaterial({ color: c });
+  const hip = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.22, 0.32), mat(pants));
+  hip.position.y = 0.62;
+  const ll = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.58, 0.22), mat(pants));
+  ll.position.set(-0.14, 0.3, 0);
+  const rl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.58, 0.22), mat(pants));
+  rl.position.set(0.14, 0.3, 0);
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.72, 0.36), mat(cloth));
+  torso.position.y = 1.12;
+  const la = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.16), mat(skin));
+  la.position.set(-0.42, 1.05, 0);
+  const ra = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.16), mat(skin));
+  ra.position.set(0.42, 1.05, 0);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), mat(skin));
+  head.position.y = 1.68;
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.27, 10, 8), mat(0x1c1917));
+  hair.position.y = 1.78;
+  hair.scale.set(1, 0.7, 1);
+  g.add(hip, ll, rl, torso, la, ra, head, hair);
   if (p.hat) {
-    const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.18, 8), new THREE.MeshLambertMaterial({ color: 0x111 }));
-    hat.position.y = 1.62;
+    const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.2, 10), mat(0x111));
+    hat.position.y = 1.96;
     g.add(hat);
+  }
+  if (p.acc === 'heart') {
+    const goggles = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 10), mat(0xfb7185));
+    goggles.position.set(-0.09, 1.7, 0.2);
+    g.add(goggles);
   }
   const tag = document.createElement('div');
   tag.textContent = p.username || 'Guest';
-  tag.style.cssText = 'position:absolute;color:#fff;font:700 11px system-ui;text-shadow:0 1px 2px #000;pointer-events:none';
+  tag.style.cssText = 'position:absolute;transform:translate(-50%,-100%);color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:999px;font:800 13px system-ui;pointer-events:none;white-space:nowrap';
   document.body.appendChild(tag);
   g.userData.tag = tag;
   scene.add(g);
@@ -769,6 +806,23 @@ function nearestPlayer() {
   });
   return best;
 }
+let reel = null;
+function startReel(water, ok) {
+  if (reel) return;
+  const fish = new THREE.Mesh(
+    new THREE.ConeGeometry(0.16, 0.55, 6),
+    new THREE.MeshLambertMaterial({ color: 0xff7a2e })
+  );
+  fish.rotation.x = Math.PI / 2;
+  fish.position.set(water.x, 0.25, water.z);
+  scene.add(fish);
+  const pts = [new THREE.Vector3(), new THREE.Vector3()];
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffffff }));
+  scene.add(line);
+  reel = { t: 0, ok, fish, line, from: new THREE.Vector3(water.x, 0.2, water.z) };
+  toast(ok ? 'Fish on! Reeling…' : 'Nibble…');
+}
+
 function doInteract() {
   const here = document.getElementById('place').textContent;
   const tree = nearestNode('tree');
@@ -786,10 +840,8 @@ function doInteract() {
   }
   if (water) {
     if (inv.tool !== 'rod' && inv.tool !== 'neon_rod') { toast('Equip a rod to fish'); return; }
-    if (Math.random() < (inv.tool === 'neon_rod' ? 0.85 : 0.55)) {
-      inv.fish += 1;
-      saveInv(); paintBag(); toast('Caught a fish');
-    } else toast('It got away');
+    const ok = Math.random() < (inv.tool === 'neon_rod' ? 0.85 : 0.6);
+    startReel(water, ok);
     return;
   }
   if (here.startsWith('Stand')) {
@@ -1138,6 +1190,28 @@ function tick() {
     f.mesh.position.set(f.ox + Math.cos(f.t) * f.r, 0.22 + Math.sin(f.t * 3) * 0.06, f.oz + Math.sin(f.t * 0.85) * f.r);
     f.mesh.rotation.y = -f.t;
   });
+  if (reel) {
+    reel.t += dt * 0.9;
+    const t = Math.min(1, reel.t);
+    const dest = new THREE.Vector3(player.x, player.y - 0.3, player.z);
+    reel.fish.position.lerpVectors(reel.from, dest, t);
+    reel.fish.position.y = 0.25 + Math.sin(t * Math.PI) * 2.4;
+    reel.fish.rotation.y += 0.2;
+    const hands = dest.clone();
+    hands.y = player.y - 0.15;
+    reel.line.geometry.setFromPoints([reel.fish.position.clone(), hands]);
+    if (t >= 1) {
+      scene.remove(reel.fish);
+      scene.remove(reel.line);
+      if (reel.ok) {
+        inv.fish += 1;
+        saveInv();
+        paintBag();
+        toast('Reeled in a fish · bag +1');
+      } else toast('It snapped the line');
+      reel = null;
+    }
+  }
   hungerT += dt;
   if (hungerT > 8) {
     hungerT = 0;
