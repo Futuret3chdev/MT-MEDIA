@@ -24,7 +24,7 @@ const sections = [
   {
     href: '/software/security',
     title: 'Security',
-    desc: 'Security tools and downloads for the MT-ECO SYSTEM.',
+    desc: 'Shield plus Vault Lock, Seed Guard, Net Watch, Key Ring — live on this device.',
   },
 ];
 

@@ -10,7 +10,7 @@ export default function PacPage() {
         <Link href="/boards?game=pacman" className="opacity-70 hover:opacity-100">Pac board</Link>
       </div>
       <h1 className="text-4xl font-semibold mb-2">MT Pac</h1>
-      <p className="opacity-70 mb-6">Emerald maze. Gold dots. $MT orbs. Wallet + staff desk.</p>
+      <p className="opacity-70 mb-6">3 lives. Green orbs frighten ghosts. Fruit, wrap tunnels, levels. Wallet + staff desk.</p>
       <MtPac />
     </div>
   );

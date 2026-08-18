@@ -96,7 +96,7 @@ export const CATALOG: CatalogGame[] = [
     status: 'live',
     play: '/pacman',
     img: '/games/covers/pacman.png',
-    blurb: 'Emerald maze. Gold dots. $MT orbs. Wallet + staff desk.',
+    blurb: '3 lives. Power orbs frighten ghosts. Cherry then 🟢 fruit. Side tunnels. Levels speed up.',
   },
   {
     id: 'tetris',
@@ -105,7 +105,7 @@ export const CATALOG: CatalogGame[] = [
     status: 'live',
     play: '/tetris',
     img: '/games/covers/tetris.jpg',
-    blurb: 'Neon stack. Wallet + staff desk. Own board.',
+    blurb: 'Hold, next-3, ghost, hard drop. Levels + combo. 4-line is $MT Tetris.',
   },
   {
     id: 'tetrismob',
@@ -114,7 +114,7 @@ export const CATALOG: CatalogGame[] = [
     status: 'live',
     play: '/tetrismob',
     img: '/games/covers/tetrismob.jpg',
-    blurb: 'Thumb-pad Tetris. Same stack, bigger buttons. Wallet + staff.',
+    blurb: 'Swipe stack. Hold + hard drop pads. Long-press hold. Same wallet + staff.',
   },
   {
     id: 'racer',
@@ -213,7 +213,7 @@ export const CATALOG: CatalogGame[] = [
     status: 'live',
     play: '/chicken',
     img: '/games/covers/chicken.jpg',
-    blurb: 'Cross the neon lanes. Wallet + staff award.',
+    blurb: '3 lives, 🟢 $MT, 🛡 shield, trucks, night/day. Far side wraps with a bonus.',
   },
   {
     id: 'mtjump',

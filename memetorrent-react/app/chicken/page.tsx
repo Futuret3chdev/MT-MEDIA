@@ -10,7 +10,7 @@ export default function ChickenPage() {
         <Link href="/boards?game=chicken" className="opacity-70 hover:opacity-100">Chicken board</Link>
       </div>
       <h1 className="text-4xl font-semibold mb-2">MT Chicken</h1>
-      <p className="opacity-70 mb-6">Cross the lanes. Cars don’t wait. Wallet + staff desk.</p>
+      <p className="opacity-70 mb-6">3 lives. Shield and $MT in the road. Trucks. Night or day. Wallet + staff desk.</p>
       <MtChicken />
     </div>
   );
