@@ -268,9 +268,8 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
             className="py-1 inline-flex items-center gap-2 opacity-90 hover:opacity-100"
           >
-            <span>🎰</span>
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-400 text-black">18+</span>
-            Casino
+            <img src="/icons/casino-mt-18.png" alt="" className="w-8 h-8 rounded-lg object-cover" />
+            $MT Casino 18+
           </a>
           <a
             href="/claims"

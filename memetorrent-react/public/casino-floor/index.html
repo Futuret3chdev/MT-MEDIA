@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Nova Mirage">
+  <meta name="format-detection" content="telephone=no">
+  <title>Nova Mirage — MT Ecosystem Casino</title>
+  <link rel="icon" href="/casino-floor/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/casino-floor/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/casino-floor/apple-touch-icon.png">
+  <link rel="manifest" href="/casino-floor/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/casino-floor/css/style.css?v=53">
+  <link rel="stylesheet" href="/casino-floor/css/roulette.css?v=53">
+  <link rel="stylesheet" href="/casino-floor/css/game-scene.css?v=53">
+  <link rel="stylesheet" href="/casino-floor/css/celebration.css?v=53">
+  <link rel="stylesheet" href="/casino-floor/css/gate.css?v=53">
+  <link rel="stylesheet" href="/casino-floor/css/game-fx.css?v=53">
+  <link rel="stylesheet" href="/casino-floor/css/blackjack.css?v=53">
+  <link rel="stylesheet" href="/casino-floor/css/starfall.css?v=53">
+  <link rel="stylesheet" href="/casino-floor/css/baccarat.css?v=53">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="age-gate-frame" class="age-gate-frame" aria-hidden="true">
+    <div class="age-gate-inner">
+      <span class="age-badge">18+</span>
+      <div class="age-gate-copy">
+        <strong>Age verification required</strong>
+        <span>Nova Mirage is adults only — enter your birth year to continue</span>
+      </div>
+      <label class="age-field">
+        <span>Birth year</span>
+        <input type="number" id="age-birth-year" inputmode="numeric" min="1900" max="2010" placeholder="1995" autocomplete="bday-year">
+      </label>
+      <p class="age-gate-error" id="age-gate-error" hidden></p>
+      <button type="button" class="btn-play" id="btn-age-confirm">I am 18+</button>
+      <p class="age-legal">Play responsibly · Under 18 will be redirected to MemeTorrent</p>
+    </div>
+  </div>
+
+  <div id="install-hint" class="install-hint" hidden>
+    <p><strong>Tip:</strong> Tap <span class="ios-share">Share</span> → <strong>Add to Home Screen</strong>. To connect wallet, tap Phantom/Solflare — it opens the <strong>wallet app</strong> directly.</p>
+    <button type="button" id="install-hint-close">Got it</button>
+  </div>
+  <div id="app">
+    <!-- SPLASH -->
+    <section id="title-screen" class="screen active">
+      <div class="lobby-bg"></div>
+      <div class="lobby-neon-glow" aria-hidden="true"></div>
+      <div class="lobby-content">
+        <div class="casino-cover">
+          <p class="eco-tag">MT ECOSYSTEM</p>
+          <div class="casino-marquee" aria-hidden="true">
+            <span>♠ POKER</span><span>♦ POKIERS</span><span>♣ 20 GAMES</span><span>♥ $MT</span>
+          </div>
+          <h1 class="casino-name">
+            <span class="name-nova">NOVA</span>
+            <span class="name-mirage">MIRAGE</span>
+          </h1>
+          <p class="casino-tagline">Where legends deal &amp; the reels never sleep</p>
+          <p class="cover-18">18+ only · Age verification required</p>
+          <div class="cover-pills">
+            <span class="cover-pill">Poker</span>
+            <span class="cover-pill">Pokiers</span>
+            <span class="cover-pill">Casino Floor</span>
+          </div>
+        </div>
+        <p class="eco-credits">
+          <span>Made by <strong>Futuret3ch</strong></span>
+          <span class="sep">·</span>
+          <span><strong>MEMETORRENT</strong> $MT</span>
+        </p>
+        <button class="btn-play" id="btn-enter" type="button">Enter Nova Mirage</button>
+        <p class="lobby-hint">20 games on the floor · Poker &amp; Pokiers live now</p>
+      </div>
+      <footer class="lobby-footer">
+        <span class="footer-brand">Nova Mirage</span>
+        <span class="footer-credits">Futuret3ch × <a href="https://memetorrent.futuret3ch.com.au">MemeTorrent</a></span>
+      </footer>
+    </section>
+
+    <!-- AUTH (login / signup required) -->
+    <section id="auth-screen" class="screen">
+      <div class="auth-bg" aria-hidden="true"></div>
+      <div class="auth-wrap">
+        <div class="auth-brand">
+          <p class="eco-tag">MT ECOSYSTEM</p>
+          <h1>NOVA MIRAGE</h1>
+          <p>Sign in to play poker, pokiers &amp; casino floor games</p>
+        </div>
+        <div class="auth-card">
+          <div class="auth-tabs">
+            <button type="button" class="auth-tab active" data-auth-tab="login">Log In</button>
+            <button type="button" class="auth-tab" data-auth-tab="signup">Sign Up</button>
+          </div>
+          <div class="auth-panel active" id="auth-panel-login">
+            <h2>Welcome back</h2>
+            <p>Log in with your account to access the casino floor.</p>
+            <div class="auth-providers" id="auth-providers-login"></div>
+          </div>
+          <div class="auth-panel" id="auth-panel-signup" hidden>
+            <h2>Create your account</h2>
+            <p>Free to join — connect Discord, Telegram, Gmail or Facebook.</p>
+            <div class="auth-providers" id="auth-providers-signup"></div>
+          </div>
+          <p class="auth-skip"><button type="button" id="btn-auth-back">← Back to cover</button></p>
+        </div>
+        <p class="auth-18-note">18+ only · Play responsibly · Entertainment purposes</p>
+      </div>
+    </section>
+
+    <!-- MAIN MENU -->
+    <section id="menu-screen" class="screen">
+      <header class="menu-header menu-header-premium">
+        <div class="menu-toolbar">
+          <button type="button" class="menu-tb-btn btn-ghost" id="btn-menu-back" aria-label="Back">←</button>
+          <span class="eco-pill menu-tb-brand">NOVA MIRAGE</span>
+          <span class="menu-tb-spacer"></span>
+          <button type="button" class="menu-tb-btn btn-settings" id="btn-settings" title="Settings" aria-label="Settings">⚙</button>
+        </div>
+        <div class="menu-toolbar menu-toolbar-sub">
+          <button type="button" class="btn-auth-header" id="btn-header-auth">Log In</button>
+          <div class="header-profile" title="Your profile">
+            <div class="header-profile-avatar" id="menu-player-avatar"></div>
+            <span class="header-profile-name" id="menu-player-name">Player1</span>
+          </div>
+          <button type="button" class="btn-wallet btn-wallet-compact" id="btn-connect">Wallet</button>
+        </div>
+      </header>
+      <button type="button" class="wallet-toggle" id="btn-wallet-toggle" aria-expanded="false" aria-controls="wallet-panel">
+        <span class="wallet-toggle-label">Balance</span>
+        <span class="wallet-toggle-summary" id="wallet-toggle-summary">₵10,000 · 0 MT</span>
+        <span class="wallet-toggle-chevron" aria-hidden="true">▾</span>
+      </button>
+
+      <div class="wallet-panel" id="wallet-panel" hidden>
+        <div class="wallet-bar">
+          <div class="wallet-stat">
+            <span class="stat-label">$MEMETORRENT</span>
+            <span class="stat-value mt" id="hud-mt">0</span>
+            <button type="button" class="btn-refresh" id="btn-refresh-mt" title="Refresh balance">↻</button>
+          </div>
+          <div class="wallet-stat">
+            <span class="stat-label">Free Chips</span>
+            <span class="stat-value" id="hud-chips">10,000</span>
+          </div>
+          <div class="wallet-stat">
+            <span class="stat-label">Wins</span>
+            <span class="stat-value" id="hud-wins">0</span>
+          </div>
+          <a class="btn-buy-mt" id="btn-buy-mt" href="#" target="_blank" rel="noopener">Buy $MT</a>
+          <button type="button" class="btn-bonus" id="btn-daily">Free Chips</button>
+        </div>
+        <p class="wallet-addr" id="wallet-address">Connect Phantom, Solflare or Backpack</p>
+        <p class="wallet-note" id="wallet-note">Same wallet as Lucky Reels — on-chain $MEMETORRENT, no free tokens</p>
+      </div>
+
+      <p class="lobby-toast" id="lobby-toast" hidden></p>
+
+      <div class="lobby-categories" id="lobby-categories">
+        <button type="button" class="lobby-cat active" data-cat="all">All Games</button>
+        <button type="button" class="lobby-cat" data-cat="poker">Poker</button>
+        <button type="button" class="lobby-cat" data-cat="pokiers">Pokiers</button>
+        <button type="button" class="lobby-cat" data-cat="floor">Live Casino</button>
+      </div>
+
+      <div class="menu-scroll">
+        <div id="menu-sections"></div>
+
+        <div class="menu-section">
+          <h3>Live Tables</h3>
+          <div id="room-list" class="room-list"></div>
+          <div class="room-actions">
+            <button type="button" class="btn-secondary" id="btn-create-room">Quick Match</button>
+            <div class="join-row">
+              <input type="text" id="join-code" maxlength="6" placeholder="Room code">
+              <button type="button" class="btn-secondary" id="btn-join-room">Join</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- GAME FULLSCREEN PREVIEW -->
+    <div id="game-preview-modal" class="game-preview-modal" hidden>
+      <div class="preview-backdrop" id="preview-backdrop"></div>
+      <div class="preview-sheet">
+        <button type="button" class="preview-close" id="preview-close" aria-label="Close">✕</button>
+        <div class="preview-visual" id="preview-visual"></div>
+        <div class="preview-info">
+          <h3 id="preview-title"></h3>
+          <p id="preview-desc"></p>
+          <span id="preview-stakes" class="preview-stakes"></span>
+        </div>
+        <button type="button" class="btn-play preview-play" id="preview-play">Play Now</button>
+      </div>
+    </div>
+
+    <!-- MATCHMAKING -->
+    <section id="multiplayer-screen" class="screen">
+      <div class="match-wrap">
+        <p class="eco-pill">MEMETORRENT NETWORK</p>
+        <h2>Finding Table…</h2>
+        <p class="room-code-label">Room Code</p>
+        <p class="room-code" id="room-code">------</p>
+        <div class="match-bar-wrap"><div class="match-bar" id="match-bar"></div></div>
+        <p class="match-status" id="match-status">Connecting…</p>
+        <button type="button" class="btn-ghost" id="btn-multi-back">Cancel</button>
+      </div>
+    </section>
+
+    <!-- TABLE SETUP -->
+    <section id="setup-screen" class="screen">
+      <div class="game-scene" id="setup-scene" aria-hidden="true">
+        <img class="game-scene-img" alt="">
+        <div class="game-scene-vignette"></div>
+        <div class="game-scene-fx fx-glow"></div>
+        <div class="game-scene-fx fx-embers"></div>
+        <div class="game-scene-fx fx-shimmer"></div>
+        <div class="game-scene-fx fx-sparks"></div>
+      </div>
+      <div class="game-scene-content setup-scene-content">
+      <div class="setup-wrap">
+        <p class="eco-pill" id="setup-badge">TABLE</p>
+        <h2 id="setup-title">Free Play vs AI</h2>
+        <p class="setup-desc" id="setup-desc"></p>
+
+        <div class="setup-stats">
+          <div><span>Buy-in</span><strong id="setup-buyin">Free</strong></div>
+          <div><span>Blinds</span><strong id="setup-blinds">25 / 50</strong></div>
+          <div><span>Stack</span><strong id="setup-stack">5,000</strong></div>
+        </div>
+
+        <p class="setup-warn" id="setup-mt-warn"></p>
+
+        <div class="setup-avatar-preview" id="setup-avatar-preview"></div>
+
+        <label class="name-field">
+          <span>Screen name</span>
+          <input type="text" id="player-name" maxlength="16" placeholder="Your name" value="Player1">
+        </label>
+        <button class="btn-play" id="btn-launch" type="button">Take a Seat</button>
+        <button type="button" class="btn-ghost setup-back" id="btn-setup-back">← Back to Lobby</button>
+      </div>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="game-screen" class="screen">
+      <div class="game-scene" id="poker-scene" aria-hidden="true">
+        <img class="game-scene-img" alt="">
+        <div class="game-scene-vignette"></div>
+        <div class="game-scene-fx fx-glow"></div>
+        <div class="game-scene-fx fx-embers"></div>
+        <div class="game-scene-fx fx-shimmer"></div>
+        <div class="game-scene-fx fx-sparks"></div>
+      </div>
+      <div class="game-scene-content">
+      <header class="game-header">
+        <button type="button" class="btn-ghost" id="btn-lobby">← Lobby</button>
+        <div class="header-center">
+          <span id="mode-badge" class="mode-badge badge-free">FREE</span>
+          <span id="phase-label">Pre-Flop</span>
+        </div>
+        <div class="header-right">
+          <span class="wallet-hud" id="wallet-hud"></span>
+          <span class="header-pot">Pot <strong id="pot-amount">0</strong></span>
+        </div>
+      </header>
+
+      <div class="table-wrap">
+        <div id="poker-table" class="poker-table">
+          <div class="table-felt">
+            <div class="table-logo" id="table-brand">MT</div>
+            <div class="table-eco">MT ECOSYSTEM</div>
+            <div id="community-cards" class="community-cards"></div>
+            <div id="seats" class="seats"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <div class="commentary-float">
+          <div id="commentary-bubble" class="speech-bubble">
+            <span id="turn-indicator" class="bubble-turn">Waiting…</span>
+            <span id="game-message" class="bubble-msg">Waiting for action…</span>
+            <span id="hand-strength" class="bubble-hand"></span>
+          </div>
+        </div>
+
+        <div id="action-panel" class="action-panel">
+          <button type="button" class="act fold" id="btn-fold">Fold</button>
+          <button type="button" class="act check" id="btn-check">Check</button>
+          <button type="button" class="act call" id="btn-call">Call</button>
+          <div class="raise-group">
+            <input type="range" id="raise-slider" min="0" max="1000" step="50">
+            <span id="raise-value">100</span>
+            <button type="button" class="act raise" id="btn-raise">Raise</button>
+          </div>
+          <button type="button" class="act allin" id="btn-allin">All-In</button>
+        </div>
+
+        <button type="button" class="btn-next" id="btn-next-hand">Deal Next Hand</button>
+      </div>
+
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings-screen" class="screen">
+      <header class="menu-header">
+        <button type="button" class="btn-ghost" id="btn-settings-back">←</button>
+        <div class="menu-header-center">
+          <span class="eco-pill">ACCOUNT</span>
+          <h2>Settings</h2>
+        </div>
+        <span class="profile-auth-badge" id="profile-auth-badge">Guest</span>
+      </header>
+
+      <div class="settings-tabs">
+        <button type="button" class="settings-tab active" data-tab="account">Sign In</button>
+        <button type="button" class="settings-tab" data-tab="avatar">Avatar</button>
+        <button type="button" class="settings-tab" data-tab="character">Character</button>
+      </div>
+
+      <div class="profile-scroll">
+        <!-- TAB: Sign In -->
+        <div class="settings-panel active" id="settings-panel-account">
+          <div class="profile-hero">
+            <div class="profile-avatar-wrap" id="profile-avatar-preview"></div>
+            <p class="profile-player-name" id="settings-display-name">Player1</p>
+            <p class="profile-hint">Sign in to save your profile across devices</p>
+          </div>
+
+          <div class="profile-section">
+            <h3>Sign in with</h3>
+            <p class="profile-desc">Discord &amp; Telegram work now. Add Gmail/Facebook IDs in config.js when ready.</p>
+            <div class="auth-list">
+              <div id="google-signin-btn" class="auth-slot-full"></div>
+              <button type="button" class="auth-btn auth-btn-full google" id="btn-auth-google">
+                <span class="auth-icon">📧</span> Sign in with Gmail
+              </button>
+              <button type="button" class="auth-btn auth-btn-full discord" id="btn-auth-discord">
+                <span class="auth-icon">💬</span> Sign in with Discord
+              </button>
+              <button type="button" class="auth-btn auth-btn-full telegram" id="btn-auth-telegram">
+                <span class="auth-icon">✈️</span> Sign in with Telegram
+              </button>
+              <button type="button" class="auth-btn auth-btn-full facebook" id="btn-auth-facebook">
+                <span class="auth-icon">📘</span> Sign in with Facebook
+              </button>
+            </div>
+            <button type="button" class="btn-ghost profile-signout" id="btn-auth-signout" hidden>Sign out</button>
+          </div>
+        </div>
+
+        <!-- TAB: Avatar -->
+        <div class="settings-panel" id="settings-panel-avatar" hidden>
+
+          <div class="profile-section">
+            <h3>Table photo</h3>
+            <p class="profile-desc">Your uploaded picture shows on your face at the poker table</p>
+            <div class="profile-avatar-wrap settings-avatar-preview" id="settings-avatar-preview"></div>
+            <div class="avatar-upload-row">
+              <label class="btn-secondary avatar-upload-btn">
+                Upload picture
+                <input type="file" id="avatar-file" accept="image/jpeg,image/png,image/webp" hidden>
+              </label>
+              <button type="button" class="btn-ghost" id="btn-avatar-remove">Remove photo</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Character -->
+        <div class="settings-panel" id="settings-panel-character" hidden>
+          <div class="profile-section">
+            <h3>Character &amp; name</h3>
+            <p class="profile-desc">Used when no photo is uploaded — or as your seat frame colour</p>
+
+            <label class="profile-field">
+              <span>Display name (at the table)</span>
+              <input type="text" id="profile-name" maxlength="16" placeholder="Table name">
+            </label>
+
+            <div class="customize-grid">
+            <label class="profile-field">
+              <span>Skin tone</span>
+              <div class="swatch-row" id="skin-swatches"></div>
+            </label>
+            <label class="profile-field">
+              <span>Hair style</span>
+              <select id="profile-hair-style"></select>
+            </label>
+            <label class="profile-field">
+              <span>Hair colour</span>
+              <div class="swatch-row" id="hair-swatches"></div>
+            </label>
+            <label class="profile-field">
+              <span>Seat frame</span>
+              <div class="swatch-row" id="frame-swatches"></div>
+            </label>
+            <label class="profile-field">
+              <span>Accessory</span>
+              <select id="profile-accessory"></select>
+            </label>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-play profile-save" id="btn-settings-save">Save &amp; return to lobby</button>
+      </div>
+
+      <footer class="menu-footer">
+        <span>MT ECOSYSTEM</span>
+        <span>Futuret3ch · MemeTorrent</span>
+      </footer>
+    </section>
+
+    <!-- BLACKJACK -->
+    <section id="blackjack-screen" class="screen">
+      <div class="game-scene" id="blackjack-scene" aria-hidden="true">
+        <img class="game-scene-img" alt="">
+        <div class="game-scene-vignette"></div>
+        <div class="game-scene-fx fx-glow"></div>
+        <div class="game-scene-fx fx-embers"></div>
+        <div class="game-scene-fx fx-shimmer"></div>
+      </div>
+      <div class="game-scene-content bj-cabinet">
+        <header class="bj-top">
+          <button type="button" class="bj-back" id="btn-blackjack-back">←</button>
+          <h1 class="bj-title">BLACKJACK</h1>
+          <div class="bj-bank">BANK <strong><span id="bj-currency">₵</span><span id="bj-balance">10,000</span></strong></div>
+        </header>
+        <div class="bj-table-wrap" id="bj-table-wrap">
+          <div class="bj-rail" id="bj-rail">
+            <div class="bj-spotlight" aria-hidden="true"></div>
+            <div class="bj-dealer-host" aria-hidden="true">
+              <img src="/casino-floor/assets/dealer-hostess.jpg" alt="" loading="eager">
+              <div class="bj-dealer-glow"></div>
+            </div>
+            <div class="bj-shoe" id="bj-shoe" aria-hidden="true">
+              <div class="bj-shoe-stack"></div>
+              <span class="bj-shoe-label">SHOE</span>
+            </div>
+            <div class="bj-table" id="bj-table" data-phase="bet">
+              <div class="bj-felt">
+                <div class="bj-felt-markings" aria-hidden="true">
+                  <span class="bj-mark-center">21</span>
+                  <span class="bj-mark-insurance">INSURANCE</span>
+                </div>
+                <div class="bj-dealer-zone">
+                  <p class="bj-zone-label">Dealer</p>
+                  <div class="bj-cards" id="bj-dealer-cards"></div>
+                  <p class="bj-hand-val" id="bj-dealer-val"></p>
+                </div>
+                <div class="bj-bet-spot" id="bj-bet-spot">
+                  <div class="bj-chip-stack" id="bj-chip-stack"></div>
+                  <span class="bj-bet-label">₵<span id="bj-bet-amt">0</span></span>
+                </div>
+                <div class="bj-player-zone">
+                  <p class="bj-zone-label">You</p>
+                  <div class="bj-cards" id="bj-player-cards"></div>
+                  <p class="bj-hand-val" id="bj-player-val"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="bj-message" id="bj-message">Tap felt to bet · Deal when ready</p>
+        <footer class="bj-footer">
+          <div class="bj-chip-tray" id="bj-chip-tray"></div>
+          <div class="bj-actions">
+            <button type="button" class="bj-btn bj-btn-clear" id="btn-bj-clear">CLEAR</button>
+            <button type="button" class="bj-btn bj-btn-deal" id="btn-bj-deal">DEAL</button>
+            <button type="button" class="bj-btn bj-btn-hit" id="btn-bj-hit" disabled>HIT</button>
+            <button type="button" class="bj-btn bj-btn-stand" id="btn-bj-stand" disabled>STAND</button>
+            <button type="button" class="bj-btn bj-btn-double" id="btn-bj-double" disabled>DOUBLE</button>
+          </div>
+        </footer>
+      </div>
+    </section>
+
+    <!-- BACCARAT — live dealer layout (Iconic21 / Asia Gaming style) -->
+    <section id="baccarat-screen" class="screen bc-live-screen">
+      <div class="game-scene" id="baccarat-scene" aria-hidden="true"></div>
+      <div class="bc-live-shell">
+        <header class="bc-live-bar">
+          <button type="button" class="bc-back" id="btn-baccarat-back" aria-label="Back">☰</button>
+          <span class="bc-table-id">Baccarat N15</span>
+          <span class="bc-limits" id="bc-limits">2 — 5,000</span>
+          <span class="bc-mode-badge" id="bc-mode-badge" data-currency="free">FREE</span>
+          <div class="bc-bank">Bal <strong><span id="bc-currency">₵</span><span id="bc-balance">10,000</span></strong></div>
+        </header>
+
+        <div class="bc-live-body" id="bc-table-wrap">
+          <div class="bc-video-stage" id="bc-table" data-phase="bet">
+            <div class="bc-stage-bg" aria-hidden="true"></div>
+            <div class="bc-stage-stats">
+              <div class="bc-stat-line"><span class="bc-dot bc-dot-p"></span><span id="bc-pct-player">0%</span></div>
+              <div class="bc-stat-line"><span class="bc-dot bc-dot-b"></span><span id="bc-pct-banker">0%</span></div>
+              <div class="bc-stat-line"><span class="bc-dot bc-dot-t"></span><span id="bc-pct-tie">0%</span></div>
+              <div class="bc-stat-scores">
+                <span class="bc-stat-p">P <strong id="bc-score-player">—</strong></span>
+                <span class="bc-stat-b">B <strong id="bc-score-banker">—</strong></span>
+              </div>
+            </div>
+            <div class="bc-dealer-avatar" aria-hidden="true">
+              <div class="bc-dealer-photo"></div>
+            </div>
+            <div class="bc-table-oval">
+              <span class="bc-cn bc-cn-player">閒</span>
+              <span class="bc-cn bc-cn-tie">和</span>
+              <span class="bc-cn bc-cn-banker">莊</span>
+              <div class="bc-stage-hands">
+                <div class="bc-stage-hand bc-stage-player" data-hand="player">
+                  <div class="bc-cards" id="bc-player-cards"></div>
+                  <span class="bc-hand-val" id="bc-player-val"></span>
+                </div>
+                <div class="bc-stage-hand bc-stage-banker" data-hand="banker">
+                  <div class="bc-cards" id="bc-banker-cards"></div>
+                  <span class="bc-hand-val" id="bc-banker-val"></span>
+                </div>
+              </div>
+            </div>
+            <div class="bc-shoe" id="bc-shoe" aria-hidden="true">
+              <div class="bc-shoe-stack"></div>
+            </div>
+            <div class="bc-stage-result" id="bc-score-result" hidden></div>
+            <div class="bc-stage-meta">
+              <span class="bc-live-pill"><span class="bc-live-dot"></span>LIVE</span>
+              <span class="bc-dealer-name">Nova Dealer</span>
+            </div>
+          </div>
+
+          <div class="bc-console" id="bc-console">
+            <div class="bc-chip-row" id="bc-chip-tray"></div>
+            <div class="bc-side-row" aria-hidden="true">
+              <span class="bc-side-cell">P Pair</span>
+              <span class="bc-side-cell">B Pair</span>
+              <span class="bc-side-cell bc-side-tie">Tie 8:1</span>
+              <span class="bc-side-cell">Lucky 6</span>
+              <span class="bc-side-cell">P Bonus</span>
+              <span class="bc-side-cell">B Bonus</span>
+            </div>
+            <div class="bc-main-bets">
+              <button type="button" class="bc-main-bet bc-bet-player" id="bc-bet-player" data-bet="player">
+                <span class="bc-main-label">PLAYER</span>
+                <span class="bc-main-count" id="bc-player-count">0</span>
+                <span class="bc-spot-amt">—</span>
+              </button>
+              <button type="button" class="bc-main-bet bc-bet-tie" id="bc-bet-tie" data-bet="tie">
+                <span class="bc-main-label">TIE</span>
+                <span class="bc-main-pay">8:1</span>
+                <span class="bc-spot-amt">—</span>
+              </button>
+              <button type="button" class="bc-main-bet bc-bet-banker" id="bc-bet-banker" data-bet="banker">
+                <span class="bc-main-label">BANKER</span>
+                <span class="bc-main-count" id="bc-banker-count">0</span>
+                <span class="bc-spot-amt">—</span>
+              </button>
+            </div>
+            <div class="bc-console-bar">
+              <span class="bc-total-bet" id="bc-total-bet">Total bet —</span>
+              <div class="bc-console-actions">
+                <button type="button" class="bc-btn bc-btn-ghost" id="btn-bc-clear">UNDO</button>
+                <button type="button" class="bc-btn bc-btn-deal" id="btn-bc-deal" disabled>DEAL</button>
+                <button type="button" class="bc-btn bc-btn-next" id="btn-bc-next" hidden>NEW HAND</button>
+              </div>
+            </div>
+            <p class="bc-message" id="bc-message">Place your bets</p>
+          </div>
+
+          <div class="bc-roads-board" id="bc-scoreboard">
+            <div class="bc-bead-plate" id="bc-road" aria-label="Bead plate"></div>
+            <div class="bc-roads-grid">
+              <div class="bc-road-cell bc-road-big">
+                <div class="bc-big-road" id="bc-big-road" aria-label="Big road"></div>
+              </div>
+              <div class="bc-road-cell bc-road-eye">
+                <div class="bc-derived-road bc-road-eye-grid" id="bc-eye-road" aria-label="Big eye"></div>
+              </div>
+              <div class="bc-road-cell bc-road-small">
+                <div class="bc-derived-road bc-road-small-grid" id="bc-small-road" aria-label="Small road"></div>
+              </div>
+              <div class="bc-road-cell bc-road-cock">
+                <div class="bc-derived-road bc-road-cock-grid" id="bc-cock-road" aria-label="Cockroach"></div>
+              </div>
+            </div>
+            <div class="bc-road-stats">
+              <span>#B <strong id="bc-stat-b">0</strong></span>
+              <span>#P <strong id="bc-stat-p">0</strong></span>
+              <span>#T <strong id="bc-stat-t">0</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STARFALL SPINS -->
+    <section id="starfall-screen" class="screen">
+      <div class="game-scene" id="starfall-scene" aria-hidden="true">
+        <img class="game-scene-img" alt="">
+        <div class="game-scene-vignette"></div>
+        <div class="game-scene-fx fx-glow"></div>
+        <div class="game-scene-fx fx-stars"></div>
+        <div class="game-scene-fx fx-shimmer"></div>
+      </div>
+      <div class="game-scene-content sf-cabinet">
+        <header class="sf-top">
+          <button type="button" class="sf-back" id="btn-starfall-back">←</button>
+          <h1 class="sf-title">STARFALL SPINS</h1>
+          <div class="sf-stats">
+            <span>BANK <strong>₵<span id="sf-balance">10,000</span></strong></span>
+            <span class="sf-last-win">WIN <strong id="sf-last-win">—</strong></span>
+          </div>
+        </header>
+        <div class="sf-machine" id="sf-machine">
+          <div class="sf-aurora" aria-hidden="true"></div>
+          <div class="sf-frame" id="sf-frame">
+            <div class="sf-jackpot-ticker">
+              <span class="sf-ticker-label">JACKPOT</span>
+              <span class="sf-ticker-amt" id="sf-jackpot">₵88,888</span>
+            </div>
+            <div class="sf-marquee-wrap">
+              <p class="sf-marquee"><span>✦ STARFALL SPINS ✦ 5 PAYLINES ✦ MATCH 3+ ✦ BIG WINS ✦&nbsp;&nbsp;✦ STARFALL SPINS ✦ 5 PAYLINES ✦ MATCH 3+ ✦ BIG WINS ✦&nbsp;&nbsp;</span></p>
+            </div>
+            <div class="sf-window">
+              <div class="sf-paylines" id="sf-paylines" aria-hidden="true">
+                <span class="sf-row-guide" data-row="0"></span>
+                <span class="sf-row-guide" data-row="1"></span>
+                <span class="sf-row-guide" data-row="2"></span>
+                <span class="sf-pline" data-line="0"></span>
+                <span class="sf-pline" data-line="1"></span>
+                <span class="sf-pline" data-line="2"></span>
+                <span class="sf-pline" data-line="3"></span>
+                <span class="sf-pline" data-line="4"></span>
+              </div>
+              <div class="sf-line-overlay" id="sf-line-overlay"></div>
+              <div class="sf-grid-overlay" aria-hidden="true"></div>
+              <div class="sf-reel-glow" aria-hidden="true"></div>
+              <div class="sf-reels" id="sf-reels"></div>
+            </div>
+            <div class="sf-paytable" id="sf-paytable"></div>
+          </div>
+          <div class="sf-win-popup" id="sf-win-popup" hidden>
+            <span class="sf-win-popup-label">WIN</span>
+            <span class="sf-win-popup-amt" id="sf-win-popup-amt">₵0</span>
+          </div>
+        </div>
+        <p class="sf-message" id="sf-message">Match 3+ symbols on a payline</p>
+        <footer class="sf-footer">
+          <div class="sf-bet-row">
+            <button type="button" class="sf-bet-btn" id="btn-sf-bet-down">−</button>
+            <span class="sf-bet-amt">BET ₵<span id="sf-bet">125</span></span>
+            <button type="button" class="sf-bet-btn" id="btn-sf-bet-up">+</button>
+          </div>
+          <button type="button" class="sf-spin-btn" id="btn-sf-spin">SPIN</button>
+        </footer>
+      </div>
+    </section>
+
+    <!-- ROULETTE -->
+    <section id="roulette-screen" class="screen">
+      <div class="game-scene" id="roulette-scene" aria-hidden="true">
+        <img class="game-scene-img" alt="">
+        <div class="game-scene-vignette"></div>
+        <div class="game-scene-fx fx-glow"></div>
+        <div class="game-scene-fx fx-embers"></div>
+        <div class="game-scene-fx fx-shimmer"></div>
+        <div class="game-scene-fx fx-sparks"></div>
+      </div>
+      <div class="game-scene-content rl-cabinet">
+        <header class="rl-top">
+          <button type="button" class="rl-back" id="btn-roulette-back" aria-label="Back to lobby">←</button>
+          <h1 class="rl-title">European Roulette</h1>
+          <div class="rl-bank"><span class="rl-bank-label">BANK</span> <span id="rl-currency">₵</span><span id="roulette-chips">10,000</span></div>
+        </header>
+
+        <div class="rl-history-bar">
+          <span class="rl-history-label">LAST</span>
+          <div class="rl-history-track" id="roulette-history"></div>
+        </div>
+
+        <div class="rl-mobile-tabs" id="rl-mobile-tabs">
+          <button type="button" class="rl-mobile-tab active" data-rl-tab="bets">Place Bets</button>
+          <button type="button" class="rl-mobile-tab" data-rl-tab="wheel">Live Wheel</button>
+        </div>
+
+        <div class="rl-main">
+          <div class="rl-stage" id="rl-stage">
+            <div class="rl-dealer" aria-hidden="true">
+              <img src="/casino-floor/assets/dealer-hostess.jpg" alt="" loading="eager" decoding="async">
+              <div class="rl-dealer-glow"></div>
+            </div>
+            <div class="rl-wheel-zone" id="rl-wheel-zone">
+              <div class="rl-wheel-frame" id="roulette-wheel-wrap"></div>
+              <div class="rl-result-line">
+                <div class="rl-result" id="roulette-result"></div>
+                <p class="rl-msg" id="roulette-message">Place your bets</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rl-mat-scroll" id="rl-mat-scroll">
+            <div class="rl-mat" id="roulette-mat"></div>
+          </div>
+        </div>
+
+        <footer class="rl-footer">
+          <div class="rl-chip-tray" id="chip-select"></div>
+          <p class="rl-bet-total" id="roulette-bets-summary"></p>
+          <div class="rl-footer-actions">
+            <button type="button" class="rl-btn-clear" id="btn-roulette-clear">CLEAR</button>
+            <button type="button" class="rl-spin-btn" id="btn-roulette-spin">SPIN</button>
+          </div>
+        </footer>
+      </div>
+    </section>
+
+    <!-- LUCKY REELS (embedded) -->
+    <section id="reels-screen" class="screen">
+      <div class="game-scene" id="reels-scene" aria-hidden="true">
+        <img class="game-scene-img" alt="">
+        <div class="game-scene-vignette"></div>
+        <div class="game-scene-fx fx-glow"></div>
+        <div class="game-scene-fx fx-embers"></div>
+        <div class="game-scene-fx fx-shimmer"></div>
+        <div class="game-scene-fx fx-sparks"></div>
+      </div>
+      <div class="game-scene-content">
+      <header class="game-header">
+        <button type="button" class="btn-ghost" id="btn-reels-back">← Casino Lobby</button>
+        <div class="header-center">
+          <span class="eco-pill">MT ECOSYSTEM</span>
+          <span>Lucky Reels</span>
+        </div>
+        <a class="btn-ghost" id="btn-reels-open" href="https://lucky-reels-eosin.vercel.app" target="_blank" rel="noopener">Open ↗</a>
+      </header>
+      <iframe
+        id="reels-frame"
+        class="reels-frame"
+        src="about:blank"
+        title="Lucky Reels Slots"
+        allow="clipboard-write"
+      ></iframe>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <div id="wallet-modal" class="modal" hidden>
+    <div class="modal-backdrop" id="wallet-modal-backdrop"></div>
+    <div class="modal-card">
+      <h3>Connect Wallet</h3>
+      <p class="modal-desc">Opens <strong>Phantom</strong> or <strong>Solflare</strong> app. In Solflare, approve the <strong>Connect</strong> prompt when it appears.</p>
+      <button type="button" class="wallet-option phantom" id="btn-phantom">
+        <span class="wallet-icon">👻</span>
+        <span>Phantom</span>
+      </button>
+      <button type="button" class="wallet-option solflare" id="btn-solflare">
+        <span class="wallet-icon">🔥</span>
+        <span>Solflare</span>
+      </button>
+      <button type="button" class="wallet-option backpack" id="btn-backpack">
+        <span class="wallet-icon">🎒</span>
+        <span>Backpack</span>
+      </button>
+      <button type="button" class="btn-ghost modal-close" id="btn-wallet-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="celebration-layer" class="celebration-layer" aria-hidden="true" hidden></div>
+
+  <script type="module" src="/casino-floor/js/main.js?v=53"></script>
+</body>
+</html>

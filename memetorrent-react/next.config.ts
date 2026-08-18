@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['mysql2'],
+  async rewrites() {
+    return [
+      { source: '/casino', destination: '/casino-floor/index.html' },
+      { source: '/casino/', destination: '/casino-floor/index.html' },
+    ];
+  },
   async redirects() {
     const folders = [
       '/games/unix/tap',
@@ -18,6 +24,8 @@ const nextConfig: NextConfig = {
     ];
     return [
       { source: '/claims.html', destination: '/claims', permanent: true },
+      { source: '/casino-floor', destination: '/casino-floor/index.html', permanent: false },
+      { source: '/casino-floor/', destination: '/casino-floor/index.html', permanent: false },
       ...folders.flatMap((p) => [
         { source: p, destination: `${p}/index.html`, permanent: false },
         { source: `${p}/`, destination: `${p}/index.html`, permanent: false },
