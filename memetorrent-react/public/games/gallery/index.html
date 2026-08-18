@@ -169,6 +169,12 @@
     <button data-bp="lamp">Lamp</button>
     <button data-bp="plant">Plant</button>
     <button data-bp="paint">Paint</button>
+    <button id="buildAim">Aim</button>
+    <button id="buildNudgeL">◀</button>
+    <button id="buildNudgeF">▲</button>
+    <button id="buildNudgeB">▼</button>
+    <button id="buildNudgeR">▶</button>
+    <button id="buildSet">Set piece</button>
     <button id="buildRot">Rotate</button>
     <button id="buildUndo">Undo</button>
     <button id="buildDone">Done</button>
@@ -809,6 +815,7 @@ let myHouse = null;
 let buildMode = false;
 let buildPiece = 'wall';
 let buildYaw = 0;
+let buildCursor = { x: 0, z: 0 };
 let ghost = null;
 const PIECE_COST = { wall: 2, floor: 1, door: 2, window: 2, roof: 3, chair: 1, table: 2, bed: 3, lamp: 1, plant: 1, paint: 0 };
 const PIECE_COLOR = { wall: 0xd6c4a8, floor: 0x8b5a2b, door: 0x5c3a21, window: 0x93c5fd, roof: 0x7f1d1d, chair: 0x6b4423, table: 0x5c4033, bed: 0x1e3a5f, lamp: 0xfde68a, plant: 0x16a34a };
@@ -832,13 +839,25 @@ function pieceGeo(type) {
   return new THREE.BoxGeometry(1, 1, 1);
 }
 
+function pieceY(type) {
+  if (type === 'floor') return 0.08;
+  if (type === 'roof') return 3.2;
+  if (type === 'bed') return 0.28;
+  if (type === 'table' || type === 'chair') return 0.42;
+  if (type === 'lamp') return 0.7;
+  if (type === 'plant') return 0.5;
+  return 1.2;
+}
+
 function addHousePartMesh(part, ghosting) {
   const mesh = new THREE.Mesh(
     pieceGeo(part.type),
     new THREE.MeshLambertMaterial({
-      color: part.color || PIECE_COLOR[part.type] || 0xccc,
+      color: ghosting ? 0x5cffb0 : (part.color || PIECE_COLOR[part.type] || 0xccc),
       transparent: !!ghosting,
-      opacity: ghosting ? 0.45 : 1
+      opacity: ghosting ? 0.4 : 1,
+      wireframe: !!ghosting,
+      depthWrite: !ghosting
     })
   );
   mesh.position.set(part.x, part.y, part.z);
@@ -846,6 +865,7 @@ function addHousePartMesh(part, ghosting) {
   if (part.type === 'roof') mesh.rotation.y += Math.PI / 4;
   if (ghosting) return mesh;
   houseGroup.add(mesh);
+  part._mesh = mesh;
   if (['wall', 'door', 'floor', 'roof'].includes(part.type)) {
     const b = new THREE.Box3().setFromObject(mesh);
     houseColliders.push(b);
@@ -916,9 +936,11 @@ function claimHouse(kind) {
 function startDesigner() {
   if (!myHouse) { toast('Claim a lot first'); return; }
   buildMode = true;
+  chopHold = false;
+  buildCursor = { x: myHouse.x, z: myHouse.z };
   document.getElementById('buildBar').classList.add('on');
   document.getElementById('life').style.display = 'none';
-  toast('Designer on · look at your lot · Do/E places · wood is used');
+  toast('Green wire is the preview. Aim, then Set piece. It will not slide.');
 }
 
 function onPlot(x, z) {
@@ -928,33 +950,65 @@ function onPlot(x, z) {
 }
 
 function placeLook() {
-  const d = 2.1;
+  const d = 2.2;
   return {
-    x: Math.round(player.x - Math.sin(player.yaw) * d),
-    z: Math.round(player.z - Math.cos(player.yaw) * d)
+    x: player.x - Math.sin(player.yaw) * d,
+    z: player.z - Math.cos(player.yaw) * d
   };
+}
+
+function snapLot(x, z) {
+  if (!myHouse) return { x: Math.round(x), z: Math.round(z) };
+  return {
+    x: myHouse.x + Math.round((x - myHouse.x) / 2) * 2,
+    z: myHouse.z + Math.round((z - myHouse.z) / 2) * 2
+  };
+}
+
+function aimCursorFromView() {
+  if (!myHouse) return;
+  const look = placeLook();
+  const snap = snapLot(look.x, look.z);
+  if (!onPlot(snap.x, snap.z)) {
+    toast('Face your lot, then tap Aim');
+    return;
+  }
+  buildCursor = snap;
+  toast('Preview locked · tap Set piece');
+}
+
+function nudgeCursor(dx, dz) {
+  if (!myHouse) return;
+  const sin = Math.sin(player.yaw), cos = Math.cos(player.yaw);
+  const wx = Math.round(dx * cos + dz * sin);
+  const wz = Math.round(-dx * sin + dz * cos);
+  const next = { x: buildCursor.x + wx * 2, z: buildCursor.z + wz * 2 };
+  if (!onPlot(next.x, next.z)) { toast('Edge of lot'); return; }
+  buildCursor = next;
 }
 
 function placeCurrent() {
   if (!buildMode || !myHouse) return false;
+  const look = buildCursor;
   if (buildPiece === 'paint') {
-    const look = placeLook();
     const hit = myHouse.parts.find((p) => Math.abs(p.x - look.x) < 1.1 && Math.abs(p.z - look.z) < 1.1);
-    if (!hit) { toast('Look at a piece to paint'); return true; }
+    if (!hit) { toast('Aim at a piece, then Paint'); return true; }
     const cols = [0xd6c4a8, 0x7f1d1d, 0x1e3a5f, 0x14532d, 0xf5e6c8, 0x111827, 0x19d37e];
-    hit.color = cols[(cols.indexOf(hit.color) + 1 + cols.length) % cols.length] || cols[0];
+    const i = cols.indexOf(hit.color);
+    hit.color = cols[(i + 1 + cols.length) % cols.length];
     saveHouse(); rebuildHouse(); toast('Painted');
     return true;
   }
   const cost = PIECE_COST[buildPiece] || 1;
   if ((inv.wood || 0) < cost) { toast('Need ' + cost + ' wood'); return true; }
-  const look = placeLook();
-  if (!onPlot(look.x, look.z)) { toast('Stay on your lot to build'); return true; }
-  const y = buildPiece === 'floor' ? 0.08 : (buildPiece === 'roof' ? 3.2 : (buildPiece === 'bed' ? 0.28 : (buildPiece === 'table' || buildPiece === 'chair' ? 0.42 : 1.2)));
-  myHouse.parts.push({ type: buildPiece, x: look.x, y, z: look.z, rot: buildYaw, color: PIECE_COLOR[buildPiece] });
+  if (!onPlot(look.x, look.z)) { toast('Aim on your lot first'); return true; }
+  const y = pieceY(buildPiece);
+  const part = { type: buildPiece, x: look.x, y, z: look.z, rot: buildYaw, color: PIECE_COLOR[buildPiece] };
+  myHouse.parts.push(part);
+  addHousePartMesh(part, false);
   inv.wood -= cost;
-  saveInv(); paintBag(); saveHouse(); rebuildHouse();
-  toast('Placed ' + buildPiece + ' · -' + cost + ' wood');
+  saveInv(); paintBag(); saveHouse();
+  toast('Set ' + buildPiece + ' — it stays. Aim to move the preview only.');
   return true;
 }
 
@@ -1263,10 +1317,19 @@ document.getElementById('buildDone').onclick = () => {
   toast('Designer closed — your house stays');
 };
 const actBtn = document.getElementById('act');
-actBtn.onpointerdown = (e) => { chopHold = true; doInteract(); e.preventDefault(); };
+actBtn.onpointerdown = (e) => {
+  if (buildMode) { placeCurrent(); e.preventDefault(); return; }
+  chopHold = true; doInteract(); e.preventDefault();
+};
 actBtn.onpointerup = () => { chopHold = false; };
 actBtn.onpointerleave = () => { chopHold = false; };
 actBtn.onclick = null;
+document.getElementById('buildAim').onclick = aimCursorFromView;
+document.getElementById('buildSet').onclick = () => placeCurrent();
+document.getElementById('buildNudgeL').onclick = () => nudgeCursor(-1, 0);
+document.getElementById('buildNudgeR').onclick = () => nudgeCursor(1, 0);
+document.getElementById('buildNudgeF').onclick = () => nudgeCursor(0, -1);
+document.getElementById('buildNudgeB').onclick = () => nudgeCursor(0, 1);
 addEventListener('keyup', (e) => { if (e.code === 'KeyE') chopHold = false; });
 addEventListener('keydown', (e) => { if (e.code === 'KeyE') chopHold = true; });
 document.getElementById('rpsClose').onclick = () => document.getElementById('rps').classList.remove('open');
@@ -1425,7 +1488,9 @@ function tick() {
     player.grounded = false;
   }
   jumping = false;
-  if (keys['KeyE'] || chopHold) {
+  if (buildMode) {
+    chopHold = false;
+  } else if (keys['KeyE'] || chopHold) {
     if (chopCd <= 0) {
       if (nearestNode('tree') || (chopTarget && !chopTarget.dead)) swingAxe();
       else doInteract();
@@ -1449,7 +1514,7 @@ function tick() {
 
   ensureChunks();
   const act = document.getElementById('act');
-  const can = !!(chopTarget || nearestNode('tree') || nearestNode('water') || nearestPlayer() || (document.getElementById('place').textContent || '').startsWith('Stand'));
+  const can = !!(buildMode || chopTarget || nearestNode('tree') || nearestNode('water') || nearestPlayer() || (document.getElementById('place').textContent || '').startsWith('Stand'));
   if (act) act.classList.toggle('show', can || coarse);
 
   const back = 1.4;
@@ -1467,15 +1532,21 @@ function tick() {
     f.mesh.position.set(f.ox + Math.cos(f.t) * f.r, 0.22 + Math.sin(f.t * 3) * 0.06, f.oz + Math.sin(f.t * 0.85) * f.r);
     f.mesh.rotation.y = -f.t;
   });
-  if (buildMode) {
-    const look = placeLook();
+  if (buildMode && myHouse) {
     if (!ghost || ghost.userData.type !== buildPiece) {
       if (ghost) scene.remove(ghost);
-      ghost = addHousePartMesh({ type: buildPiece, x: look.x, y: 1.2, z: look.z, rot: buildYaw, color: PIECE_COLOR[buildPiece] }, true);
+      ghost = addHousePartMesh({
+        type: buildPiece,
+        x: buildCursor.x,
+        y: pieceY(buildPiece),
+        z: buildCursor.z,
+        rot: buildYaw,
+        color: PIECE_COLOR[buildPiece]
+      }, true);
       ghost.userData.type = buildPiece;
       scene.add(ghost);
     } else {
-      ghost.position.set(look.x, buildPiece === 'floor' ? 0.08 : 1.2, look.z);
+      ghost.position.set(buildCursor.x, pieceY(buildPiece), buildCursor.z);
       ghost.rotation.y = buildYaw + (buildPiece === 'roof' ? Math.PI / 4 : 0);
     }
   } else if (ghost) { scene.remove(ghost); ghost = null; }
