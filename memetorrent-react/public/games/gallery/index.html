@@ -120,6 +120,19 @@
       background: var(--mt); color: var(--ink); border: 0; border-radius: 10px;
       padding: 8px 12px; font-weight: 800; cursor: pointer;
     }
+    #buildBar {
+      display: none; position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 22;
+      background: rgba(8,20,14,.92); border: 1px solid rgba(25,211,126,.4);
+      border-radius: 16px; padding: 8px; gap: 6px; flex-wrap: wrap;
+      justify-content: center; max-width: 96vw;
+    }
+    #buildBar.on { display: flex; }
+    #buildBar button {
+      min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15);
+      background: #163226; color: #e8fff4; font-weight: 700; cursor: pointer;
+    }
+    #buildBar button.on { background: var(--mt); color: var(--ink); }
   </style>
 </head>
 <body>
@@ -144,6 +157,22 @@
   </div>
   <div id="bagBar">Wood 0 · Fish 0 · ¢0</div>
   <button id="act" class="fab">Do</button>
+  <div id="buildBar">
+    <button data-bp="wall">Wall</button>
+    <button data-bp="floor">Floor</button>
+    <button data-bp="door">Door</button>
+    <button data-bp="window">Window</button>
+    <button data-bp="roof">Roof</button>
+    <button data-bp="chair">Chair</button>
+    <button data-bp="table">Table</button>
+    <button data-bp="bed">Bed</button>
+    <button data-bp="lamp">Lamp</button>
+    <button data-bp="plant">Plant</button>
+    <button data-bp="paint">Paint</button>
+    <button id="buildRot">Rotate</button>
+    <button id="buildUndo">Undo</button>
+    <button id="buildDone">Done</button>
+  </div>
   <div id="hint">WASD walk · mouse look · click a frame to hang art</div>
   <div id="joyL" class="pad"><div id="joyKnob"></div></div>
   <div id="lookHint">drag to look</div>
@@ -203,11 +232,15 @@
       </div>
       <div id="sheetHome" class="sheet">
         <b>House</b>
-        <p style="opacity:.7;font-size:12px">Buy with coins, rent cheaper, or list for housemates.</p>
-        <div class="sku"><span>Rent a cabin — 40¢</span><button id="rentHome">Rent</button></div>
-        <div class="sku"><span>Buy a house — 120¢</span><button id="buyHome">Buy</button></div>
-        <div class="sku"><span>$MT villa (exclusive)</span><button id="buyVilla">Villa</button></div>
+        <p style="opacity:.7;font-size:12px">Claim a lot, then walk it and design walls, floors, and furniture. Costs wood to add pieces.</p>
+        <div class="sku"><span>First cabin — free lot, then design</span><button id="rentHome">Claim lot</button></div>
+        <div class="sku"><span>Buy a house — 120¢</span><button id="buyHome">Buy + design</button></div>
+        <div class="sku"><span>$MT villa (exclusive)</span><button id="buyVilla">Villa + design</button></div>
         <label class="sku"><span>Looking for housemates</span><input type="checkbox" id="seekMates" /></label>
+        <div class="row" style="margin-top:10px">
+          <button id="designHome">Open designer</button>
+          <button class="ghost" id="goHome">Go to my lot</button>
+        </div>
         <div id="homeStatus" style="margin-top:8px;opacity:.8"></div>
         <div id="walletBox2" class="wallet-box">
           <h3>Connect wallet</h3>
@@ -465,7 +498,7 @@ const INV_KEY = 'mtw-inv';
 function loadInv() {
   try {
     return Object.assign({
-      wood: 0, fish: 0, coins: 12, food: 0,
+      wood: 0, fish: 0, coins: 80, food: 0,
       axe: false, rod: false, gold_axe: false, neon_rod: false, bar_kit: false, villa: false,
       tool: '',
       pet: 'cub', petHunger: 80,
@@ -768,9 +801,175 @@ for (let i = 0; i < 8; i++) {
   places.push({ name: 'Stand ' + (i + 1), x, z, r: 3 });
 }
 
+const HOUSE_KEY = 'mtw-house-design';
+const houseColliders = [];
+const houseGroup = new THREE.Group();
+scene.add(houseGroup);
+let myHouse = null;
+let buildMode = false;
+let buildPiece = 'wall';
+let buildYaw = 0;
+let ghost = null;
+const PIECE_COST = { wall: 2, floor: 1, door: 2, window: 2, roof: 3, chair: 1, table: 2, bed: 3, lamp: 1, plant: 1, paint: 0 };
+const PIECE_COLOR = { wall: 0xd6c4a8, floor: 0x8b5a2b, door: 0x5c3a21, window: 0x93c5fd, roof: 0x7f1d1d, chair: 0x6b4423, table: 0x5c4033, bed: 0x1e3a5f, lamp: 0xfde68a, plant: 0x16a34a };
+
+function loadHouse() {
+  try { return JSON.parse(localStorage.getItem(HOUSE_KEY) || 'null'); } catch { return null; }
+}
+function saveHouse() { localStorage.setItem(HOUSE_KEY, JSON.stringify(myHouse)); }
+
+function pieceGeo(type) {
+  if (type === 'wall') return new THREE.BoxGeometry(2, 2.4, 0.28);
+  if (type === 'floor') return new THREE.BoxGeometry(2, 0.16, 2);
+  if (type === 'door') return new THREE.BoxGeometry(1.4, 2.2, 0.22);
+  if (type === 'window') return new THREE.BoxGeometry(1.4, 1.1, 0.16);
+  if (type === 'roof') return new THREE.ConeGeometry(2.1, 1.2, 4);
+  if (type === 'chair') return new THREE.BoxGeometry(0.6, 0.7, 0.6);
+  if (type === 'table') return new THREE.BoxGeometry(1.4, 0.7, 0.9);
+  if (type === 'bed') return new THREE.BoxGeometry(1.2, 0.4, 2);
+  if (type === 'lamp') return new THREE.CylinderGeometry(0.12, 0.18, 1.1, 8);
+  if (type === 'plant') return new THREE.ConeGeometry(0.35, 0.8, 6);
+  return new THREE.BoxGeometry(1, 1, 1);
+}
+
+function addHousePartMesh(part, ghosting) {
+  const mesh = new THREE.Mesh(
+    pieceGeo(part.type),
+    new THREE.MeshLambertMaterial({
+      color: part.color || PIECE_COLOR[part.type] || 0xccc,
+      transparent: !!ghosting,
+      opacity: ghosting ? 0.45 : 1
+    })
+  );
+  mesh.position.set(part.x, part.y, part.z);
+  mesh.rotation.y = part.rot || 0;
+  if (part.type === 'roof') mesh.rotation.y += Math.PI / 4;
+  if (ghosting) return mesh;
+  houseGroup.add(mesh);
+  if (['wall', 'door', 'floor', 'roof'].includes(part.type)) {
+    const b = new THREE.Box3().setFromObject(mesh);
+    houseColliders.push(b);
+  }
+  return mesh;
+}
+
+function rebuildHouse() {
+  houseGroup.clear();
+  houseColliders.length = 0;
+  if (!myHouse || !myHouse.parts) return;
+  myHouse.parts.forEach((p) => addHousePartMesh(p, false));
+  for (let i = places.length - 1; i >= 0; i--) if (places[i].name === 'My house') places.splice(i, 1);
+  places.push({ name: 'My house', x: myHouse.x, z: myHouse.z, r: 7 });
+}
+
+function defaultShell(kind, x, z) {
+  const w = kind === 'villa' ? 6 : 4;
+  const parts = [];
+  for (let i = -w; i <= w; i += 2) {
+    for (let j = -w; j <= w; j += 2) {
+      parts.push({ type: 'floor', x: x + i, y: 0.08, z: z + j, rot: 0, color: kind === 'villa' ? 0xc9a227 : 0x8b5a2b });
+    }
+  }
+  const wallC = kind === 'villa' ? 0xf5e6c8 : (kind === 'rent' ? 0xc4b49a : 0xd6c4a8);
+  const roofC = kind === 'villa' ? 0x1e3a5f : 0x7f1d1d;
+  for (let i = -w; i <= w; i += 2) {
+    parts.push({ type: 'wall', x: x + i, y: 1.2, z: z - w, rot: 0, color: wallC });
+    if (i !== 0) parts.push({ type: 'wall', x: x + i, y: 1.2, z: z + w, rot: 0, color: wallC });
+    parts.push({ type: 'wall', x: x - w, y: 1.2, z: z + i, rot: Math.PI / 2, color: wallC });
+    parts.push({ type: 'wall', x: x + w, y: 1.2, z: z + i, rot: Math.PI / 2, color: wallC });
+  }
+  parts.push({ type: 'door', x: x, y: 1.1, z: z + w, rot: 0, color: 0x5c3a21 });
+  parts.push({ type: 'roof', x: x, y: kind === 'villa' ? 3.4 : 3.1, z: z, rot: 0, color: roofC });
+  parts.push({ type: 'table', x: x, y: 0.45, z: z, rot: 0 });
+  parts.push({ type: 'chair', x: x - 1.1, y: 0.4, z: z, rot: 0 });
+  if (kind !== 'rent') parts.push({ type: 'bed', x: x + 2, y: 0.28, z: z - 1, rot: 0 });
+  if (kind === 'villa') {
+    parts.push({ type: 'lamp', x: x - 2, y: 0.7, z: z - 2, rot: 0 });
+    parts.push({ type: 'plant', x: x + 2.2, y: 0.5, z: z + 2, rot: 0 });
+  }
+  return parts;
+}
+
+function lotSpot() {
+  if (Math.hypot(player.x, player.z) < 22) return { x: 0, z: 32 };
+  return { x: Math.round(player.x), z: Math.round(player.z) };
+}
+
+function claimHouse(kind) {
+  const lot = lotSpot();
+  myHouse = { x: lot.x, z: lot.z, kind, parts: defaultShell(kind, lot.x, lot.z) };
+  inv.wood = (inv.wood || 0) + 12;
+  saveInv(); paintBag();
+  saveHouse();
+  rebuildHouse();
+  player.x = lot.x;
+  player.z = lot.z + (kind === 'villa' ? 7 : 5);
+  player.yaw = Math.PI;
+  startDesigner();
+  toast('Your lot is south of Craft Hall. Place walls and furniture.');
+  fetch('/api/games/world', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'house', name: inv.name, kind: kind === 'rent' ? 'rent' : 'buy', title: inv.name + ' house', x: lot.x, z: lot.z, seeking: !!(document.getElementById('seekMates') || {}).checked })
+  }).catch(() => {});
+}
+
+function startDesigner() {
+  if (!myHouse) { toast('Claim a lot first'); return; }
+  buildMode = true;
+  document.getElementById('buildBar').classList.add('on');
+  document.getElementById('life').style.display = 'none';
+  toast('Designer on · look at your lot · Do/E places · wood is used');
+}
+
+function onPlot(x, z) {
+  if (!myHouse) return false;
+  const s = myHouse.kind === 'villa' ? 8 : 6;
+  return Math.abs(x - myHouse.x) <= s && Math.abs(z - myHouse.z) <= s;
+}
+
+function placeLook() {
+  const d = 2.1;
+  return {
+    x: Math.round(player.x - Math.sin(player.yaw) * d),
+    z: Math.round(player.z - Math.cos(player.yaw) * d)
+  };
+}
+
+function placeCurrent() {
+  if (!buildMode || !myHouse) return false;
+  if (buildPiece === 'paint') {
+    const look = placeLook();
+    const hit = myHouse.parts.find((p) => Math.abs(p.x - look.x) < 1.1 && Math.abs(p.z - look.z) < 1.1);
+    if (!hit) { toast('Look at a piece to paint'); return true; }
+    const cols = [0xd6c4a8, 0x7f1d1d, 0x1e3a5f, 0x14532d, 0xf5e6c8, 0x111827, 0x19d37e];
+    hit.color = cols[(cols.indexOf(hit.color) + 1 + cols.length) % cols.length] || cols[0];
+    saveHouse(); rebuildHouse(); toast('Painted');
+    return true;
+  }
+  const cost = PIECE_COST[buildPiece] || 1;
+  if ((inv.wood || 0) < cost) { toast('Need ' + cost + ' wood'); return true; }
+  const look = placeLook();
+  if (!onPlot(look.x, look.z)) { toast('Stay on your lot to build'); return true; }
+  const y = buildPiece === 'floor' ? 0.08 : (buildPiece === 'roof' ? 3.2 : (buildPiece === 'bed' ? 0.28 : (buildPiece === 'table' || buildPiece === 'chair' ? 0.42 : 1.2)));
+  myHouse.parts.push({ type: buildPiece, x: look.x, y, z: look.z, rot: buildYaw, color: PIECE_COLOR[buildPiece] });
+  inv.wood -= cost;
+  saveInv(); paintBag(); saveHouse(); rebuildHouse();
+  toast('Placed ' + buildPiece + ' · -' + cost + ' wood');
+  return true;
+}
+
+function undoPiece() {
+  if (!myHouse || myHouse.parts.length < 2) return;
+  myHouse.parts.pop();
+  saveHouse(); rebuildHouse();
+}
+
+myHouse = loadHouse();
+if (myHouse) rebuildHouse();
+
 function topUnder(nx, nz, feet) {
   let best = 0;
-  for (const c of colliders) {
+  for (const c of colliders.concat(houseColliders)) {
     if (nx > c.min.x - 0.22 && nx < c.max.x + 0.22 && nz > c.min.z - 0.22 && nz < c.max.z + 0.22) {
       if (c.max.y <= feet + 0.45 && c.max.y > best) best = c.max.y;
     }
@@ -783,7 +982,7 @@ function blockedSolid(nx, ny, nz) {
     new THREE.Vector3(nx, feet + 0.82, nz),
     new THREE.Vector3(0.48, 1.55, 0.48)
   );
-  return colliders.some((c) => c.intersectsBox(body) && c.max.y > feet + 0.45);
+  return colliders.concat(houseColliders).some((c) => c.intersectsBox(body) && c.max.y > feet + 0.45);
 }
 
 let job = localStorage.getItem('mtw-job') || '';
@@ -824,6 +1023,7 @@ function startReel(water, ok) {
 }
 
 function doInteract() {
+  if (buildMode && placeCurrent()) return;
   const here = document.getElementById('place').textContent;
   const tree = nearestNode('tree');
   const water = nearestNode('water');
@@ -976,27 +1176,47 @@ document.getElementById('jobWood').onclick = () => { job = 'wood'; localStorage.
 document.getElementById('jobFish').onclick = () => { job = 'fish'; localStorage.setItem('mtw-job', job); toast('Bring 6 fish back to the plaza shop'); };
 document.getElementById('jobBar').onclick = () => { job = 'bar'; localStorage.setItem('mtw-job', job); toast('Serve at a bar or open yours'); };
 document.getElementById('rentHome').onclick = () => {
-  if (inv.coins < 40) { toast('Need 40¢'); return; }
-  inv.coins -= 40; saveInv(); paintBag();
-  fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'house', name: inv.name, kind: 'rent', title: inv.name + ' rental', x: player.x, z: player.z, seeking: document.getElementById('seekMates').checked }) }).catch(() => {});
-  toast('Rented a cabin here');
+  if (myHouse) { startDesigner(); return; }
+  if (inv.coins < 40 && (inv.wood || 0) < 1) {
+    // first lot is free so you can actually design
+  } else if (inv.coins >= 40) {
+    inv.coins -= 40; saveInv(); paintBag();
+  }
+  claimHouse('rent');
 };
 document.getElementById('buyHome').onclick = () => {
-  if (inv.coins < 120) { toast('Need 120¢'); return; }
+  if (inv.coins < 120) { toast('Need 120¢ — take jobs or sell fish'); return; }
   inv.coins -= 120; saveInv(); paintBag();
-  fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'house', name: inv.name, kind: 'buy', title: inv.name + "'s house", x: player.x, z: player.z, seeking: document.getElementById('seekMates').checked }) }).catch(() => {});
-  toast('Bought a house here');
+  claimHouse('buy');
 };
 document.getElementById('buyVilla').onclick = () => {
   if (!inv.wallet) {
     needWallet('sheetHome', 'Connect a wallet in this box to buy the $MT villa.');
     return;
   }
-  fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'house', name: inv.name, kind: 'buy', title: inv.name + ' villa', x: player.x, z: player.z }) }).catch(() => {});
-  toast('Villa marked');
+  claimHouse('villa');
+};
+document.getElementById('designHome').onclick = () => startDesigner();
+document.getElementById('goHome').onclick = () => {
+  if (!myHouse) { toast('No lot yet'); return; }
+  player.x = myHouse.x;
+  player.z = myHouse.z + 5;
+  document.getElementById('life').style.display = 'none';
+};
+document.querySelectorAll('#buildBar [data-bp]').forEach((b) => {
+  b.onclick = () => {
+    buildPiece = b.getAttribute('data-bp');
+    document.querySelectorAll('#buildBar [data-bp]').forEach((x) => x.classList.toggle('on', x === b));
+    toast('Placing ' + buildPiece);
+  };
+});
+document.getElementById('buildRot').onclick = () => { buildYaw += Math.PI / 2; };
+document.getElementById('buildUndo').onclick = undoPiece;
+document.getElementById('buildDone').onclick = () => {
+  buildMode = false;
+  document.getElementById('buildBar').classList.remove('on');
+  if (ghost) { scene.remove(ghost); ghost = null; }
+  toast('Designer closed — your house stays');
 };
 document.getElementById('act').onclick = doInteract;
 document.getElementById('rpsClose').onclick = () => document.getElementById('rps').classList.remove('open');
@@ -1190,6 +1410,18 @@ function tick() {
     f.mesh.position.set(f.ox + Math.cos(f.t) * f.r, 0.22 + Math.sin(f.t * 3) * 0.06, f.oz + Math.sin(f.t * 0.85) * f.r);
     f.mesh.rotation.y = -f.t;
   });
+  if (buildMode) {
+    const look = placeLook();
+    if (!ghost || ghost.userData.type !== buildPiece) {
+      if (ghost) scene.remove(ghost);
+      ghost = addHousePartMesh({ type: buildPiece, x: look.x, y: 1.2, z: look.z, rot: buildYaw, color: PIECE_COLOR[buildPiece] }, true);
+      ghost.userData.type = buildPiece;
+      scene.add(ghost);
+    } else {
+      ghost.position.set(look.x, buildPiece === 'floor' ? 0.08 : 1.2, look.z);
+      ghost.rotation.y = buildYaw + (buildPiece === 'roof' ? Math.PI / 4 : 0);
+    }
+  } else if (ghost) { scene.remove(ghost); ghost = null; }
   if (reel) {
     reel.t += dt * 0.9;
     const t = Math.min(1, reel.t);
