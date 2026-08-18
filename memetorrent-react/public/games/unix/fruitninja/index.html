@@ -160,7 +160,7 @@ paintWallet();
 
 const state = {
   run: false, paused: false, score: 0, lives: 5, combo: 0, comboT: 0, wave: 0,
-  items: [], bits: [], trail: [], pops: [], last: 0, spawn: 0, diff: 'medium', best: 0,
+  items: [], bits: [], halves: [], trail: [], pops: [], last: 0, spawn: 0, diff: 'medium', best: 0,
   slow: 0, gold: 0
 };
 try { state.best = Number(localStorage.getItem('mt-fruit-best') || 0); } catch {}
@@ -217,6 +217,29 @@ function pop(x, y, text) {
   state.pops.push({ x, y, text, t: 0.8 });
 }
 
+function splitFruit(it, x1, y1, x2, y2) {
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  const nx = -Math.sin(ang);
+  const ny = Math.cos(ang);
+  const kick = 260 + Math.random() * 80;
+  for (const side of [-1, 1]) {
+    state.halves.push({
+      x: it.x + nx * side * 6,
+      y: it.y + ny * side * 6,
+      vx: it.vx + nx * side * kick,
+      vy: it.vy + ny * side * kick * 0.55 - 40,
+      rot: it.rot,
+      spin: it.spin + side * 4,
+      r: it.r,
+      f: it.f,
+      kind: it.kind,
+      cut: ang,
+      side,
+      t: 1.6
+    });
+  }
+}
+
 function hitPad() {
   return (wallet.addr ? 2.15 : 1.7) * Math.max(1, W / 900);
 }
@@ -236,6 +259,7 @@ function slash(x1, y1, x2, y2) {
     }
     if (!hit) return;
     it.live = false;
+    splitFruit(it, x1, y1, x2, y2);
     if (it.kind === 'bomb') {
       burst(it.x, it.y, '#222', 18);
       burst(it.x, it.y, '#ff3d7f', 10);
@@ -250,8 +274,8 @@ function slash(x1, y1, x2, y2) {
     if (it.kind === 'gold') { state.gold = 8; pop(it.x, it.y, 'x2 GOLD'); }
     if (it.kind === 'heart') { state.lives = Math.min(6, state.lives + 1); pop(it.x, it.y, '+LIFE'); }
     hits++;
-    burst(it.x, it.y, it.f.c, 16);
-    burst(it.x, it.y, it.f.inner, 10);
+    burst(it.x, it.y, it.f.c, 8);
+    burst(it.x, it.y, it.f.inner, 6);
     const mul = (state.gold > 0 ? 2 : 1) * (wallet.addr ? 1.2 : 1);
     const extra = state.combo >= 3 ? state.combo * 2 : 0;
     const pts = Math.round((it.f.pts + extra) * mul);
@@ -289,7 +313,7 @@ function paintHud() {
 
 function start(diff) {
   state.run = true; state.paused = false; state.score = 0; state.lives = 5; state.combo = 0; state.comboT = 0;
-  state.items = []; state.bits = []; state.pops = []; state.wave = 0; state.spawn = 0.15; state.diff = diff;
+  state.items = []; state.bits = []; state.halves = []; state.pops = []; state.wave = 0; state.spawn = 0.15; state.diff = diff;
   state.slow = 0; state.gold = 0;
   document.getElementById('menu').style.display = 'none';
   document.getElementById('over').style.display = 'none';
@@ -374,6 +398,34 @@ function drawFruit(it) {
   ctx.restore();
 }
 
+function drawHalf(h) {
+  ctx.save();
+  ctx.translate(h.x, h.y);
+  ctx.rotate(h.cut);
+  ctx.beginPath();
+  ctx.rect(h.side > 0 ? -2 : -h.r, -h.r - 2, h.r + 2, h.r * 2 + 4);
+  ctx.clip();
+  ctx.rotate(-h.cut + h.rot);
+  let c = h.f.c, inner = h.f.inner;
+  if (h.kind === 'freeze') { c = '#38bdf8'; inner = '#e0f2fe'; }
+  if (h.kind === 'gold') { c = '#fbbf24'; inner = '#fff7cc'; }
+  if (h.kind === 'heart') { c = '#fb7185'; inner = '#ffe4e6'; }
+  if (h.kind === 'bomb') { c = '#1a1a1a'; inner = '#ff3d7f'; }
+  ctx.fillStyle = c;
+  ctx.beginPath(); ctx.arc(0, 0, h.r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = inner;
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath(); ctx.ellipse(-h.r * 0.12, 0, h.r * 0.4, h.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  ctx.save();
+  ctx.translate(h.x, h.y);
+  ctx.rotate(h.cut);
+  ctx.fillStyle = inner || '#ffe4c4';
+  ctx.fillRect(-3, -h.r * 0.92, 6, h.r * 1.84);
+  ctx.restore();
+}
+
 function tick(now) {
   const raw = Math.min(0.033, (now - (state.last || now)) / 1000);
   state.last = now;
@@ -407,6 +459,15 @@ function tick(now) {
   }
   state.bits.forEach((b) => { b.t -= raw; b.x += b.vx * raw; b.y += b.vy * raw; b.vy += 900 * raw; });
   state.bits = state.bits.filter((b) => b.t > 0);
+  const grav = DIFF[state.diff].gravity;
+  state.halves.forEach((h) => {
+    h.t -= raw;
+    h.vy += grav * raw;
+    h.x += h.vx * raw;
+    h.y += h.vy * raw;
+    h.rot += h.spin * raw;
+  });
+  state.halves = state.halves.filter((h) => h.t > 0 && h.y < H + 80);
   state.trail.forEach((t) => t.t -= raw);
   state.trail = state.trail.filter((t) => t.t > 0);
   state.pops.forEach((p) => { p.t -= raw; p.y -= 40 * raw; });
@@ -427,6 +488,7 @@ function tick(now) {
   });
   ctx.globalAlpha = 1;
   state.items.forEach(drawFruit);
+  state.halves.forEach(drawHalf);
   ctx.lineCap = 'round';
   const blade = wallet.addr ? 'rgba(25,211,126,' : 'rgba(122,240,255,';
   state.trail.forEach((t) => {
