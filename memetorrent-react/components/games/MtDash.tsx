@@ -12,6 +12,7 @@ export default function MtDash() {
   const [best, setBest] = useState(0);
   const [over, setOver] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [boostLeft, setBoostLeft] = useState(0);
   const keys = useRef({ l: false, r: false });
   const touchX = useRef<number | null>(null);
 
@@ -38,35 +39,39 @@ export default function MtDash() {
     let coins = 0;
     let dead = false;
     const pads: Pad[] = [];
-    const loot: { x: number; y: number; k: 'mt' | 'rug' }[] = [];
+    const loot: { x: number; y: number; k: 'mt' | 'rug' | 'special' }[] = [];
+    let jumpBoost = 0;
+    const JUMP = -0.72;
+    const JUMP_BOOST = -1.05;
     const seed = () => {
       pads.length = 0;
       loot.length = 0;
-      for (let i = 0; i < 14; i++) {
-        pads.push({
-          x: 0.08 + Math.random() * 0.72,
-          y: 0.95 - i * 0.12,
-          w: 0.16,
-          kind: 'solid',
-        });
+      let x = 0.42;
+      for (let i = 0; i < 16; i++) {
+        x = Math.max(0.06, Math.min(0.76, x + (Math.random() - 0.5) * 0.28));
+        pads.push({ x, y: 0.92 - i * 0.075, w: 0.18, kind: 'solid' });
       }
     };
     seed();
     const spawnAbove = (top: number) => {
       while (pads[pads.length - 1].y > top - 1.6) {
-        const last = pads[pads.length - 1].y;
+        const prev = pads[pads.length - 1];
         const r = Math.random();
+        const gap = 0.065 + Math.random() * 0.03;
+        let nx = prev.x + (Math.random() - 0.5) * 0.26;
+        nx = Math.max(0.05, Math.min(0.77, nx));
         pads.push({
-          x: 0.06 + Math.random() * 0.74,
-          y: last - (0.1 + Math.random() * 0.08),
-          w: 0.14 + Math.random() * 0.05,
-          kind: r > 0.82 ? 'boost' : r > 0.64 ? 'break' : r > 0.48 ? 'move' : 'solid',
+          x: nx,
+          y: prev.y - gap,
+          w: 0.17 + Math.random() * 0.03,
+          kind: r > 0.88 ? 'boost' : r > 0.74 ? 'break' : r > 0.58 ? 'move' : 'solid',
         });
-        if (Math.random() < 0.35) {
+        if (Math.random() < 0.42) {
+          const roll = Math.random();
           loot.push({
-            x: pads[pads.length - 1].x + 0.05,
-            y: pads[pads.length - 1].y - 0.04,
-            k: Math.random() < 0.18 ? 'rug' : 'mt',
+            x: nx + 0.06,
+            y: prev.y - gap - 0.045,
+            k: roll < 0.14 ? 'special' : roll < 0.28 ? 'rug' : 'mt',
           });
         }
       }
@@ -105,18 +110,30 @@ export default function MtDash() {
       if (p.x > 1) p.x -= 1;
       pads.forEach((pad) => {
         if (pad.kind === 'move') pad.x = 0.1 + (Math.sin(now / 500 + pad.y * 8) * 0.5 + 0.5) * 0.7;
-        if (p.vy > 0 && p.y < pad.y + 0.01 && p.y > pad.y - 0.03 && p.x > pad.x - 0.02 && p.x < pad.x + pad.w + 0.02) {
+        if (p.vy > 0 && p.y < pad.y + 0.012 && p.y > pad.y - 0.035 && p.x > pad.x - 0.025 && p.x < pad.x + pad.w + 0.025) {
           if (pad.kind === 'break') pad.y = 2;
-          p.vy = pad.kind === 'boost' ? -1.05 : -0.58;
+          const spring = jumpBoost > 0 ? JUMP_BOOST : JUMP;
+          p.vy = pad.kind === 'boost' ? JUMP_BOOST : spring;
         }
       });
       loot.forEach((c) => {
-        if (Math.hypot(p.x - c.x, p.y - c.y) < 0.045) {
+        if (Math.hypot(p.x - c.x, p.y - c.y) < 0.05) {
           if (c.k === 'mt') { pts += 25; coins += 1; }
-          if (c.k === 'rug') p.vy = 0.85;
+          if (c.k === 'special') {
+            pts += 80;
+            coins += 5;
+            jumpBoost = 10;
+          }
+          if (c.k === 'rug') p.vy = 0.7;
           c.y = 3;
         }
       });
+      if (jumpBoost > 0) {
+        jumpBoost = Math.max(0, jumpBoost - dt);
+        setBoostLeft(Math.ceil(jumpBoost));
+      } else {
+        setBoostLeft(0);
+      }
       if (p.y < 0.45) {
         const lift = 0.45 - p.y;
         p.y = 0.45;
@@ -155,11 +172,18 @@ export default function MtDash() {
         ctx.fillRect(pad.x * w, pad.y * h, pad.w * w, 10 * dpr);
       });
       loot.forEach((c) => {
-        ctx.font = `${22 * dpr}px system-ui`;
+        ctx.font = `${(c.k === 'special' ? 30 : 22) * dpr}px system-ui`;
         ctx.textAlign = 'center';
-        ctx.fillText(c.k === 'mt' ? '🟢' : '🧹', c.x * w, c.y * h);
+        ctx.fillText(c.k === 'special' ? '💰' : c.k === 'mt' ? '🟢' : '🧹', c.x * w, c.y * h);
       });
-      ctx.fillStyle = '#ffe566';
+      if (jumpBoost > 0) {
+        ctx.strokeStyle = 'rgba(25,211,126,0.85)';
+        ctx.lineWidth = 4 * dpr;
+        ctx.beginPath();
+        ctx.arc(p.x * w, p.y * h, 22 * dpr, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = jumpBoost > 0 ? '#19d37e' : '#ffe566';
       ctx.beginPath();
       ctx.ellipse(p.x * w, p.y * h, 16 * dpr, 14 * dpr, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -171,7 +195,7 @@ export default function MtDash() {
       ctx.fillStyle = '#19d37e';
       ctx.font = `${14 * dpr}px system-ui`;
       ctx.textAlign = 'left';
-      ctx.fillText(`${pts}   🟢${coins}`, 16 * dpr, 28 * dpr);
+      ctx.fillText(`${pts}   🟢${coins}${jumpBoost > 0 ? '   $MT BOOST ' + Math.ceil(jumpBoost) + 's' : ''}`, 16 * dpr, 28 * dpr);
       requestAnimationFrame(loop);
     };
     const id = requestAnimationFrame(loop);
@@ -190,6 +214,9 @@ export default function MtDash() {
         <div>
           Score <span className="text-emerald-400 font-mono">{score}</span>
           <span className="opacity-50 ml-3">best {best}</span>
+          {boostLeft > 0 && (
+            <span className="ml-3 font-black text-emerald-400">$MT BOOST {boostLeft}s</span>
+          )}
         </div>
         <button
           type="button"
@@ -199,7 +226,7 @@ export default function MtDash() {
           {playing ? 'Dashing…' : over ? 'Dash again' : 'Start dash'}
         </button>
       </div>
-      <p className="mt-2 text-xs opacity-50">A/D or arrows, or drag. Green pads bounce. Gold boosts. Pink breaks. 🟢 coins · 🧹 rugs.</p>
+      <p className="mt-2 text-xs opacity-50">A/D or drag. Pads stay in jump range. 💰 $MT stash = 10s jump boost. 🟢 coins · 🧹 rugs.</p>
       <div className="mt-6 max-w-md">
         <NightWallet name="" />
       </div>
