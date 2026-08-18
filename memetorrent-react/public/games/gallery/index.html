@@ -443,7 +443,7 @@ function plantTree(x, z) {
   );
   leaf.position.set(x, 3.1, z);
   scene.add(trunk, leaf);
-  nodes.push({ type: 'tree', x, z, r: 2.4, dead: false, trunk, leaf });
+  nodes.push({ type: 'tree', x, z, r: 2.6, dead: false, hp: 3, trunk, leaf });
 }
 function makePond(x, z, r = 6) {
   const water = new THREE.Mesh(
@@ -780,7 +780,7 @@ function loadChunk(cx, cz) {
       const leaf = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2.4, 8), new THREE.MeshLambertMaterial({ color: 0x2f8a3a }));
       leaf.position.set(tx, 2.9, tz);
       g.add(trunk, leaf);
-      nodes.push({ type: 'tree', x: tx, z: tz, r: 2.2, mesh: g, dead: false, trunk, leaf });
+      nodes.push({ type: 'tree', x: tx, z: tz, r: 2.4, mesh: g, dead: false, hp: 3, trunk, leaf });
     }
   }
   scene.add(g);
@@ -1022,20 +1022,64 @@ function startReel(water, ok) {
   toast(ok ? 'Fish on! Reeling…' : 'Nibble…');
 }
 
+let chopTarget = null;
+let chopHold = false;
+let chopCd = 0;
+function markTree(tree, on) {
+  if (!tree || !tree.leaf || !tree.leaf.material) return;
+  if (!tree.leaf.material.emissive) tree.leaf.material.emissive = new THREE.Color(0x000000);
+  tree.leaf.material.emissive.setHex(on ? 0x2f6b22 : 0x000000);
+}
+function swingAxe() {
+  if (inv.tool !== 'axe' && inv.tool !== 'gold_axe') {
+    toast('Equip an axe in Bag, then hold Do / E');
+    return false;
+  }
+  let tree = chopTarget && !chopTarget.dead && Math.hypot(chopTarget.x - player.x, chopTarget.z - player.z) < 3.2
+    ? chopTarget
+    : nearestNode('tree');
+  if (!tree) return false;
+  if (chopTarget && chopTarget !== tree) markTree(chopTarget, false);
+  chopTarget = tree;
+  markTree(tree, true);
+  if (tree.hp == null) tree.hp = 3;
+  const dmg = inv.tool === 'gold_axe' ? 2 : 1;
+  tree.hp -= dmg;
+  inv.wood += dmg;
+  saveInv();
+  paintBag();
+  if (tree.leaf) tree.leaf.rotation.z = (Math.random() - 0.5) * 0.25;
+  if (tree.hp > 0) {
+    toast('Tree ' + tree.hp + ' hits left · keep holding Do / E');
+    return true;
+  }
+  tree.dead = true;
+  markTree(tree, false);
+  if (tree.trunk) tree.trunk.visible = false;
+  if (tree.leaf) tree.leaf.visible = false;
+  toast('Tree down · keep holding to chop the next');
+  setTimeout(() => {
+    tree.dead = false;
+    tree.hp = 3;
+    if (tree.trunk) tree.trunk.visible = true;
+    if (tree.leaf) { tree.leaf.visible = true; tree.leaf.rotation.z = 0; }
+  }, 20000);
+  const next = nearestNode('tree');
+  chopTarget = next;
+  if (next) markTree(next, true);
+  return true;
+}
+
 function doInteract() {
   if (buildMode && placeCurrent()) return;
   const here = document.getElementById('place').textContent;
-  const tree = nearestNode('tree');
+  const tree = (chopTarget && !chopTarget.dead && Math.hypot(chopTarget.x - player.x, chopTarget.z - player.z) < 3.2)
+    ? chopTarget
+    : nearestNode('tree');
   const water = nearestNode('water');
   const near = nearestPlayer();
   if (tree) {
-    if (inv.tool !== 'axe' && inv.tool !== 'gold_axe') { toast('Equip an axe to cut wood'); return; }
-    tree.dead = true;
-    if (tree.trunk) tree.trunk.visible = false;
-    if (tree.leaf) tree.leaf.visible = false;
-    inv.wood += inv.tool === 'gold_axe' ? 3 : 2;
-    saveInv(); paintBag(); toast('+' + (inv.tool === 'gold_axe' ? 3 : 2) + ' wood');
-    setTimeout(() => { tree.dead = false; if (tree.trunk) tree.trunk.visible = true; if (tree.leaf) tree.leaf.visible = true; }, 25000);
+    swingAxe();
     return;
   }
   if (water) {
@@ -1218,7 +1262,13 @@ document.getElementById('buildDone').onclick = () => {
   if (ghost) { scene.remove(ghost); ghost = null; }
   toast('Designer closed — your house stays');
 };
-document.getElementById('act').onclick = doInteract;
+const actBtn = document.getElementById('act');
+actBtn.onpointerdown = (e) => { chopHold = true; doInteract(); e.preventDefault(); };
+actBtn.onpointerup = () => { chopHold = false; };
+actBtn.onpointerleave = () => { chopHold = false; };
+actBtn.onclick = null;
+addEventListener('keyup', (e) => { if (e.code === 'KeyE') chopHold = false; });
+addEventListener('keydown', (e) => { if (e.code === 'KeyE') chopHold = true; });
 document.getElementById('rpsClose').onclick = () => document.getElementById('rps').classList.remove('open');
 document.querySelectorAll('[data-rps]').forEach((b) => b.onclick = () => {
   toast('You played ' + b.getAttribute('data-rps'));
@@ -1375,7 +1425,14 @@ function tick() {
     player.grounded = false;
   }
   jumping = false;
-  if (keys['KeyE']) { keys['KeyE'] = false; doInteract(); }
+  if (keys['KeyE'] || chopHold) {
+    if (chopCd <= 0) {
+      if (nearestNode('tree') || (chopTarget && !chopTarget.dead)) swingAxe();
+      else doInteract();
+      chopCd = 0.38;
+    }
+  }
+  if (chopCd > 0) chopCd -= dt;
   player.vy -= 22 * dt;
   if (player.vy > 0 && blockedSolid(player.x, player.y + player.vy * dt + 0.1, player.z)) player.vy = 0;
   const nextY = player.y + player.vy * dt;
@@ -1392,7 +1449,7 @@ function tick() {
 
   ensureChunks();
   const act = document.getElementById('act');
-  const can = !!(nearestNode('tree') || nearestNode('water') || nearestPlayer() || (document.getElementById('place').textContent || '').startsWith('Stand'));
+  const can = !!(chopTarget || nearestNode('tree') || nearestNode('water') || nearestPlayer() || (document.getElementById('place').textContent || '').startsWith('Stand'));
   if (act) act.classList.toggle('show', can || coarse);
 
   const back = 1.4;
