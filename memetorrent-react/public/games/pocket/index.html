@@ -33,27 +33,34 @@ body {
 /* GAME AREA */
 #gameContainer {
     position: absolute;
-    top: 40px; /* push below HUD */
+    top: 50px;
     left: 0;
     width: 100%;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 50px);
     display: flex;
     justify-content: center;
     align-items: center;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,10,6,0.82)),
-      url('/games/covers/clubpool.jpg') center/cover no-repeat #0a0a0a;
+    background: #07140e;
 	 overflow: hidden;
+}
+
+#tableStage {
+    position: relative;
+    width: min(100vw, calc((100vh - 70px) * 2));
+    max-height: calc(100vh - 70px);
+    background: #0d5016;
+    border: 10px solid #3d2314;
+    box-shadow: 0 0 0 3px #1a0e08, 0 18px 50px rgba(0,0,0,0.65);
 }
 
 /* CANVAS */
 #gameCanvas {
     width: 100%;
-    height: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
     display: block;
     touch-action: none;
-	max-width: 100%;
-    max-height: 100%;
+    background: #0d5016;
 }
 
 /* =========================
@@ -1227,7 +1234,9 @@ button.ghost {
 <!-- GAME -->
 <div id="gameContainer">
 
-    <canvas id="gameCanvas"></canvas>
+    <div id="tableStage">
+        <canvas id="gameCanvas" width="900" height="450"></canvas>
+    </div>
 
 </div>
 
@@ -3137,12 +3146,12 @@ document.addEventListener("click", (e) => {
 });
 
 const musicTracks = [
-    { name: "Future", src: "sounds/edm/future.mp3", credit: "FreeToUse EDM" },
-    { name: "Keep It Cool", src: "sounds/edm/keep-it-cool.mp3", credit: "FreeToUse EDM" },
-    { name: "Energy", src: "sounds/edm/energy.mp3", credit: "FreeToUse EDM" },
-    { name: "High", src: "sounds/edm/high.mp3", credit: "FreeToUse EDM" },
-    { name: "Keep Pushing", src: "sounds/edm/keep-pushing.mp3", credit: "FreeToUse EDM" },
-    { name: "Back To Life", src: "sounds/edm/back-to-life.mp3", credit: "FreeToUse EDM" }
+    { name: "Future", src: "/games/pocket/sounds/edm/future.mp3", credit: "FreeToUse EDM" },
+    { name: "Keep It Cool", src: "/games/pocket/sounds/edm/keep-it-cool.mp3", credit: "FreeToUse EDM" },
+    { name: "Energy", src: "/games/pocket/sounds/edm/energy.mp3", credit: "FreeToUse EDM" },
+    { name: "High", src: "/games/pocket/sounds/edm/high.mp3", credit: "FreeToUse EDM" },
+    { name: "Keep Pushing", src: "/games/pocket/sounds/edm/keep-pushing.mp3", credit: "FreeToUse EDM" },
+    { name: "Back To Life", src: "/games/pocket/sounds/edm/back-to-life.mp3", credit: "FreeToUse EDM" }
 ];
 
 let currentTrackIndex = 0;
@@ -3185,24 +3194,21 @@ function fillTrackPick() {
 
 function playMusic() {
     if (!musicAudio) initMusic();
+    if (!musicAudio.src) loadTrack(currentTrackIndex);
 
-    // 🔥 FIX: resume audio context (required on mobile + Chrome)
     if (audioCtx && audioCtx.state === "suspended") {
         audioCtx.resume();
     }
 
-    setupAudioAnalyser();
-
     musicAudio.play().then(() => {
+        try { setupAudioAnalyser(); } catch (e) { /* already wired */ }
         updateTrackUI();
         startVisualizer();
-
-        // ✅ move DJ activation HERE (after play success)
         const dj = document.getElementById("mtDJ");
         if (dj) dj.classList.add("active");
-
     }).catch(err => {
         console.warn("Play failed:", err);
+        setMessage('Music blocked — tap Play again');
     });
 }
 
@@ -3529,6 +3535,8 @@ function bootPocket() {
 let analyser, dataArray;
 
 function initializeAudio() {
+    setupAudioAnalyser();
+    return;
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 64; // Set FFT size for frequency data
