@@ -170,6 +170,17 @@ export const CATALOG: CatalogGame[] = [
     img: '/games/covers/pocket.jpg',
     blurb: 'Sideload client. Needs a portal developer license.',
   },
+  {
+    id: 'nova-poker',
+    name: 'Nova Poker',
+    kind: 'adult',
+    status: 'live',
+    play: 'https://nova-poker.vercel.app',
+    img: '/games/covers/nova-poker.png',
+    blurb: 'Texas Hold\'em. 18+ only.',
+    source: 'https://github.com/Futuret3chdev/nova-poker',
+    rated: '18+',
+  },
 ];
 
 export function getGame(id: string) {
