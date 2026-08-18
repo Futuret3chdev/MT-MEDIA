@@ -14,15 +14,16 @@ export const LUCKY_REELS_URL = 'https://lucky-reels-eosin.vercel.app';
 
 // OAuth — same structure & credentials as mte-pop/js/config.js (MTEPOP_CONFIG)
 export const MT_POKER_CONFIG = {
-  appUrl: 'https://memetorrent.futuret3ch.com.au/casino-floor',
+  appUrl: 'https://memetorrent.futuret3ch.com.au',
   appName: 'Nova Mirage',
   inviteMessage: 'Join me at Nova Mirage — poker, pokiers & more in the MT Ecosystem!',
 
-  // Redirect URI for Discord (paste exactly in Discord portal):
-  // https://memetorrent.futuret3ch.com.au/casino-floor/auth/callback
+  // Same Discord app + redirect already registered for the MT site
+  // (https://memetorrent.futuret3ch.com.au/games/api/discord-callback.php)
   googleClientId: '',
   facebookAppId: '',
-  discordClientId: '1348440616442265641',
+  discordClientId: '1380444668562505789',
+  discordRedirectUri: 'https://memetorrent.futuret3ch.com.au/games/api/discord-callback.php',
   telegramBotUsername: 'mod_futuret3ch_bot',
   telegramAuthMode: 'deeplink',
   // Token NEVER goes in this file. Set in Vercel → Environment Variables:

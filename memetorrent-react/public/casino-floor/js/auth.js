@@ -1,7 +1,7 @@
 import { MT_POKER_CONFIG } from './config.js';
 import { applyAuthUser, clearAuth } from './profile.js';
 import {
-  createPkce, openPopup, exchangeDiscordCode, discordAvatarUrl,
+  openPopup, exchangeDiscordCode, discordAvatarUrl,
   discordAuthorizeUrl, randomString
 } from './oauth.js';
 
@@ -180,17 +180,12 @@ export async function signInDiscord(onSuccess, onError) {
   }
 
   try {
-    const { verifier, challenge } = await createPkce();
-    const state = randomString(16);
+    const state = `nm_${randomString(16)}`;
     sessionStorage.setItem('mtpoker_oauth_provider', 'discord');
-    sessionStorage.setItem(`mtpoker_pkce_${state}`, verifier);
 
-    const url = discordAuthorizeUrl(clientId, state, challenge);
+    const url = discordAuthorizeUrl(clientId, state);
     const result = await openPopup(url, state);
-    const verifierStored = sessionStorage.getItem(`mtpoker_pkce_${state}`);
-    sessionStorage.removeItem(`mtpoker_pkce_${state}`);
-
-    const data = await exchangeDiscordCode(result.code, verifierStored);
+    const data = await exchangeDiscordCode(result.code, '');
     const me = data.user;
     if (!me?.id) throw new Error('Could not load Discord profile');
 
@@ -204,7 +199,7 @@ export async function signInDiscord(onSuccess, onError) {
     return profile;
   } catch (err) {
     const hint = err.message?.includes('redirect')
-      ? `${err.message}. Discord redirect must be: ${MT_POKER_CONFIG.appUrl}/auth/callback`
+      ? `${err.message}. Discord redirect must be: ${MT_POKER_CONFIG.discordRedirectUri}`
       : err.message;
     onError?.(new Error(hint || 'Discord sign-in failed'));
     throw err;

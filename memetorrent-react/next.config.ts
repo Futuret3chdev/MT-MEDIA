@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['mysql2'],
+  async rewrites() {
+    return [
+      {
+        source: '/games/api/discord-callback.php',
+        destination: '/api/oauth/discord/callback',
+      },
+    ];
+  },
   async redirects() {
     const folders = [
       '/games/unix/tap',

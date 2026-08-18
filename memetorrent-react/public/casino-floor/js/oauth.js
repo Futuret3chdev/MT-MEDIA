@@ -4,11 +4,10 @@ const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-
 const OAUTH_MSG = 'mtpoker_oauth';
 
 function redirectUri() {
-  const appUrl = (MT_POKER_CONFIG.appUrl || 'https://poker-stars-wheat.vercel.app').replace(/\/$/, '');
-  const origin = window.location.origin;
-  const isLocal = origin && (origin.includes('localhost') || origin.includes('127.0.0.1'));
-  if (isLocal) return `${origin}/auth/callback`;
-  return `${appUrl}/auth/callback`;
+  return (
+    MT_POKER_CONFIG.discordRedirectUri ||
+    'https://memetorrent.futuret3ch.com.au/games/api/discord-callback.php'
+  );
 }
 
 function randomString(len) {
@@ -118,11 +117,13 @@ export function discordAuthorizeUrl(clientId, state, challenge) {
     client_id: clientId,
     redirect_uri: redirectUri(),
     response_type: 'code',
-    scope: 'identify',
-    state,
-    code_challenge: challenge,
-    code_challenge_method: 'S256'
+    scope: 'identify email',
+    state
   });
+  if (challenge) {
+    params.set('code_challenge', challenge);
+    params.set('code_challenge_method', 'S256');
+  }
   return `https://discord.com/oauth2/authorize?${params.toString()}`;
 }
 
