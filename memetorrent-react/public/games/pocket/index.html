@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLUBPOOL - MT DEMO</title>
+    <title>MT WORLD — Pocket</title>
     <meta name="description"
-          content="Play 8-Ball Pool online for free! Realistic physics, smooth controls, and classic billiards gameplay. Challenge yourself in this browser-based pool game with no downloads required.">
+          content="Live 8-ball in MT WORLD. Quick Match, rematch, and challenge from Chat. Free tables on our servers.">
     <meta name="keywords"
-          content="8-ball pool, pool game, billiards, online pool, free pool game, browser game, HTML5 game, snooker, cue sports">
+          content="8-ball pool, MT WORLD, Pocket, live pool, billiards, MemeTorrent">
     <meta name="author" content="Futuret3ch and Memetorrent">
-    <link rel="canonical" href="https://memetorrent.futuret3ch.com.au/games/8ball">
+    <link rel="canonical" href="https://memetorrent.futuret3ch.com.au/games/pocket">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
@@ -1035,6 +1035,87 @@ button.primary {
     border-radius: 2px;
     opacity: 0.8;
 }
+
+button.quick {
+    background: #19d37e;
+    color: #04140c;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+button.ghost {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+#englishPad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+#englishPad span {
+    font-size: 9px;
+    letter-spacing: 1px;
+    opacity: 0.55;
+    color: #fff;
+}
+#englishBall {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff, #bbb);
+    position: relative;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.35);
+}
+#englishDot {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #111;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+#winOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+#winCard {
+    width: min(92vw, 360px);
+    background: linear-gradient(160deg, #10261c, #07140e);
+    border: 1px solid rgba(25,211,126,0.35);
+    border-radius: 18px;
+    padding: 22px 20px;
+    text-align: center;
+    color: #fff;
+}
+#winTitle { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+#winSub { font-size: 13px; opacity: 0.7; margin-bottom: 16px; }
+#winCard .row { margin-top: 4px; }
+.my-record { font-size: 12px; color: #b8f2e6; margin-bottom: 8px; }
+.stake-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: #cfd8dc;
+}
+.stake-label select, #trackPick {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #1a1a1a;
+    color: #fff;
+}
+.room-stake { color: #19d37e; font-size: 12px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -1054,6 +1135,16 @@ button.primary {
 </div>
 	<div id="mtTokenIntro">
     <div class="mt-token">$MT</div>
+</div>
+<div id="winOverlay">
+    <div id="winCard">
+        <div id="winTitle">Table over</div>
+        <div id="winSub">Same seats. Same cloth.</div>
+        <div class="row">
+            <button class="quick" onclick="requestRematch()">Rematch</button>
+            <button class="ghost" onclick="hideWin(); leaveCurrentRoom();">Leave</button>
+        </div>
+    </div>
 </div>
 <div id="orientationNotice">⚠️ Please rotate your device to landscape for best experience</div>
 
@@ -1080,6 +1171,10 @@ button.primary {
 
         <div id="powerMeter">
             <div id="powerBar"></div>
+        </div>
+        <div id="englishPad" title="English — tap the cue ball">
+            <span>SPIN</span>
+            <div id="englishBall"><div id="englishDot"></div></div>
         </div>
 
         <div class="player-info" id="player2">
@@ -1123,20 +1218,52 @@ button.primary {
 
         <div class="menu-content open">
             <input id="playerName" placeholder="Your name">
-            <input id="roomCode" placeholder="Room code">
+            <div class="row">
+                <button class="full" id="btnWallet" onclick="connectPocketWallet()">Connect wallet</button>
+            </div>
+            <div class="menu-status" id="walletStatus">Wallet off · free tables still play</div>
+            <label class="stake-label">Table stake
+                <select id="stakeSelect" onchange="onStakeChange()">
+                    <option value="0">Free play</option>
+                    <option value="1">1 $MT</option>
+                    <option value="5">5 $MT</option>
+                    <option value="10">10 $MT</option>
+                    <option value="25">25 $MT</option>
+                </select>
+            </label>
+            <button class="full quick" onclick="quickMatch()">Quick Match</button>
+            <input id="roomCode" placeholder="Table code (optional)">
 
-            <button class="full" onclick="createRoom()">Create Room</button>
+            <button class="full" onclick="createRoom()">Create table</button>
 
             <div class="row">
-                <button onclick="joinRoom()">Join</button>
+                <button onclick="joinRoom()">Find tables</button>
                 <button onclick="refreshRooms()">Refresh</button>
             </div>
 
-            <button class="full" onclick="leaveCurrentRoom()">Leave Room</button>
+            <button class="full" onclick="leaveCurrentRoom()">Leave table</button>
+            <button class="full ghost" onclick="requestRematch()">Rematch</button>
 
             <div class="menu-status" id="roomStatus"></div>
 
-            <button class="full primary" onclick="resetGame()">New Game</button>
+            <button class="full primary" onclick="resetGame()">New rack</button>
+        </div>
+    </div>
+
+    <div class="menu-block">
+        <div class="menu-header" onclick="toggleSection(this)">
+            <span>Music</span>
+            <span class="icon">➕</span>
+        </div>
+        <div class="menu-content">
+            <select id="trackPick" onchange="pickTrack(this.selectedIndex)"></select>
+            <div class="row">
+                <button onclick="prevTrack()">Prev</button>
+                <button onclick="playMusic()">Play</button>
+                <button onclick="pauseMusic()">Pause</button>
+                <button onclick="nextTrack()">Next</button>
+            </div>
+            <div class="menu-status" id="trackNow">Club Night</div>
         </div>
     </div>
 
@@ -1164,6 +1291,7 @@ button.primary {
         </div>
 
         <div class="menu-content">
+            <div class="my-record" id="myRecord"></div>
             <div id="leaderboard"></div>
         </div>
     </div>
@@ -1212,8 +1340,17 @@ checkOrientation();
         roomCode: null,
         playerNumber: null,
         connected: false,
-        suppressShotBroadcast: false
+        suppressShotBroadcast: false,
+        spectator: false
     };
+    const tableParams = new URLSearchParams(location.search);
+    const invitedTable = (tableParams.get('table') || '').trim();
+    const chatScoreRoom = tableParams.get('from') === 'chat' ? (tableParams.get('room') || '') : '';
+    let autoTableTried = false;
+    let english = { x: 0, y: 0 };
+    let pendingWatch = false;
+    let tableStake = 0;
+    let pocketWallet = { address: '', type: '' };
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -1265,7 +1402,7 @@ resizeCanvas();
     const TABLE_X = 50;
     const TABLE_Y = 25;
     const POCKET_RADIUS = 25;
-    const MAX_POWER = 20;
+    const MAX_POWER = 22;
 
     let gameState = {
         currentPlayer: 1,
@@ -1358,8 +1495,10 @@ function renderRoomList(rooms) {
 
         // Join button (only if not full)
         const joinButton = room.playerCount < 2
-            ? `<button onclick="joinRoomByCode('${room.roomCode}')">Join Room</button>`
-            : "";
+            ? `<button onclick="joinRoomByCode('${room.roomCode}')">Sit down</button>`
+            : `<button class="ghost" onclick="watchRoom('${room.roomCode}')">Watch</button>`;
+        const stakeAmt = Number(room.stake || room.buyIn || 0) || 0;
+        const stakeLine = stakeAmt > 0 ? `<div class="room-stake">${stakeAmt} $MT stake</div>` : `<div class="room-meta">Free table</div>`;
 
         // Build card
         html += `
@@ -1373,6 +1512,7 @@ function renderRoomList(rooms) {
                 <div class="room-meta">
                     ${status}
                 </div>
+                ${stakeLine}
 
                 <div class="room-players">
                     👤 ${playerNames}
@@ -1454,34 +1594,118 @@ function getOtherPlayerName() {
     return gameState.currentPlayer === 1 ? p2Name : p1Name;
 }
 
-    function createRoom() {
-    const playerName = document.getElementById("playerName").value.trim();
-    const roomCode = document.getElementById("roomCode").value.trim();
+function randomTableCode() {
+    return 'POCK-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+}
 
-    if (!playerName) {
-        alert("Enter your name first");
+function ensureName() {
+    const input = document.getElementById("playerName");
+    let name = (input && input.value || '').trim();
+    if (!name) {
+        name = localStorage.getItem('mt-pocket-name') || ('Guest' + Math.floor(Math.random() * 90 + 10));
+        if (input) input.value = name;
+    }
+    localStorage.setItem('mt-pocket-name', name);
+    return name.slice(0, 16);
+}
+
+function canvasPos(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+}
+
+function showWin(title, sub) {
+    const overlay = document.getElementById('winOverlay');
+    const t = document.getElementById('winTitle');
+    const s = document.getElementById('winSub');
+    if (t) t.textContent = title;
+    if (s) s.textContent = sub || 'Same seats. Same cloth.';
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function hideWin() {
+    const overlay = document.getElementById('winOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function requestRematch() {
+    hideWin();
+    if (!multiplayer.connected) {
+        resetGame(false);
+        setMessage('New rack. Break.');
         return;
     }
+    resetGame(true);
+    setMessage('Rematch — break again.');
+}
 
-    if (!roomCode) {
-        alert("Enter a room code");
-        return;
-    }
-
+function watchRoom(roomCode) {
+    const playerName = ensureName();
+    pendingWatch = true;
+    multiplayer.spectator = true;
     if (multiplayer.roomCode) {
         socket.emit("leaveRoom", { roomCode: multiplayer.roomCode });
     }
-
     setTimeout(() => {
-        socket.emit("createRoom", { roomCode, playerName });
-
-        // 🔥 CLOSE MENU
+        socket.emit("joinRoom", { roomCode, playerName: playerName + ' (watch)', spectator: true });
+        socket.emit("spectateRoom", { roomCode, playerName });
+        setMessage('Watching ' + roomCode);
         toggleMenu();
-
-        // 🔥 SHOW WAITING
-        setRoomStatus("Waiting for opponent...");
-        setMessage("Waiting for player to join...");
     }, 150);
+}
+
+function onStakeChange() {
+    const el = document.getElementById('stakeSelect');
+    tableStake = Number(el && el.value) || 0;
+    if (tableStake > 0 && !pocketWallet.address) {
+        setMessage('Connect a wallet to sit a $MT table');
+    }
+}
+
+function createRoomWithCode(roomCode) {
+    const playerName = ensureName();
+    onStakeChange();
+    if (tableStake > 0 && !pocketWallet.address) {
+        setMessage('Connect wallet first for a staked table');
+        return;
+    }
+    const code = (roomCode || document.getElementById("roomCode").value.trim() || randomTableCode());
+    const codeEl = document.getElementById("roomCode");
+    if (codeEl) codeEl.value = code;
+    if (multiplayer.roomCode) {
+        socket.emit("leaveRoom", { roomCode: multiplayer.roomCode });
+    }
+    setTimeout(() => {
+        socket.emit("createRoom", {
+            roomCode: code,
+            playerName,
+            stake: tableStake,
+            wallet: pocketWallet.address || null
+        });
+        toggleMenu();
+        setRoomStatus("Waiting for opponent...");
+        setMessage(tableStake > 0
+            ? ("Table " + code + " · " + tableStake + " $MT stake")
+            : ("Table " + code + " · waiting for a seat"));
+    }, 150);
+}
+
+function quickMatch() {
+    ensureName();
+    const open = (roomsCache || []).find(r => r.playerCount < 2);
+    if (open) {
+        joinRoomByCode(open.roomCode);
+        return;
+    }
+    createRoomWithCode(randomTableCode());
+}
+
+    function createRoom() {
+    const typed = document.getElementById("roomCode").value.trim();
+    createRoomWithCode(typed || randomTableCode());
 }
 
     function joinRoom() {
@@ -1499,10 +1723,13 @@ function getOtherPlayerName() {
 }
 
     function joinRoomByCode(roomCode) {
-    const playerName = document.getElementById("playerName").value.trim();
-
-    if (!playerName) {
-        alert("Enter your name first");
+    const playerName = ensureName();
+    multiplayer.spectator = false;
+    pendingWatch = false;
+    const listed = (roomsCache || []).find(r => r.roomCode === roomCode);
+    const need = Number(listed && (listed.stake || listed.buyIn)) || tableStake;
+    if (need > 0 && !pocketWallet.address) {
+        setMessage('Connect wallet to sit this $MT table');
         return;
     }
 
@@ -1511,16 +1738,19 @@ function getOtherPlayerName() {
     }
 
     setTimeout(() => {
-        socket.emit("joinRoom", { roomCode, playerName });
+        socket.emit("joinRoom", { roomCode, playerName, wallet: pocketWallet.address || null, stake: need });
 
         toggleMenu();
-        setMessage("Joining room...");
+        setMessage(need > 0 ? ("Sitting at " + roomCode + " · " + need + " $MT") : ("Sitting at " + roomCode + "…"));
     }, 150);
 }
 
     socket.on("connect", () => {
         setRoomStatus("Connected to multiplayer server");
         refreshRooms();
+        if (invitedTable && !autoTableTried) {
+            setTimeout(refreshRooms, 250);
+        }
     });
 	
 socket.on("stateSync", (snapshot) => {
@@ -1534,14 +1764,9 @@ socket.on("gameOverSync", (data) => {
     gameState.gameOver = true;
     gameState.ballsMoving = false;
 
-    if (data && data.message) {
-        setMessage(data.message);
-    } else if (data && data.winnerName) {
-        setMessage(`🎉 ${data.winnerName} Wins!`);
-    } else {
-        setMessage("Game over");
-    }
-
+    const title = (data && (data.message || (data.winnerName && (`🎉 ${data.winnerName} Wins!`)))) || 'Table over';
+    setMessage(title);
+    showWin(title, 'Rematch keeps this table.');
     updatePlayerDisplay();
 });
 
@@ -1552,12 +1777,21 @@ socket.on("gameOverSync", (data) => {
     socket.on("roomList", (rooms) => {
     roomsCache = rooms;   // store rooms
     renderRoomList(rooms);
+    if (invitedTable && !autoTableTried && !multiplayer.connected) {
+        autoTableTried = true;
+        const existing = (rooms || []).find(r => r.roomCode === invitedTable);
+        if (existing && existing.playerCount < 2) joinRoomByCode(invitedTable);
+        else if (existing && existing.playerCount >= 2) watchRoom(invitedTable);
+        else createRoomWithCode(invitedTable);
+    }
 });
 
     socket.on("roomJoined", (data) => {
     multiplayer.roomCode = data.roomCode;
     multiplayer.playerNumber = data.playerNumber;
     multiplayer.connected = true;
+    if (data.spectator || data.playerNumber > 2) multiplayer.spectator = true;
+    pendingWatch = false;
 
     updatePlayerNames(data.players || []);
 
@@ -1598,7 +1832,20 @@ updateTurnMessage();
     });
 
     socket.on("errorMessage", (msg) => {
-        alert(msg);
+        const text = typeof msg === 'string' ? msg : (msg && msg.message) || 'Table error';
+        if (pendingWatch) {
+            pendingWatch = false;
+            multiplayer.spectator = false;
+            setMessage("That table is live — can't sit in. Try Quick Match.");
+            return;
+        }
+        if (invitedTable && /exist|full|taken|already/i.test(text) && !multiplayer.connected) {
+            const existing = (roomsCache || []).find(r => r.roomCode === invitedTable);
+            if (existing && existing.playerCount < 2) joinRoomByCode(invitedTable);
+            else setMessage(text);
+            return;
+        }
+        setMessage(text);
     });
 
     socket.on("playerLeft", (msg) => {
@@ -1705,6 +1952,7 @@ socket.on("chatMessage", (data) => {
     multiplayer.playerNumber = null;
     multiplayer.connected = false;
     multiplayer.suppressShotBroadcast = false;
+    multiplayer.spectator = false;
 }
 
 function leaveCurrentRoom() {
@@ -1818,8 +2066,19 @@ function prepareToSwitchRooms() {
 
     function drawTable() {
     // TABLE BASE
-    ctx.fillStyle = '#0d5016';
+    const felt = ctx.createLinearGradient(TABLE_X, TABLE_Y, TABLE_X, TABLE_Y + TABLE_HEIGHT);
+    felt.addColorStop(0, '#146b32');
+    felt.addColorStop(0.5, '#0d5016');
+    felt.addColorStop(1, '#0a3d12');
+    ctx.fillStyle = felt;
     ctx.fillRect(TABLE_X, TABLE_Y, TABLE_WIDTH, TABLE_HEIGHT);
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    for (let d = 1; d <= 3; d++) {
+        ctx.beginPath();
+        ctx.arc(TABLE_X + 18, TABLE_Y + (TABLE_HEIGHT * d) / 4, 3, 0, Math.PI * 2);
+        ctx.arc(TABLE_X + TABLE_WIDTH - 18, TABLE_Y + (TABLE_HEIGHT * d) / 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
 
     // TABLE BORDER
     ctx.strokeStyle = '#8B4513';
@@ -2011,30 +2270,60 @@ ctx.restore();
         ).toString(16).slice(1);
     }
 
+    function firstAimContact(angle) {
+        const ox = cueBall.position.x;
+        const oy = cueBall.position.y;
+        const dx = Math.cos(angle);
+        const dy = Math.sin(angle);
+        let hit = null;
+        let hitDist = 900;
+        balls.forEach(ball => {
+            if (ball === cueBall || !ball.position) return;
+            const vx = ball.position.x - ox;
+            const vy = ball.position.y - oy;
+            const t = vx * dx + vy * dy;
+            if (t < BALL_RADIUS) return;
+            const px = ox + dx * t;
+            const py = oy + dy * t;
+            const gap = Math.hypot(ball.position.x - px, ball.position.y - py);
+            if (gap < BALL_RADIUS * 2 && t < hitDist) {
+                hitDist = t;
+                hit = { x: ox + dx * (t - BALL_RADIUS * 2), y: oy + dy * (t - BALL_RADIUS * 2), t };
+            }
+        });
+        return hit;
+    }
+
     function drawCue() {
         if (!isDragging || gameState.ballsMoving) return;
+        if (multiplayer.spectator) return;
         if (multiplayer.connected && multiplayer.playerNumber !== gameState.currentPlayer) return;
 
         const dx = mousePos.x - cueBall.position.x;
         const dy = mousePos.y - cueBall.position.y;
         const angle = Math.atan2(dy, dx);
+        const contact = firstAimContact(angle);
+        const aimLen = contact ? contact.t : 280;
 
         ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.setLineDash([10, 10]);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.setLineDash([8, 7]);
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(cueBall.position.x, cueBall.position.y);
-        ctx.lineTo(cueBall.position.x + Math.cos(angle) * 250, cueBall.position.y + Math.sin(angle) * 250);
+        ctx.lineTo(cueBall.position.x + Math.cos(angle) * aimLen, cueBall.position.y + Math.sin(angle) * aimLen);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        const ghostBallX = cueBall.position.x + Math.cos(angle) * 50;
-        const ghostBallY = cueBall.position.y + Math.sin(angle) * 50;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        const ghostBallX = contact ? contact.x : cueBall.position.x + Math.cos(angle) * 56;
+        const ghostBallY = contact ? contact.y : cueBall.position.y + Math.sin(angle) * 56;
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(ghostBallX, ghostBallY, BALL_RADIUS, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
 
         const cueDistance = 30 + shotPower * 3;
         const cueX = cueBall.position.x - Math.cos(angle) * cueDistance;
@@ -2077,6 +2366,7 @@ ctx.restore();
 
     function shoot() {
     if (shotPower <= 0 || gameState.ballsMoving || gameState.gameOver) return;
+    if (multiplayer.spectator) return;
 
     if (multiplayer.connected && multiplayer.playerNumber !== gameState.currentPlayer) {
         setMessage(`It's ${getCurrentPlayerName()}'s turn`);
@@ -2087,11 +2377,17 @@ ctx.restore();
     const dy = mousePos.y - cueBall.position.y;
     const angle = Math.atan2(dy, dx);
 
-    const force = Math.min(shotPower / 10, MAX_POWER) * 0.012;
-    Body.applyForce(cueBall, cueBall.position, {
+    const breakMul = gameState.breakShot ? 1.45 : 1;
+    const force = Math.min(shotPower / 10, MAX_POWER) * 0.012 * breakMul;
+    const hit = {
+        x: cueBall.position.x + english.x * BALL_RADIUS * 0.55,
+        y: cueBall.position.y + english.y * BALL_RADIUS * 0.55
+    };
+    Body.applyForce(cueBall, hit, {
         x: Math.cos(angle) * force,
         y: Math.sin(angle) * force
     });
+    Body.setAngularVelocity(cueBall, english.x * shotPower * 0.12);
 
     if (multiplayer.connected && !multiplayer.suppressShotBroadcast) {
     socket.emit("shotTaken", {
@@ -2165,7 +2461,7 @@ function startCountdown() {
 
     if (!overlay || !text) return;
 
-    let count = 10;
+    let count = 3;
 
     overlay.style.display = "flex";
 
@@ -2209,12 +2505,7 @@ function showWaitingState(roomCode) {
             finalMessage = `🎉 ${winnerName} Wins!`;
             setMessage(finalMessage);
             playSound(800, 0.5, 'square', 0.3);
-            fetch('/api/scores', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game_id: 'mt-world-pocket', player_name: winnerName, score: 1 })
-            }).catch(() => {});
+            recordPocketResult(true, winnerName);
         } else {
             gameState.gameOver = true;
             winnerName = getOtherPlayerName();
@@ -2222,11 +2513,13 @@ function showWaitingState(roomCode) {
             finalMessage = `💀 ${winnerName} Wins!`;
             setMessage(finalMessage);
             playSound(200, 0.5, 'sawtooth', 0.3);
+            recordPocketResult(false, winnerName);
         }
 
         World.remove(engine.world, ball);
         const index = balls.indexOf(ball);
         if (index > -1) balls.splice(index, 1);
+        showWin(finalMessage, tableStake > 0 ? (tableStake + ' $MT on the cloth') : 'Rematch keeps this table.');
 
         if (multiplayer.connected) {
             const snapshot = {
@@ -2461,20 +2754,21 @@ function endTurn() {
 
     canvas.addEventListener('mousedown', (e) => {
         if (gameState.ballsMoving || gameState.gameOver) return;
+        if (multiplayer.spectator) return;
         if (multiplayer.connected && multiplayer.playerNumber !== gameState.currentPlayer) return;
 
-        const rect = canvas.getBoundingClientRect();
-        dragStart.x = e.clientX - rect.left;
-        dragStart.y = e.clientY - rect.top;
-        mousePos.x = dragStart.x;
-        mousePos.y = dragStart.y;
+        const pos = canvasPos(e.clientX, e.clientY);
+        dragStart.x = pos.x;
+        dragStart.y = pos.y;
+        mousePos.x = pos.x;
+        mousePos.y = pos.y;
         isDragging = true;
     });
 
     canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        mousePos.x = e.clientX - rect.left;
-        mousePos.y = e.clientY - rect.top;
+        const pos = canvasPos(e.clientX, e.clientY);
+        mousePos.x = pos.x;
+        mousePos.y = pos.y;
 
         if (isDragging && !gameState.ballsMoving) {
             const dx = dragStart.x - mousePos.x;
@@ -2530,7 +2824,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function gameLoop() {
     Engine.update(engine, 16.666); 
 	
-	const maxVelocity = 8;
+	const maxVelocity = gameState.breakShot ? 12 : 8;
 
 balls.forEach(ball => {
     const speed = Math.sqrt(ball.velocity.x ** 2 + ball.velocity.y ** 2);
@@ -2594,6 +2888,7 @@ function toggleChat(e) {
             consecutiveFouls: {1: 0, 2: 0}
         };
 
+        hideWin();
         setMessage('Break to start!');
         const p1 = document.getElementById('p1Group');
 const p2 = document.getElementById('p2Group');
@@ -2621,12 +2916,8 @@ if (p2) p2.className = 'ball-group';
     }
 	
 	function getTouchPos(e) {
-    const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0] || e.changedTouches[0];
-    return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-    };
+    return canvasPos(touch.clientX, touch.clientY);
 }
 
 canvas.addEventListener("touchstart", (e) => {
@@ -2689,6 +2980,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 menuOverlay.style.display === "flex" ? "none" : "flex";
         };
     }
+    bootPocket();
 });
     createBalls();
     updatePlayerDisplay();
@@ -2734,9 +3026,14 @@ document.addEventListener("click", (e) => {
 });
 
 const musicTracks = [
-    { name: "Track 1", src: "sounds/beat1.mp3" },
-    { name: "Track 2", src: "sounds/beat2.mp3" },
-    { name: "Track 3", src: "sounds/beat3.mp3" }
+    { name: "Night Pulse", src: "sounds/edm/night-pulse.mp3", credit: "Pixabay EDM" },
+    { name: "Club Voltage", src: "sounds/edm/club-voltage.mp3", credit: "Pixabay EDM" },
+    { name: "Bassline Drive", src: "sounds/edm/bassline-drive.mp3", credit: "Pixabay EDM" },
+    { name: "Neon Drop", src: "sounds/edm/neon-drop.mp3", credit: "Pixabay EDM" },
+    { name: "Afterhours", src: "sounds/edm/afterhours.mp3", credit: "Pixabay EDM" },
+    { name: "Club Night", src: "sounds/beat1.mp3", credit: "MT table" },
+    { name: "Late Felt", src: "sounds/beat2.mp3", credit: "MT table" },
+    { name: "Green Rail", src: "sounds/beat3.mp3", credit: "MT table" }
 ];
 
 let currentTrackIndex = 0;
@@ -2757,8 +3054,24 @@ function initMusic() {
 }
 
 function loadTrack(index) {
-    currentTrackIndex = index;
-    musicAudio.src = musicTracks[index].src;
+    currentTrackIndex = ((index % musicTracks.length) + musicTracks.length) % musicTracks.length;
+    if (!musicAudio) initMusic();
+    musicAudio.src = musicTracks[currentTrackIndex].src;
+}
+
+function pickTrack(index) {
+    loadTrack(index);
+    playMusic();
+    updateTrackUI();
+}
+
+function fillTrackPick() {
+    const sel = document.getElementById('trackPick');
+    if (!sel) return;
+    sel.innerHTML = musicTracks.map((t, i) =>
+        `<option value="${i}">${t.name}${t.credit ? ' · ' + t.credit : ''}</option>`
+    ).join('');
+    sel.selectedIndex = currentTrackIndex;
 }
 
 function playMusic() {
@@ -2828,13 +3141,159 @@ function prevTrack() {
 
 function updateTrackUI() {
     const track = musicTracks[currentTrackIndex];
-
-    // Top message
-    setMessage(`🎵 ${track.name}`);
-
-    // DJ panel
+    const now = document.getElementById('trackNow');
+    if (now) now.textContent = track.name + (track.credit ? ' · ' + track.credit : '');
+    const sel = document.getElementById('trackPick');
+    if (sel) sel.selectedIndex = currentTrackIndex;
     const el = document.querySelector(".track-name");
     if (el) el.textContent = track.name;
+}
+
+function ladderRead() {
+    try { return JSON.parse(localStorage.getItem('mt-pocket-ladder') || '{}'); } catch { return {}; }
+}
+
+function renderMyRecord() {
+    const el = document.getElementById('myRecord');
+    if (!el) return;
+    const L = ladderRead();
+    el.textContent = `You · ${L.wins || 0} wins · streak ${L.streak || 0}` +
+        (tableStake ? ` · last stake ${tableStake} $MT` : '');
+}
+
+function recordPocketResult(won, winnerName) {
+    const L = ladderRead();
+    if (won) {
+        L.wins = (L.wins || 0) + 1;
+        L.streak = (L.streak || 0) + 1;
+    } else {
+        L.streak = 0;
+    }
+    L.last = Date.now();
+    localStorage.setItem('mt-pocket-ladder', JSON.stringify(L));
+    renderMyRecord();
+    const score = tableStake > 0 ? tableStake : 1;
+    fetch('/api/scores', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            game_id: 'mt-world-pocket',
+            player_name: winnerName || ensureName(),
+            score,
+            room: chatScoreRoom || multiplayer.roomCode || undefined
+        })
+    }).catch(() => {});
+    loadPocketLadder();
+}
+
+function loadPocketLadder() {
+    fetch('/api/scores?game_id=mt-world-pocket', { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => {
+            const rows = (d.scores || []).map(s => ({
+                name: s.username,
+                wins: s.score
+            }));
+            if (rows.length) renderLeaderboard(rows);
+            else document.getElementById('leaderboard').innerHTML = '<div style="opacity:0.6">No wins on the board yet</div>';
+        })
+        .catch(() => {});
+}
+
+function setEnglish(x, y) {
+    english = { x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) };
+    const dot = document.getElementById('englishDot');
+    const ball = document.getElementById('englishBall');
+    if (!dot || !ball) return;
+    const r = ball.clientWidth / 2 - 4;
+    dot.style.left = (ball.clientWidth / 2 + english.x * r) + 'px';
+    dot.style.top = (ball.clientHeight / 2 + english.y * r) + 'px';
+}
+
+function bindEnglishPad() {
+    const ball = document.getElementById('englishBall');
+    if (!ball) return;
+    const apply = (ev) => {
+        const r = ball.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const pt = ev.touches ? ev.touches[0] : ev;
+        setEnglish((pt.clientX - cx) / (r.width / 2), (pt.clientY - cy) / (r.height / 2));
+    };
+    ball.addEventListener('click', apply);
+    ball.addEventListener('pointerdown', apply);
+}
+
+function walletProvider(type) {
+    if (type === 'phantom') return window.phantom?.solana || window.solana;
+    if (type === 'solflare') return window.solflare;
+    if (type === 'backpack') return window.backpack;
+    return window.phantom?.solana || window.solflare || window.backpack || window.solana;
+}
+
+function shortWallet(addr) {
+    if (!addr) return '';
+    return addr.slice(0, 4) + '…' + addr.slice(-4);
+}
+
+function paintWallet() {
+    const btn = document.getElementById('btnWallet');
+    const st = document.getElementById('walletStatus');
+    if (pocketWallet.address) {
+        if (btn) btn.textContent = shortWallet(pocketWallet.address);
+        if (st) st.textContent = (pocketWallet.type || 'Wallet') + ' connected · staked tables open';
+    } else {
+        if (btn) btn.textContent = 'Connect wallet';
+        if (st) st.textContent = 'Wallet off · free tables still play';
+    }
+}
+
+async function connectPocketWallet() {
+    if (pocketWallet.address) {
+        pocketWallet = { address: '', type: '' };
+        paintWallet();
+        return;
+    }
+    const order = ['phantom', 'solflare', 'backpack'];
+    let last = 'Install Phantom, Solflare, or Backpack';
+    for (const type of order) {
+        const p = walletProvider(type);
+        if (!p || !p.connect) continue;
+        try {
+            const res = await p.connect();
+            const pk = res?.publicKey || p.publicKey;
+            const addr = pk && (typeof pk.toString === 'function' ? pk.toString() : String(pk));
+            if (!addr) continue;
+            pocketWallet = { address: addr, type };
+            localStorage.setItem('mt-pocket-wallet', addr);
+            paintWallet();
+            setMessage('Wallet ' + shortWallet(addr));
+            return;
+        } catch (err) {
+            last = err?.message || last;
+        }
+    }
+    setMessage(last);
+}
+
+function bootPocket() {
+    fillTrackPick();
+    bindEnglishPad();
+    renderMyRecord();
+    loadPocketLadder();
+    const saved = localStorage.getItem('mt-pocket-name');
+    const nameEl = document.getElementById('playerName');
+    if (saved && nameEl && !nameEl.value) nameEl.value = saved;
+    fetch('/api/portal/me', { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.user?.username && nameEl) {
+                nameEl.value = d.user.username;
+                localStorage.setItem('mt-pocket-name', d.user.username);
+            }
+        })
+        .catch(() => {});
 }
 
 let analyser, dataArray;
@@ -2935,21 +3394,20 @@ function startVisualizer() {
         <button id="closeHelp">✕</button>
             <h3 class="help-title">
 			<span class="ball-8"></span>
-				How to Play
+				MT WORLD — Pocket
 							</h3>
 
-            <p>• Click and drag to aim</p>
-            <p>• Pull back for power</p>
-            <p>• Release to shoot</p>
-
-            <p>• Pocket your group (solids/stripes)</p>
-            <p>• Pocket 8-ball last to win</p>
-            <p>• Avoid scratching the cue ball!</p>
+            <p>• Drag to aim. The ghost ball is your first contact.</p>
+            <p>• Pull back for power. Breaks hit harder.</p>
+            <p>• Tap SPIN on the cue ball for english.</p>
+            <p>• Quick Match sits you at an open table.</p>
+            <p>• Rematch keeps the same opponent.</p>
+            <p>• Pocket your group, then the 8 last.</p>
 
             <hr>
 
             <p class="brand">Futuret3ch × MemeTorrent</p>
-            <p class="eco">$MT ECO SYSTEM</p>
+            <p class="eco">MT WORLD · wallet + $MT stakes · Pixabay EDM</p>
         </div>
     </div>
 </div>

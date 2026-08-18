@@ -292,7 +292,11 @@ export async function POST(request: NextRequest) {
         JSON.stringify(state),
         room,
       ]);
-      const play = kind !== 'ttt' && kind !== 'rps' ? getGame(kind)?.play || '' : '';
+      let play = kind !== 'ttt' && kind !== 'rps' ? getGame(kind)?.play || '' : '';
+      if (gameId === 'mt-world-pocket') {
+        const table = `POCK-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+        play = `/games/pocket/index.html?table=${table}`;
+      }
       const invite = JSON.stringify({ title: label, id: gameId, play });
       await conn.execute(
         'INSERT INTO mt_crypto_chat (room, username, body, kind, owner_email) VALUES (?,?,?,?,?)',

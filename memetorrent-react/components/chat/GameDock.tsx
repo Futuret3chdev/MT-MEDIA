@@ -63,11 +63,17 @@ export default function GameDock({
   };
 
   const playUrl = (s: RoomSession) => {
-    if (s.play && String(s.play).trim()) return s.play;
-    const g = getGame(s.game_id);
-    if (g?.play) return g.play;
-    if (s.game_id === 'tap') return '/games/unix/tap/index.html';
-    return '';
+    let url = '';
+    if (s.play && String(s.play).trim()) url = s.play;
+    else {
+      const g = getGame(s.game_id);
+      if (g?.play) url = g.play;
+      else if (s.game_id === 'tap') url = '/games/unix/tap/index.html';
+    }
+    if (s.game_id === 'mt-world-pocket' && url && !/[?&]table=/.test(url)) {
+      url += `${url.includes('?') ? '&' : '?'}table=POCK-${s.id}`;
+    }
+    return url;
   };
 
   const openSession = (s: RoomSession) => {

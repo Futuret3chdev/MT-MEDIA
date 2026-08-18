@@ -16,11 +16,11 @@ export const CATALOG: CatalogGame[] = [
   {
     id: 'mt-world-pocket',
     name: 'MT WORLD — Pocket',
-    kind: 'multiplayer',
+    kind: 'p2e',
     status: 'live',
-    play: 'https://memetorrent.futuret3ch.com.au/games/pocket',
+    play: '/games/pocket/index.html',
     img: '/games/covers/pocket.jpg',
-    blurb: 'Clubpool in MT WORLD. Live multiplayer on our servers.',
+    blurb: 'Live 8-ball. Wallet connect, free tables or $MT stakes, Pixabay EDM on the cloth, Quick Match, rematch, and challenge from Chat.',
   },
   {
     id: 'mt-world-gallery',
