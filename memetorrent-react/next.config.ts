@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
       '/games/2',
       '/games/racer',
       '/games/pocket',
+      '/games/gallery',
     ];
     return [
       { source: '/claims.html', destination: '/claims', permanent: true },

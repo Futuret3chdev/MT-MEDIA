@@ -27,9 +27,9 @@ export const CATALOG: CatalogGame[] = [
     name: 'MT WORLD — Gallery',
     kind: 'multiplayer',
     status: 'live',
-    play: 'https://futuret3ch.com.au/software/gallery/',
+    play: '/games/gallery/index.html',
     img: '/games/covers/gallery.jpg',
-    blurb: 'Walk the gallery with other players. Hang art. Live room.',
+    blurb: 'MT Craft, bigger: walk the plaza into a gallery, museum, studio, and craft hall. Hang your art. Works on phone.',
   },
   {
     id: 'soccer-pro',

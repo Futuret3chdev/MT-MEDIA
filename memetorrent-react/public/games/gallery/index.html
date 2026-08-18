@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>MT WORLD — Gallery</title>
+  <meta name="description" content="Walk MT WORLD: gallery, museum, and studios. Hang art. Works on phone." />
+  <link rel="canonical" href="https://memetorrent.futuret3ch.com.au/games/gallery/" />
+  <style>
+    :root { --mt: #19d37e; --ink: #062113; }
+    html, body { margin: 0; height: 100%; height: 100dvh; background: #0b140f; color: #e8fff4; font-family: system-ui, sans-serif; overflow: hidden; touch-action: none; }
+    canvas { display: block; width: 100%; height: 100%; }
+    #hud {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      padding: 10px 12px calc(8px + env(safe-area-inset-top));
+      padding-top: max(10px, env(safe-area-inset-top));
+      background: linear-gradient(180deg, rgba(0,0,0,.82), rgba(0,0,0,.35) 80%, transparent);
+      font-size: 13px;
+    }
+    #hud b { letter-spacing: .04em; }
+    #place { color: var(--mt); font-weight: 700; }
+    #hud a { color: var(--mt); text-decoration: none; margin-left: auto; }
+    #hud button, .fab {
+      background: var(--mt); color: var(--ink); border: 0; border-radius: 999px;
+      padding: 10px 14px; font-weight: 800; cursor: pointer; min-height: 44px;
+    }
+    #hint {
+      position: fixed; left: 12px; bottom: calc(16px + env(safe-area-inset-bottom));
+      z-index: 8; font-size: 12px; opacity: .7; max-width: 46vw; pointer-events: none;
+    }
+    .pad {
+      position: fixed; z-index: 15; width: 120px; height: 120px; border-radius: 50%;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
+      touch-action: none;
+    }
+    #joyL { left: 16px; bottom: calc(28px + env(safe-area-inset-bottom)); }
+    #joyKnob {
+      position: absolute; width: 48px; height: 48px; border-radius: 50%;
+      background: var(--mt); left: 36px; top: 36px; pointer-events: none;
+    }
+    #lookHint {
+      position: fixed; right: 16px; bottom: calc(28px + env(safe-area-inset-bottom));
+      width: 120px; height: 120px; border-radius: 50%;
+      border: 1px dashed rgba(255,255,255,.25); color: rgba(255,255,255,.45);
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      font-size: 11px; z-index: 12; pointer-events: none;
+    }
+    #jump {
+      position: fixed; right: 28px; bottom: calc(160px + env(safe-area-inset-bottom));
+      z-index: 16; min-width: 72px;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .pad, #lookHint, #jump { display: none; }
+    }
+    #panel {
+      display: none; position: fixed; inset: 0; z-index: 30;
+      background: rgba(0,0,0,.72); align-items: flex-end; justify-content: center;
+    }
+    #panel.open { display: flex; }
+    #panel .card {
+      width: min(92vw, 420px); background: #10261c; border: 1px solid rgba(25,211,126,.35);
+      border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    }
+    #panel input, #panel textarea {
+      width: 100%; box-sizing: border-box; margin: 8px 0; padding: 12px;
+      border-radius: 10px; border: 0; background: #0b1a12; color: #fff;
+    }
+    #panel .row { display: flex; gap: 8px; }
+    #panel .row > * { flex: 1; }
+    button.ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.2); }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <b>MT WORLD</b>
+    <span id="place">Plaza</span>
+    <button id="hang">Hang art</button>
+    <a href="/catalog/mt-world-gallery">Catalog</a>
+  </div>
+  <div id="hint">WASD walk · mouse look · click a frame to hang art</div>
+  <div id="joyL" class="pad"><div id="joyKnob"></div></div>
+  <div id="lookHint">drag to look</div>
+  <button id="jump" class="fab">Jump</button>
+  <div id="panel">
+    <div class="card">
+      <b>Hang artwork</b>
+      <input id="artUrl" placeholder="https://… image URL" />
+      <input id="artFile" type="file" accept="image/*" />
+      <input id="artTitle" placeholder="Title (optional)" />
+      <div class="row">
+        <button class="ghost" id="artCancel">Cancel</button>
+        <button id="artGo">Hang here</button>
+      </div>
+    </div>
+  </div>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js" } }
+  </script>
+  <script type="module">
+import * as THREE from 'three';
+
+const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
+const hint = document.getElementById('hint');
+if (coarse) hint.textContent = 'Left stick walk · right side drag look · Jump · Hang art';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87b8e8);
+scene.fog = new THREE.Fog(0x87b8e8, 28, 90);
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 140);
+const renderer = new THREE.WebGLRenderer({ antialias: !coarse, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, coarse ? 1.5 : 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = !coarse;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x3d5a32, 0.95));
+const sun = new THREE.DirectionalLight(0xfff2c8, 1.05);
+sun.position.set(20, 30, 12);
+if (!coarse) { sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); }
+scene.add(sun);
+
+const colliders = [];
+const frames = [];
+const places = [];
+
+function box(w, h, d, x, y, z, color, opts = {}) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshLambertMaterial({ color })
+  );
+  mesh.position.set(x, y, z);
+  if (!coarse) { mesh.castShadow = !opts.ground; mesh.receiveShadow = true; }
+  scene.add(mesh);
+  if (!opts.ghost) {
+    colliders.push(new THREE.Box3().setFromCenterAndSize(
+      new THREE.Vector3(x, y, z),
+      new THREE.Vector3(w, h, d)
+    ));
+  }
+  return mesh;
+}
+
+function wall(x1, z1, x2, z2, h, color) {
+  const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+  const dx = x2 - x1, dz = z2 - z1;
+  const len = Math.hypot(dx, dz) || 1;
+  const m = box(len, h, 0.45, cx, h / 2, cz, color);
+  m.rotation.y = Math.atan2(dx, dz) ? Math.atan2(dx, dz) : (Math.abs(dx) > Math.abs(dz) ? 0 : Math.PI / 2);
+  if (Math.abs(dx) > Math.abs(dz)) m.rotation.y = 0;
+  else m.rotation.y = Math.PI / 2;
+  return m;
+}
+
+// Ground
+box(80, 1, 80, 0, -0.5, 0, 0x4aa14a, { ground: true });
+box(80, 0.2, 80, 0, -1.1, 0, 0x6b4423, { ground: true });
+
+// Paths
+box(4, 0.08, 36, 0, 0.04, 0, 0xc2a36b, { ghost: true, ground: true });
+box(36, 0.08, 4, 0, 0.04, 0, 0xc2a36b, { ghost: true, ground: true });
+
+// Plaza monument
+box(1.4, 1.4, 1.4, 0, 0.7, 0, 0x19d37e, { ghost: true });
+box(0.5, 2.2, 0.5, 0, 2.2, 0, 0x0d3d24, { ghost: true });
+places.push({ name: 'Plaza', x: 0, z: 0, r: 6 });
+
+function wallWithDoor(axis, pos, span, center, color, h, t) {
+  const gap = 2.5;
+  const left = (span - gap) / 2;
+  if (axis === 'z') {
+    box(left, h, t, center - (gap + left) / 2, h / 2, pos, color);
+    box(left, h, t, center + (gap + left) / 2, h / 2, pos, color);
+    box(span, 1.5, t, center, h - 0.75, pos, color);
+  } else {
+    box(t, h, left, pos, h / 2, center - (gap + left) / 2, color);
+    box(t, h, left, pos, h / 2, center + (gap + left) / 2, color);
+    box(t, 1.5, span, pos, h - 0.75, center, color);
+  }
+}
+
+function building({ name, cx, cz, w, d, color, floor, roof, door }) {
+  const h = 5.2;
+  const t = 0.4;
+  box(w, 0.12, d, cx, 0.06, cz, floor || 0xeeeeee, { ghost: true, ground: true });
+  const north = cz - d / 2, south = cz + d / 2, west = cx - w / 2, east = cx + w / 2;
+  if (door === 'n') wallWithDoor('z', north, w, cx, color, h, t);
+  else box(w, h, t, cx, h / 2, north, color);
+  if (door === 's') wallWithDoor('z', south, w, cx, color, h, t);
+  else box(w, h, t, cx, h / 2, south, color);
+  if (door === 'w') wallWithDoor('x', west, d, cz, color, h, t);
+  else box(t, h, d, west, h / 2, cz, color);
+  if (door === 'e') wallWithDoor('x', east, d, cz, color, h, t);
+  else box(t, h, d, east, h / 2, cz, color);
+  box(w + 0.6, 0.35, d + 0.6, cx, h + 0.1, cz, roof || 0x8b3a2a);
+  places.push({ name, x: cx, z: cz, r: Math.max(w, d) / 2 + 1.2 });
+}
+
+function addFrame(x, y, z, rotY, id) {
+  const back = new THREE.Mesh(
+    new THREE.BoxGeometry(1.7, 1.3, 0.08),
+    new THREE.MeshLambertMaterial({ color: 0x2a1a10 })
+  );
+  const canvas = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.45, 1.05),
+    new THREE.MeshBasicMaterial({ color: 0xd9d2c5 })
+  );
+  canvas.position.z = 0.05;
+  const g = new THREE.Group();
+  g.add(back, canvas);
+  g.position.set(x, y, z);
+  g.rotation.y = rotY;
+  g.userData = { id, canvas };
+  scene.add(g);
+  frames.push(g);
+}
+
+// Gallery (east) — white
+building({ name: 'Gallery', cx: 14, cz: 0, w: 12, d: 10, color: 0xf4f1ea, floor: 0xfafafa, roof: 0xd0cbc0, door: 'w' });
+addFrame(14, 2.1, -4.7, 0, 'g1');
+addFrame(11, 2.1, -4.7, 0, 'g2');
+addFrame(17, 2.1, -4.7, 0, 'g3');
+addFrame(8.3, 2.1, 0, Math.PI / 2, 'g4');
+addFrame(19.7, 2.1, 0, -Math.PI / 2, 'g5');
+
+// Museum (north) — stone
+building({ name: 'Museum', cx: 0, cz: -14, w: 14, d: 12, color: 0x9aa3ad, floor: 0xd8d2c4, roof: 0x4a5560, door: 's' });
+box(1, 4.4, 1, -5, 2.2, -8.6, 0xcfd6dd, { ghost: true });
+box(1, 4.4, 1, 5, 2.2, -8.6, 0xcfd6dd, { ghost: true });
+box(1.2, 1.1, 1.2, -3, 0.55, -14, 0x6b4f2a, { ghost: true });
+box(1.2, 1.1, 1.2, 3, 0.55, -14, 0x6b4f2a, { ghost: true });
+addFrame(0, 2.2, -19.7, 0, 'm1');
+addFrame(-4, 2.2, -19.7, 0, 'm2');
+addFrame(4, 2.2, -19.7, 0, 'm3');
+
+// Studio (west) — wood
+building({ name: 'Studio', cx: -14, cz: 0, w: 12, d: 10, color: 0xb07a43, floor: 0x7a5230, roof: 0x5a3218, door: 'e' });
+box(1.6, 0.9, 0.9, -14, 0.55, -2, 0x3d2918, { ghost: true });
+box(0.9, 1.4, 0.2, -16, 1.2, -3, 0xeee6d6, { ghost: true });
+addFrame(-14, 2.1, -4.7, 0, 's1');
+addFrame(-11, 2.1, -4.7, 0, 's2');
+addFrame(-19.7, 2.1, 0, Math.PI / 2, 's3');
+
+// Craft hall (south)
+building({ name: 'Craft Hall', cx: 0, cz: 14, w: 12, d: 10, color: 0x5c7a3a, floor: 0x6b5344, roof: 0x3d4f28, door: 'n' });
+box(1.3, 1.1, 1.3, 0, 0.55, 14, 0x8b5a2b, { ghost: true });
+box(0.9, 1.3, 0.9, 2.4, 0.7, 15.5, 0x555, { ghost: true });
+addFrame(0, 2.1, 18.7, Math.PI, 'c1');
+addFrame(-3, 2.1, 18.7, Math.PI, 'c2');
+
+// Trees
+function tree(x, z) {
+  box(0.5, 2, 0.5, x, 1, z, 0x6b4423, { ghost: true });
+  box(2.2, 2.2, 2.2, x, 3.1, z, 0x2f7a3a, { ghost: true });
+}
+[[-8, 8], [8, 8], [-8, -8], [8, -8], [-20, 12], [20, -12]].forEach(([x, z]) => tree(x, z));
+
+const KEY = 'mt-world-gallery-art';
+function loadArt() {
+  try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; }
+}
+function saveArt(map) { localStorage.setItem(KEY, JSON.stringify(map)); }
+const hung = loadArt();
+function applyArt(id, url) {
+  const f = frames.find((g) => g.userData.id === id);
+  if (!f || !url) return;
+  const tex = new THREE.TextureLoader().load(url);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  f.userData.canvas.material = new THREE.MeshBasicMaterial({ map: tex });
+}
+Object.entries(hung).forEach(([id, url]) => applyArt(id, url));
+
+const player = { x: 0, y: 1.65, z: 8, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, grounded: false };
+const move = { x: 0, z: 0 };
+const keys = {};
+let jumping = false;
+
+addEventListener('keydown', (e) => {
+  keys[e.code] = true;
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+});
+addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+renderer.domElement.addEventListener('click', (e) => {
+  if (coarse) return;
+  if (document.pointerLockElement !== renderer.domElement) {
+    renderer.domElement.requestPointerLock();
+    return;
+  }
+  pickFrame(e);
+});
+addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== renderer.domElement) return;
+  player.yaw -= e.movementX * 0.0022;
+  player.pitch -= e.movementY * 0.0022;
+  player.pitch = Math.max(-1.2, Math.min(1.2, player.pitch));
+});
+
+const ray = new THREE.Raycaster();
+let pendingFrame = 'g1';
+function nearestFrame() {
+  let best = frames[0], bestD = 1e9;
+  frames.forEach((f) => {
+    const d = Math.hypot(f.position.x - player.x, f.position.z - player.z);
+    if (d < bestD) { bestD = d; best = f; }
+  });
+  return bestD < 4.5 ? best : null;
+}
+function pickFrame() {
+  const f = nearestFrame();
+  if (f) openHang(f.userData.id);
+}
+
+const panel = document.getElementById('panel');
+function openHang(id) {
+  pendingFrame = id || nearestFrame()?.userData.id || 'g1';
+  panel.classList.add('open');
+}
+document.getElementById('hang').onclick = () => openHang();
+document.getElementById('artCancel').onclick = () => panel.classList.remove('open');
+document.getElementById('artGo').onclick = () => {
+  const url = document.getElementById('artUrl').value.trim();
+  if (url) {
+    hung[pendingFrame] = url;
+    saveArt(hung);
+    applyArt(pendingFrame, url);
+  }
+  panel.classList.remove('open');
+};
+document.getElementById('artFile').onchange = (ev) => {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    hung[pendingFrame] = reader.result;
+    saveArt(hung);
+    applyArt(pendingFrame, reader.result);
+    panel.classList.remove('open');
+  };
+  reader.readAsDataURL(file);
+};
+
+// Mobile joysticks
+const joy = document.getElementById('joyL');
+const knob = document.getElementById('joyKnob');
+let joyTouch = null;
+function setJoy(dx, dy) {
+  const r = 36;
+  const m = Math.hypot(dx, dy) || 1;
+  const s = Math.min(1, m / r);
+  const nx = (dx / m) * s, ny = (dy / m) * s;
+  knob.style.left = 36 + nx * r + 'px';
+  knob.style.top = 36 + ny * r + 'px';
+  move.x = nx;
+  move.z = ny;
+}
+joy.addEventListener('touchstart', (e) => {
+  joyTouch = e.changedTouches[0].identifier;
+  const t = e.changedTouches[0];
+  const b = joy.getBoundingClientRect();
+  setJoy(t.clientX - (b.left + 60), t.clientY - (b.top + 60));
+  e.preventDefault();
+}, { passive: false });
+joy.addEventListener('touchmove', (e) => {
+  const t = [...e.changedTouches].find((x) => x.identifier === joyTouch);
+  if (!t) return;
+  const b = joy.getBoundingClientRect();
+  setJoy(t.clientX - (b.left + 60), t.clientY - (b.top + 60));
+  e.preventDefault();
+}, { passive: false });
+function endJoy() { joyTouch = null; setJoy(0, 0); }
+joy.addEventListener('touchend', endJoy);
+joy.addEventListener('touchcancel', endJoy);
+
+let lookId = null, lastLook = null;
+renderer.domElement.addEventListener('touchstart', (e) => {
+  const t = e.changedTouches[0];
+  if (t.clientX < innerWidth * 0.42) return;
+  lookId = t.identifier;
+  lastLook = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+renderer.domElement.addEventListener('touchmove', (e) => {
+  const t = [...e.changedTouches].find((x) => x.identifier === lookId);
+  if (!t || !lastLook) return;
+  player.yaw -= (t.clientX - lastLook.x) * 0.005;
+  player.pitch -= (t.clientY - lastLook.y) * 0.005;
+  player.pitch = Math.max(-1.2, Math.min(1.2, player.pitch));
+  lastLook = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+renderer.domElement.addEventListener('touchend', () => { lookId = null; lastLook = null; });
+
+document.getElementById('jump').ontouchstart = (e) => { jumping = true; e.preventDefault(); };
+document.getElementById('jump').onclick = () => { jumping = true; };
+
+function blocked(nx, ny, nz) {
+  const body = new THREE.Box3().setFromCenterAndSize(
+    new THREE.Vector3(nx, ny, nz),
+    new THREE.Vector3(0.55, 1.6, 0.55)
+  );
+  return colliders.some((c) => c.intersectsBox(body));
+}
+
+function tick() {
+  const speed = keys['ShiftLeft'] ? 7.2 : 4.4;
+  let ix = move.x, iz = move.z;
+  if (keys['KeyW'] || keys['ArrowUp']) iz -= 1;
+  if (keys['KeyS'] || keys['ArrowDown']) iz += 1;
+  if (keys['KeyA'] || keys['ArrowLeft']) ix -= 1;
+  if (keys['KeyD'] || keys['ArrowRight']) ix += 1;
+  const len = Math.hypot(ix, iz);
+  if (len > 1) { ix /= len; iz /= len; }
+  const sin = Math.sin(player.yaw), cos = Math.cos(player.yaw);
+  const wishX = ix * cos + iz * sin;
+  const wishZ = -ix * sin + iz * cos;
+  const dt = 1 / 60;
+  const nx = player.x + wishX * speed * dt;
+  const nz = player.z + wishZ * speed * dt;
+  if (!blocked(nx, player.y, player.z)) player.x = nx;
+  if (!blocked(player.x, player.y, nz)) player.z = nz;
+  player.x = Math.max(-38, Math.min(38, player.x));
+  player.z = Math.max(-38, Math.min(38, player.z));
+
+  if ((keys['Space'] || jumping) && player.grounded) {
+    player.vy = 6.2;
+    player.grounded = false;
+  }
+  jumping = false;
+  player.vy -= 18 * dt;
+  const ny = player.y + player.vy * dt;
+  if (ny <= 1.65) {
+    player.y = 1.65;
+    player.vy = 0;
+    player.grounded = true;
+  } else player.y = ny;
+
+  camera.position.set(player.x, player.y, player.z);
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = player.yaw;
+  camera.rotation.x = player.pitch;
+
+  let here = 'Plaza';
+  let best = 99;
+  places.forEach((p) => {
+    const d = Math.hypot(p.x - player.x, p.z - player.z);
+    if (d < p.r && d < best) { best = d; here = p.name; }
+  });
+  document.getElementById('place').textContent = here;
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+addEventListener('orientationchange', () => setTimeout(() => dispatchEvent(new Event('resize')), 200));
+
+tick();
+  </script>
+</body>
+</html>
