@@ -213,6 +213,17 @@ export default function Navbar() {
             <a href="/catalog" className="opacity-70 hover:opacity-100">GAMES</a>
             <a href="/developers" className="opacity-70 hover:opacity-100">API</a>
             <a
+              href="/casino"
+              title="18+ games"
+              className="relative inline-flex items-center justify-center w-8 h-8 rounded-lg border border-amber-400/40 text-base hover:bg-amber-400/10"
+              aria-label="18+ casino games"
+            >
+              🎰
+              <span className="absolute -top-1.5 -right-2 text-[8px] font-bold leading-none px-1 py-0.5 rounded bg-amber-400 text-black">
+                18+
+              </span>
+            </a>
+            <a
               href="/claims"
               className="font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-3 py-1 rounded-full whitespace-nowrap"
             >
