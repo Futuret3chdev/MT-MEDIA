@@ -1,6 +1,5 @@
 import './globals.css';
-import Navbar from '@/components/nav/Navbar';
-import Footer from '@/components/footer/Footer';
+import SiteShell from '@/components/nav/SiteShell';
 import { WalletAdapterProvider } from '@/components/wallet/WalletAdapterProvider';
 import MtTracker from '@/components/analytics/MtTracker';
 
@@ -16,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-build="2026-08-18-mt-dash">
+    <html lang="en" data-build="2026-08-18-one-chrome">
       <head>
         {/* Font Awesome for social icons in original brand colors */}
         <link 
@@ -28,11 +27,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
         <WalletAdapterProvider>
           <MtTracker />
-          <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <SiteShell>{children}</SiteShell>
         </WalletAdapterProvider>
       </body>
     </html>

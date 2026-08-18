@@ -240,6 +240,12 @@ const GAME_ALIASES: Record<string, string> = {
   pocket: 'clubpool',
 };
 
+/** Static HTML under /games — safe to iframe. Next app routes are not. */
+export function isStaticPlay(play: string) {
+  if (!play || play.startsWith('http')) return false;
+  return play.includes('/games/') || play.endsWith('.html');
+}
+
 export function getGame(id: string) {
   const key = GAME_ALIASES[id] || id;
   return CATALOG.find((g) => g.id === key);

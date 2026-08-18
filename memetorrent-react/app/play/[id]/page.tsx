@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { CATALOG, getGame } from '@/lib/mt-catalog';
+import { notFound, redirect } from 'next/navigation';
+import { CATALOG, getGame, isStaticPlay } from '@/lib/mt-catalog';
 
 export function generateStaticParams() {
   return CATALOG.map((g) => ({ id: g.id }));
@@ -10,7 +10,9 @@ export default async function PlayGamePage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const g = getGame(id);
   if (!g) notFound();
-  const src = g.play;
+  if (!isStaticPlay(g.play)) {
+    redirect(g.play.startsWith('http') ? `/catalog/${g.id}` : g.play);
+  }
 
   return (
     <div>
@@ -26,7 +28,7 @@ export default async function PlayGamePage({ params }: { params: Promise<{ id: s
         </Link>
       </div>
       <iframe
-        src={src}
+        src={g.play}
         title={g.name}
         className="block w-full border-0 bg-black"
         style={{ height: 'calc(100dvh - 15rem)', minHeight: 520 }}

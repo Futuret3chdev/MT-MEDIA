@@ -1,9 +1,10 @@
 import type { CatalogGame } from '@/lib/mt-catalog';
+import { isStaticPlay } from '@/lib/mt-catalog';
 import PlayLink from '@/components/auth/PlayLink';
 
 export default function GameCard({ game }: { game: CatalogGame }) {
   const external = game.play.startsWith('http');
-  const needsShell = !external && (game.play.includes('/games/') || game.play.endsWith('.html'));
+  const needsShell = isStaticPlay(game.play);
   return (
     <article className="rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/70 flex flex-col">
       <a href={`/catalog/${game.id}`} className="block h-44 bg-black/50 shrink-0">

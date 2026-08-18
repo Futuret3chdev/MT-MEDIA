@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { CATALOG, getGame } from '@/lib/mt-catalog';
+import { CATALOG, getGame, isStaticPlay } from '@/lib/mt-catalog';
 import PlayLink from '@/components/auth/PlayLink';
 
 export function generateStaticParams() {
@@ -16,7 +16,7 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
   const g = getGame(id);
   if (!g) notFound();
   const external = g.play.startsWith('http');
-  const needsShell = !external && (g.play.includes('/games/') || g.play.endsWith('.html'));
+  const needsShell = isStaticPlay(g.play);
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
       <div className="flex flex-wrap gap-4 text-sm">
@@ -38,7 +38,7 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
           <p className="opacity-70 max-w-2xl mb-6">{g.blurb}</p>
           <div className="flex flex-wrap gap-3">
             <PlayLink
-              href={external ? g.play : `/play/${g.id}`}
+              href={external ? g.play : needsShell ? `/play/${g.id}` : g.play}
               external={external}
               className="font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-5 py-2 rounded-full text-sm"
             >
