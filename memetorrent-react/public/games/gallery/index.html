@@ -13,17 +13,43 @@
     #hud {
       position: fixed; top: 0; left: 0; right: 0; z-index: 20;
       display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-      padding: 10px 12px calc(8px + env(safe-area-inset-top));
+      padding: 10px 12px 12px;
       padding-top: max(10px, env(safe-area-inset-top));
-      background: linear-gradient(180deg, rgba(0,0,0,.82), rgba(0,0,0,.35) 80%, transparent);
+      background: linear-gradient(180deg, rgba(4,16,10,.92), rgba(4,16,10,.2));
       font-size: 13px;
     }
-    #hud b { letter-spacing: .04em; }
-    #place { color: var(--mt); font-weight: 700; }
-    #hud a { color: var(--mt); text-decoration: none; margin-left: auto; }
-    #hud button, .fab {
-      background: var(--mt); color: var(--ink); border: 0; border-radius: 999px;
-      padding: 10px 14px; font-weight: 800; cursor: pointer; min-height: 44px;
+    .brand {
+      display: flex; align-items: center; gap: 8px; margin-right: 6px;
+    }
+    .logo {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: radial-gradient(circle at 30% 30%, #5cffb0, #0b8a4e);
+      color: #04140c; font-weight: 900; display: grid; place-items: center;
+      box-shadow: 0 0 16px rgba(25,211,126,.45);
+    }
+    .brand small { display: block; color: var(--mt); font-size: 11px; letter-spacing: .04em; }
+    #hud a.hud-exit {
+      margin-left: auto; color: #c8ffe4; text-decoration: none;
+      border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 8px 12px;
+    }
+    .hud-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+    .hud-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2px; min-width: 58px; min-height: 52px; padding: 6px 8px;
+      border: 1px solid rgba(25,211,126,.35);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(25,211,126,.18), rgba(8,20,14,.75));
+      color: #e9fff4; font-weight: 700; font-size: 10px; letter-spacing: .04em;
+      text-transform: uppercase; cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .hud-btn i { font-style: normal; font-size: 16px; line-height: 1; }
+    .hud-btn:hover, .hud-btn:focus { border-color: #19d37e; background: rgba(25,211,126,.28); }
+    .fab {
+      background: radial-gradient(circle at 30% 20%, #5cffb0, #13b56a);
+      color: var(--ink); border: 0; border-radius: 999px;
+      padding: 12px 16px; font-weight: 800; cursor: pointer; min-height: 48px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
     }
     #hint {
       position: fixed; left: 12px; bottom: calc(16px + env(safe-area-inset-bottom));
@@ -81,21 +107,40 @@
     #rps.open { display: flex; }
     #rps .card { background: #10261c; padding: 18px; border-radius: 16px; text-align: center; width: min(92vw, 320px); }
     #rps button { margin: 6px; }
+    .wallet-box {
+      margin-top: 12px; padding: 12px; border-radius: 14px;
+      border: 1px solid rgba(25,211,126,.35); background: #0b1a12;
+    }
+    .wallet-box.need { border-color: #fbbf24; box-shadow: 0 0 0 2px rgba(251,191,36,.35); }
+    .wallet-box h3 { margin: 0 0 6px; font-size: 14px; }
+    .wallet-box p { margin: 0 0 10px; font-size: 12px; opacity: .8; }
+    .wallet-box .row button { min-height: 42px; }
+    #walletAddr, #walletAddr2 { font-size: 12px; color: var(--mt); margin-top: 8px; word-break: break-all; }
+    .sheet button:not(.ghost):not(.swatch) {
+      background: var(--mt); color: var(--ink); border: 0; border-radius: 10px;
+      padding: 8px 12px; font-weight: 800; cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div id="hud">
-    <b>MT WORLD</b>
-    <span id="place">Plaza</span>
-    <span id="online">1 in world</span>
-    <button id="btnBag">Bag</button>
-    <button id="btnShop">Shop</button>
-    <button id="btnJob">Job</button>
-    <button id="btnDress">Dress</button>
-    <button id="btnHome">House</button>
-    <button id="btnSocial">People</button>
-    <button id="hang">Hang art</button>
-    <a href="/catalog/mt-world-gallery">Catalog</a>
+    <div class="brand">
+      <div class="logo">MT</div>
+      <div>
+        <b>WORLD</b>
+        <small><span id="place">Plaza</span> · <span id="online">1 in world</span></small>
+      </div>
+    </div>
+    <nav class="hud-nav">
+      <button class="hud-btn" id="btnBag"><i>🎒</i><span>Bag</span></button>
+      <button class="hud-btn" id="btnShop"><i>🏪</i><span>Shop</span></button>
+      <button class="hud-btn" id="btnJob"><i>📋</i><span>Job</span></button>
+      <button class="hud-btn" id="btnDress"><i>👕</i><span>Dress</span></button>
+      <button class="hud-btn" id="btnHome"><i>🏠</i><span>House</span></button>
+      <button class="hud-btn" id="btnSocial"><i>👥</i><span>People</span></button>
+      <button class="hud-btn" id="hang"><i>🖼️</i><span>Art</span></button>
+    </nav>
+    <a class="hud-exit" href="/catalog/mt-world-gallery">Exit</a>
   </div>
   <div id="bagBar">Wood 0 · Fish 0 · ¢0</div>
   <button id="act" class="fab">Do</button>
@@ -126,9 +171,18 @@
       </div>
       <div id="sheetShop" class="sheet">
         <b>Plaza shop</b>
-        <p style="opacity:.7;font-size:12px">Free tools. $MT exclusives need a connected wallet.</p>
+        <p style="opacity:.7;font-size:12px">Free tools on the shelf. $MT exclusives unlock in the box below.</p>
         <div id="shopList"></div>
-        <button id="btnWallet" class="ghost" style="margin-top:10px;width:100%">Connect wallet for $MT exclusives</button>
+        <div id="walletBox" class="wallet-box">
+          <h3>Connect wallet</h3>
+          <p id="walletMsg">Use this box to connect. $MT exclusives will not unlock from the world hint.</p>
+          <div class="row">
+            <button type="button" data-w="phantom">Phantom</button>
+            <button type="button" data-w="solflare">Solflare</button>
+            <button type="button" data-w="backpack">Backpack</button>
+          </div>
+          <div id="walletAddr"></div>
+        </div>
       </div>
       <div id="sheetJob" class="sheet">
         <b>Jobs board</b>
@@ -155,6 +209,16 @@
         <div class="sku"><span>$MT villa (exclusive)</span><button id="buyVilla">Villa</button></div>
         <label class="sku"><span>Looking for housemates</span><input type="checkbox" id="seekMates" /></label>
         <div id="homeStatus" style="margin-top:8px;opacity:.8"></div>
+        <div id="walletBox2" class="wallet-box">
+          <h3>Connect wallet</h3>
+          <p id="walletMsg2">Villa is $MT exclusive. Connect here.</p>
+          <div class="row">
+            <button type="button" data-w="phantom">Phantom</button>
+            <button type="button" data-w="solflare">Solflare</button>
+            <button type="button" data-w="backpack">Backpack</button>
+          </div>
+          <div id="walletAddr2"></div>
+        </div>
       </div>
       <div id="sheetSocial" class="sheet">
         <b>People nearby</b>
@@ -427,10 +491,36 @@ window.mtwFeed = () => {
   inv.petHunger = Math.min(100, inv.petHunger + 35);
   saveInv(); paintBag(); toast(inv.pet + ' is happier');
 };
+function paintWallet() {
+  const short = inv.wallet ? inv.wallet.slice(0, 4) + '…' + inv.wallet.slice(-4) : '';
+  ['walletAddr', 'walletAddr2'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = short ? ('Connected · ' + short) : '';
+  });
+  ['walletBox', 'walletBox2'].forEach((id) => {
+    const box = document.getElementById(id);
+    if (box && inv.wallet) box.classList.remove('need');
+  });
+  const msg = document.getElementById('walletMsg');
+  if (msg && inv.wallet) msg.textContent = 'Wallet ready. $MT exclusives are unlocked.';
+}
+function needWallet(sheet, message) {
+  openSheet(sheet);
+  const box = document.getElementById(sheet === 'sheetHome' ? 'walletBox2' : 'walletBox');
+  const msg = document.getElementById(sheet === 'sheetHome' ? 'walletMsg2' : 'walletMsg');
+  if (msg) msg.textContent = message;
+  if (box) {
+    box.classList.add('need');
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
 window.mtwBuy = async (id) => {
   const s = SHOP.find((x) => x.id === id);
   if (!s) return;
-  if (s.mt && !inv.wallet) { toast('Connect wallet for $MT exclusives'); return; }
+  if (s.mt && !inv.wallet) {
+    needWallet('sheetShop', 'Connect a wallet in this box to buy ' + s.name + '.');
+    return;
+  }
   if (s.pet) {
     inv.pets = inv.pets || {};
     inv.pets[s.pet] = true;
@@ -441,13 +531,29 @@ window.mtwBuy = async (id) => {
   if (id === 'rod' || id === 'neon_rod') inv.tool = id;
   saveInv(); paintBag(); toast('Got ' + s.name);
 };
-async function connectWallet() {
-  const p = window.phantom?.solana || window.solflare || window.solana;
-  if (!p?.connect) { toast('Install Phantom or Solflare'); return; }
-  const res = await p.connect();
-  const pk = res?.publicKey || p.publicKey;
-  inv.wallet = pk && (pk.toString ? pk.toString() : String(pk));
-  saveInv(); toast('Wallet ' + (inv.wallet || '').slice(0, 4) + '…');
+async function connectWallet(type) {
+  const p = type === 'solflare' ? window.solflare
+    : type === 'backpack' ? window.backpack
+    : (window.phantom?.solana || window.solana || window.solflare || window.backpack);
+  const msg = document.getElementById('walletMsg');
+  const msg2 = document.getElementById('walletMsg2');
+  if (!p?.connect) {
+    const t = 'Install Phantom, Solflare, or Backpack, then tap the button in this box.';
+    if (msg) msg.textContent = t;
+    if (msg2) msg2.textContent = t;
+    return;
+  }
+  try {
+    const res = await p.connect();
+    const pk = res?.publicKey || p.publicKey;
+    inv.wallet = pk && (pk.toString ? pk.toString() : String(pk));
+    saveInv();
+    paintWallet();
+  } catch (err) {
+    const t = err?.message || 'Wallet closed. Try again in this box.';
+    if (msg) msg.textContent = t;
+    if (msg2) msg2.textContent = t;
+  }
 }
 
 const PETS = {
@@ -725,7 +831,10 @@ document.getElementById('btnDress').onclick = () => openSheet('sheetDress');
 document.getElementById('btnHome').onclick = () => openSheet('sheetHome');
 document.getElementById('btnSocial').onclick = () => openSheet('sheetSocial');
 document.getElementById('lifeClose').onclick = () => { document.getElementById('life').style.display = 'none'; };
-document.getElementById('btnWallet').onclick = connectWallet;
+document.querySelectorAll('[data-w]').forEach((b) => {
+  b.onclick = () => connectWallet(b.getAttribute('data-w'));
+});
+paintWallet();
 document.getElementById('craftMeal').onclick = () => {
   if (inv.fish < 2 || inv.wood < 1) { toast('Need 2 fish and 1 wood'); return; }
   inv.fish -= 2; inv.wood -= 1; inv.food = (inv.food || 0) + 1; saveInv(); paintBag(); toast('Grilled a fish');
@@ -750,7 +859,10 @@ document.getElementById('buyHome').onclick = () => {
   toast('Bought a house here');
 };
 document.getElementById('buyVilla').onclick = () => {
-  if (!inv.wallet) { toast('Wallet for $MT villa'); return; }
+  if (!inv.wallet) {
+    needWallet('sheetHome', 'Connect a wallet in this box to buy the $MT villa.');
+    return;
+  }
   fetch('/api/games/world', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'house', name: inv.name, kind: 'buy', title: inv.name + ' villa', x: player.x, z: player.z }) }).catch(() => {});
   toast('Villa marked');
