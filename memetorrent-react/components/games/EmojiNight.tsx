@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import NightAward from '@/components/games/NightAward';
+import NightWallet from '@/components/games/NightWallet';
 
 type Puzzle = { id: string; emojis: string; hint: string; pack: string };
 
@@ -25,6 +27,7 @@ export default function EmojiNight() {
   const [prizeDraft, setPrizeDraft] = useState('');
   const [noteDraft, setNoteDraft] = useState('');
   const [startDraft, setStartDraft] = useState('');
+  const [meName, setMeName] = useState('');
 
   useEffect(() => {
     fetch('/api/games/emoji', { credentials: 'include' })
@@ -43,6 +46,12 @@ export default function EmojiNight() {
         setPrizeDraft(d.prize || '');
         setNoteDraft(d.note || '');
         setStartDraft(d.starts_at || '');
+      })
+      .catch(() => {});
+    fetch('/api/portal/me', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.user?.username) setMeName(d.user.username);
       })
       .catch(() => {});
   }, []);
@@ -231,6 +240,10 @@ export default function EmojiNight() {
         </div>
       )}
 
+      <div className="mt-6">
+        <NightWallet name={meName} />
+      </div>
+
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm">
         <div>
           Score <span className="text-emerald-400 font-mono text-lg">{score}</span>
@@ -287,6 +300,7 @@ export default function EmojiNight() {
                 <button className="rounded-full bg-emerald-400 text-black font-bold py-2">Save prize</button>
               </form>
             )}
+            {staff && <NightAward />}
           </div>
         )}
       </div>
