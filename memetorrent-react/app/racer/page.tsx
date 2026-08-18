@@ -25,7 +25,7 @@ export default function RacerPage() {
         src="/games/racer3d/index.html"
         title="MT Racer"
         className="w-full border-0 rounded-3xl bg-black"
-        style={{ height: 'min(70vh, 720px)', minHeight: 480 }}
+        style={{ height: 'min(78vh, 820px)', minHeight: 560 }}
         allow="autoplay"
       />
       <div className="mt-6 max-w-md">

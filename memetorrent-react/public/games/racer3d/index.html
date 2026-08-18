@@ -68,12 +68,21 @@ import * as THREE from 'three';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x070b14);
-scene.fog = new THREE.Fog(0x070b14, 18, 90);
-const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.1, 140);
+scene.fog = new THREE.Fog(0x070b14, 28, 120);
+const camera = new THREE.PerspectiveCamera(78, 16 / 9, 0.1, 200);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
+function size() {
+  const w = Math.max(320, window.innerWidth);
+  const h = Math.max(280, window.innerHeight);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+}
+size();
 scene.add(new THREE.HemisphereLight(0x88aacc, 0x081018, 0.85));
 const hemi = scene.children.find((c) => c.isHemisphereLight);
 const sun = new THREE.DirectionalLight(0xffe6b0, 0.55);
@@ -111,6 +120,8 @@ function applyMap(id) {
   segs.forEach((s, i) => {
     s.slab.material.color.setHex(i % 2 ? m.roadA : m.roadB);
     s.line.material.color.setHex(m.line);
+    if (s.line2) s.line2.material.color.setHex(m.line);
+    if (s.line3) s.line3.material.color.setHex(m.line);
     s.l.material.color.setHex(m.rail);
     s.r.material.color.setHex(m.rail);
   });
@@ -166,19 +177,21 @@ paintPicks();
 const road = new THREE.Group();
 scene.add(road);
 const segs = [];
-for (let i = 0; i < 40; i++) {
+for (let i = 0; i < 48; i++) {
   const slab = new THREE.Mesh(
-    new THREE.BoxGeometry(8, 0.2, 6),
+    new THREE.BoxGeometry(18, 0.28, 8),
     new THREE.MeshLambertMaterial({ color: i % 2 ? 0x1a1f2a : 0x151922 })
   );
-  slab.position.set(0, 0, -i * 6);
-  const line = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 2.2), new THREE.MeshBasicMaterial({ color: 0xfff3b0 }));
-  line.position.set(0, 0.12, -i * 6);
-  const l = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.35, 6), new THREE.MeshBasicMaterial({ color: 0x19d37e }));
-  l.position.set(-4.1, 0.2, -i * 6);
-  const r = l.clone(); r.position.x = 4.1;
-  scene.add(slab, line, l, r);
-  segs.push({ slab, line, l, r, z: -i * 6 });
+  slab.position.set(0, 0, -i * 8);
+  const line = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 3), new THREE.MeshBasicMaterial({ color: 0xfff3b0 }));
+  line.position.set(0, 0.16, -i * 8);
+  const line2 = line.clone(); line2.position.x = -3;
+  const line3 = line.clone(); line3.position.x = 3;
+  const l = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.5, 8), new THREE.MeshBasicMaterial({ color: 0x19d37e }));
+  l.position.set(-9.1, 0.28, -i * 8);
+  const r = l.clone(); r.position.x = 9.1;
+  scene.add(slab, line, line2, line3, l, r);
+  segs.push({ slab, line, line2, line3, l, r, z: -i * 8 });
 }
 
 function building(x, z, h, c) {
@@ -190,8 +203,8 @@ function building(x, z, h, c) {
 const props = [];
 for (let i = 0; i < 24; i++) {
   const z = -i * 10 - 8;
-  props.push(building(-8 - Math.random() * 6, z, 3 + Math.random() * 10, 0x12201a));
-  props.push(building(8 + Math.random() * 6, z, 3 + Math.random() * 10, 0x1a1530));
+  props.push(building(-12 - Math.random() * 6, z, 3 + Math.random() * 10, 0x12201a));
+  props.push(building(12 + Math.random() * 6, z, 3 + Math.random() * 10, 0x1a1530));
 }
 
 function carMesh(color, kit = {}) {
@@ -248,7 +261,7 @@ function spawnTraffic() {
   const cols = [0xfb7185, 0x38bdf8, 0xfbbf24, 0xa78bfa];
   for (let i = 0; i < 8; i++) {
     const m = carMesh(cols[i % cols.length]);
-    const o = { mesh: m, x: [-2.2, 0, 2.2][i % 3], z: -20 - i * 14, spd: 8 + Math.random() * 6 };
+    const o = { mesh: m, x: [-4.4, 0, 4.4][i % 3], z: -20 - i * 14, spd: 8 + Math.random() * 6 };
     traffic.push(o);
   }
 }
@@ -268,6 +281,7 @@ let playing = false, dist = 0, mt = 0, nitro = 0, last = performance.now();
 const engine = document.getElementById('engine');
 
 document.getElementById('go').onclick = () => {
+  size();
   applyMap(mapId);
   if (player.mesh) scene.remove(player.mesh);
   player.mesh = carMesh(carColor, kitOn);
@@ -275,7 +289,7 @@ document.getElementById('go').onclick = () => {
   spawnTraffic();
   coins.forEach((c) => scene.remove(c.mesh));
   coins.length = 0;
-  for (let i = 0; i < 12; i++) makeCoin(-15 - i * 18, [-2.2, 0, 2.2][i % 3]);
+  for (let i = 0; i < 12; i++) makeCoin(-15 - i * 18, [-4.4, 0, 4.4][i % 3]);
   dist = 0; mt = 0; nitro = 0; playing = true;
   document.getElementById('menu').style.display = 'none';
   engine.volume = 0.28; engine.play().catch(() => {});
@@ -297,7 +311,7 @@ function tick(now) {
     if (keys['KeyA'] || keys['ArrowLeft']) player.vx -= 18 * dt;
     if (keys['KeyD'] || keys['ArrowRight']) player.vx += 18 * dt;
     player.vx *= 0.88;
-    player.x = Math.max(-2.8, Math.min(2.8, player.x + player.vx * dt));
+    player.x = Math.max(-6.2, Math.min(6.2, player.x + player.vx * dt));
     const gas = keys['KeyW'] || keys['ArrowUp'] ? 1 : 0.35;
     if (keys['Space'] && mt > 0) { nitro = 2.2; mt -= 4 * dt; beep(220); }
     if (nitro > 0) nitro -= dt;
@@ -306,9 +320,11 @@ function tick(now) {
     dist += dz * 4;
     segs.forEach((s) => {
       s.z += dz;
-      if (s.z > 8) s.z -= 40 * 6;
+      if (s.z > 10) s.z -= 48 * 8;
       s.slab.position.z = s.z;
       s.line.position.z = s.z;
+      if (s.line2) s.line2.position.z = s.z;
+      if (s.line3) s.line3.position.z = s.z;
       s.l.position.z = s.z;
       s.r.position.z = s.z;
     });
@@ -318,7 +334,7 @@ function tick(now) {
     });
     traffic.forEach((t) => {
       t.z += (player.speed - t.spd) * dt;
-      if (t.z > 12) { t.z -= 120; t.x = [-2.2, 0, 2.2][Math.floor(Math.random() * 3)]; }
+      if (t.z > 12) { t.z -= 120; t.x = [-4.4, 0, 4.4][Math.floor(Math.random() * 3)]; }
       t.mesh.position.set(t.x, 0.35, t.z);
       if (Math.abs(t.x - player.x) < 1.1 && Math.abs(t.z - player.z) < 2.1) {
         player.speed *= 0.45;
@@ -338,25 +354,21 @@ function tick(now) {
     });
     player.mesh.position.set(player.x, 0.35, 0);
     player.mesh.rotation.z = -player.vx * 0.03;
-    camera.position.set(player.x * 0.35, 3.2, 6.4);
-    camera.lookAt(player.x * 0.2, 0.6, -8);
+    camera.position.set(player.x * 0.25, 2.15, 5.4);
+    camera.lookAt(player.x * 0.2, 0.15, -22);
     engine.playbackRate = 0.85 + player.speed / 80;
     document.getElementById('spd').textContent = Math.round(player.speed * 9) + ' KM/H';
     document.getElementById('dist').textContent = Math.round(dist) + ' m · $MT ' + Math.floor(mt);
     if (leftBehind()) { /* keep running */ }
   } else {
-    camera.position.set(0, 4, 8);
-    camera.lookAt(0, 0.4, -10);
+    camera.position.set(0, 2.4, 6);
+    camera.lookAt(0, 0.2, -20);
   }
   renderer.render(scene, camera);
   requestAnimationFrame(tick);
 }
 function leftBehind() { return false; }
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
+addEventListener('resize', size);
 requestAnimationFrame(tick);
 
 addEventListener('visibilitychange', () => {
