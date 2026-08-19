@@ -15,7 +15,7 @@ export default function SoftwareSecurityPage() {
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mt-4 mb-2">Software · Security</div>
       <h1 className="text-4xl font-semibold tracking-tight mb-4">Security software.</h1>
       <p className="opacity-70 mb-10 max-w-2xl">
-        Shield is the core. Beside it: Vault Lock, Seed Guard, Net Watch, Key Ring — live in this browser. No third-party antivirus brand. Keys stay on the device.
+        Shield plus Vault Lock, Seed Guard, Net Watch, Key Ring, Phish Scan, Clip Guard, Sign Desk, and Allow List. Live in this browser. Keys stay on the device.
       </p>
       <SecuritySuite />
     </div>

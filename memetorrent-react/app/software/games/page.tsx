@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import GameSuite from '@/components/software/GameSuite';
 
 const APK = '/downloads/MTGames.apk';
 
@@ -29,10 +30,10 @@ export default function SoftwareGamesPage() {
       </div>
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mt-4 mb-2">Software · Games</div>
       <h1 className="text-4xl sm:text-5xl font-semibold tracking-[-1.6px] mb-4">
-        Game software you can download.
+        Game software you can use.
       </h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        Download the Android client with a developer license. iOS, Windows and macOS builds follow.
+        Browser tools for nights and builds — skin lab, score book, pads, covers. Android client still sits below with a license.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -82,6 +83,10 @@ export default function SoftwareGamesPage() {
           </div>
         ))}
       </div>
+
+      <h2 className="text-2xl font-semibold mt-14 mb-3">Tools in this browser.</h2>
+      <p className="opacity-70 mb-6 max-w-2xl text-sm">Open a card. Nothing uploads. Use them on a night or while you build.</p>
+      <GameSuite />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-type Tool = 'shield' | 'vaultlock' | 'seedguard' | 'netwatch' | 'keyring';
+type Tool = 'shield' | 'vaultlock' | 'seedguard' | 'netwatch' | 'keyring' | 'phish' | 'clip' | 'signdesk' | 'allowlist';
 
 const KNOWN = [
   'memetorrent.futuret3ch.com.au',
@@ -46,7 +46,7 @@ export default function SecuritySuite() {
   useEffect(() => {
     setOrigin(location.host);
     const h = location.hash.replace('#', '') as Tool;
-    if (['shield', 'vaultlock', 'seedguard', 'netwatch', 'keyring'].includes(h)) setTool(h);
+    if (['shield', 'vaultlock', 'seedguard', 'netwatch', 'keyring', 'phish', 'clip', 'signdesk', 'allowlist'].includes(h)) setTool(h);
   }, []);
 
   function pick(id: Tool) {
@@ -60,6 +60,10 @@ export default function SecuritySuite() {
     { id: 'seedguard', name: 'Seed Guard', tag: '$MT exclusive', desc: 'Offline phrase check and 3-share split. Words never leave this tab.' },
     { id: 'netwatch', name: 'Net Watch', tag: '$MT exclusive', desc: 'Check an RPC or claim URL against MT hosts before you sign.' },
     { id: 'keyring', name: 'Key Ring', tag: '$MT exclusive', desc: 'Named device keys in this browser only. Switch the active ring.' },
+    { id: 'phish', name: 'Phish Scan', tag: 'Live', desc: 'Paste a DM or claim. Flags seed-asks, fake MT hosts, and drain language.' },
+    { id: 'clip', name: 'Clip Guard', tag: 'Live', desc: 'Read the clipboard here. Warn if an address swapped after you copied yours.' },
+    { id: 'signdesk', name: 'Sign Desk', tag: 'Live', desc: 'Paste a message or payload before you sign. Stays on this device.' },
+    { id: 'allowlist', name: 'Allow List', tag: 'Live', desc: 'Hosts you trust for $MT. Check a new URL against your own list.' },
   ];
 
   return (
@@ -93,6 +97,10 @@ export default function SecuritySuite() {
         {tool === 'seedguard' && <SeedGuard />}
         {tool === 'netwatch' && <NetWatch origin={origin} />}
         {tool === 'keyring' && <KeyRing />}
+        {tool === 'phish' && <PhishScan />}
+        {tool === 'clip' && <ClipGuard />}
+        {tool === 'signdesk' && <SignDesk />}
+        {tool === 'allowlist' && <AllowList />}
       </div>
     </div>
   );
@@ -361,6 +369,164 @@ function KeyRing() {
         ))}
       </ul>
       {!keys.length && <p className="text-sm opacity-50">No keys on this device yet.</p>}
+    </div>
+  );
+}
+
+function PhishScan() {
+  const [text, setText] = useState('');
+  const [hits, setHits] = useState<string[]>([]);
+
+  function scan() {
+    const t = text.toLowerCase();
+    const out: string[] = [];
+    if (/\b(seed|mnemonic|recovery phrase|12 words|24 words)\b/.test(t)) out.push('Asks for a seed or recovery phrase. Never send that.');
+    if (/\b(verify wallet|connect to claim|airdrop|free \$mt)\b/.test(t)) out.push('Claim / airdrop language. Open Claim on this site only.');
+    if (/\b(private key|export key|keystore)\b/.test(t)) out.push('Asks for a private key. Stop.');
+    const urls = text.match(/https?:\/\/[^\s]+/gi) || text.match(/\b[a-z0-9.-]+\.(com|au|app|io|xyz|net)\b/gi) || [];
+    urls.forEach((u) => {
+      const h = hostOf(u);
+      if (nearSpoof(h)) out.push(h + ' looks like a spoof of an MT name.');
+      else if (h && !KNOWN.some((k) => h === k || h.endsWith('.' + k))) out.push(h + ' is not an MT host.');
+    });
+    if (!out.length) out.push('No seed-ask or spoof host found. Still do not sign off this site.');
+    setHits(out);
+  }
+
+  return (
+    <div>
+      <h3 className="text-lg font-semibold mb-2">Phish Scan</h3>
+      <p className="text-sm opacity-70 mb-4">Paste a DM, tweet, or claim. Nothing is uploaded.</p>
+      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 mb-3 text-sm" placeholder="Paste the message here" />
+      <button type="button" onClick={scan} className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2 mb-3">Scan here</button>
+      <ul className="space-y-2 text-sm">
+        {hits.map((h) => <li key={h} className="rounded-xl border border-white/10 px-3 py-2">{h}</li>)}
+      </ul>
+    </div>
+  );
+}
+
+function ClipGuard() {
+  const [mine, setMine] = useState('');
+  const [clip, setClip] = useState('');
+  const [verdict, setVerdict] = useState('');
+
+  useEffect(() => {
+    try { setMine(localStorage.getItem('mt-game-wallet') || ''); } catch { /* */ }
+  }, []);
+
+  async function readClip() {
+    try {
+      const t = await navigator.clipboard.readText();
+      setClip(t.trim());
+      const a = t.trim();
+      if (!a) { setVerdict('Clipboard is empty.'); return; }
+      if (mine && a !== mine && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a)) {
+        setVerdict('Address in the clipboard is not your last connected wallet. Possible swap. Paste yours again from the wallet app.');
+        return;
+      }
+      if (/seed|mnemonic|phrase/i.test(a)) {
+        setVerdict('Clipboard looks like a phrase. Do not paste it into chat.');
+        return;
+      }
+      setVerdict(mine && a === mine ? 'Matches your last connected wallet.' : 'Read. Compare it to your wallet app before you send.');
+    } catch {
+      setVerdict('Clipboard blocked. Paste into the box instead.');
+    }
+  }
+
+  return (
+    <div>
+      <h3 className="text-lg font-semibold mb-2">Clip Guard</h3>
+      <p className="text-sm opacity-70 mb-4">Malware swaps addresses in the clipboard. Check here before you send.</p>
+      <input value={mine} onChange={(e) => setMine(e.target.value)} placeholder="Your address" className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 mb-2 font-mono text-sm" />
+      <input value={clip} onChange={(e) => setClip(e.target.value)} placeholder="Or paste clipboard here" className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 mb-3 font-mono text-sm" />
+      <div className="flex gap-2 mb-3">
+        <button type="button" onClick={readClip} className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2">Read clipboard</button>
+        <button type="button" onClick={() => {
+          if (!clip) { setVerdict('Nothing to compare.'); return; }
+          setVerdict(mine && clip.trim() === mine.trim() ? 'Match.' : 'Does not match your address.');
+        }} className="rounded-full border border-white/20 px-4 py-2 text-sm">Compare paste</button>
+      </div>
+      <p className="text-sm">{verdict}</p>
+    </div>
+  );
+}
+
+function SignDesk() {
+  const [raw, setRaw] = useState('');
+  const [out, setOut] = useState('');
+
+  function check() {
+    const t = raw.trim();
+    if (!t) { setOut('Empty.'); return; }
+    const words = t.split(/\s+/);
+    const flags: string[] = [];
+    flags.push(t.length + ' characters · ' + words.length + ' tokens.');
+    if (words.length === 12 || words.length === 24) flags.push('Looks like a seed. Do not sign or send this.');
+    if (/transfer|approve|setauthority|closeaccount/i.test(t)) flags.push('Instruction language — treat as a spend.');
+    if (/^[0-9a-fA-F]+$/.test(t) && t.length > 64) flags.push('Long hex payload. Decode in a wallet you trust, not a random site.');
+    if (/^[1-9A-HJ-NP-Za-km-z]{32,88}$/.test(t)) flags.push('Looks like base58. Confirm the address in your wallet.');
+    flags.push('This desk does not sign. It only reads locally.');
+    setOut(flags.join(' '));
+  }
+
+  return (
+    <div>
+      <h3 className="text-lg font-semibold mb-2">Sign Desk</h3>
+      <p className="text-sm opacity-70 mb-4">Paste a message or payload before you approve it in the wallet.</p>
+      <textarea value={raw} onChange={(e) => setRaw(e.target.value)} rows={5} className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 mb-3 font-mono text-sm" />
+      <button type="button" onClick={check} className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2 mb-3">Check here</button>
+      <p className="text-sm opacity-80">{out}</p>
+    </div>
+  );
+}
+
+function AllowList() {
+  const [list, setList] = useState<string[]>([]);
+  const [add, setAdd] = useState('');
+  const [check, setCheck] = useState('');
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    try { setList(JSON.parse(localStorage.getItem('mt-allow-hosts') || '[]')); } catch { /* */ }
+  }, []);
+
+  function save(next: string[]) {
+    setList(next);
+    try { localStorage.setItem('mt-allow-hosts', JSON.stringify(next)); } catch { /* */ }
+  }
+
+  return (
+    <div>
+      <h3 className="text-lg font-semibold mb-2">Allow List</h3>
+      <p className="text-sm opacity-70 mb-4">Hosts you personally trust for $MT. Stored here only.</p>
+      <div className="flex gap-2 mb-3">
+        <input value={add} onChange={(e) => setAdd(e.target.value)} placeholder="host.example" className="flex-1 rounded-xl bg-black/40 border border-white/15 px-3 py-2" />
+        <button type="button" onClick={() => {
+          const h = hostOf(add);
+          if (!h) return;
+          save(Array.from(new Set([...list, h])));
+          setAdd('');
+        }} className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2">Add</button>
+      </div>
+      <div className="flex gap-2 mb-3">
+        <input value={check} onChange={(e) => setCheck(e.target.value)} placeholder="URL to test" className="flex-1 rounded-xl bg-black/40 border border-white/15 px-3 py-2" />
+        <button type="button" onClick={() => {
+          const h = hostOf(check);
+          const ok = list.some((k) => h === k || h.endsWith('.' + k)) || KNOWN.some((k) => h === k || h.endsWith('.' + k));
+          setMsg(ok ? h + ' is allowed or an MT host.' : h + ' is not on your list.');
+        }} className="rounded-full border border-white/20 px-4 py-2 text-sm">Test</button>
+      </div>
+      <p className="text-sm mb-3">{msg}</p>
+      <ul className="space-y-1 text-sm font-mono">
+        {list.map((h) => (
+          <li key={h} className="flex justify-between gap-2">
+            <span>{h}</span>
+            <button type="button" className="text-xs opacity-50" onClick={() => save(list.filter((x) => x !== h))}>drop</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

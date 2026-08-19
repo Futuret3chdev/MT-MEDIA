@@ -4,7 +4,7 @@ const sections = [
   {
     href: '/software/games',
     title: 'Games',
-    desc: 'Download the MT game client. Android first. Sign up as a developer and get a free build license.',
+    desc: 'Skin lab, score book, pads, cover stamp, party codes — plus the Android client.',
   },
   {
     href: '/studio',
@@ -24,7 +24,7 @@ const sections = [
   {
     href: '/software/security',
     title: 'Security',
-    desc: 'Shield plus Vault Lock, Seed Guard, Net Watch, Key Ring — live on this device.',
+    desc: 'Shield, vault, seed, net, keys, plus Phish Scan, Clip Guard, Sign Desk, Allow List.',
   },
 ];
 
