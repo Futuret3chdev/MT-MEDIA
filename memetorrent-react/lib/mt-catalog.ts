@@ -29,7 +29,7 @@ export const CATALOG: CatalogGame[] = [
     status: 'live',
     play: '/games/gallery/index.html',
     img: '/games/covers/gallery.jpg',
-    blurb: 'Live MT WORLD: other players, dress-up, pets (free cub + $MT dragons), chop, fish, jobs, houses, friends, and spaced business stands. Phone ready.',
+    blurb: 'Dusk plaza, chase cam so you see your skin. Shop spends ¢. Mint token head, gold cape, pets, jobs, houses.',
   },
   {
     id: 'soccer-pro',
@@ -220,9 +220,9 @@ export const CATALOG: CatalogGame[] = [
     name: 'MT Jump',
     kind: 'arcade',
     status: 'live',
-    play: 'https://admin.futuret3ch.com.au/static/games/mt-mario/index.html?v=7',
-    img: '/games/covers/mtjump.jpg',
-    blurb: 'Platformer party mini-game. /mtjump',
+    play: '/mtjump',
+    img: '/games/covers/mtjump.jpg?v=2',
+    blurb: 'Mint token runner. Three worlds. Skins and shop buy with coins. Air hop, dash, springs, ? blocks.',
   },
   {
     id: 'mtgames',

@@ -149,6 +149,7 @@
       <button class="hud-btn" id="btnShop"><i>🏪</i><span>Shop</span></button>
       <button class="hud-btn" id="btnJob"><i>📋</i><span>Job</span></button>
       <button class="hud-btn" id="btnDress"><i>👕</i><span>Dress</span></button>
+      <button class="hud-btn" id="btnCam"><i>📷</i><span>Chase</span></button>
       <button class="hud-btn" id="btnHome"><i>🏠</i><span>House</span></button>
       <button class="hud-btn" id="btnSocial"><i>👥</i><span>People</span></button>
       <button class="hud-btn" id="hang"><i>🖼️</i><span>Art</span></button>
@@ -291,8 +292,8 @@ if (coarse) hint.textContent = 'Stick walk · drag look · Jump · Do to chop, f
 else hint.textContent = 'Woods east of the gallery · pond west of the studio · E / Do with an axe or rod';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87b8e8);
-scene.fog = new THREE.Fog(0x87b8e8, 28, 90);
+scene.background = new THREE.Color(0x1b3b4a);
+scene.fog = new THREE.Fog(0x1b3b4a, 36, 110);
 
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 140);
 const renderer = new THREE.WebGLRenderer({ antialias: !coarse, powerPreference: 'high-performance' });
@@ -301,9 +302,12 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = !coarse;
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x3d5a32, 0.95));
-const sun = new THREE.DirectionalLight(0xfff2c8, 1.05);
-sun.position.set(20, 30, 12);
+scene.add(new THREE.HemisphereLight(0x9ad4ff, 0x143322, 0.7));
+const sun = new THREE.DirectionalLight(0xffc48a, 0.85);
+sun.position.set(18, 26, 10);
+const fill = new THREE.PointLight(0x19d37e, 1.1, 28);
+fill.position.set(0, 4, 0);
+scene.add(fill);
 if (!coarse) { sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); }
 scene.add(sun);
 
@@ -340,17 +344,32 @@ function wall(x1, z1, x2, z2, h, color) {
 }
 
 // Ground
-box(80, 1, 80, 0, -0.5, 0, 0x4aa14a, { ground: true });
-box(80, 0.2, 80, 0, -1.1, 0, 0x6b4423, { ground: true });
+box(110, 1, 110, 0, -0.5, 0, 0x2f6b3c, { ground: true });
+box(110, 0.2, 110, 0, -1.1, 0, 0x4a2f18, { ground: true });
 
 // Paths
-box(4, 0.08, 36, 0, 0.04, 0, 0xc2a36b, { ghost: true, ground: true });
-box(36, 0.08, 4, 0, 0.04, 0, 0xc2a36b, { ghost: true, ground: true });
+box(5, 0.08, 42, 0, 0.04, 0, 0x1a3d2a, { ghost: true, ground: true });
+box(42, 0.08, 5, 0, 0.04, 0, 0x1a3d2a, { ghost: true, ground: true });
+box(18, 0.09, 18, 0, 0.05, 0, 0x163226, { ghost: true, ground: true });
 
-// Plaza monument
-box(1.4, 1.4, 1.4, 0, 0.7, 0, 0x19d37e, { ghost: true });
-box(0.5, 2.2, 0.5, 0, 2.2, 0, 0x0d3d24, { ghost: true });
+// Plaza monument — $MT hex token
+(function () {
+  const g = new THREE.Group();
+  const hex = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.28, 6), new THREE.MeshLambertMaterial({ color: 0x19d37e }));
+  hex.rotation.y = Math.PI / 6;
+  hex.position.y = 1.35;
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.08, 8, 6), new THREE.MeshLambertMaterial({ color: 0xfbbf24 }));
+  rim.rotation.x = Math.PI / 2; rim.rotation.z = Math.PI / 6; rim.position.y = 1.35;
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 1.3, 8), new THREE.MeshLambertMaterial({ color: 0x0d3d24 }));
+  pole.position.y = 0.65;
+  g.add(pole, hex, rim);
+  scene.add(g);
+})();
 places.push({ name: 'Plaza', x: 0, z: 0, r: 6 });
+[-10, 10].forEach((x) => {
+  const lamp = box(0.12, 2.4, 0.12, x, 1.2, x > 0 ? -8 : 8, 0x111827, { ghost: true });
+  box(0.35, 0.35, 0.35, x, 2.5, x > 0 ? -8 : 8, 0xfbbf24, { ghost: true });
+});
 
 function wallWithDoor(axis, pos, span, center, color, h, t) {
   const gap = 2.5;
@@ -547,6 +566,8 @@ window.mtwPet = (kind) => {
 const SHOP = [
   { id: 'axe', name: 'Wooden axe', cost: 0, mt: false },
   { id: 'rod', name: 'Fishing rod', cost: 0, mt: false },
+  { id: 'cape', name: 'Gold cape', cost: 20, mt: false, acc: 'cape' },
+  { id: 'token_head', name: 'Mint token head', cost: 15, mt: false, body: '19d37e' },
   { id: 'gold_axe', name: 'Gold axe', cost: 5, mt: true },
   { id: 'neon_rod', name: 'Neon rod', cost: 5, mt: true },
   { id: 'bar_kit', name: 'Bar license', cost: 8, mt: true },
@@ -607,6 +628,8 @@ window.mtwBuy = async (id) => {
     needWallet('sheetShop', 'Connect a wallet in this box to buy ' + s.name + '.');
     return;
   }
+  if (s.cost && inv.coins < s.cost) { toast('Need ' + s.cost + '¢'); return; }
+  if (s.cost) inv.coins -= s.cost;
   if (s.pet) {
     inv.pets = inv.pets || {};
     inv.pets[s.pet] = true;
@@ -614,9 +637,11 @@ window.mtwBuy = async (id) => {
     inv.petHunger = 100;
     buildPet();
   } else inv[s.id] = true;
+  if (s.acc) inv.acc = s.acc;
+  if (s.body) inv.body = s.body;
   if (id === 'axe' || id === 'gold_axe') inv.tool = id;
   if (id === 'rod' || id === 'neon_rod') inv.tool = id;
-  saveInv(); paintBag(); toast('Got ' + s.name);
+  saveInv(); paintBag(); rebuildMe(); toast('Got ' + s.name);
 };
 async function connectWallet(type) {
   const p = type === 'solflare' ? window.solflare
@@ -709,36 +734,47 @@ const others = new Map();
 function avatarMesh(p) {
   const g = new THREE.Group();
   const skin = parseInt(p.body || 'e8c39e', 16);
-  const cloth = parseInt(p.shirt || '1a3d2a', 16);
-  const pants = 0x1e293b;
+  const cloth = parseInt(p.shirt || '19d37e', 16);
+  const pants = 0x0f172a;
   const mat = (c) => new THREE.MeshLambertMaterial({ color: c });
-  const hip = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.22, 0.32), mat(pants));
-  hip.position.y = 0.62;
-  const ll = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.58, 0.22), mat(pants));
-  ll.position.set(-0.14, 0.3, 0);
-  const rl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.58, 0.22), mat(pants));
-  rl.position.set(0.14, 0.3, 0);
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.72, 0.36), mat(cloth));
-  torso.position.y = 1.12;
-  const la = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.16), mat(skin));
-  la.position.set(-0.42, 1.05, 0);
-  const ra = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.16), mat(skin));
-  ra.position.set(0.42, 1.05, 0);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), mat(skin));
-  head.position.y = 1.68;
-  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.27, 10, 8), mat(0x1c1917));
-  hair.position.y = 1.78;
-  hair.scale.set(1, 0.7, 1);
-  g.add(hip, ll, rl, torso, la, ra, head, hair);
+  const hip = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.3), mat(pants));
+  hip.position.y = 0.58;
+  const ll = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.42, 4, 6), mat(pants));
+  ll.position.set(-0.13, 0.32, 0);
+  const rl = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.42, 4, 6), mat(pants));
+  rl.position.set(0.13, 0.32, 0);
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.68, 0.34), mat(cloth));
+  torso.position.y = 1.08;
+  const la = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.42, 4, 6), mat(skin));
+  la.position.set(-0.38, 1.02, 0);
+  const ra = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.42, 4, 6), mat(skin));
+  ra.position.set(0.38, 1.02, 0);
+  const token = p.body === '19d37e' || p.acc === 'token';
+  const head = token
+    ? new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.16, 6), mat(0x19d37e))
+    : new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), mat(skin));
+  head.position.y = 1.64;
+  if (token) head.rotation.y = Math.PI / 6;
+  g.add(hip, ll, rl, torso, la, ra, head);
+  if (token) {
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.035, 6, 6), mat(0xfbbf24));
+    rim.position.y = 1.64; rim.rotation.x = Math.PI / 2; rim.rotation.z = Math.PI / 6;
+    g.add(rim);
+  }
   if (p.hat) {
-    const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.2, 10), mat(0x111));
-    hat.position.y = 1.96;
+    const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.16, 8), mat(0xfbbf24));
+    hat.position.y = 1.9;
     g.add(hat);
   }
   if (p.acc === 'heart') {
     const goggles = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 10), mat(0xfb7185));
-    goggles.position.set(-0.09, 1.7, 0.2);
+    goggles.position.set(-0.09, 1.66, 0.2);
     g.add(goggles);
+  }
+  if (p.acc === 'cape') {
+    const cape = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), mat(0xfbbf24));
+    cape.position.set(0, 1.05, -0.22); cape.rotation.x = 0.2;
+    g.add(cape);
   }
   const tag = document.createElement('div');
   tag.textContent = p.username || 'Guest';
@@ -748,6 +784,19 @@ function avatarMesh(p) {
   scene.add(g);
   return g;
 }
+
+let chaseCam = true;
+let meMesh = null;
+function rebuildMe() {
+  if (meMesh) {
+    scene.remove(meMesh);
+    if (meMesh.userData.tag) meMesh.userData.tag.remove();
+  }
+  meMesh = avatarMesh({
+    body: inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc, username: inv.name || 'You'
+  });
+}
+rebuildMe();
 
 const CS = 32;
 const chunks = new Map();
@@ -1171,19 +1220,19 @@ function openSheet(id) {
   if (id === 'sheetDress') paintDress();
 }
 function paintDress() {
-  const skins = ['e8c39e', '8d5524', 'c68642', 'f1c27d', 'ffdbac'];
-  const shirts = ['1a3d2a', '1d4ed8', 'b91c1c', '111827', 'f59e0b', '19d37e'];
+  const skins = ['e8c39e', '8d5524', 'c68642', 'f1c27d', 'ffdbac', '19d37e', '38bdf8', 'fb7185'];
+  const shirts = ['19d37e', '1a3d2a', '1d4ed8', 'b91c1c', '111827', 'f59e0b', '7c3aed'];
   const sk = document.getElementById('skinRow');
   const sh = document.getElementById('shirtRow');
-  if (sk) sk.innerHTML = skins.map((c) => `<div class="swatch" style="background:#${c}" onclick="window.mtwSkin('${c}')"></div>`).join('');
-  if (sh) sh.innerHTML = shirts.map((c) => `<div class="swatch" style="background:#${c}" onclick="window.mtwShirt('${c}')"></div>`).join('');
+  if (sk) sk.innerHTML = skins.map((c) => `<div class="swatch" style="background:#${c};outline:${inv.body===c?'3px solid #19d37e':'none'}" onclick="window.mtwSkin('${c}')"></div>`).join('');
+  if (sh) sh.innerHTML = shirts.map((c) => `<div class="swatch" style="background:#${c};outline:${inv.shirt===c?'3px solid #19d37e':'none'}" onclick="window.mtwShirt('${c}')"></div>`).join('');
   const hat = document.getElementById('hatOn');
   const acc = document.getElementById('accHeart');
   if (hat) hat.checked = !!inv.hat;
   if (acc) acc.checked = inv.acc === 'heart';
 }
-window.mtwSkin = (c) => { inv.body = c; saveInv(); toast('Skin saved — others will see it'); };
-window.mtwShirt = (c) => { inv.shirt = c; saveInv(); toast('Shirt saved'); };
+window.mtwSkin = (c) => { inv.body = c; saveInv(); rebuildMe(); paintDress(); toast('Skin on you now'); };
+window.mtwShirt = (c) => { inv.shirt = c; saveInv(); rebuildMe(); paintDress(); toast('Shirt on you now'); };
 function paintSocial() {
   const near = nearestPlayer();
   const el = document.getElementById('nearList');
@@ -1268,8 +1317,13 @@ document.getElementById('craftMeal').onclick = () => {
   if (inv.fish < 2 || inv.wood < 1) { toast('Need 2 fish and 1 wood'); return; }
   inv.fish -= 2; inv.wood -= 1; inv.food = (inv.food || 0) + 1; saveInv(); paintBag(); toast('Grilled a fish');
 };
-document.getElementById('hatOn').onchange = (e) => { inv.hat = e.target.checked; saveInv(); };
-document.getElementById('accHeart').onchange = (e) => { inv.acc = e.target.checked ? 'heart' : 'none'; saveInv(); };
+document.getElementById('hatOn').onchange = (e) => { inv.hat = e.target.checked; saveInv(); rebuildMe(); };
+document.getElementById('accHeart').onchange = (e) => { inv.acc = e.target.checked ? 'heart' : 'none'; saveInv(); rebuildMe(); };
+document.getElementById('btnCam').onclick = () => {
+  chaseCam = !chaseCam;
+  document.querySelector('#btnCam span').textContent = chaseCam ? 'Chase' : 'Eyes';
+  toast(chaseCam ? 'Chase cam — you can see your skin' : 'First person');
+};
 document.getElementById('jobWood').onclick = () => { job = 'wood'; localStorage.setItem('mtw-job', job); toast('Bring 8 wood back to the plaza shop'); };
 document.getElementById('jobFish').onclick = () => { job = 'fish'; localStorage.setItem('mtw-job', job); toast('Bring 6 fish back to the plaza shop'); };
 document.getElementById('jobBar').onclick = () => { job = 'bar'; localStorage.setItem('mtw-job', job); toast('Serve at a bar or open yours'); };
@@ -1588,10 +1642,31 @@ function tick() {
     inv.fish -= 6; inv.coins += 16; job = ''; localStorage.removeItem('mtw-job'); saveInv(); paintBag(); toast('Fisher paid +16¢');
   }
 
-  camera.position.set(player.x, player.y, player.z);
-  camera.rotation.order = 'YXZ';
-  camera.rotation.y = player.yaw;
-  camera.rotation.x = player.pitch;
+  if (meMesh) {
+    meMesh.position.set(player.x, 0, player.z);
+    meMesh.rotation.y = player.yaw + Math.PI;
+    meMesh.visible = chaseCam;
+    if (meMesh.userData.tag) meMesh.userData.tag.style.display = chaseCam ? 'block' : 'none';
+  }
+  if (chaseCam) {
+    const back = 4.4;
+    camera.position.set(
+      player.x + Math.sin(player.yaw) * back,
+      player.y + 0.55,
+      player.z + Math.cos(player.yaw) * back
+    );
+    camera.lookAt(player.x, player.y - 0.25, player.z);
+    if (meMesh.userData.tag) {
+      const v = meMesh.position.clone(); v.y += 2.05; v.project(camera);
+      meMesh.userData.tag.style.left = ((v.x * 0.5 + 0.5) * innerWidth) + 'px';
+      meMesh.userData.tag.style.top = ((-v.y * 0.5 + 0.5) * innerHeight) + 'px';
+    }
+  } else {
+    camera.position.set(player.x, player.y, player.z);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = player.yaw;
+    camera.rotation.x = player.pitch;
+  }
 
   let here = 'Plaza';
   let best = 99;

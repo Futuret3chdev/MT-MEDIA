@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>MT Jump</title>
+  <style>
+    :root {
+      --bg: #06140e; --accent: #19d37e; --gold: #fbbf24; --text: #e8fff4; --muted: #8fb9a4;
+      --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; width: 100%; height: 100%; height: 100dvh; background: #04100b; color: var(--text);
+      font-family: ui-sans-serif, system-ui, sans-serif; overflow: hidden; user-select: none;
+    }
+    #app { position: fixed; inset: 0; display: flex; flex-direction: column; padding-top: var(--safe-t); padding-bottom: var(--safe-b); }
+    header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; background: linear-gradient(180deg, rgba(4,16,11,.95), transparent); }
+    header h1 { font-size: 15px; margin: 0; } header h1 span { color: var(--accent); }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); border-radius: 999px; padding: 3px 9px; font-size: 11px; color: var(--muted); }
+    .chip strong { color: var(--gold); }
+    #stageWrap { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #06140e; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #hud { position: absolute; inset: 0; pointer-events: none; z-index: 2; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 10px; }
+    #hud .top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+    .badge { background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 5px 8px; }
+    #overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(2,10,7,.82); backdrop-filter: blur(6px); z-index: 50; }
+    #overlay.hidden { display: none; }
+    .card { width: min(94%, 420px); max-height: 88%; overflow: auto; background: linear-gradient(180deg, #123226, #0a1a12); border: 1px solid rgba(25,211,126,.28); border-radius: 18px; padding: 16px; }
+    .card h2 { margin: 0 0 6px; font-size: 20px; }
+    .card p { margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    button { appearance: none; border: 0; cursor: pointer; border-radius: 12px; padding: 11px 12px; font-weight: 700; font-size: 13px; background: linear-gradient(180deg, #19d37e, #0f9a58); color: #04140c; }
+    button.secondary { background: rgba(255,255,255,.08); color: var(--text); border: 1px solid rgba(255,255,255,.1); }
+    button.gold { background: linear-gradient(180deg, #ffd76a, #f0a202); color: #1a1200; }
+    button:disabled { opacity: .45; }
+    .grid2 { display: grid; grid-columns: 1fr 1fr; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .skin, .shop-item { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 10px; text-align: left; cursor: pointer; }
+    .skin.active { border-color: #19d37e; box-shadow: 0 0 0 1px #19d37e; }
+    .skin h4, .shop-item h4 { margin: 0 0 4px; font-size: 13px; }
+    .skin p, .shop-item p { margin: 0; font-size: 11px; color: var(--muted); }
+    .price { color: var(--gold); font-weight: 700; font-size: 12px; margin-top: 6px; }
+    .prev { height: 46px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 6px; }
+    input, select { width: 100%; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.12); color: white; border-radius: 10px; padding: 10px; margin: 4px 0 8px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .ok { color: var(--accent); }
+    .tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .tabs button { padding: 8px 10px; font-size: 12px; background: rgba(255,255,255,.06); color: var(--text); }
+    .tabs button.on { background: linear-gradient(180deg, #19d37e, #0f9a58); color: #04140c; }
+    #controls { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; pointer-events: none; height: min(42vh, 280px); padding: 0 12px calc(10px + var(--safe-b)); display: flex; align-items: flex-end; justify-content: space-between; background: linear-gradient(0deg, rgba(0,0,0,.55), transparent 70%); }
+    #stickZone { pointer-events: auto; width: 140px; height: 140px; position: relative; touch-action: none; }
+    #stickBase { position: absolute; inset: 18px; border-radius: 50%; background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.18); }
+    #stickKnob { position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #7dffc0, #1faa6c); border: 2px solid rgba(255,255,255,.35); }
+    #btnCluster { pointer-events: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; margin-bottom: 8px; }
+    #btnJump { width: 92px; height: 92px; border-radius: 50%; font-size: 15px; font-weight: 900; background: radial-gradient(circle at 35% 30%, #7dffc0, #1faa6c 55%, #0d7a48); border: 3px solid rgba(255,255,255,.35); color: #04140c; }
+    #btnRowSmall { display: flex; gap: 8px; }
+    #btnRowSmall button { min-width: 58px; height: 44px; border-radius: 14px; font-size: 11px; background: rgba(20,24,40,.82); color: #e8fff4; border: 1px solid rgba(255,255,255,.16); }
+    .toast { position: absolute; left: 50%; bottom: 38%; transform: translateX(-50%); background: #04140c; border: 1px solid #19d37e; color: #e8fff4; padding: 8px 14px; border-radius: 999px; font-size: 12px; z-index: 40; pointer-events: none; }
+    .toast.hide { display: none; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🟢 <span>MT</span> Jump</h1>
+      <div class="chips">
+        <div class="chip" id="chipCoins">Bank <strong>0</strong></div>
+        <div class="chip" id="chipMute" style="cursor:pointer;pointer-events:auto">🔊 Music</div>
+      </div>
+    </header>
+    <div id="stageWrap">
+      <canvas id="c"></canvas>
+      <div id="hud">
+        <div class="top">
+          <div class="badge" id="hudStats">Lives 3 · Score 0</div>
+          <div class="badge" id="hudMode">Plaza 1-1</div>
+        </div>
+        <div class="badge" id="hudHint" style="align-self:flex-start;opacity:.85">Jump · pipes = Coin Rush · ? blocks · springs</div>
+      </div>
+      <div id="controls">
+        <div id="stickZone"><div id="stickBase"></div><div id="stickKnob"></div></div>
+        <div id="btnCluster">
+          <div id="btnRowSmall">
+            <button type="button" id="btnMenu">MENU</button>
+            <button type="button" id="btnShop">SHOP</button>
+            <button type="button" id="btnDash">DASH</button>
+          </div>
+          <button type="button" id="btnJump">JUMP</button>
+        </div>
+      </div>
+      <div id="toast" class="toast hide"></div>
+      <div id="overlay"><div class="card" id="menuCard"></div></div>
+    </div>
+  </div>
+<script>
+(() => {
+  const SAVE_KEY = "mt_jump_save_v2";
+  const ROOM_KEY = "mt_mario_rooms_v1";
+
+  const SKINS = [
+    { id: "mint", name: "Mint Runner", free: true, pal: { body: "#19d37e", rim: "#fbbf24", face: "#052e16", limb: "#047857", shoe: "#022c22", glow: "#86efac" } },
+    { id: "gold", name: "Gold Token", coin: 80, pal: { body: "#fbbf24", rim: "#fff7cc", face: "#78350f", limb: "#d97706", shoe: "#451a03", glow: "#fde68a" } },
+    { id: "neon", name: "Neon Pulse", coin: 120, pal: { body: "#ff4fd8", rim: "#67e8f9", face: "#3b0764", limb: "#a21caf", shoe: "#4a044e", glow: "#f0abfc" } },
+    { id: "forest", name: "Grove", coin: 60, pal: { body: "#166534", rim: "#86efac", face: "#052e16", limb: "#14532d", shoe: "#052e16", glow: "#4ade80" } },
+    { id: "fire", name: "Ember", coin: 150, pal: { body: "#ea580c", rim: "#fde68a", face: "#7c2d12", limb: "#c2410c", shoe: "#431407", glow: "#fdba74" } },
+    { id: "ghost", name: "Ghost Mint", coin: 200, pal: { body: "rgba(134,239,172,.55)", rim: "#e5e7eb", face: "#064e3b", limb: "#94a3b8", shoe: "#334155", glow: "#ecfeff" } },
+    { id: "dragon", name: "Dragon $MT", mt: true, coin: 0, pal: { body: "#7c3aed", rim: "#fbbf24", face: "#2e1065", limb: "#5b21b6", shoe: "#1e1b4b", glow: "#c4b5fd" } },
+    { id: "night", name: "Night Vault", mt: true, coin: 0, pal: { body: "#0f172a", rim: "#19d37e", face: "#86efac", limb: "#1e293b", shoe: "#020617", glow: "#19d37e" } },
+  ];
+  const SHOP = [
+    { id: "life_pack", name: "+2 Lives", desc: "Next run starts with two extra lives", coin: 40, type: "consumable" },
+    { id: "magnet", name: "Coin magnet", desc: "Pull nearby coins this run", coin: 55, type: "run" },
+    { id: "double", name: "Double coins", desc: "2× coins this run", coin: 70, type: "run" },
+    { id: "double_jump", name: "Air hop", desc: "Jump again in the air", coin: 110, type: "perm" },
+    { id: "dash", name: "Dash", desc: "Burst forward (DASH / Shift)", coin: 90, type: "perm" },
+    { id: "skin_all", name: "All coin skins", desc: "Unlock every coin-priced skin", coin: 380, type: "perm" },
+  ];
+  const WORLDS = [
+    { id: 0, name: "Plaza 1-1", sky0: "#7ec8ff", sky1: "#e8fff4", hill: "rgba(25,211,126,.28)", ground: "#3f8f4a", dirt: "#6b4423", brick: "#c45c4a", cloud: "rgba(255,255,255,.85)" },
+    { id: 1, name: "Night 1-2", sky0: "#0b1220", sky1: "#1e1b4b", hill: "rgba(124,58,237,.28)", ground: "#14532d", dirt: "#1e293b", brick: "#7c3aed", cloud: "rgba(167,139,250,.35)" },
+    { id: 2, name: "Mint Cave 1-3", sky0: "#022c22", sky1: "#064e3b", hill: "rgba(251,191,36,.18)", ground: "#047857", dirt: "#134e4a", brick: "#f59e0b", cloud: "rgba(167,243,208,.2)" },
+  ];
+
+  function loadSave() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
+      return {
+        coins: raw.coins || 0, best: raw.best || 0,
+        ownedSkins: raw.ownedSkins || ["mint"],
+        ownedItems: raw.ownedItems || [],
+        activeSkin: raw.activeSkin || "mint",
+        lifeBonus: raw.lifeBonus || 0,
+        runBuffs: raw.runBuffs || [],
+        worlds: raw.worlds || [0],
+        world: raw.world || 0,
+        wallet: raw.wallet || "",
+        playerId: raw.playerId || ("p_" + Math.random().toString(36).slice(2, 10)),
+        name: raw.name || ("Runner" + Math.floor(Math.random() * 900 + 100)),
+      };
+    } catch {
+      return { coins: 0, best: 0, ownedSkins: ["mint"], ownedItems: [], activeSkin: "mint", lifeBonus: 0, runBuffs: [], worlds: [0], world: 0, wallet: "", playerId: "p_x", name: "Runner" };
+    }
+  }
+  let save = loadSave();
+  function persist() {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+    const c = document.querySelector("#chipCoins strong");
+    if (c) c.textContent = save.coins;
+  }
+  persist();
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg; el.classList.remove("hide");
+    clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.add("hide"), 1600);
+  }
+  function pal() { return (SKINS.find((s) => s.id === save.activeSkin) || SKINS[0]).pal; }
+  function ownsSkin(id) { return save.ownedSkins.includes(id); }
+  function ownsItem(id) { return save.ownedItems.includes(id); }
+
+  const bgm = new Audio("bgm.mp3"); bgm.loop = true; bgm.volume = 0.32; bgm.preload = "auto";
+  const sfxJump = new Audio("jump.mp3"); sfxJump.volume = 0.42;
+  let musicOn = localStorage.getItem("mt_jump_music") !== "0", musicStarted = false;
+  function updateMuteChip() { const el = document.getElementById("chipMute"); if (el) el.textContent = musicOn ? "🔊 Music" : "🔇 Music"; }
+  async function ensureMusic() { if (!musicOn || musicStarted) return; try { await bgm.play(); musicStarted = true; } catch {} }
+  function toggleMusic() {
+    musicOn = !musicOn; localStorage.setItem("mt_jump_music", musicOn ? "1" : "0");
+    if (!musicOn) { bgm.pause(); musicStarted = false; } else { musicStarted = false; ensureMusic(); }
+    updateMuteChip();
+  }
+  document.getElementById("chipMute").onclick = (e) => { e.stopPropagation(); toggleMusic(); };
+  updateMuteChip();
+  function playJumpSfx() { try { sfxJump.currentTime = 0; sfxJump.play().catch(() => {}); } catch {} }
+
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  let W = 480, H = 320, scale = 1;
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = Math.min(devicePixelRatio || 1, 2.5);
+    W = Math.max(280, Math.floor(rect.width));
+    H = Math.max(220, Math.floor(rect.height));
+    canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    scale = W / 480;
+  }
+  addEventListener("resize", resize);
+  addEventListener("orientationchange", () => setTimeout(resize, 120));
+  resize();
+
+  const keys = { left: false, right: false, up: false, down: false, jump: false, jumpPressed: false, dash: false };
+  let stickAxis = 0, jumpBuffer = 0, coyote = 0, dashCd = 0;
+  const stickZone = document.getElementById("stickZone");
+  const stickKnob = document.getElementById("stickKnob");
+  let stickActive = false, stickId = null;
+  function setStickVisual(dx, dy) {
+    const max = 36, len = Math.hypot(dx, dy) || 1, c = Math.min(1, max / len);
+    stickKnob.style.transform = `translate(${dx * c}px, ${dy * c}px)`;
+  }
+  function applyStick(clientX, clientY) {
+    const r = stickZone.getBoundingClientRect();
+    let dx = clientX - (r.left + r.width / 2), dy = clientY - (r.top + r.height / 2);
+    const max = 48, len = Math.hypot(dx, dy);
+    if (len > max) { dx = (dx / len) * max; dy = (dy / len) * max; }
+    setStickVisual(dx, dy);
+    stickAxis = Math.max(-1, Math.min(1, dx / max));
+    if (Math.abs(stickAxis) < 0.18) stickAxis = 0;
+    keys.left = stickAxis < -0.18; keys.right = stickAxis > 0.18;
+    keys.up = dy < -28; keys.down = dy > 28;
+  }
+  function resetStick() { stickActive = false; stickId = null; stickAxis = 0; keys.left = keys.right = keys.up = keys.down = false; setStickVisual(0, 0); }
+  stickZone.addEventListener("pointerdown", (e) => { e.preventDefault(); stickActive = true; stickId = e.pointerId; stickZone.setPointerCapture?.(e.pointerId); applyStick(e.clientX, e.clientY); });
+  stickZone.addEventListener("pointermove", (e) => { if (!stickActive || (stickId != null && e.pointerId !== stickId)) return; e.preventDefault(); applyStick(e.clientX, e.clientY); });
+  const endStick = (e) => { if (stickId != null && e.pointerId !== stickId) return; e.preventDefault(); resetStick(); };
+  stickZone.addEventListener("pointerup", endStick);
+  stickZone.addEventListener("pointercancel", endStick);
+  const btnJump = document.getElementById("btnJump");
+  btnJump.addEventListener("pointerdown", (e) => { e.preventDefault(); keys.jump = true; keys.jumpPressed = true; jumpBuffer = 0.14; });
+  btnJump.addEventListener("pointerup", (e) => { e.preventDefault(); keys.jump = false; });
+  btnJump.addEventListener("pointercancel", (e) => { e.preventDefault(); keys.jump = false; });
+  document.getElementById("btnDash").onclick = () => { keys.dash = true; };
+  addEventListener("keydown", (e) => {
+    if (["ArrowLeft","a","A"].includes(e.key)) keys.left = true;
+    if (["ArrowRight","d","D"].includes(e.key)) keys.right = true;
+    if (["ArrowUp","w","W"].includes(e.key)) keys.up = true;
+    if (["ArrowDown","s","S"].includes(e.key)) keys.down = true;
+    if (e.key === "Shift" || e.code === "KeyK") keys.dash = true;
+    if ([" ","z","Z","j","J"].includes(e.key)) { if (!keys.jump) { keys.jumpPressed = true; jumpBuffer = 0.14; } keys.jump = true; e.preventDefault(); }
+  });
+  addEventListener("keyup", (e) => {
+    if (["ArrowLeft","a","A"].includes(e.key)) keys.left = false;
+    if (["ArrowRight","d","D"].includes(e.key)) keys.right = false;
+    if (["ArrowUp","w","W"].includes(e.key)) keys.up = false;
+    if (["ArrowDown","s","S"].includes(e.key)) keys.down = false;
+    if ([" ","z","Z","j","J"].includes(e.key)) keys.jump = false;
+  });
+
+  async function connectWallet() {
+    const p = window.phantom?.solana || window.solana || window.solflare || window.backpack;
+    if (!p?.connect) { toast("Install Phantom, Solflare, or Backpack"); return false; }
+    try {
+      const res = await p.connect();
+      const pk = res?.publicKey || p.publicKey;
+      save.wallet = pk && (pk.toString ? pk.toString() : String(pk));
+      persist();
+      toast("Wallet ready · $MT skins unlocked");
+      showMenu("skins");
+      return true;
+    } catch (err) { toast(err?.message || "Wallet closed"); return false; }
+  }
+
+  function buySkin(s) {
+    if (ownsSkin(s.id)) { save.activeSkin = s.id; persist(); toast(s.name + " equipped"); showMenu("skins"); return; }
+    if (s.mt && !save.wallet) { toast("Connect wallet for $MT skins"); connectWallet(); return; }
+    if (s.coin && save.coins < s.coin) { toast("Need " + s.coin + " coins"); return; }
+    if (s.coin) save.coins -= s.coin;
+    save.ownedSkins.push(s.id);
+    save.activeSkin = s.id;
+    persist();
+    toast("Got " + s.name);
+    showMenu("skins");
+  }
+  function buyItem(it) {
+    if (it.type === "perm" && ownsItem(it.id)) { toast("Already owned"); return; }
+    if (save.coins < it.coin) { toast("Need " + it.coin + " coins"); return; }
+    save.coins -= it.coin;
+    if (it.id === "life_pack") save.lifeBonus = (save.lifeBonus || 0) + 2;
+    if (it.id === "skin_all") SKINS.filter((s) => !s.mt).forEach((s) => { if (!save.ownedSkins.includes(s.id)) save.ownedSkins.push(s.id); });
+    if (it.type === "run" && !save.runBuffs.includes(it.id)) save.runBuffs.push(it.id);
+    if (it.type === "perm" || it.type === "consumable") { if (!save.ownedItems.includes(it.id)) save.ownedItems.push(it.id); }
+    persist();
+    toast("Bought " + it.name);
+    showMenu("shop");
+  }
+
+  let party = null;
+  function allRooms() { try { return JSON.parse(localStorage.getItem(ROOM_KEY) || "{}"); } catch { return {}; } }
+  function writeRooms(r) { localStorage.setItem(ROOM_KEY, JSON.stringify(r)); }
+  function createRoom() {
+    const code = Math.random().toString(36).slice(2, 6).toUpperCase();
+    const rooms = allRooms();
+    rooms[code] = { code, hostId: save.playerId, updated: Date.now(), settings: { miniLives: 3, miniSpeed: 1, theme: "day", allowAnyoneEdit: true, miniEnabled: true }, members: [{ id: save.playerId, name: save.name, skin: save.activeSkin }] };
+    writeRooms(rooms); party = rooms[code]; return code;
+  }
+  function joinRoom(code) {
+    code = (code || "").trim().toUpperCase();
+    const rooms = allRooms();
+    if (!rooms[code]) return null;
+    if (!rooms[code].members.find((x) => x.id === save.playerId)) rooms[code].members.push({ id: save.playerId, name: save.name, skin: save.activeSkin });
+    rooms[code].updated = Date.now(); writeRooms(rooms); party = rooms[code]; return party;
+  }
+  function canEditParty() { return party && (party.hostId === save.playerId || party.settings.allowAnyoneEdit || ownsItem("party_host")); }
+  function updatePartySettings(patch) {
+    if (!party || !canEditParty()) { toast("Can't edit this room"); return; }
+    const rooms = allRooms(); if (!rooms[party.code]) return;
+    Object.assign(rooms[party.code].settings, patch); rooms[party.code].updated = Date.now(); writeRooms(rooms); party = rooms[party.code];
+  }
+  function refreshParty() { if (!party) return; const rooms = allRooms(); if (rooms[party.code]) party = rooms[party.code]; }
+
+  let mode = "menu", game = null, mini = null;
+
+  function buildLevel(wid) {
+    const tw = 16, th = 16, cols = 150 + wid * 10, rows = 18;
+    const tiles = Array.from({ length: rows }, () => Array(cols).fill(0));
+    const groundY = rows - 2;
+    for (let x = 0; x < cols; x++) {
+      tiles[groundY][x] = 1; tiles[groundY + 1][x] = 1;
+      if (x > 8 && x % 7 === 0) tiles[groundY - 1][x] = 3;
+      if (x > 12 && x % 16 === 0) {
+        tiles[groundY - 2][x] = 2; tiles[groundY - 2][x + 1] = 5; tiles[groundY - 2][x + 2] = 2;
+        tiles[groundY - 3][x + 1] = 3;
+      }
+      if (x > 20 && x % 21 === 0) tiles[groundY - 1][x] = 4;
+      if (x > 28 && x % 24 === 0) tiles[groundY - 1][x] = 7;
+      if (x > 18 && x % 32 === 0) tiles[groundY - 2][x] = 8;
+      if (wid > 0 && x > 40 && x % 20 === 0) {
+        tiles[groundY - 4][x] = 2; tiles[groundY - 4][x + 1] = 2; tiles[groundY - 4][x + 2] = 2;
+        tiles[groundY - 5][x + 1] = 3;
+      }
+    }
+    const gaps = wid === 0 ? [[38, 43], [70, 75], [104, 110]] : wid === 1 ? [[32, 38], [58, 64], [88, 95], [122, 128]] : [[28, 35], [52, 60], [80, 88], [110, 118], [134, 140]];
+    for (const [a, b] of gaps) {
+      for (let x = a; x < b; x++) { tiles[groundY][x] = 0; tiles[groundY + 1][x] = 0; }
+      const mid = Math.floor((a + b) / 2);
+      tiles[groundY - 2][mid] = 2; tiles[groundY - 2][mid + 1] = 2;
+      if (wid > 0) tiles[groundY - 2][mid - 1] = 7;
+    }
+    tiles[groundY - 1][cols - 4] = 6; tiles[groundY - 2][cols - 4] = 6;
+    return { tiles, tw, th, cols, rows, w: cols * tw, h: rows * th, groundY, wid };
+  }
+  function spawnEnemies(level) {
+    const list = [], gy = (level.groundY - 1) * level.th;
+    const spots = [24, 34, 50, 62, 78, 92, 108, 120, 136];
+    spots.forEach((tx, i) => {
+      if (!level.tiles[level.groundY][tx]) return;
+      list.push({ type: i % 3 === 0 ? "spike" : (i % 2 ? "crab" : "goomba"), x: tx * level.tw, y: gy, w: 14, h: 14, vx: (i % 2 ? -1 : 1) * (38 + level.wid * 10), alive: true, t: 0 });
+    });
+    [42, 86, 118].forEach((tx, i) => {
+      list.push({ type: "bat", x: tx * level.tw, y: (level.groundY - 6) * level.th, w: 14, h: 12, vx: 46 + level.wid * 8, baseY: (level.groundY - 6) * level.th, alive: true, t: i });
+    });
+    return list;
+  }
+
+  function newGame(wid) {
+    if (wid == null) wid = save.world || 0;
+    save.world = wid;
+    const lives = 3 + (save.lifeBonus || 0);
+    save.lifeBonus = 0;
+    const buffs = [...(save.runBuffs || [])];
+    save.runBuffs = [];
+    persist();
+    const level = buildLevel(wid);
+    game = {
+      player: { x: 48, y: (level.groundY - 2) * level.th, w: 14, h: 20, vx: 0, vy: 0, onGround: false, facing: 1, inv: 0, jumps: 0 },
+      camX: 0, lives, score: 0, coinsRun: 0, level, enemies: spawnEnemies(level),
+      flag: level.w - 48, spawnX: 48, spawnY: (level.groundY - 2) * level.th,
+      won: false, dead: false, buffs, t: 0, _fallLock: false, world: WORLDS[wid],
+    };
+    coyote = 0; jumpBuffer = 0; dashCd = 0; mode = "play"; hideOverlay(); ensureMusic();
+    document.getElementById("hudMode").textContent = WORLDS[wid].name;
+    document.getElementById("hudHint").textContent = "Pipes = Coin Rush · ? = coins · spring = launch · flag = next world";
+  }
+
+  function tileAt(px, py) {
+    const { tiles, tw, th, cols, rows } = game.level;
+    const tx = Math.floor(px / tw), ty = Math.floor(py / th);
+    if (tx < 0) return 1; if (ty < 0) return 0; if (tx >= cols) return 1; if (ty >= rows) return 0;
+    return tiles[ty][tx];
+  }
+  function setTile(px, py, v) {
+    const { tiles, tw, th, cols, rows } = game.level;
+    const tx = Math.floor(px / tw), ty = Math.floor(py / th);
+    if (tx < 0 || ty < 0 || tx >= cols || ty >= rows) return;
+    tiles[ty][tx] = v;
+  }
+  function solidFull(t) { return t === 1 || t === 4 || t === 5 || t === 9; }
+  function solidTop(t) { return t === 1 || t === 2 || t === 4 || t === 5 || t === 7 || t === 8 || t === 9; }
+
+  function moveAndCollide(p, dt) {
+    const { tw, th } = game.level;
+    p.x += p.vx * dt;
+    const midYs = [p.y + 2, p.y + p.h * 0.5, p.y + p.h - 3];
+    for (const my of midYs) {
+      if (p.vx > 0 && solidFull(tileAt(p.x + p.w, my))) { p.x = Math.floor((p.x + p.w) / tw) * tw - p.w - 0.01; p.vx = 0; break; }
+      if (p.vx < 0 && solidFull(tileAt(p.x, my))) { p.x = Math.floor(p.x / tw + 1) * tw + 0.01; p.vx = 0; break; }
+    }
+    p.y += p.vy * dt; p.onGround = false;
+    if (p.vy >= 0) {
+      const feet = [p.x + 1, p.x + p.w * 0.5, p.x + p.w - 1];
+      for (const fx of feet) {
+        const t = tileAt(fx, p.y + p.h + 0.1);
+        if (!solidTop(t)) continue;
+        const tileTop = Math.floor((p.y + p.h + 0.1) / th) * th;
+        if (p.y + p.h - p.vy * dt <= tileTop + 6) {
+          p.y = tileTop - p.h - 0.01; p.vy = 0; p.onGround = true; p.jumps = 0; coyote = 0.12;
+          if (t === 7) { p.vy = -460; p.onGround = false; playJumpSfx(); }
+          break;
+        }
+      }
+    } else {
+      const heads = [p.x + 2, p.x + p.w / 2, p.x + p.w - 2];
+      for (const hx of heads) {
+        const t = tileAt(hx, p.y);
+        if (t === 1 || t === 2 || t === 4 || t === 5 || t === 9) {
+          p.y = Math.floor(p.y / th + 1) * th + 0.01; p.vy = 0;
+          if (t === 5) { setTile(hx, p.y - 2, 9); grabCoin(1); toast("? block"); }
+          break;
+        }
+      }
+    }
+  }
+
+  function grabCoin(n) {
+    const gain = (game.buffs.includes("double") ? 2 : 1) * n;
+    game.coinsRun += gain; game.score += 100 * gain; save.coins += gain; persist();
+  }
+
+  function updateEnemies(dt) {
+    const { th, groundY } = game.level;
+    for (const e of game.enemies) {
+      if (!e.alive) continue;
+      e.t += dt;
+      if (e.type === "bat") { e.x += e.vx * dt; e.y = e.baseY + Math.sin(e.t * 3) * 18; if (e.x < 20 || e.x > game.level.w - 40) e.vx *= -1; continue; }
+      e.x += e.vx * dt;
+      const footX = e.vx > 0 ? e.x + e.w + 1 : e.x - 1;
+      if (!solidTop(tileAt(footX, e.y + e.h + 2)) || solidFull(tileAt(footX, e.y + e.h / 2))) e.vx *= -1;
+      e.y = groundY * th - e.h;
+    }
+  }
+
+  function postScore() {
+    fetch("/api/scores", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game_id: "mtjump", score: game.score }) }).catch(() => {});
+  }
+
+  function updatePlay(dt) {
+    if (!game || game.dead || game.won) return;
+    const p = game.player;
+    game.t += dt;
+    if (p.inv > 0) p.inv -= dt;
+    if (jumpBuffer > 0) jumpBuffer -= dt;
+    if (coyote > 0) coyote -= dt;
+    if (dashCd > 0) dashCd -= dt;
+    const speed = 150 * (game.buffs.includes("magnet") ? 1.06 : 1);
+    if (Math.abs(stickAxis) > 0.05) { p.vx = stickAxis * speed; p.facing = stickAxis >= 0 ? 1 : -1; }
+    else { p.vx = 0; if (keys.left) { p.vx = -speed; p.facing = -1; } if (keys.right) { p.vx = speed; p.facing = 1; } }
+    if (keys.dash && ownsItem("dash") && dashCd <= 0) { p.vx = p.facing * 320; dashCd = 0.7; keys.dash = false; toast("Dash"); }
+    keys.dash = false;
+    const canGround = p.onGround || coyote > 0;
+    const canAir = ownsItem("double_jump") && p.jumps < 1 && !p.onGround;
+    if ((keys.jumpPressed || jumpBuffer > 0) && (canGround || canAir)) {
+      p.vy = canGround ? -340 : -300;
+      if (!canGround) p.jumps += 1;
+      p.onGround = false; coyote = 0; jumpBuffer = 0; keys.jumpPressed = false; playJumpSfx();
+    } else keys.jumpPressed = false;
+    p.vy += 920 * dt; if (p.vy > 560) p.vy = 560;
+    if (!keys.jump && p.vy < -100) p.vy *= 0.9;
+    moveAndCollide(p, dt);
+    const groundLine = (game.level.groundY + 1) * game.level.th;
+    const standing = solidTop(tileAt(p.x + 2, p.y + p.h + 1)) || solidTop(tileAt(p.x + p.w - 2, p.y + p.h + 1));
+    if ((!standing && p.y + p.h > groundLine + 4) || p.y > game.level.h - 2) { fallDeath(); return; }
+    updateEnemies(dt);
+    const cx = p.x + p.w / 2, cy = p.y + p.h / 2, t = tileAt(cx, cy);
+    if (t === 3) { setTile(cx, cy, 0); grabCoin(1); }
+    if (t === 8) { game.spawnX = p.x; game.spawnY = p.y; toast("Checkpoint"); setTile(cx, cy, 0); }
+    if (t === 4 && keys.down) { enterMini(); return; }
+    for (const e of game.enemies) {
+      if (!e.alive || p.inv > 0) continue;
+      if (!(p.x < e.x + e.w && p.x + p.w > e.x && p.y < e.y + e.h && p.y + p.h > e.y)) continue;
+      if (p.vy > 40 && p.y + p.h - e.y < 12) { e.alive = false; p.vy = -200; game.score += e.type === "bat" ? 300 : 200; }
+      else hurt();
+    }
+    if (t === 6 || p.x > game.flag) {
+      game.won = true; mode = "win";
+      save.best = Math.max(save.best, game.score);
+      const next = (game.level.wid || 0) + 1;
+      if (next < WORLDS.length && !save.worlds.includes(next)) save.worlds.push(next);
+      persist(); postScore(); showMenu("win"); return;
+    }
+    if (game.buffs.includes("magnet")) {
+      for (let dx = -48; dx <= 48; dx += 16) for (let dy = -48; dy <= 48; dy += 16)
+        if (tileAt(cx + dx, cy + dy) === 3) { setTile(cx + dx, cy + dy, 0); grabCoin(1); }
+    }
+    game.camX = Math.max(0, Math.min(game.level.w - W / (scale || 1), p.x - (W / (scale || 1)) * 0.35));
+    const buff = game.buffs.length ? " · " + game.buffs.join("+") : "";
+    document.getElementById("hudStats").textContent = `Lives ${game.lives} · Score ${game.score} · Coins ${game.coinsRun}${buff}`;
+    document.getElementById("hudMode").textContent = game.world.name;
+  }
+
+  function fallDeath() {
+    if (!game || game.dead || game.won || mode !== "play" || game._fallLock) return;
+    game._fallLock = true; game.lives -= 1;
+    if (game.lives <= 0) { game.dead = true; mode = "dead"; save.best = Math.max(save.best, game.score); persist(); postScore(); showMenu("dead"); game._fallLock = false; return; }
+    game.player.x = game.spawnX; game.player.y = game.spawnY; game.player.vx = 0; game.player.vy = 0; game.player.inv = 2.2;
+    toast("Fell · lives " + game.lives);
+    setTimeout(() => { if (game) game._fallLock = false; }, 400);
+  }
+  function hurt() {
+    const p = game.player; if (p.inv > 0) return;
+    game.lives -= 1; p.inv = 1.4;
+    if (game.lives <= 0) { game.dead = true; mode = "dead"; save.best = Math.max(save.best, game.score); persist(); postScore(); showMenu("dead"); return; }
+    p.vy = -160; p.vx = p.facing * -80;
+  }
+
+  function hexPath(x, y, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 6 + i * Math.PI / 3;
+      const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+  }
+  function drawHero(px, py, w, h, facing, t, moving, air, fade) {
+    const P = pal();
+    ctx.save();
+    if (fade) ctx.globalAlpha = 0.4;
+    ctx.translate(px + w / 2, py + h);
+    ctx.scale(facing || 1, 1);
+    const bob = moving && !air ? Math.sin(t * 16) * 1.4 : 0;
+    const leg = moving && !air ? Math.sin(t * 16) * 3.4 : (air ? 3 : 0);
+    ctx.fillStyle = P.shoe;
+    ctx.fillRect(-6, -7 + leg, 5, 7);
+    ctx.fillRect(0, -7 - leg, 5, 7);
+    ctx.fillStyle = P.limb;
+    ctx.fillRect(-7, -h + 6 + bob, 3.5, 8);
+    ctx.fillRect(3, -h + 6 + bob, 3.5, 8);
+    ctx.translate(0, -h * 0.52 + bob);
+    hexPath(0, 0, 9.2); ctx.fillStyle = P.glow; ctx.fill();
+    hexPath(0, 0, 8); ctx.fillStyle = P.rim; ctx.fill();
+    hexPath(0, 0, 6.2); ctx.fillStyle = P.body; ctx.fill();
+    ctx.fillStyle = P.face; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("$", 0, 1);
+    ctx.fillStyle = "#fff"; ctx.fillRect(facing > 0 ? 1.5 : -3.5, -2.2, 2.2, 2.2);
+    ctx.restore();
+  }
+
+  function drawPlay() {
+    const g = game; if (!g) return;
+    const cam = g.camX, sc = scale || 1, thm = g.world;
+    const grd = ctx.createLinearGradient(0, 0, 0, H);
+    grd.addColorStop(0, thm.sky0); grd.addColorStop(1, thm.sky1);
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = thm.cloud;
+    for (let i = 0; i < 7; i++) {
+      const cx = ((i * 160) - cam * 0.18) % (W + 160) - 40;
+      ctx.beginPath(); ctx.ellipse(cx, 40 + (i % 3) * 18, 34, 14, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = thm.hill;
+    for (let i = 0; i < 6; i++) {
+      const hx = ((i * 200) - cam * 0.35) % (W + 220) - 60;
+      ctx.beginPath(); ctx.ellipse(hx, H - 24, 110, 48, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = "#0a0a12"; ctx.fillRect(0, (g.level.groundY + 1) * g.level.th * sc, W, H);
+    const { tiles, tw, th, cols, rows } = g.level;
+    const x0 = Math.max(0, Math.floor(cam / tw) - 1);
+    for (let y = 0; y < rows; y++) {
+      for (let x = x0; x < Math.min(cols, x0 + Math.ceil(W / tw / sc) + 4); x++) {
+        const t = tiles[y][x]; if (!t) continue;
+        const sx = (x * tw - cam) * sc, sy = y * th * sc, sw = tw * sc, sh = th * sc;
+        if (t === 1) { ctx.fillStyle = thm.dirt; ctx.fillRect(sx, sy, sw + 0.5, sh + 0.5); ctx.fillStyle = thm.ground; ctx.fillRect(sx, sy, sw + 0.5, sh * 0.32); }
+        if (t === 2) { ctx.fillStyle = thm.brick; ctx.fillRect(sx, sy, sw, sh); ctx.strokeStyle = "rgba(255,255,255,.2)"; ctx.strokeRect(sx + 1, sy + 1, sw - 2, sh - 2); }
+        if (t === 3) { ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(sx + sw / 2, sy + sh / 2, sw * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#78350f"; ctx.font = `${Math.max(8, sw * 0.55)}px sans-serif`; ctx.textAlign = "center"; ctx.fillText("$", sx + sw / 2, sy + sh / 2 + 1); }
+        if (t === 4) { ctx.fillStyle = "#047857"; ctx.fillRect(sx, sy, sw, sh); ctx.fillStyle = "#064e3b"; ctx.fillRect(sx - 3, sy, sw + 6, sh * 0.32); }
+        if (t === 5) { ctx.fillStyle = "#f59e0b"; ctx.fillRect(sx, sy, sw, sh); ctx.fillStyle = "#fff"; ctx.font = `bold ${sw * 0.7}px sans-serif`; ctx.textAlign = "center"; ctx.fillText("?", sx + sw / 2, sy + sh * 0.72); }
+        if (t === 6) { ctx.fillStyle = "#e5e7eb"; ctx.fillRect(sx + sw * 0.45, sy - sh * 2.2, 3, sh * 3.2); ctx.fillStyle = "#19d37e"; ctx.beginPath(); ctx.moveTo(sx + sw * 0.45, sy - sh * 2.2); ctx.lineTo(sx + sw * 0.45 + 20, sy - sh * 1.6); ctx.lineTo(sx + sw * 0.45, sy - sh); ctx.fill(); }
+        if (t === 7) { ctx.fillStyle = "#fb7185"; ctx.beginPath(); ctx.moveTo(sx, sy + sh); ctx.lineTo(sx + sw / 2, sy); ctx.lineTo(sx + sw, sy + sh); ctx.fill(); }
+        if (t === 8) { ctx.fillStyle = "#38bdf8"; ctx.fillRect(sx + sw * 0.4, sy, 3, sh); ctx.fillStyle = "#7dd3fc"; ctx.fillRect(sx + sw * 0.4, sy, sw * 0.45, sh * 0.4); }
+        if (t === 9) { ctx.fillStyle = "#78716c"; ctx.fillRect(sx, sy, sw, sh); }
+      }
+    }
+    for (const e of g.enemies) {
+      if (!e.alive) continue;
+      const ex = (e.x - cam) * sc, ey = e.y * sc, ew = e.w * sc, eh = e.h * sc;
+      if (e.type === "bat") { ctx.fillStyle = "#a78bfa"; ctx.beginPath(); ctx.ellipse(ex + ew / 2, ey + eh / 2, ew * 0.6, eh * 0.4, 0, 0, Math.PI * 2); ctx.fill(); }
+      else if (e.type === "spike") { ctx.fillStyle = "#94a3b8"; ctx.beginPath(); ctx.moveTo(ex, ey + eh); ctx.lineTo(ex + ew / 2, ey); ctx.lineTo(ex + ew, ey + eh); ctx.fill(); }
+      else if (e.type === "crab") { ctx.fillStyle = "#fb7185"; ctx.fillRect(ex, ey + 4, ew, eh - 4); ctx.fillStyle = "#be123c"; ctx.fillRect(ex - 3, ey + 6, 4, 3); ctx.fillRect(ex + ew - 1, ey + 6, 4, 3); }
+      else { ctx.fillStyle = "#65a30d"; ctx.fillRect(ex, ey + 3, ew, eh - 3); ctx.fillStyle = "#365314"; ctx.beginPath(); ctx.arc(ex + ew / 2, ey + 6, ew * 0.45, Math.PI, 0); ctx.fill(); }
+    }
+    const p = g.player;
+    drawHero((p.x - cam) * sc, p.y * sc, p.w * sc, p.h * sc, p.facing, g.t, Math.abs(p.vx) > 8, !p.onGround, p.inv > 0 && Math.floor(g.t * 12) % 2 === 0);
+  }
+
+  function enterMini() {
+    refreshParty();
+    const settings = party?.settings || { miniLives: 3, miniSpeed: 1, theme: "day", miniEnabled: true };
+    if (settings.miniEnabled === false) { toast("Mini disabled"); return; }
+    mini = { t: 0, timeLeft: 30, score: 0, lives: settings.miniLives || 3, speed: settings.miniSpeed || 1, theme: settings.theme || "day", player: { x: W / 2, y: H - 60, w: 28, h: 28 }, coins: [], bombs: [], spawn: 0 };
+    mode = "mini"; hideOverlay();
+    document.getElementById("hudMode").textContent = "Coin Rush";
+  }
+  function updateMini(dt) {
+    const m = mini; m.t += dt; m.timeLeft -= dt; m.spawn -= dt;
+    if (keys.left) m.player.x -= 220 * m.speed * dt;
+    if (keys.right) m.player.x += 220 * m.speed * dt;
+    m.player.x = Math.max(10, Math.min(W - 40, m.player.x));
+    if (m.spawn <= 0) {
+      m.spawn = Math.max(0.25, 0.7 / m.speed);
+      const obj = { x: 20 + Math.random() * (W - 60), y: -20, r: 12, vy: (80 + Math.random() * 100) * m.speed };
+      if (Math.random() < 0.22) m.bombs.push(obj); else m.coins.push(obj);
+    }
+    const hit = (o) => Math.hypot(o.x - (m.player.x + 14), o.y - (m.player.y + 14)) < o.r + 14;
+    m.coins.forEach((c) => c.y += c.vy * dt);
+    m.bombs.forEach((b) => b.y += b.vy * dt);
+    m.coins = m.coins.filter((c) => { if (hit(c)) { m.score += 1; save.coins += 1; if (game) game.score += 50; return false; } return c.y < H + 30; });
+    m.bombs = m.bombs.filter((b) => { if (hit(b)) { m.lives -= 1; return false; } return b.y < H + 30; });
+    persist();
+    document.getElementById("hudStats").textContent = `Mini ${m.lives} · ${m.score} · ${Math.ceil(m.timeLeft)}s`;
+    if (m.lives <= 0 || m.timeLeft <= 0) {
+      mode = "play"; if (game) { game.score += m.score * 25; toast("Mini +" + m.score + " coins"); } mini = null;
+    }
+  }
+  function drawMini() {
+    const m = mini;
+    ctx.fillStyle = m.theme === "night" ? "#0d1b2a" : m.theme === "neon" ? "#1a0033" : "#87ceeb";
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#14532d"; ctx.fillRect(0, H - 40, W, 40);
+    m.coins.forEach((c) => { ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill(); });
+    m.bombs.forEach((b) => { ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); });
+    drawHero(m.player.x, m.player.y, m.player.w, m.player.h, 1, m.t, true, false, false);
+  }
+
+  const overlay = document.getElementById("overlay");
+  const menuCard = document.getElementById("menuCard");
+  function hideOverlay() { overlay.classList.add("hidden"); }
+  function showOverlay() { overlay.classList.remove("hidden"); }
+
+  function showMenu(tab = "home") {
+    if (tab !== "dead" && tab !== "win" && mode !== "play" && mode !== "mini") mode = "menu";
+    showOverlay(); refreshParty();
+    const tabs = `<div class="tabs">
+      <button data-t="home" class="${tab==='home'?'on':''}">Home</button>
+      <button data-t="skins" class="${tab==='skins'?'on':''}">Skins</button>
+      <button data-t="shop" class="${tab==='shop'?'on':''}">Shop</button>
+      <button data-t="party" class="${tab==='party'?'on':''}">Party</button>
+    </div>`;
+    let body = "";
+    if (tab === "home") {
+      body = `<h2>🟢 MT Jump</h2>
+        <p>Mint token runner. Buy skins with coins you earn. $MT skins need a wallet.</p>
+        <div class="muted">Best <strong style="color:var(--gold)">${save.best}</strong> · Bank <strong>${save.coins}</strong> · Skin <strong>${save.activeSkin}</strong>${save.wallet ? " · wallet on" : ""}</div>
+        <div class="row">${WORLDS.map((w) => `<button ${save.worlds.includes(w.id) ? "" : "disabled"} data-world="${w.id}">${w.name}${save.worlds.includes(w.id) ? "" : " 🔒"}</button>`).join("")}</div>
+        <div class="row"><button class="secondary" id="btnConnect">Connect wallet</button><button class="secondary" id="btnStartMini">Coin Rush</button><button class="secondary" id="btnCloseMenu">Close</button></div>`;
+    } else if (tab === "skins") {
+      body = `<h2>Skins</h2><p>Tap a card. Coin skins buy from your bank. $MT skins need a connected wallet.</p><div class="grid2">`;
+      SKINS.forEach((s) => {
+        const owned = ownsSkin(s.id);
+        body += `<div class="skin ${save.activeSkin===s.id?"active":""}" data-skin="${s.id}">
+          <div class="prev" data-prev="${s.id}"></div>
+          <h4>${s.name}</h4>
+          <p>${s.free ? "Free" : s.mt ? (owned ? "Owned · $MT" : "$MT exclusive") : owned ? "Owned" : s.coin + " coins"}</p>
+          <div class="price">${owned ? (save.activeSkin===s.id ? "Equipped" : "Equip") : (s.mt && !save.wallet ? "Connect wallet" : "Buy")}</div>
+        </div>`;
+      });
+      body += `</div><div class="row"><button class="secondary" data-t="home">Back</button><button id="btnConnect">Connect wallet</button></div>`;
+    } else if (tab === "shop") {
+      body = `<h2>Shop</h2><p>Spend coins from runs. Buffs apply on the next Play.</p><div class="grid2">`;
+      SHOP.forEach((it) => {
+        const owned = ownsItem(it.id) && it.type === "perm";
+        body += `<div class="shop-item" data-shop="${it.id}"><h4>${it.name}</h4><p>${it.desc}</p><div class="price">${owned ? "Owned" : it.coin + " coins"}</div></div>`;
+      });
+      body += `</div><div class="row"><button class="secondary" data-t="home">Back</button></div>`;
+    } else if (tab === "party") {
+      const s = party?.settings;
+      body = party ? `<h2>Party ${party.code}</h2>
+        <label class="muted">Mini lives</label><input type="number" id="pLives" min="1" max="9" value="${s.miniLives}" />
+        <label class="muted">Speed</label><input type="number" id="pSpeed" min="0.5" max="2" step="0.1" value="${s.miniSpeed}" />
+        <select id="pTheme"><option value="day" ${s.theme==="day"?"selected":""}>Day</option><option value="night" ${s.theme==="night"?"selected":""}>Night</option><option value="neon" ${s.theme==="neon"?"selected":""}>Neon</option></select>
+        <label class="muted"><input type="checkbox" id="pAnyone" ${s.allowAnyoneEdit?"checked":""}/> Anyone can edit</label>
+        <div class="row"><button id="btnSaveParty">Save</button><button id="btnPlayPartyMini">Play Coin Rush</button></div>
+        <div class="row"><button class="secondary" data-t="home">Back</button></div>`
+      : `<h2>Party</h2><div class="row"><button id="btnCreateRoom">Create room</button></div>
+        <input id="joinCode" placeholder="CODE" maxlength="6" />
+        <div class="row"><button class="secondary" id="btnJoinRoom">Join</button><button class="secondary" data-t="home">Back</button></div>`;
+    } else if (tab === "dead") {
+      body = `<h2>Down</h2><p>Score <b>${game?.score || 0}</b> · Best <b>${save.best}</b> · Bank <b>${save.coins}</b></p>
+        <div class="row"><button id="btnRestart">Play again</button><button class="secondary" id="btnDeadMenu">Menu</button></div>`;
+    } else if (tab === "win") {
+      const next = (game?.level.wid || 0) + 1;
+      body = `<h2>Flag!</h2><p>Cleared ${game?.world.name}. Score <b>${game?.score || 0}</b></p>
+        <div class="row">${next < WORLDS.length ? `<button id="btnNext">Next world</button>` : ""}<button id="btnRestart">Run again</button><button class="secondary" id="btnDeadMenu">Menu</button></div>`;
+    }
+    menuCard.innerHTML = (tab === "dead" || tab === "win" ? "" : tabs) + body;
+    menuCard.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => showMenu(b.getAttribute("data-t")));
+    menuCard.querySelectorAll("[data-world]").forEach((b) => b.onclick = () => { ensureMusic(); newGame(Number(b.getAttribute("data-world"))); });
+    menuCard.querySelector("#btnRestart") && (menuCard.querySelector("#btnRestart").onclick = () => { ensureMusic(); newGame(save.world); });
+    menuCard.querySelector("#btnNext") && (menuCard.querySelector("#btnNext").onclick = () => { ensureMusic(); newGame((game?.level.wid || 0) + 1); });
+    menuCard.querySelector("#btnDeadMenu") && (menuCard.querySelector("#btnDeadMenu").onclick = () => { mode = "menu"; game = null; mini = null; showMenu("home"); });
+    menuCard.querySelector("#btnStartMini") && (menuCard.querySelector("#btnStartMini").onclick = () => { if (!game) newGame(save.world); enterMini(); });
+    menuCard.querySelector("#btnCloseMenu") && (menuCard.querySelector("#btnCloseMenu").onclick = () => { if (mode === "play" || mode === "mini") hideOverlay(); });
+    menuCard.querySelectorAll("#btnConnect").forEach((b) => b.onclick = () => connectWallet());
+    menuCard.querySelectorAll("[data-skin]").forEach((el) => { el.onclick = () => buySkin(SKINS.find((s) => s.id === el.getAttribute("data-skin"))); });
+    menuCard.querySelectorAll("[data-shop]").forEach((el) => { el.onclick = () => buyItem(SHOP.find((s) => s.id === el.getAttribute("data-shop"))); });
+    menuCard.querySelector("#btnCreateRoom") && (menuCard.querySelector("#btnCreateRoom").onclick = () => { toast("Room " + createRoom()); showMenu("party"); });
+    menuCard.querySelector("#btnJoinRoom") && (menuCard.querySelector("#btnJoinRoom").onclick = () => { if (!joinRoom(menuCard.querySelector("#joinCode").value)) toast("No room"); else showMenu("party"); });
+    menuCard.querySelector("#btnSaveParty") && (menuCard.querySelector("#btnSaveParty").onclick = () => { updatePartySettings({ miniLives: Number(menuCard.querySelector("#pLives").value) || 3, miniSpeed: Number(menuCard.querySelector("#pSpeed").value) || 1, theme: menuCard.querySelector("#pTheme").value, allowAnyoneEdit: menuCard.querySelector("#pAnyone").checked }); toast("Saved"); showMenu("party"); });
+    menuCard.querySelector("#btnPlayPartyMini") && (menuCard.querySelector("#btnPlayPartyMini").onclick = () => { if (!game) newGame(save.world); enterMini(); });
+    menuCard.querySelectorAll("[data-prev]").forEach((el) => {
+      const s = SKINS.find((x) => x.id === el.getAttribute("data-prev"));
+      if (!s) return;
+      const c = document.createElement("canvas"); c.width = 64; c.height = 46; el.appendChild(c);
+      const x = c.getContext("2d");
+      const old = save.activeSkin; save.activeSkin = s.id;
+      const prevCtx = ctx;
+      // draw mini preview using same pal
+      const P = s.pal;
+      x.translate(32, 40);
+      x.fillStyle = P.shoe; x.fillRect(-8, -6, 6, 6); x.fillRect(2, -6, 6, 6);
+      x.fillStyle = P.rim; x.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI/6+i*Math.PI/3; const px = Math.cos(a)*12, py = Math.sin(a)*12-10; i?x.lineTo(px,py):x.moveTo(px,py); } x.closePath(); x.fill();
+      x.fillStyle = P.body; x.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI/6+i*Math.PI/3; const px = Math.cos(a)*9, py = Math.sin(a)*9-10; i?x.lineTo(px,py):x.moveTo(px,py); } x.closePath(); x.fill();
+      x.fillStyle = P.face; x.font = "bold 10px sans-serif"; x.textAlign = "center"; x.fillText("$", 0, -8);
+      save.activeSkin = old;
+    });
+  }
+
+  document.getElementById("btnMenu").onclick = () => showMenu("home");
+  document.getElementById("btnShop").onclick = () => showMenu("shop");
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    if (mode === "play" && game) updatePlay(dt);
+    if (mode === "mini" && mini) updateMini(dt);
+    if (mode === "mini" && mini) drawMini();
+    else if (game && (mode === "play" || mode === "dead" || mode === "win")) drawPlay();
+    else { ctx.fillStyle = "#06140e"; ctx.fillRect(0, 0, W, H); }
+    requestAnimationFrame(frame);
+  }
+  showMenu("home");
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

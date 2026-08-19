@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
       '/games/unix/fruitninja',
       '/games/unix/dash',
       '/games/unix/chicken',
+      '/games/mtjump',
       '/games/unix/soccer',
       '/games/unix/taptap',
       '/games/2',
