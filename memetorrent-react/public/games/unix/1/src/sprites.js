@@ -1772,12 +1772,12 @@ var drawMtPacSprite = function(ctx,x,y,dirEnum,frame,rot_angle) {
 
     ctx.fillStyle = "#fef3c7";
     ctx.strokeStyle = "#052e16";
-    ctx.lineWidth = 0.7;
-    ctx.font = "bold 7px sans-serif";
+    ctx.lineWidth = 0.45;
+    ctx.font = "bold 4.2px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("$", -0.4, 0.6);
-    ctx.strokeText("$", -0.4, 0.6);
+    ctx.fillText("$MT", 0, 0.4);
+    ctx.strokeText("$MT", 0, 0.4);
 
     ctx.beginPath();
     ctx.arc(-2.2, -2.4, 1.1, 0, Math.PI*2);

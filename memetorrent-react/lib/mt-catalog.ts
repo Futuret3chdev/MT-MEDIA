@@ -95,7 +95,7 @@ export const CATALOG: CatalogGame[] = [
     kind: 'arcade',
     status: 'live',
     play: '/pacman',
-    img: '/games/covers/pacman.png?v=3',
+    img: '/games/covers/pacman.png?v=4',
     blurb: 'Full arcade menu. $MT Pac is a mint hex token, not the yellow pie. Play / Turbo / Practice / Cutscenes / High scores.',
   },
   {
@@ -221,7 +221,7 @@ export const CATALOG: CatalogGame[] = [
     kind: 'arcade',
     status: 'live',
     play: '/mtjump',
-    img: '/games/covers/mtjump.jpg?v=2',
+    img: '/games/covers/mtjump.jpg?v=3',
     blurb: 'Mint token runner. Three worlds. Skins and shop buy with coins. Air hop, dash, springs, ? blocks.',
   },
   {

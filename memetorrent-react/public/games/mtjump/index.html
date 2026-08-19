@@ -307,8 +307,8 @@
       tiles[groundY][x] = 1; tiles[groundY + 1][x] = 1;
       if (x > 8 && x % 7 === 0) tiles[groundY - 1][x] = 3;
       if (x > 12 && x % 16 === 0) {
-        tiles[groundY - 2][x] = 2; tiles[groundY - 2][x + 1] = 5; tiles[groundY - 2][x + 2] = 2;
-        tiles[groundY - 3][x + 1] = 3;
+        tiles[groundY - 3][x] = 2; tiles[groundY - 3][x + 1] = 5; tiles[groundY - 3][x + 2] = 2;
+        tiles[groundY - 4][x + 1] = 3;
       }
       if (x > 20 && x % 21 === 0) tiles[groundY - 1][x] = 4;
       if (x > 28 && x % 24 === 0) tiles[groundY - 1][x] = 7;
@@ -351,9 +351,9 @@
     persist();
     const level = buildLevel(wid);
     game = {
-      player: { x: 48, y: (level.groundY - 2) * level.th, w: 14, h: 20, vx: 0, vy: 0, onGround: false, facing: 1, inv: 0, jumps: 0 },
+      player: { x: 48, y: level.groundY * level.th - 12, w: 10, h: 12, vx: 0, vy: 0, onGround: false, facing: 1, inv: 0, jumps: 0 },
       camX: 0, lives, score: 0, coinsRun: 0, level, enemies: spawnEnemies(level),
-      flag: level.w - 48, spawnX: 48, spawnY: (level.groundY - 2) * level.th,
+      flag: level.w - 48, spawnX: 48, spawnY: level.groundY * level.th - 12,
       won: false, dead: false, buffs, t: 0, _fallLock: false, world: WORLDS[wid],
     };
     coyote = 0; jumpBuffer = 0; dashCd = 0; mode = "play"; hideOverlay(); ensureMusic();
@@ -516,21 +516,21 @@
     if (fade) ctx.globalAlpha = 0.4;
     ctx.translate(px + w / 2, py + h);
     ctx.scale(facing || 1, 1);
-    const bob = moving && !air ? Math.sin(t * 16) * 1.4 : 0;
-    const leg = moving && !air ? Math.sin(t * 16) * 3.4 : (air ? 3 : 0);
+    const bob = moving && !air ? Math.sin(t * 16) * 0.6 : 0;
+    const leg = moving && !air ? Math.sin(t * 16) * 1.6 : (air ? 1.4 : 0);
     ctx.fillStyle = P.shoe;
-    ctx.fillRect(-6, -7 + leg, 5, 7);
-    ctx.fillRect(0, -7 - leg, 5, 7);
+    ctx.fillRect(-4, -4 + leg, 3, 4);
+    ctx.fillRect(0.5, -4 - leg, 3, 4);
     ctx.fillStyle = P.limb;
-    ctx.fillRect(-7, -h + 6 + bob, 3.5, 8);
-    ctx.fillRect(3, -h + 6 + bob, 3.5, 8);
-    ctx.translate(0, -h * 0.52 + bob);
-    hexPath(0, 0, 9.2); ctx.fillStyle = P.glow; ctx.fill();
-    hexPath(0, 0, 8); ctx.fillStyle = P.rim; ctx.fill();
-    hexPath(0, 0, 6.2); ctx.fillStyle = P.body; ctx.fill();
-    ctx.fillStyle = P.face; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("$", 0, 1);
-    ctx.fillStyle = "#fff"; ctx.fillRect(facing > 0 ? 1.5 : -3.5, -2.2, 2.2, 2.2);
+    ctx.fillRect(-4.2, -h + 4 + bob, 2.2, 4);
+    ctx.fillRect(2, -h + 4 + bob, 2.2, 4);
+    ctx.translate(0, -h * 0.55 + bob);
+    hexPath(0, 0, 5.4); ctx.fillStyle = P.glow; ctx.fill();
+    hexPath(0, 0, 4.6); ctx.fillStyle = P.rim; ctx.fill();
+    hexPath(0, 0, 3.6); ctx.fillStyle = P.body; ctx.fill();
+    ctx.fillStyle = P.face; ctx.font = "bold 3.4px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("$MT", 0, 0.3);
+    ctx.fillStyle = "#fff"; ctx.fillRect(facing > 0 ? 0.8 : -2.2, -1.6, 1.4, 1.4);
     ctx.restore();
   }
 
@@ -559,7 +559,7 @@
         const sx = (x * tw - cam) * sc, sy = y * th * sc, sw = tw * sc, sh = th * sc;
         if (t === 1) { ctx.fillStyle = thm.dirt; ctx.fillRect(sx, sy, sw + 0.5, sh + 0.5); ctx.fillStyle = thm.ground; ctx.fillRect(sx, sy, sw + 0.5, sh * 0.32); }
         if (t === 2) { ctx.fillStyle = thm.brick; ctx.fillRect(sx, sy, sw, sh); ctx.strokeStyle = "rgba(255,255,255,.2)"; ctx.strokeRect(sx + 1, sy + 1, sw - 2, sh - 2); }
-        if (t === 3) { ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(sx + sw / 2, sy + sh / 2, sw * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#78350f"; ctx.font = `${Math.max(8, sw * 0.55)}px sans-serif`; ctx.textAlign = "center"; ctx.fillText("$", sx + sw / 2, sy + sh / 2 + 1); }
+        if (t === 3) { ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(sx + sw / 2, sy + sh / 2, sw * 0.34, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#78350f"; ctx.font = `bold ${Math.max(5, sw * 0.32)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("$MT", sx + sw / 2, sy + sh / 2 + 0.5); }
         if (t === 4) { ctx.fillStyle = "#047857"; ctx.fillRect(sx, sy, sw, sh); ctx.fillStyle = "#064e3b"; ctx.fillRect(sx - 3, sy, sw + 6, sh * 0.32); }
         if (t === 5) { ctx.fillStyle = "#f59e0b"; ctx.fillRect(sx, sy, sw, sh); ctx.fillStyle = "#fff"; ctx.font = `bold ${sw * 0.7}px sans-serif`; ctx.textAlign = "center"; ctx.fillText("?", sx + sw / 2, sy + sh * 0.72); }
         if (t === 6) { ctx.fillStyle = "#e5e7eb"; ctx.fillRect(sx + sw * 0.45, sy - sh * 2.2, 3, sh * 3.2); ctx.fillStyle = "#19d37e"; ctx.beginPath(); ctx.moveTo(sx + sw * 0.45, sy - sh * 2.2); ctx.lineTo(sx + sw * 0.45 + 20, sy - sh * 1.6); ctx.lineTo(sx + sw * 0.45, sy - sh); ctx.fill(); }
@@ -584,7 +584,7 @@
     refreshParty();
     const settings = party?.settings || { miniLives: 3, miniSpeed: 1, theme: "day", miniEnabled: true };
     if (settings.miniEnabled === false) { toast("Mini disabled"); return; }
-    mini = { t: 0, timeLeft: 30, score: 0, lives: settings.miniLives || 3, speed: settings.miniSpeed || 1, theme: settings.theme || "day", player: { x: W / 2, y: H - 60, w: 28, h: 28 }, coins: [], bombs: [], spawn: 0 };
+    mini = { t: 0, timeLeft: 30, score: 0, lives: settings.miniLives || 3, speed: settings.miniSpeed || 1, theme: settings.theme || "day", player: { x: W / 2, y: H - 52, w: 18, h: 20 }, coins: [], bombs: [], spawn: 0 };
     mode = "mini"; hideOverlay();
     document.getElementById("hudMode").textContent = "Coin Rush";
   }
@@ -707,7 +707,7 @@
       x.fillStyle = P.shoe; x.fillRect(-8, -6, 6, 6); x.fillRect(2, -6, 6, 6);
       x.fillStyle = P.rim; x.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI/6+i*Math.PI/3; const px = Math.cos(a)*12, py = Math.sin(a)*12-10; i?x.lineTo(px,py):x.moveTo(px,py); } x.closePath(); x.fill();
       x.fillStyle = P.body; x.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI/6+i*Math.PI/3; const px = Math.cos(a)*9, py = Math.sin(a)*9-10; i?x.lineTo(px,py):x.moveTo(px,py); } x.closePath(); x.fill();
-      x.fillStyle = P.face; x.font = "bold 10px sans-serif"; x.textAlign = "center"; x.fillText("$", 0, -8);
+      x.fillStyle = P.face; x.font = "bold 7px sans-serif"; x.textAlign = "center"; x.fillText("$MT", 0, -8);
       save.activeSkin = old;
     });
   }
