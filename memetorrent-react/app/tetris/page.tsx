@@ -10,7 +10,7 @@ export default function TetrisPage() {
         <Link href="/boards?game=tetris" className="opacity-70 hover:opacity-100">Tetris board</Link>
       </div>
       <h1 className="text-4xl font-semibold mb-2">MT Tetris</h1>
-      <p className="opacity-70 mb-6">Hold, next-3, ghost piece, hard drop. 4-line is $MT Tetris. Wallet + staff desk.</p>
+      <p className="opacity-70 mb-6">Pick a mode first. Hold, next-3, ghost, hard drop stay. DAS + 180 on top. Wallet + staff desk.</p>
       <MtTetris />
     </div>
   );

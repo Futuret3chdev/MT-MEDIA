@@ -95,8 +95,8 @@ export const CATALOG: CatalogGame[] = [
     kind: 'arcade',
     status: 'live',
     play: '/pacman',
-    img: '/games/covers/pacman.png',
-    blurb: '3 lives. Power orbs frighten ghosts. Cherry then 🟢 fruit. Side tunnels. Levels speed up.',
+    img: '/games/covers/pacman.png?v=2',
+    blurb: 'Full arcade menu: Pac-Man, Ms. Pac-Man, Cookie-Man, Crazy Otto, $MT Pac, Learn. Play / Turbo / Practice / Cutscenes / High scores.',
   },
   {
     id: 'tetris',
@@ -104,8 +104,8 @@ export const CATALOG: CatalogGame[] = [
     kind: 'arcade',
     status: 'live',
     play: '/tetris',
-    img: '/games/covers/tetris.jpg',
-    blurb: 'Hold, next-3, ghost, hard drop. Levels + combo. 4-line is $MT Tetris.',
+    img: '/games/covers/tetris.jpg?v=2',
+    blurb: 'Menu: Classic, Sprint 40, Ultra 2m, $MT Fever, Zen. Hold, next-3, ghost, hard drop, DAS, 180.',
   },
   {
     id: 'tetrismob',
@@ -113,8 +113,8 @@ export const CATALOG: CatalogGame[] = [
     kind: 'arcade',
     status: 'live',
     play: '/tetrismob',
-    img: '/games/covers/tetrismob.jpg',
-    blurb: 'Swipe stack. Hold + hard drop pads. Long-press hold. Same wallet + staff.',
+    img: '/games/covers/tetrismob.jpg?v=2',
+    blurb: 'Same modes on thumbs. Swipe, hold pads, 180, DAS repeat. Wallet + staff.',
   },
   {
     id: 'racer',

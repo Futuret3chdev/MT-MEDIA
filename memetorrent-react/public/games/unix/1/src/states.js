@@ -105,6 +105,7 @@ var homeState = (function(){
     menu.addTextIconButton(getGameName(GAME_PACMAN),
         function() {
             gameMode = GAME_PACMAN;
+            mtMode = false;
             exitTo(preNewGameState);
         },
         function(ctx,x,y,frame) {
@@ -113,6 +114,7 @@ var homeState = (function(){
     menu.addTextIconButton(getGameName(GAME_MSPACMAN),
         function() {
             gameMode = GAME_MSPACMAN;
+            mtMode = false;
             exitTo(preNewGameState);
         },
         function(ctx,x,y,frame) {
@@ -121,15 +123,35 @@ var homeState = (function(){
     menu.addTextIconButton(getGameName(GAME_COOKIE),
         function() {
             gameMode = GAME_COOKIE;
+            mtMode = false;
             exitTo(preNewGameState);
         },
         function(ctx,x,y,frame) {
             drawCookiemanSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame), true);
         });
+    menu.addTextIconButton(getGameName(GAME_OTTO),
+        function() {
+            gameMode = GAME_OTTO;
+            mtMode = false;
+            exitTo(preNewGameState);
+        },
+        function(ctx,x,y,frame) {
+            atlas.drawOttoSprite(ctx,x,y,DIR_RIGHT,getOttoAnimFrame(frame));
+        });
+    menu.addTextIconButton("$MT PAC",
+        function() {
+            gameMode = GAME_PACMAN;
+            mtMode = true;
+            exitTo(preNewGameState);
+        },
+        function(ctx,x,y,frame) {
+            atlas.drawPacmanSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame));
+        });
 
     menu.addSpacer(0.5);
     menu.addTextIconButton("LEARN",
         function() {
+            mtMode = false;
             exitTo(learnState);
         },
         function(ctx,x,y,frame) {
@@ -467,6 +489,14 @@ var preNewGameState = (function() {
             newGameState.setStartLevel(1);
             exitTo(newGameState, 60);
         });
+    menu.addTextButton("PLAY $MT",
+        function() {
+            practiceMode = false;
+            turboMode = false;
+            mtMode = true;
+            newGameState.setStartLevel(1);
+            exitTo(newGameState, 60);
+        });
     menu.addTextButton("PRACTICE",
         function() { 
             practiceMode = true;
@@ -481,6 +511,10 @@ var preNewGameState = (function() {
     menu.addTextButton("ABOUT",
         function() { 
             exitTo(aboutGameState);
+        });
+    menu.addTextButton("HIGH SCORES",
+        function() {
+            exitTo(scoreState);
         });
     menu.addSpacer(0.5);
     menu.addTextButton("BACK",
@@ -1251,6 +1285,10 @@ var readyNewState = newChildObject(readyState, {
             setNextCookieMap();
         }
         map.resetCurrent();
+        if (mtMode && map) {
+            map.wallStrokeColor = "#19d37e";
+            map.wallFillColor = "#052e16";
+        }
         fruit.onNewLevel();
         renderer.drawMap();
 
@@ -1621,6 +1659,18 @@ var overState = (function() {
     return {
         init: function() {
             frames = 0;
+            try {
+                var sc = getScore();
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'mt-pac-score', score: sc, mt: !!mtMode }, '*');
+                }
+                fetch('/api/scores', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ game_id: 'pacman', score: sc }),
+                }).catch(function(){});
+            } catch (e) {}
         },
         draw: function() {
             renderer.blitMap();

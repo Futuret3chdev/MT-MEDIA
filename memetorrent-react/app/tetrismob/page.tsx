@@ -10,7 +10,7 @@ export default function TetrisMobPage() {
         <Link href="/boards?game=tetrismob" className="opacity-70 hover:opacity-100">Mob board</Link>
       </div>
       <h1 className="text-4xl font-semibold mb-2">Tetris Mob</h1>
-      <p className="opacity-70 mb-6">Swipe to stack. Hold and hard-drop pads. Long-press hold. Wallet + staff desk.</p>
+      <p className="opacity-70 mb-6">Same mode menu on thumbs. Swipe, hold pads, 180, DAS repeat. Wallet + staff desk.</p>
       <MtTetris mob />
     </div>
   );

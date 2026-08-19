@@ -9,6 +9,7 @@ var GAME_OTTO = 3;
 
 var practiceMode = false;
 var turboMode = false;
+var mtMode = false;
 
 // current game mode
 var gameMode = GAME_PACMAN;

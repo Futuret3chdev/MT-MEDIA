@@ -14,7 +14,9 @@ const SHAPES: number[][][] = [
   [[1, 1, 0], [0, 1, 1]],
 ];
 const COLS = ['#19d37e', '#38bdf8', '#fbbf24', '#fb7185', '#a78bfa', '#f97316', '#e5e7eb'];
+const FEVER = ['#19d37e', '#4ade80', '#fbbf24', '#86efac', '#34d399', '#f59e0b', '#a7f3d0'];
 const NAMES = ['I', 'O', 'T', 'J', 'L', 'S', 'Z'];
+type Mode = 'classic' | 'sprint' | 'ultra' | 'fever' | 'zen';
 
 function rot(m: number[][]) {
   const h = m.length, w = m[0].length;
@@ -42,8 +44,11 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
   const [nextIds, setNextIds] = useState<number[]>([]);
   const [flash, setFlash] = useState('');
   const [playing, setPlaying] = useState(false);
+  const [mode, setMode] = useState<Mode>('classic');
+  const [clock, setClock] = useState(0);
   const act = useRef<(k: string) => void>(() => {});
   const stopRef = useRef(false);
+  const holdDir = useRef({ L: 0, R: 0 });
 
   useEffect(() => {
     if (!playing) return;
@@ -58,8 +63,10 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
     let piece = { m: SHAPES[0], x: 3, y: 0, c: 1, id: 0 };
     let hold: number | null = null;
     let heldThis = false;
-    let pts = 0, clearedTotal = 0, cmb = 0, drop = 0, on = true;
-    setScore(0); setLines(0); setLevel(1); setCombo(0); setHoldId(null);
+    let pts = 0, clearedTotal = 0, cmb = 0, drop = 0, lock = 0, on = true;
+    let left = mode === 'ultra' ? 120 : 0;
+    setScore(0); setLines(0); setLevel(1); setCombo(0); setHoldId(null); setClock(left);
+    const palette = mode === 'fever' ? FEVER : COLS;
     const take = () => {
       if (queue.length < 7) queue = queue.concat(bag());
       return queue.shift() as number;
@@ -75,18 +82,28 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
           if (m[j][i] && (y + j >= H || x + i < 0 || x + i >= W || (y + j >= 0 && board[y + j][x + i]))) return false;
       return true;
     };
-    const spawn = (id?: number) => {
-      piece = make(id ?? take());
-      heldThis = false;
-      peek();
-      if (!fits(piece.x, piece.y, piece.m)) {
-        on = false;
-        setPlaying(false);
+    const end = () => {
+      if (!on) return;
+      on = false;
+      setPlaying(false);
+      if (mode !== 'zen') {
         fetch('/api/scores', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ game_id: mob ? 'tetrismob' : 'tetris', score: pts }),
         }).catch(() => {});
+      }
+    };
+    const spawn = (id?: number) => {
+      piece = make(id ?? take());
+      heldThis = false;
+      lock = 0;
+      peek();
+      if (!fits(piece.x, piece.y, piece.m)) {
+        if (mode === 'zen') {
+          for (let i = 0; i < 4; i++) { board.shift(); board.push(Array(W).fill(0)); }
+          if (!fits(piece.x, piece.y, piece.m)) end();
+        } else end();
       }
     };
     const ghostY = () => {
@@ -109,8 +126,9 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
       if (cleared) {
         cmb += 1;
         clearedTotal += cleared;
+        const fever = mode === 'fever' && cleared === 4 ? 800 : 0;
         const base = [0, 100, 300, 500, 800][cleared] * lv;
-        const extra = cleared === 4 ? 400 : 0;
+        const extra = cleared === 4 ? 400 + fever : 0;
         const comboPts = cmb > 1 ? (cmb - 1) * 50 : 0;
         pts += base + extra + comboPts;
         setScore(pts);
@@ -119,6 +137,7 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
         setCombo(cmb);
         setFlash(cleared === 4 ? '$MT TETRIS' : cmb > 1 ? 'COMBO x' + cmb : '+' + (base + extra));
         setTimeout(() => setFlash(''), 700);
+        if (mode === 'sprint' && clearedTotal >= 40) end();
       } else {
         cmb = 0;
         setCombo(0);
@@ -126,11 +145,15 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
       spawn();
     };
     const move = (dx: number, dy: number) => {
-      if (fits(piece.x + dx, piece.y + dy, piece.m)) { piece.x += dx; piece.y += dy; return true; }
+      if (fits(piece.x + dx, piece.y + dy, piece.m)) {
+        piece.x += dx; piece.y += dy;
+        if (dx) lock = 0;
+        return true;
+      }
       return false;
     };
     const kick = (m: number[][]) => {
-      for (const dx of [0, -1, 1, -2, 2]) if (fits(piece.x + dx, piece.y, m)) { piece.x += dx; piece.m = m; return; }
+      for (const dx of [0, -1, 1, -2, 2]) if (fits(piece.x + dx, piece.y, m)) { piece.x += dx; piece.m = m; lock = 0; return; }
     };
     act.current = (k: string) => {
       if (!on) return;
@@ -138,6 +161,7 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
       if (k === 'R') move(1, 0);
       if (k === 'D') { if (!move(0, 1)) merge(); else { pts += 1; setScore(pts); } }
       if (k === 'U') kick(rot(piece.m));
+      if (k === '180') kick(rot(rot(piece.m)));
       if (k === 'HARD') {
         let n = 0;
         while (move(0, 1)) n++;
@@ -160,13 +184,18 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
         peek();
       }
     };
-    const key = (e: KeyboardEvent) => {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') act.current('L');
-      if (e.code === 'ArrowRight' || e.code === 'KeyD') act.current('R');
+    const down = (e: KeyboardEvent) => {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') { act.current('L'); holdDir.current.L = performance.now(); }
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') { act.current('R'); holdDir.current.R = performance.now(); }
       if (e.code === 'ArrowDown' || e.code === 'KeyS') act.current('D');
       if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'KeyX') { e.preventDefault(); act.current('U'); }
+      if (e.code === 'KeyZ') { e.preventDefault(); act.current('180'); }
       if (e.code === 'Space') { e.preventDefault(); act.current('HARD'); }
       if (e.code === 'KeyC' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') act.current('HOLD');
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') holdDir.current.L = 0;
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') holdDir.current.R = 0;
     };
     let sx = 0, sy = 0, st = 0;
     const pdown = (e: PointerEvent) => { sx = e.clientX; sy = e.clientY; st = performance.now(); };
@@ -183,33 +212,47 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
       else if (dy > 24) act.current('D');
       else act.current('U');
     };
-    addEventListener('keydown', key);
+    addEventListener('keydown', down);
+    addEventListener('keyup', up);
     c.addEventListener('pointerdown', pdown);
     c.addEventListener('pointerup', pup);
     spawn();
     let last = performance.now();
     const loop = (now: number) => {
       if (!on || stopRef.current) return;
-      drop += now - last;
+      const dt = now - last;
       last = now;
+      drop += dt;
+      if (mode === 'ultra') {
+        left -= dt / 1000;
+        setClock(Math.max(0, Math.ceil(left)));
+        if (left <= 0) { end(); return; }
+      }
+      if (holdDir.current.L && now - holdDir.current.L > 160) { act.current('L'); holdDir.current.L = now - 110; }
+      if (holdDir.current.R && now - holdDir.current.R > 160) { act.current('R'); holdDir.current.R = now - 110; }
       const lv = 1 + Math.floor(clearedTotal / 10);
       const ms = Math.max(90, (mob ? 540 : 480) - lv * 38);
-      if (drop > ms) {
+      const grounded = !fits(piece.x, piece.y + 1, piece.m);
+      if (grounded) {
+        lock += dt;
+        if (lock > 480) { lock = 0; merge(); }
+      } else lock = 0;
+      if (!grounded && drop > ms) {
         drop = 0;
-        if (!move(0, 1)) merge();
+        move(0, 1);
       }
       const dpr = devicePixelRatio || 1;
       const cw = c.clientWidth * dpr, ch = c.clientHeight * dpr;
       if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
       const cell = Math.min(cw / W, ch / H);
       const ox = (cw - cell * W) / 2, oy = (ch - cell * H) / 2;
-      ctx.fillStyle = '#05070c';
+      ctx.fillStyle = mode === 'fever' ? '#02140c' : '#05070c';
       ctx.fillRect(0, 0, cw, ch);
       ctx.fillStyle = '#0b1220';
       ctx.fillRect(ox, oy, cell * W, cell * H);
       const draw = (x: number, y: number, col: number, a = 1) => {
         ctx.globalAlpha = a;
-        ctx.fillStyle = COLS[(col - 1) % COLS.length];
+        ctx.fillStyle = palette[(col - 1) % palette.length];
         ctx.fillRect(ox + x * cell + 1, oy + y * cell + 1, cell - 2, cell - 2);
         ctx.globalAlpha = 1;
       };
@@ -223,11 +266,12 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
     return () => {
       on = false;
       cancelAnimationFrame(id);
-      removeEventListener('keydown', key);
+      removeEventListener('keydown', down);
+      removeEventListener('keyup', up);
       c.removeEventListener('pointerdown', pdown);
       c.removeEventListener('pointerup', pup);
     };
-  }, [playing, mob]);
+  }, [playing, mob, mode]);
 
   const mini = (id: number | null, label: string) => (
     <div className="rounded-2xl border border-white/10 px-3 py-2 min-w-[72px] text-center">
@@ -238,8 +282,35 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
     </div>
   );
 
+  const modes: { id: Mode; label: string }[] = [
+    { id: 'classic', label: 'Classic' },
+    { id: 'sprint', label: 'Sprint 40' },
+    { id: 'ultra', label: 'Ultra 2m' },
+    { id: 'fever', label: '$MT Fever' },
+    { id: 'zen', label: 'Zen' },
+  ];
+
   return (
     <div>
+      {!playing && (
+        <div className="max-w-sm mx-auto mb-3 rounded-3xl border border-emerald-400/30 p-4">
+          <div className="text-[10px] uppercase tracking-[2px] opacity-50 mb-2">Choose a mode</div>
+          <div className="grid grid-cols-2 gap-2">
+            {modes.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setMode(m.id)}
+                className={`rounded-2xl px-3 py-3 text-sm font-bold border ${
+                  mode === m.id ? 'bg-emerald-400 text-black border-emerald-400' : 'border-white/15'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <canvas ref={ref} className={`w-full ${mob ? 'h-[58vh]' : 'h-[70vh]'} max-w-sm mx-auto rounded-3xl border border-emerald-400/30 bg-black block touch-none`} />
       <div className="mt-3 flex justify-center gap-2 flex-wrap max-w-sm mx-auto">
         {mini(holdId, 'Hold')}
@@ -250,6 +321,7 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
           <span className="text-emerald-400 font-mono">{score}</span>
           {' · '}L{level}
           {' · '}{lines} lines
+          {mode === 'ultra' ? ` · ${clock}s` : ''}
           {combo > 1 ? <span className="text-amber-300"> · x{combo}</span> : null}
           {flash ? <span className="ml-2 text-amber-300 font-black">{flash}</span> : null}
         </span>
@@ -260,7 +332,7 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
             </button>
           )}
           <button type="button" onClick={() => { setScore(0); setPlaying(true); }} className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2">
-            {playing ? 'Stacking…' : 'Play'}
+            {playing ? 'Stacking…' : 'Play ' + mode}
           </button>
         </div>
       </div>
@@ -268,18 +340,19 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
         <div className="mt-3 max-w-sm mx-auto">
           <div className="grid grid-cols-5 gap-2">
             <button type="button" onPointerDown={() => act.current('HOLD')} className="h-14 rounded-2xl bg-amber-400/15 border border-amber-300/40 text-xs font-black">HOLD</button>
-            <button type="button" onPointerDown={() => act.current('L')} className="h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">◀</button>
+            <button type="button" onPointerDown={() => { act.current('L'); holdDir.current.L = performance.now(); }} onPointerUp={() => { holdDir.current.L = 0; }} className="h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">◀</button>
             <button type="button" onPointerDown={() => act.current('D')} className="h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">▼</button>
-            <button type="button" onPointerDown={() => act.current('R')} className="h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">▶</button>
+            <button type="button" onPointerDown={() => { act.current('R'); holdDir.current.R = performance.now(); }} onPointerUp={() => { holdDir.current.R = 0; }} className="h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">▶</button>
             <button type="button" onPointerDown={() => act.current('HARD')} className="h-14 rounded-2xl bg-emerald-400 text-black text-xs font-black">DROP</button>
           </div>
-          <button type="button" onPointerDown={() => act.current('U')} className="mt-2 w-full h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 font-bold">
-            Rotate
-          </button>
-          <p className="mt-2 text-xs opacity-50 text-center">Swipe: L/R, down soft, long down hard drop, tap rotate, long-press hold.</p>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <button type="button" onPointerDown={() => act.current('U')} className="h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 font-bold">Rotate</button>
+            <button type="button" onPointerDown={() => act.current('180')} className="h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 font-bold">180</button>
+          </div>
+          <p className="mt-2 text-xs opacity-50 text-center">Swipe L/R, down soft, long down hard drop, tap rotate, long-press hold. Hold pads repeat.</p>
         </div>
       ) : (
-        <p className="mt-2 text-xs opacity-50 text-center">←→ move · ↓ soft · Space hard drop · Up/X rotate · C / Shift hold. 4-line is $MT Tetris.</p>
+        <p className="mt-2 text-xs opacity-50 text-center">←→ DAS · ↓ soft · Space hard drop · Up/X rotate · Z 180 · C hold. Menu: Classic / Sprint / Ultra / $MT Fever / Zen.</p>
       )}
       <div className="mt-6 max-w-md mx-auto"><NightWallet name="" /></div>
       <NightDesk />

@@ -1,8 +1,4 @@
-//Futuret3ch 2025
-
 (function(){
-
-//@line 1 "src/inherit.js"
 //  Apparently, the mutable, non-standard __proto__ property creates a lot of complexity for JS optimizers,
 //   so it may be phased out in future JS versions.  It's not even supported in Internet Explorer.
 //
@@ -43,6 +39,111 @@ var newChildObject = function(parentObj, newObj) {
 
 var DEBUG = false;
 
+/* Sound handlers added by Dr James Freeman who was sad such a great reverse was a silent movie */
+
+window.audio = new preloadAudio(); // Expose audio to global scope
+
+function audioTrack(url, volume) {
+    var audio = new Audio(url);
+    if (volume) audio.volume = volume;
+    audio.load();
+    var looping = false;
+    this.audio = audio; // Store audio element for mute/volume control
+    this.play = function(noResetTime) {
+        if (!audio.muted) playSound(noResetTime);
+    };
+    this.startLoop = function(noResetTime) {
+        if (looping || audio.muted) return;
+        audio.addEventListener('ended', audioLoop);
+        audioLoop(noResetTime);
+        looping = true;
+    };
+    this.stopLoop = function(noResetTime) {
+        try { audio.removeEventListener('ended', audioLoop); } catch (e) {}
+        audio.pause();
+        if (!noResetTime) audio.currentTime = 0;
+        looping = false;
+    };
+    this.isPlaying = function() {
+        return !audio.paused;
+    };
+    this.isPaused = function() {
+        return audio.paused;
+    };
+    this.stop = this.stopLoop;
+    this.setVolume = function(volume) {
+        audio.volume = Math.max(0, Math.min(1, volume));
+    };
+
+    function audioLoop(noResetTime) {
+        playSound(noResetTime);
+    }
+    function playSound(noResetTime) {
+        if (!audio.paused) {
+            audio.pause();
+            if (!noResetTime) audio.currentTime = 0;
+        }
+        try {
+            var playPromise = audio.play();
+            if (playPromise) {
+                playPromise.then(function(){}).catch(function(err){});
+            }
+        }
+        catch(err) { console.error(err); }
+    }
+}
+
+function preloadAudio() {
+    this.isMuted = false;
+    this.volume = 1.0;
+
+    this.credit = new audioTrack('sounds/credit.mp3');
+    this.coffeeBreakMusic = new audioTrack('sounds/coffee-break-music.mp3');
+    this.die = new audioTrack('sounds/miss.mp3');
+    this.ghostReturnToHome = new audioTrack('sounds/ghost-return-to-home.mp3');
+    this.eatingGhost = new audioTrack('sounds/eating-ghost.mp3');
+    this.ghostTurnToBlue = new audioTrack('sounds/ghost-turn-to-blue.mp3', 0.5);
+    this.eatingFruit = new audioTrack('sounds/eating-fruit.mp3');
+    this.ghostSpurtMove1 = new audioTrack('sounds/ghost-spurt-move-1.mp3');
+    this.ghostSpurtMove2 = new audioTrack('sounds/ghost-spurt-move-2.mp3');
+    this.ghostSpurtMove3 = new audioTrack('sounds/ghost-spurt-move-3.mp3');
+    this.ghostSpurtMove4 = new audioTrack('sounds/ghost-spurt-move-4.mp3');
+    this.ghostNormalMove = new audioTrack('sounds/ghost-normal-move.mp3');
+    this.extend = new audioTrack('sounds/extend.mp3');
+    this.eating = new audioTrack('sounds/eating.mp3', 0.5);
+    this.startMusic = new audioTrack('sounds/start-music.mp3');
+
+    this.toggleMute = function() {
+        this.isMuted = !this.isMuted;
+        for (var s in this) {
+            if (s == 'silence' || s == 'ghostReset' || s == 'toggleMute' || s == 'isMuted' || s == 'setVolume' || s == 'volume') continue;
+            this[s].audio.muted = this.isMuted;
+        }
+    };
+
+    this.setVolume = function(volume) {
+        this.volume = Math.max(0, Math.min(1, volume));
+        for (var s in this) {
+            if (s == 'silence' || s == 'ghostReset' || s == 'toggleMute' || s == 'isMuted' || s == 'setVolume' || s == 'volume') continue;
+            this[s].setVolume(this.volume * (s == 'ghostTurnToBlue' || s == 'eating' ? 0.5 : 1));
+        }
+    };
+
+    this.ghostReset = function(noResetTime) {
+        for (var s in this) {
+            if (s == 'silence' || s == 'ghostReset' || s == 'toggleMute' || s == 'isMuted' || s == 'setVolume' || s == 'volume') continue;
+            if (s.match(/^ghost/)) this[s].stopLoop(noResetTime);
+        }
+    };
+
+    this.silence = function(noResetTime) {
+        for (var s in this) {
+            if (s == 'silence' || s == 'ghostReset' || s == 'toggleMute' || s == 'isMuted' || s == 'setVolume' || s == 'volume') continue;
+            this[s].stopLoop(noResetTime);
+        }
+    };
+}
+
 var getRandomColor = function() {
     return '#'+('00000'+(Math.random()*(1<<24)|0).toString(16)).slice(-6);
 };
@@ -51,7 +152,7 @@ var getRandomInt = function(min,max) {
     return Math.floor(Math.random() * (max-min+1)) + min;
 };
 
-//@line 1 "src/game.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Game
 
@@ -63,6 +164,7 @@ var GAME_OTTO = 3;
 
 var practiceMode = false;
 var turboMode = false;
+var mtMode = false;
 
 // current game mode
 var gameMode = GAME_PACMAN;
@@ -86,43 +188,43 @@ var getGameDescription = (function(){
             "NAMCO (C) 1980",
             "",
             "REVERSE-ENGINEERING:",
-            "Futuret3ch",
+            "JAMEY PITTMAN",
             "",
-            "ADAPTED BY:",
-            "Jason Cilia",
+            "REMAKE:",
+            "SHAUN WILLIAMS",
         ],
         [
-            "REMASTERED",
-            "FUTURET3CH (C) 2025",
+            "ORIGINAL ARCADE ADDON:",
+            "MIDWAY/GCC (C) 1981",
             "",
             "REVERSE-ENGINEERING:",
-            "EDISON LEE",
+            "BART GRANTHAM",
             "",
-            "ADAPTED BY:",
-            "JASON CILIA",
+            "REMAKE:",
+            "SHAUN WILLIAMS",
         ],
         [
             "A NEW PAC-MAN GAME",
             "WITH RANDOM MAZES:",
-            "Futuret3ch (C) 2025",
+            "SHAUN WILLIAMS (C) 2012",
             "",
             "COOKIE MONSTER DESIGN:",
-            "Tammy Nguyen",
+            "JIM HENSON",
             "",
-            "ADAPTED BY:",
-            "FUTURET3CH",
+            "PAC-MAN CROSSOVER CONCEPT:",
+            "TANG YONGFA",
         ],
         [
             "THE UNRELEASED",
             "MS. PAC-MAN PROTOTYPE:",
-            "FUTURET3CH 2025",
+            "GCC (C) 1981",
             "",
             "SPRITES REFERENCED FROM",
-            "Futuret3ch",
-            "DEV 2025 PRESENTATION",
+            "STEVE GOLSON'S",
+            "CAX 2012 PRESENTATION",
             "",
-            "ADAPTED BY:",
-            "FUTURET3CH",
+            "REMAKE:",
+            "SHAUN WILLIAMS",
         ],
     ];
     
@@ -131,345 +233,6 @@ var getGameDescription = (function(){
             mode = gameMode;
         }
         return desc[mode];
-    };
-})();
-
-var leaderboardScores = []; // Ensure this is defined globally
-
-function submitScore() {
-    let score;
-    try {
-        score = getScore();
-        if (typeof score === 'undefined' || score === null) {
-            throw new Error('getScore returned undefined or null');
-        }
-    } catch (e) {
-        console.error('Failed to get score:', e);
-        return;
-    }
-    const isTelegram = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    let player;
-    if (isTelegram) {
-        player = window.Telegram.WebApp.initDataUnsafe.user.username ? `@${window.Telegram.WebApp.initDataUnsafe.user.username}` : `TG_${window.Telegram.WebApp.initDataUnsafe.user.id}`;
-        console.log('Telegram player set to:', player, 'Username available:', !!window.Telegram.WebApp.initDataUnsafe.user.username);
-    } else {
-        player = prompt('Enter your name:', 'Anonymous') || 'Anonymous';
-    }
-    const gameModeValue = typeof gameMode !== 'undefined' ? (gameMode === 0 ? 'Pac-Man' : gameMode === 1 ? 'Mrs. Pac-Man' : gameMode === 2 ? 'Cookie-Man' : 'Pac-Man') : 'Pac-Man';
-    const playMode = typeof turboMode === 'boolean' && turboMode === true ? 'TURBO' : 'PLAY'; // Explicit check
-
-    console.log('Submitting score - Player:', player, 'Score:', score, 'Game Mode:', gameModeValue, 'Play Mode:', playMode, 'turboMode state:', turboMode, 'typeof turboMode:', typeof turboMode, 'Current State:', typeof currentState !== 'undefined' ? currentState.name : 'Unknown', 'Stack Trace:', new Error().stack);
-    console.log('Data to send:', JSON.stringify({ player, score, game_mode: gameModeValue, play_mode: playMode })); // Log data before fetch
-
-    fetch('submit_score.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player, score, game_mode: gameModeValue, play_mode: playMode })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
-    })
-    .then(() => {
-        fetch('submit_score.php')
-            .then(response => response.json())
-            .then(data => leaderboardScores = data)
-            .catch(err => console.error('Leaderboard fetch failed:', err));
-    })
-    .catch(err => console.error('Score submission failed:', err));
-}
-
-
-var leaderboardState = (function() {
-    var leaderboardScores = []; // Declare locally
-    var scoreboardIndex = 0; // Index to cycle through combinations
-    var gameModes = ['PACMAN', 'MRSPACMAN', 'COOKIE']; // Target game modes
-    var playModes = ['PLAY', 'TURBO']; // Available play modes
-    var totalCombinations = gameModes.length * playModes.length; // Total number of scoreboards
-
-    var showPopup = function() {
-        // Create modal overlay if it doesn't exist
-        let overlay = document.getElementById('leaderboardOverlay');
-        let popup = document.getElementById('leaderboardPopup');
-        if (!overlay || !popup) {
-            overlay = document.createElement('div');
-            overlay.id = 'leaderboardOverlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.7);
-                z-index: 1001;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            `;
-            popup = document.createElement('div');
-            popup.id = 'leaderboardPopup';
-            popup.style.cssText = `
-                background: rgba(0, 0, 0, 0.9);
-                color: #FFFF00;
-                padding: 20px;
-                border: 2px solid #FFFF00;
-                font-family: ArcadeR, sans-serif;
-                font-size: 14px;
-                text-align: center;
-                max-height: 80vh;
-                overflow-y: auto;
-                width: 90%;
-                max-width: 400px;
-                box-sizing: border-box;
-                border-radius: 10px;
-                touch-action: auto;
-                -webkit-tap-highlight-color: transparent;
-            `;
-            overlay.appendChild(popup);
-            document.body.appendChild(overlay);
-
-            // Ensure canvas is below overlay
-            const canvas = document.getElementById('canvas');
-            if (canvas) canvas.style.zIndex = '1000';
-        }
-
-        // Add content with navigation buttons
-        popup.innerHTML = `
-            <h2 style="font-size: 10px; margin: 5px 0;">Leaderboard</h2>
-            <button id="closePopup" style="position: relative; display: block; margin: 10px auto; font-size: 16px; padding: 15px 20px; background: #FF0000; color: #FFFF00; border: none; border-radius: 5px; cursor: pointer; min-width: 50px; min-height: 50px; touch-action: manipulation;">X</button>
-            <div id="scoreboardInfo" style="margin: 10px 0; font-size: 16px;"></div>
-            <div id="scoreList" style="margin-top: 10px;"></div>
-            <div style="margin: 10px 0; display: flex; justify-content: space-between;">
-                <button id="prevButton" style="font-size: 16px; padding: 10px 15px; background: #555; color: #FFFF00; border: none; border-radius: 5px; min-width: 80px; min-height: 40px; touch-action: manipulation;">Previous</button>
-                <button id="nextButton" style="font-size: 16px; padding: 10px 15px; background: #555; color: #FFFF00; border: none; border-radius: 5px; min-width: 80px; min-height: 40px; touch-action: manipulation;">Next</button>
-            </div>
-            <p style="font-size: 14px; margin-top: 10px;">Click X to close</p>
-        `;
-
-        // Populate scores
-        function updateScores() {
-            const currentGameModeIndex = Math.floor(scoreboardIndex / playModes.length);
-            const currentPlayModeIndex = scoreboardIndex % playModes.length;
-            const gameMode = gameModes[currentGameModeIndex];
-            const playMode = playModes[currentPlayModeIndex];
-            console.log('Updating scores for Game Mode:', gameMode, 'Play Mode:', playMode);
-            console.log('Raw leaderboardScores:', JSON.stringify(leaderboardScores));
-            let filteredScores = [...leaderboardScores];
-            if (gameMode) {
-                filteredScores = filteredScores.filter(score => {
-                    let normalizedGameMode = score.game_mode.toUpperCase().replace(/[-.\s]/g, ''); // Remove hyphens, dots, and spaces
-                    // Map COOKIEMAN to COOKIE
-                    if (normalizedGameMode === 'COOKIEMAN') {
-                        normalizedGameMode = 'COOKIE';
-                        console.log('Mapped COOKIEMAN to COOKIE');
-                    }
-                    console.log('Normalized game mode:', normalizedGameMode, 'vs', gameMode);
-                    return normalizedGameMode === gameMode;
-                });
-                console.log('Filtered by game mode, count:', filteredScores.length, 'Sample:', JSON.stringify(filteredScores.slice(0, 2)));
-            }
-            if (playMode) {
-                filteredScores = filteredScores.filter(score => score.play_mode.toUpperCase() === playMode);
-                console.log('Filtered by play mode, count:', filteredScores.length, 'Sample:', JSON.stringify(filteredScores.slice(0, 2)));
-            }
-            const scoreboardInfo = document.getElementById('scoreboardInfo');
-            if (scoreboardInfo) {
-                scoreboardInfo.textContent = `${gameMode} - ${playMode} (Scoreboard ${scoreboardIndex + 1}/${totalCombinations})`;
-            }
-            const scoreListDiv = document.getElementById('scoreList');
-            if (scoreListDiv) {
-                scoreListDiv.innerHTML = filteredScores.length === 0 
-                    ? '<p>No scores found</p>' 
-                    : filteredScores.map((score, i) => `<p>${i + 1}. ${score.player}: ${score.score}</p>`).join('');
-            } else {
-                console.error('Score list div not found');
-            }
-        }
-
-        // Add event listeners for navigation
-        const prevButton = document.getElementById('prevButton');
-        if (prevButton) {
-            prevButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Clicked Previous button');
-                scoreboardIndex = (scoreboardIndex - 1 + totalCombinations) % totalCombinations;
-                updateScores();
-            });
-            prevButton.addEventListener('touchstart', function(e) {
-                console.log('Touchstart on Previous button', e.touches.length, e.touches[0].clientX, e.touches[0].clientY);
-                e.stopPropagation();
-            });
-            prevButton.addEventListener('touchmove', function(e) {
-                console.log('Touchmove on Previous button', e.touches.length);
-            });
-            prevButton.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Touchend on Previous button', e.changedTouches.length, e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                scoreboardIndex = (scoreboardIndex - 1 + totalCombinations) % totalCombinations;
-                updateScores();
-            });
-            console.log('Previous button event listeners added');
-        } else {
-            console.error('Previous button not found');
-        }
-
-        const nextButton = document.getElementById('nextButton');
-        if (nextButton) {
-            nextButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Clicked Next button');
-                scoreboardIndex = (scoreboardIndex + 1) % totalCombinations;
-                updateScores();
-            });
-            nextButton.addEventListener('touchstart', function(e) {
-                console.log('Touchstart on Next button', e.touches.length, e.touches[0].clientX, e.touches[0].clientY);
-                e.stopPropagation();
-            });
-            nextButton.addEventListener('touchmove', function(e) {
-                console.log('Touchmove on Next button', e.touches.length);
-            });
-            nextButton.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Touchend on Next button', e.changedTouches.length, e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                scoreboardIndex = (scoreboardIndex + 1) % totalCombinations;
-                updateScores();
-            });
-            console.log('Next button event listeners added');
-        } else {
-            console.error('Next button not found');
-        }
-
-        const closePopupButton = document.getElementById('closePopup');
-        if (closePopupButton) {
-            closePopupButton.addEventListener('click', function() {
-                console.log('Closing leaderboard popup via X button, returning to homeState');
-                let overlay = document.getElementById('leaderboardOverlay');
-                let popup = document.getElementById('leaderboardPopup');
-                if (popup) popup.remove();
-                if (overlay) overlay.remove(); // Ensure overlay is removed
-                [prevButton, nextButton].forEach(button => button && button.removeEventListener('click', updateScores));
-                switchState(homeState);
-                var menu = homeState.getMenu();
-                if (menu && menu.style) { // Safe check for style property
-                    menu.enable(); // Re-enable menu
-                    menu.style.zIndex = '1002'; // Set menu above other elements
-                }
-            });
-            closePopupButton.addEventListener('touchstart', function(e) {
-                console.log('Touchstart on Close button', e.touches.length, e.touches[0].clientX, e.touches[0].clientY);
-                e.stopPropagation();
-            });
-            closePopupButton.addEventListener('touchmove', function(e) {
-                console.log('Touchmove on Close button', e.touches.length);
-            });
-            closePopupButton.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Touchend on Close button', e.changedTouches.length, e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                let overlay = document.getElementById('leaderboardOverlay');
-                let popup = document.getElementById('leaderboardPopup');
-                if (popup) popup.remove();
-                if (overlay) overlay.remove(); // Ensure overlay is removed
-                [prevButton, nextButton].forEach(button => button && button.removeEventListener('click', updateScores));
-                switchState(homeState);
-                var menu = homeState.getMenu();
-                if (menu && menu.style) { // Safe check for style property
-                    menu.enable(); // Re-enable menu
-                    menu.style.zIndex = '1002'; // Set menu above other elements
-                }
-            });
-            console.log('Close button event listeners added');
-        } else {
-            console.error('Close button not found');
-        }
-
-        // Initial population
-        updateScores();
-
-        // Add Enter key listener
-        document.addEventListener('keydown', closePopup);
-    };
-
-    var closePopup = function(e) {
-        if (e.keyCode == 13) {
-            console.log('Closing leaderboard popup via Enter key, returning to homeState');
-            let overlay = document.getElementById('leaderboardOverlay');
-            let popup = document.getElementById('leaderboardPopup');
-            if (popup) popup.remove();
-            if (overlay) overlay.remove(); // Ensure overlay is removed
-            document.removeEventListener('keydown', closePopup);
-            const prevButton = document.getElementById('prevButton');
-            const nextButton = document.getElementById('nextButton');
-            [prevButton, nextButton].forEach(button => button && button.removeEventListener('click', updateScores));
-            switchState(homeState);
-            var menu = homeState.getMenu();
-            if (menu && menu.style) { // Safe check for style property
-                menu.enable(); // Re-enable menu
-                menu.style.zIndex = '1002'; // Set menu above other elements
-            }
-        }
-    };
-
-    return {
-        init: function() {
-            console.log('Initializing leaderboardState, fetching data...');
-            const fetchPath = 'https://memetorrent.futuret3ch.com.au/games/unix/1/submit_score.php';
-            console.log(`Attempting fetch from: ${fetchPath}`);
-            fetch(fetchPath, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                mode: 'cors',
-                credentials: 'include',
-                timeout: 5000
-            })
-            .then(response => {
-                console.log('Fetch response status:', response.status);
-                console.log('Fetch response headers:', Object.fromEntries(response.headers));
-                console.log('Fetch response type:', response.type);
-                console.log('Fetch response URL:', response.url);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-                return response.text().then(text => {
-                    console.log('Raw response text:', text);
-                    try {
-                        const data = JSON.parse(text);
-                        return data;
-                    } catch (e) {
-                        console.error('JSON parse error:', e.message, 'Raw text:', text);
-                        throw new Error('Invalid JSON response: ' + text);
-                    }
-                });
-            })
-            .then(data => {
-                console.log('Fetched leaderboard data:', data);
-                if (!Array.isArray(data)) {
-                    console.error('Fetched data is not an array:', data);
-                    leaderboardScores = [];
-                } else {
-                    leaderboardScores = data.map(score => ({
-                        player: score.player,
-                        score: score.score,
-                        game_mode: score.game_mode ? score.game_mode.toUpperCase().replace(/[-.\s]/g, '') : 'PACMAN', // Remove hyphens, dots, and spaces
-                        play_mode: score.play_mode ? score.play_mode.toUpperCase() : 'PLAY' // Normalize to uppercase
-                    }));
-                    console.log('Normalized leaderboardScores:', JSON.stringify(leaderboardScores)); // Debug normalized data
-                }
-            })
-            .catch(err => {
-                console.error('Leaderboard fetch failed:', err.message);
-                leaderboardScores = [];
-            })
-            .finally(() => showPopup());
-        },
-        draw: function() {},
-        update: function() {},
-        keyDown: function() {}
     };
 })();
 
@@ -668,7 +431,7 @@ var saveHighScores = function() {
         localStorage.highScores = JSON.stringify(highScores);
     }
 };
-//@line 1 "src/direction.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Directions
 // (variables and utility functions for representing actor heading direction)
@@ -773,7 +536,7 @@ var isNextTileFloor = function(tile,dir) {
     return map.isFloorTile(tile.x+dir.x,tile.y+dir.y);
 };
 
-//@line 1 "src/Map.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Map
 // (an ascii map of tiles representing a level maze)
@@ -1158,7 +921,7 @@ Map.prototype.onDotEat = function(x,y) {
     this.timeEaten[i] = vcr.getTime();
     renderer.erasePellet(x,y);
 };
-//@line 1 "src/colors.js"
+
 // source: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
 
 /**
@@ -1308,7 +1071,7 @@ function rgbString(rgb) {
     var b = Math.floor(rgb[2]);
     return 'rgb('+r+','+g+','+b+')';
 }
-//@line 1 "src/mapgen.js"
+
 var mapgen = (function(){
 
     var shuffle = function(list) {
@@ -2760,7 +2523,7 @@ var mapgen = (function(){
         return map;
     };
 })();
-//@line 1 "src/atlas.js"
+
 
 var atlas = (function(){
 
@@ -3282,7 +3045,7 @@ var atlas = (function(){
         drawSnail: copySnail,
     };
 })();
-//@line 1 "src/renderers.js"
+
 //////////////////////////////////////////////////////////////
 // Renderers
 
@@ -4363,7 +4126,7 @@ var initRenderer = function(){
     ];
     renderer = renderer_list[1];
 };
-//@line 1 "src/hud.js"
+
 
 var hud = (function(){
 
@@ -4402,7 +4165,7 @@ var hud = (function(){
     };
 
 })();
-//@line 1 "src/galagaStars.js"
+
 
 var galagaStars = (function() {
 
@@ -4472,7 +4235,7 @@ var galagaStars = (function() {
     };
 
 })();
-//@line 1 "src/Button.js"
+
 var getPointerPos = function(evt) {
     var obj = canvas;
     var top = 0;
@@ -4734,7 +4497,7 @@ ToggleButton.prototype = newChildObject(Button.prototype, {
     },
 
 });
-//@line 1 "src/Menu.js"
+
 var Menu = function(title,x,y,w,h,pad,font,fontcolor) {
     this.title = title;
     this.x = x;
@@ -4888,7 +4651,7 @@ Menu.prototype = {
         }
     },
 };
-//@line 1 "src/inGameMenu.js"
+
 ////////////////////////////////////////////////////
 // In-Game Menu
 var inGameMenu = (function() {
@@ -5067,7 +4830,7 @@ var inGameMenu = (function() {
     };
 })();
 
-//@line 1 "src/sprites.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Sprites
 // (sprites are created using canvas paths)
@@ -7611,7 +7374,7 @@ var drawExclamationPoint = function(ctx,x,y) {
 
     ctx.restore();
 };
-//@line 1 "src/Actor.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // The actor class defines common data functions for the ghosts and pacman
 // It provides everything for updating position and direction.
@@ -7801,7 +7564,7 @@ Actor.prototype.update = function(j) {
     // update head direction
     this.steer();
 };
-//@line 1 "src/Ghost.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Ghost class
 
@@ -8273,7 +8036,7 @@ Ghost.prototype.setTarget = function() {
         this.targetting = 'pacman';
     }
 };
-//@line 1 "src/Player.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Player is the controllable character (Pac-Man)
 
@@ -8493,7 +8256,7 @@ Player.prototype.update = function(j) {
             map.onDotEat(this.tile.x, this.tile.y);
             ghostReleaser.onDotEat();
             fruit.onDotEat();
-            addScore((t=='.') ? 10 : 50);
+            addScore((t=='.') ? (mtMode ? 20 : 10) : (mtMode ? 100 : 50));
 
             if (t=='o')
                 energizer.activate();
@@ -8503,7 +8266,7 @@ Player.prototype.update = function(j) {
         }
     }
 };
-//@line 1 "src/actors.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // create all the actors
 
@@ -8540,7 +8303,7 @@ pacman.pathColor = "rgba(255,255,0,0.8)";
 // (suggests drawing/update order)
 var actors = [blinky, pinky, inky, clyde, pacman];
 var ghosts = [blinky, pinky, inky, clyde];
-//@line 1 "src/targets.js"
+
 /////////////////////////////////////////////////////////////////
 // Targetting
 // (a definition for each actor's targetting algorithm and a draw function to visualize it)
@@ -8800,7 +8563,7 @@ pacman.getPathDistLeft = function(fromPixel, dirEnum) {
 };
 
 })();
-//@line 1 "src/ghostCommander.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Ghost Commander
 // Determines when a ghost should be chasing a target
@@ -8906,7 +8669,7 @@ var ghostCommander = (function() {
         },
     };
 })();
-//@line 1 "src/ghostReleaser.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Ghost Releaser
 
@@ -9060,7 +8823,7 @@ var ghostReleaser = (function(){
         },
     };
 })();
-//@line 1 "src/elroyTimer.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Elroy Timer
 
@@ -9128,7 +8891,7 @@ var elroyTimer = (function(){
         load: load,
     };
 })();
-//@line 1 "src/energizer.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Energizer
 
@@ -9238,7 +9001,7 @@ var energizer = (function() {
         updatePointsTimer: function() { if (pointsFramesLeft > 0) pointsFramesLeft--; },
     };
 })();
-//@line 1 "src/fruit.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Fruit
 
@@ -9589,7 +9352,7 @@ var setFruitFromGameMode = (function() {
         }
     };
 })();
-//@line 1 "src/executive.js"
+
 var executive = (function(){
 
     var framePeriod = 1000/60; // length of each frame at 60Hz (updates per second)
@@ -9732,7 +9495,7 @@ var executive = (function(){
         getFps: function() { return fps; },
     };
 })();
-//@line 1 "src/states.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // States
 // (main loops for each state of the game)
@@ -9813,17 +9576,19 @@ var fadeNextState = function (prevState, nextState, frameDuration, continueUpdat
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Home State - updated last revised 17/08/2025
+// Home State
 // (the home title screen state)
 
 var homeState = (function(){
+
     var exitTo = function(s) {
         switchState(s);
         menu.disable();
     };
-    var menu = new Menu("Futuret3ch 2025", 2 * tileSize, 0 * tileSize, mapWidth - 4 * tileSize, 3 * tileSize, tileSize, tileSize + "px ArcadeR", "#EEE");
+
+    var menu = new Menu("CHOOSE A GAME",2*tileSize,0*tileSize,mapWidth-4*tileSize,3*tileSize,tileSize,tileSize+"px ArcadeR", "#EEE");
     var getIconAnimFrame = function(frame) {
-        frame = Math.floor(frame / 3) + 1;
+        frame = Math.floor(frame/3)+1;
         frame %= 4;
         if (frame == 3) {
             frame = 1;
@@ -9831,49 +9596,66 @@ var homeState = (function(){
         return frame;
     };
     var getOttoAnimFrame = function(frame) {
-        frame = Math.floor(frame / 3);
+        frame = Math.floor(frame/3);
         frame %= 4;
         return frame;
     };
     menu.addTextIconButton(getGameName(GAME_PACMAN),
         function() {
-            gameMode = 0; // Set as integer
+            gameMode = GAME_PACMAN;
+            mtMode = false;
             exitTo(preNewGameState);
         },
-        function(ctx, x, y, frame) {
-            atlas.drawPacmanSprite(ctx, x, y, DIR_RIGHT, getIconAnimFrame(frame));
+        function(ctx,x,y,frame) {
+            atlas.drawPacmanSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame));
         });
     menu.addTextIconButton(getGameName(GAME_MSPACMAN),
         function() {
-            gameMode = 1; // Set as integer
+            gameMode = GAME_MSPACMAN;
+            mtMode = false;
             exitTo(preNewGameState);
         },
-        function(ctx, x, y, frame) {
-            atlas.drawMsPacmanSprite(ctx, x, y, DIR_RIGHT, getIconAnimFrame(frame));
+        function(ctx,x,y,frame) {
+            atlas.drawMsPacmanSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame));
         });
     menu.addTextIconButton(getGameName(GAME_COOKIE),
         function() {
-            gameMode = 2; // Set as integer
+            gameMode = GAME_COOKIE;
+            mtMode = false;
             exitTo(preNewGameState);
         },
-        function(ctx, x, y, frame) {
-            drawCookiemanSprite(ctx, x, y, DIR_RIGHT, getIconAnimFrame(frame), true);
+        function(ctx,x,y,frame) {
+            drawCookiemanSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame), true);
         });
-    menu.addTextIconButton("LEADERBOARD",
+    menu.addTextIconButton(getGameName(GAME_OTTO),
         function() {
-            exitTo(leaderboardState);
+            gameMode = GAME_OTTO;
+            mtMode = false;
+            exitTo(preNewGameState);
         },
-        function(ctx, x, y, frame) {
-            atlas.drawGhostSprite(ctx, x, y, Math.floor(frame / 8) % 2, DIR_RIGHT, false, false, false, '#00FF00');
+        function(ctx,x,y,frame) {
+            atlas.drawOttoSprite(ctx,x,y,DIR_RIGHT,getOttoAnimFrame(frame));
         });
+    menu.addTextIconButton("$MT PAC",
+        function() {
+            gameMode = GAME_PACMAN;
+            mtMode = true;
+            exitTo(preNewGameState);
+        },
+        function(ctx,x,y,frame) {
+            atlas.drawPacmanSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame));
+        });
+
     menu.addSpacer(0.5);
     menu.addTextIconButton("LEARN",
         function() {
+            mtMode = false;
             exitTo(learnState);
         },
-        function(ctx, x, y, frame) {
-            atlas.drawGhostSprite(ctx, x, y, Math.floor(frame / 8) % 2, DIR_RIGHT, false, false, false, blinky.color);
+        function(ctx,x,y,frame) {
+            atlas.drawGhostSprite(ctx,x,y,Math.floor(frame/8)%2,DIR_RIGHT,false,false,false,blinky.color);
         });
+
     return {
         init: function() {
             menu.enable();
@@ -9882,7 +9664,7 @@ var homeState = (function(){
         draw: function() {
             renderer.clearMapFrame();
             renderer.beginMapClip();
-            renderer.renderFunc(menu.draw, menu);
+            renderer.renderFunc(menu.draw,menu);
             renderer.endMapClip();
         },
         update: function() {
@@ -9892,6 +9674,7 @@ var homeState = (function(){
             return menu;
         },
     };
+
 })();
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -10204,11 +9987,32 @@ var preNewGameState = (function() {
             newGameState.setStartLevel(1);
             exitTo(newGameState, 60);
         });
+    menu.addTextButton("PLAY $MT",
+        function() {
+            practiceMode = false;
+            turboMode = false;
+            mtMode = true;
+            newGameState.setStartLevel(1);
+            exitTo(newGameState, 60);
+        });
     menu.addTextButton("PRACTICE",
         function() { 
             practiceMode = true;
             turboMode = false;
             exitTo(selectActState);
+        });
+    menu.addSpacer(0.5);
+    menu.addTextButton("CUTSCENES",
+        function() { 
+            exitTo(cutSceneMenuState);
+        });
+    menu.addTextButton("ABOUT",
+        function() { 
+            exitTo(aboutGameState);
+        });
+    menu.addTextButton("HIGH SCORES",
+        function() {
+            exitTo(scoreState);
         });
     menu.addSpacer(0.5);
     menu.addTextButton("BACK",
@@ -10979,6 +10783,10 @@ var readyNewState = newChildObject(readyState, {
             setNextCookieMap();
         }
         map.resetCurrent();
+        if (mtMode && map) {
+            map.wallStrokeColor = "#19d37e";
+            map.wallFillColor = "#052e16";
+        }
         fruit.onNewLevel();
         renderer.drawMap();
 
@@ -11218,19 +11026,24 @@ var seekableScriptState = newChildObject(scriptState, {
 // (state when player has lost a life)
 
 var deadState = (function() {
+    
+    // this state will always have these drawn
     var commonDraw = function() {
         renderer.blitMap();
         renderer.drawScore();
     };
+
     return newChildObject(seekableScriptState, {
+
+        // script functions for each time
         triggers: {
-            0: {
+            0: { // freeze
                 init: function() {
                     audio.die.play();
                 },
                 update: function() {
                     var i;
-                    for (i = 0; i < 4; i++)
+                    for (i=0; i<4; i++) 
                         actors[i].frames++; // keep animating ghosts
                 },
                 draw: function() {
@@ -11242,7 +11055,7 @@ var deadState = (function() {
                 }
             },
             60: {
-                draw: function() {
+                draw: function() { // isolate pacman
                     commonDraw();
                     renderer.beginMapClip();
                     renderer.drawPlayer();
@@ -11250,10 +11063,10 @@ var deadState = (function() {
                 },
             },
             120: {
-                draw: function(t) {
+                draw: function(t) { // dying animation
                     commonDraw();
                     renderer.beginMapClip();
-                    renderer.drawDyingPlayer(t / 75);
+                    renderer.drawDyingPlayer(t/75);
                     renderer.endMapClip();
                 },
             },
@@ -11272,12 +11085,8 @@ var deadState = (function() {
                     renderer.drawDyingPlayer(1);
                     renderer.endMapClip();
                 },
-                init: function() {
-                    console.log('Submitting score in deadState, turboMode:', turboMode, 'gameMode:', gameMode, 'Stack Trace:', new Error().stack); // Enhanced debug
-                    if (extraLives == 0) {
-                        submitScore(); // Submit score at game over
-                    }
-                    switchState(extraLives == 0 ? overState : readyRestartState);
+                init: function() { // leave
+                    switchState( extraLives == 0 ? overState : readyRestartState);
                 }
             },
         },
@@ -11289,21 +11098,28 @@ var deadState = (function() {
 // (state when player has completed a level)
 
 var finishState = (function(){
+
+    // this state will always have these drawn
     var commonDraw = function() {
         renderer.blitMap();
         renderer.drawScore();
+
         renderer.beginMapClip();
         renderer.drawPlayer();
         renderer.endMapClip();
     };
     
+    // flash the floor and draw
     var flashFloorAndDraw = function(on) {
         renderer.setLevelFlash(on);
         commonDraw();
     };
+
     return newChildObject(seekableScriptState, {
+
+        // script functions for each time
         triggers: {
-            0: { draw: function() {
+            0:   { draw: function() {
                     renderer.setLevelFlash(false);
                     renderer.blitMap();
                     renderer.drawScore();
@@ -11313,7 +11129,7 @@ var finishState = (function(){
                     renderer.drawTargets();
                     renderer.endMapClip();
             } },
-            120: { draw: function() { flashFloorAndDraw(true); } },
+            120:  { draw: function() { flashFloorAndDraw(true); } },
             132: { draw: function() { flashFloorAndDraw(false); } },
             144: { draw: function() { flashFloorAndDraw(true); } },
             156: { draw: function() { flashFloorAndDraw(false); } },
@@ -11323,9 +11139,8 @@ var finishState = (function(){
             204: { draw: function() { flashFloorAndDraw(false); } },
             216: {
                 init: function() {
-                    console.log('Level completed, moving to next level, turboMode:', turboMode, 'gameMode:', gameMode); // Debug
                     if (!triggerCutsceneAtEndLevel()) {
-                        switchState(readyNewState, 60);
+                        switchState(readyNewState,60);
                     }
                 }
             },
@@ -11342,6 +11157,18 @@ var overState = (function() {
     return {
         init: function() {
             frames = 0;
+            try {
+                var sc = getScore();
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'mt-pac-score', score: sc, mt: !!mtMode }, '*');
+                }
+                fetch('/api/scores', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ game_id: 'pacman', score: sc }),
+                }).catch(function(){});
+            } catch (e) {}
         },
         draw: function() {
             renderer.blitMap();
@@ -11358,7 +11185,7 @@ var overState = (function() {
     };
 })();
 
-//@line 1 "src/input.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Input
 // (Handles all key presses and touches)
@@ -11633,7 +11460,7 @@ var initSwipe = function() {
     document.ontouchmove = touchMove;
     document.ontouchcancel = touchCancel;
 };
-//@line 1 "src/cutscenes.js"
+
 ////////////////////////////////////////////////
 // Cutscenes
 //
@@ -12772,7 +12599,7 @@ var triggerCutsceneAtEndLevel = function() {
     return false;
 };
 
-//@line 1 "src/maps.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Maps
 
@@ -13315,7 +13142,7 @@ mapMsPacman4.fruitPaths = {
                  { "path": "<vvv>>>>>>^^^^^^^^^>>>vv>>>>" }
              ]
          };
-//@line 1 "src/vcr.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // VCR
 // This coordinates the recording, rewinding, and replaying of the game state.
@@ -13724,7 +13551,7 @@ var vcr = (function() {
         },
     };
 })();
-//@line 1 "src/main.js"
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Entry Point
 
@@ -13751,4 +13578,5 @@ window.addEventListener("load", function() {
 	}
     executive.init();
 });
+
 })();

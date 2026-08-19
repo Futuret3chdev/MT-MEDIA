@@ -217,7 +217,7 @@ Player.prototype.update = function(j) {
             map.onDotEat(this.tile.x, this.tile.y);
             ghostReleaser.onDotEat();
             fruit.onDotEat();
-            addScore((t=='.') ? 10 : 50);
+            addScore((t=='.') ? (mtMode ? 20 : 10) : (mtMode ? 100 : 50));
 
             if (t=='o')
                 energizer.activate();
