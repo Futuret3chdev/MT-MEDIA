@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 export default function NightWallet({
   name,
@@ -10,30 +11,62 @@ export default function NightWallet({
   onBound?: (addr: string) => void;
 }) {
   const [addr, setAddr] = useState('');
-  const [handle, setHandle] = useState(name);
-  const [msg, setMsg] = useState('Connect here so staff can drop $MT on Claim.');
+  const [handle, setHandle] = useState(name || 'Guest');
+  const [msg, setMsg] = useState('Connect here so staff can drop $MT on Claim. Games pick this up too.');
+  const { select, connect: adapterConnect, publicKey, connected } = useWallet();
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      const wallet = publicKey.toBase58();
+      setAddr(wallet);
+      try { localStorage.setItem('mt-game-wallet', wallet); } catch { /* */ }
+      document.querySelectorAll('iframe').forEach((f) => {
+        try { f.contentWindow?.postMessage({ type: 'mt-wallet-ok', addr: wallet }, '*'); } catch { /* */ }
+      });
+      onBound?.(wallet);
+    }
+  }, [connected, publicKey, onBound]);
 
   async function connect(type: string) {
+    const who = (name || handle || 'Guest').trim() || 'Guest';
+    try {
+      const adapterName = type === 'solflare' ? 'Solflare' : type === 'backpack' ? 'Backpack' : 'Phantom';
+      select(adapterName as never);
+      await new Promise((r) => setTimeout(r, 80));
+      await adapterConnect();
+    } catch { /* injected fallback below */ }
     const p =
       type === 'solflare'
         ? window.solflare
         : type === 'backpack'
           ? window.backpack
           : window.phantom?.solana || window.solana || window.solflare || window.backpack;
-    if (!p?.connect) {
+    let wallet = publicKey?.toBase58() || '';
+    if (!wallet && p?.connect) {
+      try {
+        const res = await p.connect();
+        const pk = res?.publicKey || p.publicKey;
+        wallet = (pk && (typeof pk.toString === 'function' ? pk.toString() : String(pk))) || '';
+      } catch (err) {
+        setMsg(err instanceof Error ? err.message : 'Wallet closed');
+        return;
+      }
+    }
+    if (!wallet) {
+      if (/iPhone|Android/i.test(navigator.userAgent)) {
+        const url = encodeURIComponent(location.href);
+        const ref = encodeURIComponent(location.origin);
+        location.href = type === 'solflare'
+          ? `https://solflare.com/ul/v1/browse/${url}?ref=${ref}`
+          : type === 'backpack'
+            ? `https://backpack.app/ul/browse/${url}?ref=${ref}`
+            : `https://phantom.app/ul/v1/browse/${url}?ref=${ref}`;
+        return;
+      }
       setMsg('Install Phantom, Solflare, or Backpack, then tap in this box.');
       return;
     }
     try {
-      const res = await p.connect();
-      const pk = res?.publicKey || p.publicKey;
-      const wallet = pk && (typeof pk.toString === 'function' ? pk.toString() : String(pk));
-      if (!wallet) throw new Error('No address');
-      const who = (name || handle).trim();
-      if (!who) {
-        setMsg('Type your handle first, then connect.');
-        return;
-      }
       const save = await fetch('/api/games/night', {
         method: 'POST',
         credentials: 'include',
@@ -41,16 +74,15 @@ export default function NightWallet({
         body: JSON.stringify({ action: 'wallet', name: who, wallet }),
       });
       const d = await save.json();
-      if (!d.ok) {
-        setMsg(d.error || 'Could not save wallet');
-        return;
-      }
-      setAddr(wallet);
-      setMsg('Wallet saved. Wins can land on Claim $MT.');
-      onBound?.(wallet);
-    } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Wallet closed');
-    }
+      if (!d.ok) setMsg(d.error || 'Wallet on, but desk save failed.');
+    } catch { /* still unlock the game even if night desk save fails */ }
+    setAddr(wallet);
+    try { localStorage.setItem('mt-game-wallet', wallet); } catch { /* */ }
+    document.querySelectorAll('iframe').forEach((f) => {
+      try { f.contentWindow?.postMessage({ type: 'mt-wallet-ok', addr: wallet }, '*'); } catch { /* */ }
+    });
+    setMsg('Wallet saved. $MT exclusives in the game are unlocked.');
+    onBound?.(wallet);
   }
 
   return (

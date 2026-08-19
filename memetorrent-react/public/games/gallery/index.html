@@ -643,26 +643,64 @@ window.mtwBuy = async (id) => {
   if (id === 'rod' || id === 'neon_rod') inv.tool = id;
   saveInv(); paintBag(); rebuildMe(); toast('Got ' + s.name);
 };
+function walletRoots() {
+  const roots = [window];
+  try { if (parent !== window) roots.push(parent); } catch (e) {}
+  try { if (top && top !== window) roots.push(top); } catch (e) {}
+  return roots;
+}
+function pickProvider(type) {
+  for (const w of walletRoots()) {
+    try {
+      if (type === 'solflare' && w.solflare?.connect) return w.solflare;
+      if (type === 'backpack' && w.backpack?.connect) return w.backpack;
+      const p = w.phantom?.solana || w.solana || w.solflare || w.backpack;
+      if (p?.connect) return p;
+    } catch (e) {}
+  }
+  return null;
+}
+function applyWorldWallet(addr) {
+  if (!addr) return;
+  inv.wallet = addr;
+  saveInv();
+  paintWallet();
+  try { localStorage.setItem('mt-game-wallet', addr); } catch (e) {}
+}
+addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'mt-wallet-ok' && e.data.addr) {
+    applyWorldWallet(e.data.addr);
+    toast('Wallet ready · $MT exclusives unlocked');
+  }
+});
+try {
+  const savedW = localStorage.getItem('mt-game-wallet');
+  if (savedW && !inv.wallet) applyWorldWallet(savedW);
+} catch (e) {}
 async function connectWallet(type) {
-  const p = type === 'solflare' ? window.solflare
-    : type === 'backpack' ? window.backpack
-    : (window.phantom?.solana || window.solana || window.solflare || window.backpack);
+  type = type || 'phantom';
   const msg = document.getElementById('walletMsg');
   const msg2 = document.getElementById('walletMsg2');
-  if (!p?.connect) {
-    const t = 'Install Phantom, Solflare, or Backpack, then tap the button in this box.';
-    if (msg) msg.textContent = t;
-    if (msg2) msg2.textContent = t;
-    return;
+  const p = pickProvider(type);
+  if (p?.connect) {
+    try {
+      const res = await p.connect();
+      const pk = res?.publicKey || p.publicKey;
+      const addr = pk && (pk.toString ? pk.toString() : String(pk));
+      if (addr) { applyWorldWallet(addr); return; }
+    } catch (err) {
+      const t = err?.message || 'Wallet closed. Try again in this box.';
+      if (msg) msg.textContent = t;
+      if (msg2) msg2.textContent = t;
+    }
   }
   try {
-    const res = await p.connect();
-    const pk = res?.publicKey || p.publicKey;
-    inv.wallet = pk && (pk.toString ? pk.toString() : String(pk));
-    saveInv();
-    paintWallet();
-  } catch (err) {
-    const t = err?.message || 'Wallet closed. Try again in this box.';
+    parent.postMessage({ type: 'mt-wallet-request', wallet: type }, '*');
+    const t = 'Opening wallet on the page… tap Allow in Phantom.';
+    if (msg) msg.textContent = t;
+    if (msg2) msg2.textContent = t;
+  } catch (e) {
+    const t = 'Install Phantom, Solflare, or Backpack, then tap the button in this box.';
     if (msg) msg.textContent = t;
     if (msg2) msg2.textContent = t;
   }

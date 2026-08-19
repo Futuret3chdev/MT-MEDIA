@@ -134,7 +134,7 @@
         runBuffs: raw.runBuffs || [],
         worlds: raw.worlds || [0],
         world: raw.world || 0,
-        wallet: raw.wallet || "",
+        wallet: raw.wallet || (typeof localStorage !== "undefined" ? (localStorage.getItem("mt-game-wallet") || "") : ""),
         playerId: raw.playerId || ("p_" + Math.random().toString(36).slice(2, 10)),
         name: raw.name || ("Runner" + Math.floor(Math.random() * 900 + 100)),
       };
@@ -235,18 +235,66 @@
     if ([" ","z","Z","j","J"].includes(e.key)) keys.jump = false;
   });
 
-  async function connectWallet() {
-    const p = window.phantom?.solana || window.solana || window.solflare || window.backpack;
-    if (!p?.connect) { toast("Install Phantom, Solflare, or Backpack"); return false; }
-    try {
-      const res = await p.connect();
-      const pk = res?.publicKey || p.publicKey;
-      save.wallet = pk && (pk.toString ? pk.toString() : String(pk));
-      persist();
+  function walletRoots() {
+    const roots = [window];
+    try { if (parent !== window) roots.push(parent); } catch (e) {}
+    try { if (top && top !== window) roots.push(top); } catch (e) {}
+    return roots;
+  }
+  function pickProvider(type) {
+    for (const w of walletRoots()) {
+      try {
+        if (type === "solflare" && w.solflare?.connect) return w.solflare;
+        if (type === "backpack" && w.backpack?.connect) return w.backpack;
+        const p = w.phantom?.solana || w.solana || w.solflare || w.backpack;
+        if (p?.connect) return p;
+      } catch (e) {}
+    }
+    return null;
+  }
+  function applyWallet(addr) {
+    if (!addr) return;
+    save.wallet = addr;
+    persist();
+    try { localStorage.setItem("mt-game-wallet", addr); } catch (e) {}
+  }
+  addEventListener("message", (e) => {
+    if (e.data && e.data.type === "mt-wallet-ok" && e.data.addr) {
+      applyWallet(e.data.addr);
       toast("Wallet ready · $MT skins unlocked");
-      showMenu("skins");
-      return true;
-    } catch (err) { toast(err?.message || "Wallet closed"); return false; }
+      try { showMenu("skins"); } catch (err) {}
+    }
+  });
+  try {
+    const savedW = localStorage.getItem("mt-game-wallet");
+    if (savedW && !save.wallet) applyWallet(savedW);
+  } catch (e) {}
+  async function connectWallet(type) {
+    type = type || "phantom";
+    const p = pickProvider(type);
+    if (p && p.connect) {
+      try {
+        const res = await p.connect();
+        const pk = res?.publicKey || p.publicKey;
+        const addr = pk && (pk.toString ? pk.toString() : String(pk));
+        if (addr) {
+          applyWallet(addr);
+          toast("Wallet ready · $MT skins unlocked");
+          showMenu("skins");
+          return true;
+        }
+      } catch (err) {
+        toast(err && err.message ? err.message : "Wallet closed");
+      }
+    }
+    try {
+      parent.postMessage({ type: "mt-wallet-request", wallet: type }, "*");
+      toast("Opening wallet… tap allow in Phantom");
+    } catch (e) {
+      toast("Install Phantom, then connect on this page");
+      return false;
+    }
+    return false;
   }
 
   function buySkin(s) {
