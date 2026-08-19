@@ -118,6 +118,9 @@ var getPlayerDrawFunc = function(mode) {
     if (mode == undefined) {
         mode = gameMode;
     }
+    if (mtMode) {
+        return drawMtPacSprite;
+    }
     if (mode == GAME_OTTO) {
         return atlas.drawOttoSprite;
     }

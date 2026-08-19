@@ -145,7 +145,7 @@ var homeState = (function(){
             exitTo(preNewGameState);
         },
         function(ctx,x,y,frame) {
-            atlas.drawPacmanSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame));
+            drawMtPacSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame));
         });
 
     menu.addSpacer(0.5);

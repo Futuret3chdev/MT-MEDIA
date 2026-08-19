@@ -95,8 +95,8 @@ export const CATALOG: CatalogGame[] = [
     kind: 'arcade',
     status: 'live',
     play: '/pacman',
-    img: '/games/covers/pacman.png?v=2',
-    blurb: 'Full arcade menu: Pac-Man, Ms. Pac-Man, Cookie-Man, Crazy Otto, $MT Pac, Learn. Play / Turbo / Practice / Cutscenes / High scores.',
+    img: '/games/covers/pacman.png?v=3',
+    blurb: 'Full arcade menu. $MT Pac is a mint hex token, not the yellow pie. Play / Turbo / Practice / Cutscenes / High scores.',
   },
   {
     id: 'tetris',

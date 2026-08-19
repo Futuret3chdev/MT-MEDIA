@@ -273,6 +273,9 @@ var getPlayerDrawFunc = function(mode) {
     if (mode == undefined) {
         mode = gameMode;
     }
+    if (mtMode) {
+        return drawMtPacSprite;
+    }
     if (mode == GAME_OTTO) {
         return atlas.drawOttoSprite;
     }
@@ -3795,7 +3798,13 @@ var initRenderer = function(){
                     bgCtx.translate(3*tileSize, (numRows-1)*tileSize);
                     bgCtx.scale(0.85, 0.85);
                     var lives = extraLives == Infinity ? 1 : extraLives;
-                    if (gameMode == GAME_PACMAN) {
+                    if (mtMode) {
+                        for (i=0; i<lives; i++) {
+                            drawMtPacSprite(bgCtx, 0,0, DIR_LEFT, 1);
+                            bgCtx.translate(2*tileSize,0);
+                        }
+                    }
+                    else if (gameMode == GAME_PACMAN) {
                         for (i=0; i<lives; i++) {
                             drawPacmanSprite(bgCtx, 0,0, DIR_LEFT, Math.PI/6);
                             bgCtx.translate(2*tileSize,0);
@@ -4027,7 +4036,13 @@ var initRenderer = function(){
         drawDyingPlayer: function(t) {
             var frame = pacman.getAnimFrame();
 
-            if (gameMode == GAME_PACMAN) {
+            if (mtMode) {
+                var maxAngle = Math.PI*5;
+                var step = (Math.PI/4) / maxAngle;
+                var spin = Math.floor(t/step)*step*maxAngle;
+                drawMtPacSprite(ctx, pacman.pixel.x, pacman.pixel.y, pacman.dirEnum, frame, spin);
+            }
+            else if (gameMode == GAME_PACMAN) {
                 // 60 frames dying
                 // 15 frames exploding
                 var f = t*75;
@@ -6559,6 +6574,66 @@ var drawCookiemanSprite = (function(){
 
     };
 })();
+
+// $MT Pac — mint token, not the yellow pie
+var drawMtPacSprite = function(ctx,x,y,dirEnum,frame,rot_angle) {
+    var angle = 0;
+    if (frame == 1) angle = Math.atan(4/5);
+    else if (frame == 2 || frame == 3) angle = Math.atan(6/3);
+
+    ctx.save();
+    ctx.translate(x, y);
+    if (rot_angle) ctx.rotate(rot_angle);
+    var d90 = Math.PI/2;
+    if (dirEnum == DIR_UP) ctx.rotate(3*d90);
+    else if (dirEnum == DIR_DOWN) ctx.rotate(d90);
+    else if (dirEnum == DIR_LEFT) ctx.rotate(2*d90);
+
+    ctx.beginPath();
+    ctx.arc(0, 0, 9, 0, Math.PI*2);
+    ctx.fillStyle = "rgba(25,211,126,0.28)";
+    ctx.fill();
+
+    var token = function(r, color) {
+        ctx.beginPath();
+        var i;
+        for (i = 0; i < 6; i++) {
+            var a = Math.PI/6 + i*Math.PI/3;
+            var px = Math.cos(a)*r;
+            var py = Math.sin(a)*r;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        if (angle > 0) {
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, r + 0.4, -angle, angle);
+            ctx.closePath();
+        }
+        ctx.fillStyle = color;
+        ctx.fill("evenodd");
+    };
+
+    token(7.2, "#fbbf24");
+    token(5.7, "#19d37e");
+    token(5.0, "#059669");
+
+    ctx.fillStyle = "#fef3c7";
+    ctx.strokeStyle = "#052e16";
+    ctx.lineWidth = 0.7;
+    ctx.font = "bold 7px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("$", -0.4, 0.6);
+    ctx.strokeText("$", -0.4, 0.6);
+
+    ctx.beginPath();
+    ctx.arc(-2.2, -2.4, 1.1, 0, Math.PI*2);
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.fill();
+
+    ctx.restore();
+};
 
 ////////////////////////////////////////////////////////////////////
 // FRUIT SPRITES
@@ -9643,7 +9718,7 @@ var homeState = (function(){
             exitTo(preNewGameState);
         },
         function(ctx,x,y,frame) {
-            atlas.drawPacmanSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame));
+            drawMtPacSprite(ctx,x,y,DIR_RIGHT,getIconAnimFrame(frame));
         });
 
     menu.addSpacer(0.5);

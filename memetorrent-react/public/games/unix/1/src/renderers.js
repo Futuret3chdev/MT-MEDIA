@@ -747,7 +747,13 @@ var initRenderer = function(){
                     bgCtx.translate(3*tileSize, (numRows-1)*tileSize);
                     bgCtx.scale(0.85, 0.85);
                     var lives = extraLives == Infinity ? 1 : extraLives;
-                    if (gameMode == GAME_PACMAN) {
+                    if (mtMode) {
+                        for (i=0; i<lives; i++) {
+                            drawMtPacSprite(bgCtx, 0,0, DIR_LEFT, 1);
+                            bgCtx.translate(2*tileSize,0);
+                        }
+                    }
+                    else if (gameMode == GAME_PACMAN) {
                         for (i=0; i<lives; i++) {
                             drawPacmanSprite(bgCtx, 0,0, DIR_LEFT, Math.PI/6);
                             bgCtx.translate(2*tileSize,0);
@@ -979,7 +985,13 @@ var initRenderer = function(){
         drawDyingPlayer: function(t) {
             var frame = pacman.getAnimFrame();
 
-            if (gameMode == GAME_PACMAN) {
+            if (mtMode) {
+                var maxAngle = Math.PI*5;
+                var step = (Math.PI/4) / maxAngle;
+                var spin = Math.floor(t/step)*step*maxAngle;
+                drawMtPacSprite(ctx, pacman.pixel.x, pacman.pixel.y, pacman.dirEnum, frame, spin);
+            }
+            else if (gameMode == GAME_PACMAN) {
                 // 60 frames dying
                 // 15 frames exploding
                 var f = t*75;
