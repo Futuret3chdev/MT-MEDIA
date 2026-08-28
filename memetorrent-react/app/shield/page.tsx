@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import BackLink from './BackLink';
+import ProductDemos from '@/components/shield/ProductDemos';
 import { articlesByGroup, SHIELD_ARTICLES } from '@/lib/shieldHelp';
 
 export const metadata: Metadata = {
@@ -57,7 +58,8 @@ export default function ShieldPage() {
           </div>
         </div>
 
-        <h2 className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">Core — not add-ons</h2>
+        <ProductDemos>
+        <h2 className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">Core</h2>
         <div className="mt-4 grid sm:grid-cols-2 gap-4">
           <Card icon={ICONS.grid} title="Live grid" body="Who is actually on this hotspot. utun and awdl are this computer, not extra phones. Real data only." />
           <Card icon={ICONS.map} title="Live tracking map" body="Click a dot, then Street — that pin, not yours. City from IP geo, not GPS on a person." />
@@ -137,8 +139,11 @@ export default function ShieldPage() {
                   <li key={a.id}>
                     <Link
                       href={`/shield/help/${a.id}`}
-                      className="block text-sm opacity-80 hover:opacity-100 hover:text-cyan-300 py-0.5"
+                      className="flex items-center gap-2 text-sm opacity-80 hover:opacity-100 hover:text-cyan-300 py-0.5"
                     >
+                      {a.image ? (
+                        <img src={a.image} alt="" className="w-10 h-7 rounded object-cover shrink-0" />
+                      ) : null}
                       {a.title}
                     </Link>
                   </li>
@@ -158,29 +163,26 @@ export default function ShieldPage() {
             sales@futuret3ch.com.au
           </a>
         </div>
-        <p className="mt-2 text-xs opacity-50">
-          Shield never uses support@memetorrent.com.au. Product and safety mail is Futuret3ch only.
-        </p>
+
 
         <h2 id="api" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">
           APIs
         </h2>
         <p className="mt-3 text-sm opacity-80">
-          The site Developers API is unchanged:{' '}
           <Link className="text-cyan-300 font-semibold" href="/developers">
-            /developers
+            Developers API
           </Link>
-          {' '}
-          (MT-Connect, social login, wallet). The nav <strong>API</strong> tab still goes there.
+          {' — '}
+          MT-Connect, social login, wallets.
         </p>
         <p className="mt-2 text-sm opacity-70">
-          Shield-only product endpoints (licenses, scans, Guide) are separate:{' '}
           <Link className="text-cyan-300" href="/shield/api">
-            /shield/api
+            Shield product API
           </Link>
-          . Help guides:{' '}
+          {' — '}
+          licenses, scans, Guide.{' '}
           <Link className="text-cyan-300" href="/shield/help">
-            {SHIELD_ARTICLES.length} articles
+            {SHIELD_ARTICLES.length} help guides
           </Link>
           .
         </p>
@@ -231,8 +233,9 @@ export default function ShieldPage() {
         </Link>
 
         <p className="mt-16 text-xs opacity-40">
-          Shield is a Futuret3ch product on the MemeTorrent media site. We do not attack people.
+          Shield is a Futuret3ch product.
         </p>
+        </ProductDemos>
       </div>
     </main>
   );

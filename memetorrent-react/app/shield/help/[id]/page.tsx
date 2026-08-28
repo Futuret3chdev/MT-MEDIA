@@ -26,8 +26,15 @@ export default async function ShieldHelpArticle({ params }: { params: Promise<{ 
           </a>
         </div>
         <p className="text-[11px] tracking-[0.22em] uppercase text-cyan-300/80 mt-8">{a.group}</p>
+        {a.image ? (
+          <img
+            src={a.image}
+            alt=""
+            className="mt-4 w-full rounded-2xl border border-white/10 object-cover max-h-72"
+          />
+        ) : null}
         <article
-          className="mt-4"
+          className="mt-6"
           dangerouslySetInnerHTML={{ __html: renderShieldMd(a.body) }}
         />
         <p className="mt-12 text-xs opacity-50">

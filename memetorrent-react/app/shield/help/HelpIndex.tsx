@@ -41,9 +41,12 @@ export default function HelpIndex({ articles }: { articles: ShieldArticle[] }) {
               <li key={a.id}>
                 <a
                   href={`/shield/help/${a.id}`}
-                  className="block rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] px-3 py-2.5 text-sm"
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] px-2 py-2 text-sm"
                 >
-                  {a.title}
+                  {a.image ? (
+                    <img src={a.image} alt="" className="w-16 h-10 rounded-lg object-cover shrink-0" />
+                  ) : null}
+                  <span>{a.title}</span>
                 </a>
               </li>
             ))}

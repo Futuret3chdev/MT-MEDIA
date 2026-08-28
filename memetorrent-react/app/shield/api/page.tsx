@@ -31,24 +31,14 @@ export default function ShieldApiPage() {
     <main className="min-h-screen bg-black text-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
         <BackLink label="Back" />
-        <a
-          href="/developers"
-          className="mt-8 inline-flex items-center gap-2 rounded-2xl border border-emerald-400/50 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-300"
-        >
-          ← Developers API is still at /developers (MT-Connect, wallets, social login)
-        </a>
-        <p className="text-[11px] tracking-[0.28em] text-cyan-300 font-bold mt-8">SHIELD PRODUCT API ONLY</p>
-        <h1 className="text-4xl font-semibold tracking-tight mt-2">Shield product endpoints</h1>
+        <p className="text-[11px] tracking-[0.28em] text-cyan-300 font-bold mt-8">SHIELD PRODUCT API</p>
+        <h1 className="text-4xl font-semibold tracking-tight mt-2">Shield endpoints</h1>
         <p className="mt-4 text-sm opacity-80 leading-relaxed">
-          This page does <strong>not</strong> replace the Developers API. The real site API is{' '}
+          Site-wide Developers API (MT-Connect, wallets, social login):{' '}
           <a className="text-cyan-300 font-semibold" href="/developers">
-            https://memetorrent.futuret3ch.com.au/developers
+            /developers
           </a>
-          . Below is only Shield (licenses, scans, Guide). Hub:{' '}
-          <a className="text-cyan-300" href="https://memetorrent.futuret3ch.com.au/shield">
-            /shield
-          </a>
-          . Support:{' '}
+          . This page lists Shield product routes. Support:{' '}
           <a className="text-cyan-300" href="mailto:support@futuret3ch.com.au">
             support@futuret3ch.com.au
           </a>

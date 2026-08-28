@@ -36,7 +36,7 @@ export default function ShieldBusinessPage() {
             <a className="text-cyan-300" href="mailto:sales@futuret3ch.com.au">
               sales@futuret3ch.com.au
             </a>{' '}
-            — talk to sales for a deal if needed.
+            — volume and education quotes.
           </li>
         </ul>
 
@@ -89,9 +89,7 @@ export default function ShieldBusinessPage() {
             sales@futuret3ch.com.au
           </a>
         </p>
-        <p className="mt-3 text-xs opacity-50">
-          Do not use support@memetorrent.com.au for Shield. That address is not Shield support.
-        </p>
+
       </div>
     </main>
   );

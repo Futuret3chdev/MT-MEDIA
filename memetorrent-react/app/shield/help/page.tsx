@@ -24,8 +24,7 @@ export default function ShieldHelpPage() {
           {SHIELD_ARTICLES.length} guides
         </h1>
         <p className="mt-3 text-sm opacity-70 max-w-2xl">
-          Same help set that runs on the Mac Shield app: install, grid, map, safety, Family Link, Business
-          seats, API, Head Office. Nothing fake. Support:{' '}
+          Install, grid, map, safety, Family Link, Business seats, and more. Support:{' '}
           <a className="text-cyan-300" href="mailto:support@futuret3ch.com.au">
             support@futuret3ch.com.au
           </a>{' '}

@@ -5,6 +5,7 @@ export type ShieldArticle = {
   title: string;
   group: string;
   body: string;
+  image?: string;
 };
 
 export const SHIELD_ARTICLES = catalog.articles as ShieldArticle[];

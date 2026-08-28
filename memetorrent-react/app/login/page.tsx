@@ -71,16 +71,14 @@ function LoginForm() {
           <p className="text-[11px] tracking-[0.22em] font-black text-cyan-300">SHIELD PERSONAL</p>
           <h1 className="text-2xl font-semibold tracking-tight mt-1">Start your 14-day trial</h1>
           <p className="text-sm opacity-80 mt-2">
-            This login is for <strong>Shield Personal</strong> — not Shield Business, not the MT portal.
-            After you sign in you stay on Shield. 14 days of Pro + add-ons. Business seats are a separate
-            product.
+            Sign in to start a 14-day Shield Personal trial (Pro + add-ons). You will return to Shield.
           </p>
         </div>
       )}
       {!fromShield && <h1 className="text-3xl font-semibold tracking-tight mb-2">Log in</h1>}
       <p className="text-sm opacity-70 mb-6">
         {fromShield
-          ? 'Use your Futuret3ch / MemeTorrent account. You will return to Shield, not Business.'
+          ? 'Use your account. You return to the Shield trial page.'
           : 'Same account as the portal, chat, and studio.'}
       </p>
       <div className="flex gap-2 mb-5">

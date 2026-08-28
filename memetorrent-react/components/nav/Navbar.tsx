@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import NoticeBell from '@/components/nav/NoticeBell';
 import LiveScoreIcon from '@/components/nav/LiveScoreIcon';
+import ProductTabBar from '@/components/nav/ProductTabBar';
 import { LINKS } from '@/lib/constants';
 import { Connection, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import servicesData from '@/app/status/services.json';
@@ -458,22 +459,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Shield sits on its own band below the divider — not stacked under Login */}
-      <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-3">
-          <a
-            href="/shield"
-            title="Shield"
-            className="inline-flex items-center gap-3 rounded-xl border border-cyan-400/40 bg-cyan-400/10 hover:bg-cyan-400/20 px-2.5 py-1.5"
-          >
-            <img src="/icons/shield-mark.jpg" alt="Shield" className="w-11 h-11 rounded-xl object-cover" />
-            <span className="flex flex-col leading-tight">
-              <span className="text-xs sm:text-sm font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
-              <span className="text-[10px] sm:text-[11px] opacity-70">Live grid · live tracking</span>
-            </span>
-          </a>
-        </div>
-      </div>
+      <ProductTabBar />
 
       {/* Compact buy form panel - shows just below BUY $MT NOW, hides on click off.
           Manual wallet connect (Phantom/Solflare/Backpack + deeplinks) is now primary so mobile actually works.

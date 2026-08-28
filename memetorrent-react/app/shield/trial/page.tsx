@@ -40,8 +40,8 @@ export default function ShieldTrialPage() {
         <p className="text-[11px] tracking-[0.28em] text-cyan-300 font-bold mt-8">SHIELD PERSONAL</p>
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-2">14-day trial is on</h1>
         <p className="mt-4 text-sm opacity-80 leading-relaxed">
-          This is <strong>Shield Personal</strong>, not Shield Business. You are signed in as{' '}
-          <strong>{me.username || me.email || 'your account'}</strong>.
+          Signed in as <strong>{me.username || me.email || 'your account'}</strong>. This is a Shield
+          Personal 14-day trial.
         </p>
         <ul className="mt-6 space-y-2 text-sm opacity-80">
           <li>Starts {start.toLocaleDateString()} · ends {end.toLocaleDateString()} (14 days).</li>
