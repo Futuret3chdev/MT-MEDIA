@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import BackLink from './BackLink';
+import { articlesByGroup, SHIELD_ARTICLES } from '@/lib/shieldHelp';
 
 export const metadata: Metadata = {
   title: 'Shield · Futuret3ch',
@@ -118,14 +119,34 @@ export default function ShieldPage() {
           <Pill icon={ICONS.download} label="Browser extension" />
         </div>
 
-        <h2 id="docs" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">Docs · FAQs · Help</h2>
-        <ul className="mt-4 space-y-2 text-sm opacity-80">
-          <li>What are utun and awdl? They belong to this Mac — not extra phones.</li>
-          <li>Street view follows the selected map pin, not you.</li>
-          <li>If you think you are being stalked: lock this device, keep evidence, call emergency services. Shield cannot catch a person.</li>
-          <li>Family Link is never hidden. The child always sees Linked to …</li>
-          <li>iPhone is not a fake antivirus.</li>
-        </ul>
+        <h2 id="docs" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">
+          Help guides · {SHIELD_ARTICLES.length} articles
+        </h2>
+        <p className="mt-3 text-sm opacity-70">
+          Same set that runs on the Mac Shield app.{' '}
+          <Link href="/shield/help" className="text-cyan-300">
+            Open searchable help center →
+          </Link>
+        </p>
+        <div className="mt-6 space-y-8">
+          {articlesByGroup().map((g) => (
+            <section key={g.group}>
+              <h3 className="text-sm font-semibold text-cyan-300/90 mb-2">{g.group}</h3>
+              <ul className="grid sm:grid-cols-2 gap-1.5">
+                {g.items.map((a) => (
+                  <li key={a.id}>
+                    <Link
+                      href={`/shield/help/${a.id}`}
+                      className="block text-sm opacity-80 hover:opacity-100 hover:text-cyan-300 py-0.5"
+                    >
+                      {a.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
           <a className="text-cyan-300 hover:underline" href="mailto:support@futuret3ch.com.au">
             support@futuret3ch.com.au
@@ -146,9 +167,13 @@ export default function ShieldPage() {
         </h2>
         <p className="mt-3 text-sm opacity-80">
           Full endpoint list:{' '}
-          <a className="text-cyan-300 break-all" href="https://memetorrent.futuret3ch.com.au/shield/api">
-            https://memetorrent.futuret3ch.com.au/shield/api
-          </a>
+          <Link className="text-cyan-300 break-all" href="/shield/api">
+            /shield/api
+          </Link>
+          {' · '}
+          <Link className="text-cyan-300" href="/shield/help">
+            {SHIELD_ARTICLES.length} help guides
+          </Link>
         </p>
         <p className="mt-2 text-sm opacity-70">
           Auth, licenses, devices, scans, Guide, Family Link. Head Office is staff-only

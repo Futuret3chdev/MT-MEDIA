@@ -1,0 +1,514 @@
+{
+  "articles": [
+    {
+      "id": "install-mac",
+      "title": "Install on Mac",
+      "group": "Getting started",
+      "body": "# Install on Mac\n\nOpen the Shield app from Applications. It stays in the Dock and shows the dashboard at https://memetorrent.futuret3ch.com.au/shield.\n\nSelf-heal, Refresh, Guide, and the cog are in the **top right** on every page.\n\nLive grid and live tracking are core features, not add-ons.\n"
+    },
+    {
+      "id": "install-windows",
+      "title": "Install on Windows",
+      "group": "Getting started",
+      "body": "# Install on Windows\n\nWindows Shield uses the same account and license as Mac. The Windows service runs scans (ClamAV + Defender complement). It is not a kernel rootkit.\n\nDownload from https://memetorrent.futuret3ch.com.au/shield when the Windows build is published.\n"
+    },
+    {
+      "id": "install-ios",
+      "title": "Install on iPhone",
+      "group": "Getting started",
+      "body": "# Install on iPhone\n\niPhone Shield is a **companion**: Guide, Family Link, lock-down checklists, local-network list.\n\nIt does **not** scan the whole iPhone disk. Apple does not allow a full background antivirus. We will not fake that screen.\n"
+    },
+    {
+      "id": "install-android",
+      "title": "Install on Android",
+      "group": "Getting started",
+      "body": "# Install on Android\n\nAndroid Shield can on-demand scan APKs/files, show hotspot clients, and panic-lock sharing. Same login as Mac.\n\nNo invented device list. What you see is from this phone.\n"
+    },
+    {
+      "id": "install-extension",
+      "title": "Install the browser extension",
+      "group": "Getting started",
+      "body": "# Install the browser extension\n\nThe extension checks links and phishing and opens Guide. It does not intercept your operating system and does not pretend to scan the whole disk.\n"
+    },
+    {
+      "id": "sign-in",
+      "title": "Sign in (Google, Facebook, or email)",
+      "group": "Getting started",
+      "body": "# Sign in (Google, Facebook, or email)\n\nUse Google, Facebook, or email + password. Your profile picture from Google or Facebook shows next to the cog.\n\nThe Mac app talks to https://memetorrent.futuret3ch.com.au/shield/api. Secrets are not stored in the local dashboard.\n"
+    },
+    {
+      "id": "trial",
+      "title": "Start the 14-day trial",
+      "group": "Getting started",
+      "body": "# Start the 14-day trial\n\nTrial is **14 days**, full Pro plus all five add-ons, starting at first sign-in.\n\nAfter that: Free (masked live data) or Pro at $30/month or $250/year.\n\nThe countdown is in the top right. We do not invent extra trial days on screen.\n"
+    },
+    {
+      "id": "first-scan",
+      "title": "First scan",
+      "group": "Getting started",
+      "body": "# First scan\n\nOn Mac/Windows, Run shield scan uses real ClamAV signatures plus Shield\u2019s stalkerware/remote-access checks.\n\niPhone will not show a fake \u201cscanning all files\u201d bar.\n"
+    },
+    {
+      "id": "plans",
+      "title": "Free vs Pro vs add-ons",
+      "group": "Getting started",
+      "body": "# Free vs Pro vs add-ons\n\n**Free:** real dashboard with watermark; grid/map blurred (real dots, IPs hidden); 1 scan/day.\n\n**Pro ($30/mo or $250/yr):** live grid, live tracking, Street on the selected pin, sharing lock, evidence, Guide unlimited.\n\n**Add-ons:** Realtime AV, Network Ops (extra intercept), Family Link, Breach Watch, Concierge. Grid and live map are **not** add-ons.\n"
+    },
+    {
+      "id": "full-disk-mac",
+      "title": "Mac Full Disk Access (optional, real)",
+      "group": "Getting started",
+      "body": "# Mac Full Disk Access (optional, real)\n\nFull Disk Access is a real macOS permission so ClamAV can read more files. It is optional.\n\niPhone and the browser extension never ask for \u201cfull disk\u201d and never animate a fake full-disk scan.\n"
+    },
+    {
+      "id": "start-login",
+      "title": "Start at login",
+      "group": "Getting started",
+      "body": "# Start at login\n\nShield should start when you log in so Self-heal can restart dead agents. Toggle this in Settings \u2192 General when the cloud account ships; local agents already KeepAlive on this Mac.\n"
+    },
+    {
+      "id": "uninstall",
+      "title": "Uninstall",
+      "group": "Getting started",
+      "body": "# Uninstall\n\nMac: quit Shield, remove the app, and unload LaunchAgents that belong to Shield. Help \u2192 Contact if a leftover agent remains.\n\nDo not delete other Futuret3ch APIs on Contabo while uninstalling the Mac app.\n"
+    },
+    {
+      "id": "dashboard",
+      "title": "Dashboard",
+      "group": "Using Shield",
+      "body": "# Dashboard\n\nStatus of this device, agents, and alerts. Top right: Self-heal, Refresh, Guide, cog, avatar.\n"
+    },
+    {
+      "id": "virus-scanner",
+      "title": "Virus scanner",
+      "group": "Using Shield",
+      "body": "# Virus scanner\n\nClamAV on Mac/Windows. Real signatures. Quarantine + restore. iPhone is not a fake AV.\n"
+    },
+    {
+      "id": "scanner-advanced",
+      "title": "Advanced scanner settings",
+      "group": "Using Shield",
+      "body": "# Advanced scanner settings\n\nMax file size, archive depth, excludes, CPU cap, USB scan. Realtime AV add-on required for on-access scan.\n"
+    },
+    {
+      "id": "downloads-guard",
+      "title": "Downloads guard",
+      "group": "Using Shield",
+      "body": "# Downloads guard\n\nWatches the Downloads folder for new droppers. This is on-device, not a cloud spy.\n"
+    },
+    {
+      "id": "self-heal",
+      "title": "Self-heal",
+      "group": "Using Shield",
+      "body": "# Self-heal\n\nTop right. Restarts dead Shield agents. Does not attack other machines.\n"
+    },
+    {
+      "id": "sharing-lock",
+      "title": "Sharing lock",
+      "group": "Using Shield",
+      "body": "# Sharing lock\n\nTurns off SSH/VNC/SMB style sharing listeners on this device.\n"
+    },
+    {
+      "id": "airdrop",
+      "title": "AirDrop / Handoff",
+      "group": "Using Shield",
+      "body": "# AirDrop / Handoff\n\nawdl0 is this device\u2019s AirDrop radio, not another phone. You can switch it off.\n"
+    },
+    {
+      "id": "p2p",
+      "title": "P2P block",
+      "group": "Using Shield",
+      "body": "# P2P block\n\nStops torrent/P2P tools on this device. Not a network attack.\n"
+    },
+    {
+      "id": "grid",
+      "title": "Defense Network Grid",
+      "group": "Using Shield",
+      "body": "# Defense Network Grid\n\nCore Pro. Live path: this device, hotspot, LAN peers, remotes. utun\u00d73 is Apple iCloud on THIS Mac.\n"
+    },
+    {
+      "id": "live-map",
+      "title": "Live map and Street",
+      "group": "Using Shield",
+      "body": "# Live map and Street\n\nCore Pro. Click a **dot**, then **Street** \u2014 that pin, not yours. IP geo is city-level, not GPS on a person.\n"
+    },
+    {
+      "id": "master-block",
+      "title": "Master Block",
+      "group": "Using Shield",
+      "body": "# Master Block\n\nFreeze a baseline of login items and quarantine new unknown agents.\n"
+    },
+    {
+      "id": "certificates",
+      "title": "Certificates / proxy watch",
+      "group": "Using Shield",
+      "body": "# Certificates / proxy watch\n\nLooks for unexpected proxies and certificates on this device.\n"
+    },
+    {
+      "id": "threat-scan",
+      "title": "Threat / stalkerware scan",
+      "group": "Using Shield",
+      "body": "# Threat / stalkerware scan\n\nKnown remote-access and stalkerware names on this device. Not a guarantee.\n"
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence vault",
+      "group": "Using Shield",
+      "body": "# Evidence vault\n\nScreenshots and reports stored on this Mac. Export for police or a lawyer. We do not publish them.\n"
+    },
+    {
+      "id": "listeners",
+      "title": "Firewall / listeners",
+      "group": "Using Shield",
+      "body": "# Firewall / listeners\n\nShows what is listening. Odd remote ports are flagged. Real lsof data.\n"
+    },
+    {
+      "id": "login-items",
+      "title": "Login items / LaunchAgents",
+      "group": "Using Shield",
+      "body": "# Login items / LaunchAgents\n\nAudit of what starts at login. Unknown agents can be quarantined.\n"
+    },
+    {
+      "id": "account-avatar",
+      "title": "Account and avatar",
+      "group": "Using Shield",
+      "body": "# Account and avatar\n\nGoogle/Facebook/email. Picture sits next to the cog.\n"
+    },
+    {
+      "id": "billing",
+      "title": "License and billing",
+      "group": "Using Shield",
+      "body": "# License and billing\n\n14-day trial, then $30/mo or $250/yr via Stripe on the Shield hub.\n"
+    },
+    {
+      "id": "guide-ai",
+      "title": "Shield Guide AI",
+      "group": "Using Shield",
+      "body": "# Shield Guide AI\n\nExplains live status. Customizes to threat level. Refuses attack advice.\n"
+    },
+    {
+      "id": "threat-levels",
+      "title": "Threat levels and devices",
+      "group": "Using Shield",
+      "body": "# Threat levels and devices\n\nEveryday, Elevated, Stalking, Child/teen. Child mode always shows a visible guardian link.\n"
+    },
+    {
+      "id": "stalked",
+      "title": "If you think you are being stalked",
+      "group": "Safety",
+      "body": "# If you think you are being stalked\n\nSet threat level to Stalking. Lock sharing and AirDrop. Export evidence. Contact local emergency services if you are in danger. Shield cannot catch a person.\n"
+    },
+    {
+      "id": "stalkerware",
+      "title": "Stalkerware: what it is",
+      "group": "Safety",
+      "body": "# Stalkerware: what it is\n\nHidden apps that report location or messages. Shield looks for known names on THIS device. A clean scan does not prove nobody has your cloud passwords.\n"
+    },
+    {
+      "id": "hotspot-who",
+      "title": "Hotspot: who is actually on it",
+      "group": "Safety",
+      "body": "# Hotspot: who is actually on it\n\nOnly devices that joined the hotspot Wi-Fi show as LAN peers. A second phone in the car is invisible until it joins. utun/awdl are this computer.\n"
+    },
+    {
+      "id": "evidence-quiet",
+      "title": "Preserve evidence",
+      "group": "Safety",
+      "body": "# Preserve evidence\n\nUse the evidence vault. Do not hack back. Do not install counter-spyware. That can break a case and is out of scope.\n"
+    },
+    {
+      "id": "child-mode",
+      "title": "Child / teen mode",
+      "group": "Safety",
+      "body": "# Child / teen mode\n\nSimple language. No scare copy. Always show Linked to [guardian]. Child can Unlink.\n"
+    },
+    {
+      "id": "guardian-link",
+      "title": "Guardian link",
+      "group": "Safety",
+      "body": "# Guardian link\n\nFamily Link add-on: code on the adult device, typed on the child device. Location Share defaults off.\n"
+    },
+    {
+      "id": "never-do",
+      "title": "What Shield will never do",
+      "group": "Safety",
+      "body": "# What Shield will never do\n\nNo hacking back, no silent GPS, no hidden parent spy, no fake full-disk iPhone scan, no invented IPs.\n"
+    },
+    {
+      "id": "police",
+      "title": "Talking to police / a hotline",
+      "group": "Safety",
+      "body": "# Talking to police / a hotline\n\nExport diagnostics. We are not emergency services. Add real hotline numbers per country in Head Office later.\n"
+    },
+    {
+      "id": "workplace",
+      "title": "Workplace harassment on a shared Mac",
+      "group": "Safety",
+      "body": "# Workplace harassment on a shared Mac\n\nElevated level, sharing off, freeze a baseline. Talk to HR or legal as well as using Shield.\n"
+    },
+    {
+      "id": "panic-lock",
+      "title": "Panic lock",
+      "group": "Safety",
+      "body": "# Panic lock\n\nOne control to turn sharing, AirDrop, and odd listen ports off. Use Self-heal after.\n"
+    },
+    {
+      "id": "addon-realtime-av",
+      "title": "Realtime AV",
+      "group": "Add-ons",
+      "body": "# Realtime AV\n\nOn-access ClamAV on Mac/Windows. $8/mo. Not available as a fake iOS disk scanner.\n"
+    },
+    {
+      "id": "addon-network-ops",
+      "title": "Network Ops",
+      "group": "Add-ons",
+      "body": "# Network Ops\n\nExtra intercept and neighbor-join alerts. $8/mo. Grid and live map are already Pro.\n"
+    },
+    {
+      "id": "addon-family-link",
+      "title": "Family Link",
+      "group": "Add-ons",
+      "body": "# Family Link\n\nParental controls, visible kid link, opt-in location. $8/mo. Child can unlink.\n"
+    },
+    {
+      "id": "addon-breach-watch",
+      "title": "Breach Watch",
+      "group": "Add-ons",
+      "body": "# Breach Watch\n\nEmail/phone breach alerts. $5/mo. Cloud, all clients.\n"
+    },
+    {
+      "id": "addon-concierge",
+      "title": "Concierge Support",
+      "group": "Add-ons",
+      "body": "# Concierge Support\n\nPriority tickets and consented remote help. $10/mo. No silent remote desktop.\n"
+    },
+    {
+      "id": "family-code",
+      "title": "Create a link code",
+      "group": "Family Link",
+      "body": "# Create a link code\n\nGuardian taps Create code. Child types it or opens the link. Both screens show Linked to \u2026\n"
+    },
+    {
+      "id": "family-child-sees",
+      "title": "What the child sees",
+      "group": "Family Link",
+      "body": "# What the child sees\n\nA persistent banner: Linked to [name]. Unlink is always available. No hidden icon.\n"
+    },
+    {
+      "id": "family-location",
+      "title": "Location Share (opt-in)",
+      "group": "Family Link",
+      "body": "# Location Share (opt-in)\n\nDefaults off. The child (or the child\u2019s device) turns it on. Not silent GPS.\n"
+    },
+    {
+      "id": "family-unlink",
+      "title": "Unlink / bedtime / panic lock",
+      "group": "Family Link",
+      "body": "# Unlink / bedtime / panic lock\n\nChild or guardian can unlink. Bedtime downtime and panic lock are parental controls, visible on the child device.\n"
+    },
+    {
+      "id": "plans-trial",
+      "title": "Plans and trial clock",
+      "group": "Account & billing",
+      "body": "# Plans and trial clock\n\n14 days, then Free or Pro. Top-right badge is the real remaining days.\n"
+    },
+    {
+      "id": "monthly-yearly",
+      "title": "Monthly vs yearly",
+      "group": "Account & billing",
+      "body": "# Monthly vs yearly\n\n$30/month or $250/year (~30% off). Stripe Checkout on memetorrent.futuret3ch.com.au/shield.\n"
+    },
+    {
+      "id": "cancel",
+      "title": "Cancel / refund",
+      "group": "Account & billing",
+      "body": "# Cancel / refund\n\nStripe customer portal. Refund policy is in Legal.\n"
+    },
+    {
+      "id": "failed-pay",
+      "title": "Failed payment",
+      "group": "Account & billing",
+      "body": "# Failed payment\n\nWe email you. Features drop to Free until the card works. Live data is still real, just masked.\n"
+    },
+    {
+      "id": "transfer",
+      "title": "Transfer license",
+      "group": "Account & billing",
+      "body": "# Transfer license\n\nSign out, sign in on the other device. Head Office can move a seat.\n"
+    },
+    {
+      "id": "family-seats",
+      "title": "Family devices",
+      "group": "Account & billing",
+      "body": "# Family devices\n\nPro includes 3 devices. Family Link adds 5 child seats.\n"
+    },
+    {
+      "id": "can-cannot",
+      "title": "What Shield can and cannot do",
+      "group": "Privacy",
+      "body": "# What Shield can and cannot do\n\nCan: lock this device, show live LAN, scan this Mac. Cannot: find a stalker\u2019s GPS, hack them, or silently control a phone.\n"
+    },
+    {
+      "id": "no-hack-back",
+      "title": "No hacking back",
+      "group": "Privacy",
+      "body": "# No hacking back\n\nGuide refuses attack advice. Head Office will not run silent remote control.\n"
+    },
+    {
+      "id": "data-store",
+      "title": "Data we store",
+      "group": "Privacy",
+      "body": "# Data we store\n\nAccount, license, optional diagnostics you upload. Scans stay on device unless you upload.\n"
+    },
+    {
+      "id": "support-consent",
+      "title": "Support sessions (consent)",
+      "group": "Privacy",
+      "body": "# Support sessions (consent)\n\nYou tap Allow. Then staff can pull diagnostics or restart Shield agents. No hidden agent.\n"
+    },
+    {
+      "id": "clamav",
+      "title": "ClamAV signatures",
+      "group": "Privacy",
+      "body": "# ClamAV signatures\n\nOpen-source engine plus our YARA rules for PUPs/remote-access tools.\n"
+    },
+    {
+      "id": "oss",
+      "title": "Open-source components",
+      "group": "Privacy",
+      "body": "# Open-source components\n\nClamAV, Leaflet/Carto map tiles, and libraries listed in the Help Center as we ship.\n"
+    },
+    {
+      "id": "ho-licenses",
+      "title": "License search",
+      "group": "Head Office",
+      "body": "# License search\n\nStaff search email/device, extend trial, revoke, set add-ons.\n"
+    },
+    {
+      "id": "ho-revoke",
+      "title": "Revoke / extend",
+      "group": "Head Office",
+      "body": "# Revoke / extend\n\nLogged in the audit log.\n"
+    },
+    {
+      "id": "ho-heartbeats",
+      "title": "Heartbeats",
+      "group": "Head Office",
+      "body": "# Heartbeats\n\nApp version, OS, last scan, platform.\n"
+    },
+    {
+      "id": "ho-tickets",
+      "title": "Tickets",
+      "group": "Head Office",
+      "body": "# Tickets\n\nInbox. Stalking/child playbooks on the ticket.\n"
+    },
+    {
+      "id": "ho-session",
+      "title": "Starting a support session",
+      "group": "Head Office",
+      "body": "# Starting a support session\n\nOnly after the user clicks Allow on their device.\n"
+    },
+    {
+      "id": "ho-keys",
+      "title": "API keys",
+      "group": "Head Office",
+      "body": "# API keys\n\nStaff and partner keys. Revocable.\n"
+    },
+    {
+      "id": "ho-audit",
+      "title": "Audit log",
+      "group": "Head Office",
+      "body": "# Audit log\n\nWho viewed which customer.\n"
+    },
+    {
+      "id": "ho-broadcast",
+      "title": "Broadcasts",
+      "group": "Head Office",
+      "body": "# Broadcasts\n\nIn-app banners such as signature updates.\n"
+    },
+    {
+      "id": "api-auth",
+      "title": "API \u00b7 Auth",
+      "group": "API",
+      "body": "# API \u00b7 Auth\n\nPOST /v1/auth/signup|login|oauth/{google,facebook} on https://memetorrent.futuret3ch.com.au/shield/api\n"
+    },
+    {
+      "id": "api-licenses",
+      "title": "API \u00b7 Licenses",
+      "group": "API",
+      "body": "# API \u00b7 Licenses\n\nGET /v1/licenses/:id  POST /v1/licenses/:id/revoke\n"
+    },
+    {
+      "id": "api-devices",
+      "title": "API \u00b7 Devices",
+      "group": "API",
+      "body": "# API \u00b7 Devices\n\nHeartbeat, diagnostics (user-approved).\n"
+    },
+    {
+      "id": "api-scans",
+      "title": "API \u00b7 Scans",
+      "group": "API",
+      "body": "# API \u00b7 Scans\n\nHistory for licensed devices. Real results only.\n"
+    },
+    {
+      "id": "api-support",
+      "title": "API \u00b7 Support sessions",
+      "group": "API",
+      "body": "# API \u00b7 Support sessions\n\nUser creates; Head Office joins.\n"
+    },
+    {
+      "id": "api-guide",
+      "title": "API \u00b7 Guide chat",
+      "group": "API",
+      "body": "# API \u00b7 Guide chat\n\nPOST /v1/guide/chat with threat level + snapshot. No attack advice.\n"
+    },
+    {
+      "id": "api-webhooks",
+      "title": "API \u00b7 Webhooks",
+      "group": "API",
+      "body": "# API \u00b7 Webhooks\n\nPOST /v1/webhooks/stripe\n"
+    },
+    {
+      "id": "contact",
+      "title": "Contact us",
+      "group": "Contact",
+      "body": "# Contact us\n\nFuturet3ch only \u2014 never support@memetorrent.com.au.\n\n- Product: support@futuret3ch.com.au\n- Safety: safety@futuret3ch.com.au\n- Sales / Business deals: sales@futuret3ch.com.au\n"
+    },
+    {
+      "id": "business-seats",
+      "title": "Shield Business seats",
+      "group": "Account & billing",
+      "body": "# Shield Business seats\n\nHigher than Personal. 1 seat $149/mo or $1,490/yr. 10 seats $990/mo. 25 seats $1,990/mo. Extra seats, or talk to sales@futuret3ch.com.au for a deal. Network tools for office LAN issues.\n"
+    },
+    {
+      "id": "status",
+      "title": "Status",
+      "group": "Contact",
+      "body": "# Status\n\nPlaceholder until the public status page is live. If the API is down, local Shield still scans and heals.\n"
+    },
+    {
+      "id": "terms",
+      "title": "Terms",
+      "group": "Legal",
+      "body": "# Terms\n\nDraft: Shield licenses software to lock and monitor THIS device. No hacking third parties. Futuret3ch Pty-style company footer on the public hub.\n"
+    },
+    {
+      "id": "privacy",
+      "title": "Privacy",
+      "group": "Legal",
+      "body": "# Privacy\n\nAccount on server. Scans on device unless you upload diagnostics. Family Link location is opt-in.\n"
+    },
+    {
+      "id": "aup",
+      "title": "Acceptable use",
+      "group": "Legal",
+      "body": "# Acceptable use\n\nNo using Shield to stalk, spy without the visible Family Link, or attack others.\n"
+    },
+    {
+      "id": "refunds",
+      "title": "Refund policy",
+      "group": "Legal",
+      "body": "# Refund policy\n\nDraft: unused time via Stripe portal; Head Office can flag refunds.\n"
+    }
+  ]
+}
