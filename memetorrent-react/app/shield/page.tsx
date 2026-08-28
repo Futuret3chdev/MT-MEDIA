@@ -46,7 +46,10 @@ export default function ShieldPage() {
               >
                 memetorrent.futuret3ch.com.au/shield
               </a>
-              <Link href="/login" className="px-4 py-2 rounded-full border border-white/20 text-sm">
+              <Link
+                href="/login?next=/shield/trial&from=shield-trial"
+                className="px-4 py-2 rounded-full border border-white/20 text-sm"
+              >
                 Start 14-day trial
               </Link>
             </div>
@@ -61,14 +64,14 @@ export default function ShieldPage() {
           <Card icon={ICONS.panic} title="Panic lock" body="Sharing, AirDrop, odd listeners off. This device only." />
         </div>
 
-        <h2 id="pricing" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">Personal pricing</h2>
+        <h2 id="pricing" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">Personal pricing</h2>
         <div className="mt-4 grid sm:grid-cols-3 gap-4">
           <Card title="Free" body="Real dashboard. Masked live grid/map. 1 scan/day. Nothing invented." />
           <Card title="14-day trial" body="Full Pro plus all five add-ons. The clock is the real remaining days." />
           <Card title="Pro · $30 / mo" body="or $250 / year. Live grid and live tracking included." />
         </div>
 
-        <h2 id="business" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">
+        <h2 id="business" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">
           Shield Business
         </h2>
         <p className="mt-3 text-sm opacity-80 max-w-2xl leading-relaxed">
@@ -138,11 +141,13 @@ export default function ShieldPage() {
           Shield never uses support@memetorrent.com.au. Product and safety mail is Futuret3ch only.
         </p>
 
-        <h2 id="api" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">API</h2>
+        <h2 id="api" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">
+          API
+        </h2>
         <p className="mt-3 text-sm opacity-80">
-          Public API docs live on the Shield hub:{' '}
-          <a className="text-cyan-300 break-all" href="https://memetorrent.futuret3ch.com.au/shield#api">
-            https://memetorrent.futuret3ch.com.au/shield#api
+          Full endpoint list:{' '}
+          <a className="text-cyan-300 break-all" href="https://memetorrent.futuret3ch.com.au/shield/api">
+            https://memetorrent.futuret3ch.com.au/shield/api
           </a>
         </p>
         <p className="mt-2 text-sm opacity-70">
@@ -156,7 +161,7 @@ export default function ShieldPage() {
           </a>
         </p>
 
-        <h2 id="billing" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">
+        <h2 id="billing" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">
           Billing
         </h2>
         <p className="mt-3 text-sm opacity-80 max-w-2xl leading-relaxed">

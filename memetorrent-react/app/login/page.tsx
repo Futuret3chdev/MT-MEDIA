@@ -8,6 +8,7 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get('next') || '/portal';
+  const fromShield = (params.get('from') || '').includes('shield') || next.startsWith('/shield');
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,15 +51,38 @@ function LoginForm() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="flex flex-wrap gap-4 text-sm mb-6">
-        <Link href="/" className="opacity-70 hover:opacity-100">
-          ← Home
-        </Link>
-        <Link href="/portal" className="opacity-70 hover:opacity-100">
-          ← Portal
-        </Link>
+        {fromShield ? (
+          <Link href="/shield" className="opacity-70 hover:opacity-100">
+            ← Shield
+          </Link>
+        ) : (
+          <>
+            <Link href="/" className="opacity-70 hover:opacity-100">
+              ← Home
+            </Link>
+            <Link href="/portal" className="opacity-70 hover:opacity-100">
+              ← Portal
+            </Link>
+          </>
+        )}
       </div>
-      <h1 className="text-3xl font-semibold tracking-tight mb-2">Log in</h1>
-      <p className="text-sm opacity-70 mb-6">Same account as the portal, chat, and studio.</p>
+      {fromShield && (
+        <div className="mb-6 rounded-2xl border border-cyan-400/40 bg-cyan-400/10 p-4">
+          <p className="text-[11px] tracking-[0.22em] font-black text-cyan-300">SHIELD PERSONAL</p>
+          <h1 className="text-2xl font-semibold tracking-tight mt-1">Start your 14-day trial</h1>
+          <p className="text-sm opacity-80 mt-2">
+            This login is for <strong>Shield Personal</strong> — not Shield Business, not the MT portal.
+            After you sign in you stay on Shield. 14 days of Pro + add-ons. Business seats are a separate
+            product.
+          </p>
+        </div>
+      )}
+      {!fromShield && <h1 className="text-3xl font-semibold tracking-tight mb-2">Log in</h1>}
+      <p className="text-sm opacity-70 mb-6">
+        {fromShield
+          ? 'Use your Futuret3ch / MemeTorrent account. You will return to Shield, not Business.'
+          : 'Same account as the portal, chat, and studio.'}
+      </p>
       <div className="flex gap-2 mb-5">
         <button
           type="button"
@@ -105,7 +129,13 @@ function LoginForm() {
           disabled={busy}
           className="w-full py-2.5 rounded-xl bg-emerald-400 text-black font-semibold text-sm"
         >
-          {mode === 'login' ? 'Enter' : 'Create account'}
+          {fromShield
+            ? mode === 'login'
+              ? 'Start Shield trial'
+              : 'Create account & start trial'
+            : mode === 'login'
+              ? 'Enter'
+              : 'Create account'}
         </button>
       </form>
     </div>
