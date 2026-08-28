@@ -146,7 +146,7 @@ export default function ShieldPage() {
           </a>
         </p>
         <p className="mt-2 text-sm opacity-70">
-          Auth, licenses, devices, scans, Guide, Family Link, Stripe webhooks. Head Office is staff-only
+          Auth, licenses, devices, scans, Guide, Family Link. Head Office is staff-only
           (same Futuret3ch ops desk — not a public hostname).
         </p>
         <p className="mt-2 text-sm opacity-70">
@@ -156,10 +156,37 @@ export default function ShieldPage() {
           </a>
         </p>
 
-        <h2 id="payments" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">Payments</h2>
-        <p className="mt-3 text-sm opacity-80">
-          Personal: Stripe after the 14-day trial — $30 / mo or $250 / year. Add-ons on top of Pro.
-          Business: 1 seat or 10 / 25 packs; extra seats; or email sales@futuret3ch.com.au for a deal.
+        <h2 id="billing" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">
+          Billing
+        </h2>
+        <p className="mt-3 text-sm opacity-80 max-w-2xl leading-relaxed">
+          Prices above are what you will pay. Checkout is not live yet.
+        </p>
+        <ul className="mt-4 space-y-2 text-sm opacity-80">
+          <li>
+            <strong>PayID</strong> — available for Shield billing (email{' '}
+            <a className="text-cyan-300" href="mailto:sales@futuret3ch.com.au">
+              sales@futuret3ch.com.au
+            </a>{' '}
+            or{' '}
+            <a className="text-cyan-300" href="mailto:support@futuret3ch.com.au">
+              support@futuret3ch.com.au
+            </a>
+            ).
+          </li>
+          <li>
+            <strong>Credit cards</strong> — coming soon.
+          </li>
+          <li>
+            <strong>Send</strong> — coming soon.
+          </li>
+          <li>
+            <strong>All other billing</strong> — coming soon.
+          </li>
+        </ul>
+        <p className="mt-3 text-sm opacity-70">
+          Personal Pro $30 / mo or $250 / year. Business 1 / 10 / 25 seats as listed. Need a deal? Talk to
+          sales.
         </p>
         <Link
           href="/login"

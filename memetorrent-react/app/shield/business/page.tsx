@@ -50,6 +50,24 @@ export default function ShieldBusinessPage() {
           <li>Incident export — a real report from this device for IT or police.</li>
         </ul>
 
+        <h2 id="billing" className="mt-12 text-xs tracking-[0.2em] uppercase opacity-50">
+          Billing
+        </h2>
+        <ul className="mt-3 space-y-2 text-sm opacity-80">
+          <li>
+            <strong>PayID</strong> — available. Email sales@futuret3ch.com.au or support@futuret3ch.com.au.
+          </li>
+          <li>
+            <strong>Credit cards</strong> — coming soon.
+          </li>
+          <li>
+            <strong>Send</strong> — coming soon.
+          </li>
+          <li>
+            <strong>All other billing</strong> — coming soon.
+          </li>
+        </ul>
+
         <h2 id="contact" className="mt-12 text-xs tracking-[0.2em] uppercase opacity-50">
           Contact (Futuret3ch only)
         </h2>
