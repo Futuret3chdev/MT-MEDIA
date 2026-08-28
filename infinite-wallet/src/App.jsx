@@ -1103,6 +1103,18 @@ export default function MTWalletApp() {
               </button>
             )}
 
+            <a
+              href="https://memetorrent.futuret3ch.com.au/shield"
+              className="hidden sm:inline-flex items-center gap-2 px-2 py-1 rounded-2xl border border-cyan-400/40 bg-cyan-400/10 hover:bg-cyan-400/20"
+              title="Shield"
+            >
+              <img
+                src="https://memetorrent.futuret3ch.com.au/icons/shield-mark.jpg"
+                alt="Shield"
+                className="w-8 h-8 rounded-lg object-cover"
+              />
+              <span className="text-[10px] font-black tracking-[0.2em] text-cyan-300">SHIELD</span>
+            </a>
             <button onClick={handleLock} className="flex items-center gap-2 px-4 py-1.5 text-xs rounded-2xl border border-zinc-700 hover:bg-zinc-950 transition">
               <Lock className="w-3.5 h-3.5" /> LOCK
             </button>

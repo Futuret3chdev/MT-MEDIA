@@ -212,8 +212,6 @@ export default function Navbar() {
             <a href="/#utilities" className="opacity-70 hover:opacity-100">UTILITIES</a>
             <a href="/#tap" className="opacity-70 hover:opacity-100">TAP</a>
             <a href="/catalog" className="opacity-70 hover:opacity-100">GAMES</a>
-            <a href="/boards" className="opacity-70 hover:opacity-100">BOARDS</a>
-            <LiveScoreIcon />
             <a href="/developers" className="opacity-70 hover:opacity-100">API</a>
             <a
               href="/casino"
@@ -265,10 +263,6 @@ export default function Navbar() {
           <a href="/#utilities" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">UTILITIES</a>
           <a href="/#tap" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAP</a>
           <a href="/catalog" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">GAMES</a>
-          <a href="/boards" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">BOARDS</a>
-          <a href="/boards" onClick={() => setMobileMenuOpen(false)} className="py-1 inline-flex items-center">
-            <LiveScoreIcon />
-          </a>
           <a href="/developers" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">API</a>
           <a
             href="/casino"
@@ -315,6 +309,14 @@ export default function Navbar() {
               >
                 Log out
               </button>
+              <a
+                href="/shield"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-1 inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-2 py-1.5"
+              >
+                <img src="/icons/shield-mark.jpg" alt="" className="w-9 h-9 rounded-lg object-cover" />
+                <span className="text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
+              </a>
             </>
           ) : (
             <>
@@ -338,6 +340,17 @@ export default function Navbar() {
               >
                 Register
               </button>
+              <div className="flex items-center gap-2 pt-1">
+                <LiveScoreIcon />
+              </div>
+              <a
+                href="/shield"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-1 inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-2 py-1.5"
+              >
+                <img src="/icons/shield-mark.jpg" alt="" className="w-9 h-9 rounded-lg object-cover" />
+                <span className="text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
+              </a>
             </>
           )}
         </div>
@@ -396,49 +409,69 @@ export default function Navbar() {
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {portalUser ? (
-              <>
-                <LiveScoreIcon />
-                <NoticeBell />
-                <button
-                  type="button"
-                  onClick={() => (window.location.href = '/portal')}
-                  className="opacity-80 hover:opacity-100 p-1 text-sm flex items-center gap-1.5 max-w-[7.5rem]"
-                  title="Open portal"
-                  aria-label="Account"
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  <LiveScoreIcon />
+                  <NoticeBell />
+                  <button
+                    type="button"
+                    onClick={() => (window.location.href = '/portal')}
+                    className="opacity-80 hover:opacity-100 p-1 text-sm flex items-center gap-1.5 max-w-[7.5rem]"
+                    title="Open portal"
+                    aria-label="Account"
+                  >
+                    {portalUser.avatar_url ? (
+                      <img src={portalUser.avatar_url} alt="" className="w-6 h-6 rounded-md object-cover" />
+                    ) : (
+                      <span>👤</span>
+                    )}
+                    <span className="truncate text-xs">{portalUser.username}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap px-2 py-1 border border-white/20 rounded"
+                  >
+                    Log out
+                  </button>
+                </div>
+                <a
+                  href="/shield"
+                  title="Shield"
+                  className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 hover:bg-cyan-400/20 px-2 py-1"
                 >
-                  {portalUser.avatar_url ? (
-                    <img src={portalUser.avatar_url} alt="" className="w-6 h-6 rounded-md object-cover" />
-                  ) : (
-                    <span>👤</span>
-                  )}
-                  <span className="truncate text-xs">{portalUser.username}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap px-2 py-1 border border-white/20 rounded"
-                >
-                  Log out
-                </button>
-              </>
+                  <img src="/icons/shield-mark.jpg" alt="Shield" className="w-10 h-10 rounded-lg object-cover" />
+                  <span className="text-[10px] sm:text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
+                </a>
+              </div>
             ) : (
-              <>
-                <LiveScoreIcon />
-                <button
-                  type="button"
-                  onClick={() => openAuth('login')}
-                  className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap"
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  <LiveScoreIcon />
+                  <button
+                    type="button"
+                    onClick={() => openAuth('login')}
+                    className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap"
+                  >
+                    Log in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openAuth('register')}
+                    className="text-[11px] sm:text-xs px-2 py-1 border border-white/20 rounded whitespace-nowrap"
+                  >
+                    Register
+                  </button>
+                </div>
+                <a
+                  href="/shield"
+                  title="Shield"
+                  className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 hover:bg-cyan-400/20 px-2 py-1"
                 >
-                  Log in
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openAuth('register')}
-                  className="text-[11px] sm:text-xs px-2 py-1 border border-white/20 rounded whitespace-nowrap"
-                >
-                  Register
-                </button>
-              </>
+                  <img src="/icons/shield-mark.jpg" alt="Shield" className="w-10 h-10 rounded-lg object-cover" />
+                  <span className="text-[10px] sm:text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
+                </a>
+              </div>
             )}
             <ThemeToggle />
           </div>
