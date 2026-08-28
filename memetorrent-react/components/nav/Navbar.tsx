@@ -409,72 +409,69 @@ export default function Navbar() {
 
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {portalUser ? (
-              <div className="flex flex-col items-end gap-1">
-                <div className="flex items-center gap-2">
-                  <LiveScoreIcon />
-                  <NoticeBell />
-                  <button
-                    type="button"
-                    onClick={() => (window.location.href = '/portal')}
-                    className="opacity-80 hover:opacity-100 p-1 text-sm flex items-center gap-1.5 max-w-[7.5rem]"
-                    title="Open portal"
-                    aria-label="Account"
-                  >
-                    {portalUser.avatar_url ? (
-                      <img src={portalUser.avatar_url} alt="" className="w-6 h-6 rounded-md object-cover" />
-                    ) : (
-                      <span>👤</span>
-                    )}
-                    <span className="truncate text-xs">{portalUser.username}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={logout}
-                    className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap px-2 py-1 border border-white/20 rounded"
-                  >
-                    Log out
-                  </button>
-                </div>
-                <a
-                  href="/shield"
-                  title="Shield"
-                  className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 hover:bg-cyan-400/20 px-2 py-1"
+              <>
+                <LiveScoreIcon />
+                <NoticeBell />
+                <button
+                  type="button"
+                  onClick={() => (window.location.href = '/portal')}
+                  className="opacity-80 hover:opacity-100 p-1 text-sm flex items-center gap-1.5 max-w-[7.5rem]"
+                  title="Open portal"
+                  aria-label="Account"
                 >
-                  <img src="/icons/shield-mark.jpg" alt="Shield" className="w-10 h-10 rounded-lg object-cover" />
-                  <span className="text-[10px] sm:text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
-                </a>
-              </div>
+                  {portalUser.avatar_url ? (
+                    <img src={portalUser.avatar_url} alt="" className="w-6 h-6 rounded-md object-cover" />
+                  ) : (
+                    <span>👤</span>
+                  )}
+                  <span className="truncate text-xs">{portalUser.username}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap px-2 py-1 border border-white/20 rounded"
+                >
+                  Log out
+                </button>
+              </>
             ) : (
-              <div className="flex flex-col items-end gap-1">
-                <div className="flex items-center gap-2">
-                  <LiveScoreIcon />
-                  <button
-                    type="button"
-                    onClick={() => openAuth('login')}
-                    className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap"
-                  >
-                    Log in
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openAuth('register')}
-                    className="text-[11px] sm:text-xs px-2 py-1 border border-white/20 rounded whitespace-nowrap"
-                  >
-                    Register
-                  </button>
-                </div>
-                <a
-                  href="/shield"
-                  title="Shield"
-                  className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 hover:bg-cyan-400/20 px-2 py-1"
+              <>
+                <LiveScoreIcon />
+                <button
+                  type="button"
+                  onClick={() => openAuth('login')}
+                  className="text-[11px] sm:text-xs opacity-80 hover:opacity-100 whitespace-nowrap"
                 >
-                  <img src="/icons/shield-mark.jpg" alt="Shield" className="w-10 h-10 rounded-lg object-cover" />
-                  <span className="text-[10px] sm:text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
-                </a>
-              </div>
+                  Log in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAuth('register')}
+                  className="text-[11px] sm:text-xs px-2 py-1 border border-white/20 rounded whitespace-nowrap"
+                >
+                  Register
+                </button>
+              </>
             )}
             <ThemeToggle />
           </div>
+        </div>
+      </div>
+
+      {/* Shield sits on its own band below the divider — not stacked under Login */}
+      <div className="border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-3">
+          <a
+            href="/shield"
+            title="Shield"
+            className="inline-flex items-center gap-3 rounded-xl border border-cyan-400/40 bg-cyan-400/10 hover:bg-cyan-400/20 px-2.5 py-1.5"
+          >
+            <img src="/icons/shield-mark.jpg" alt="Shield" className="w-11 h-11 rounded-xl object-cover" />
+            <span className="flex flex-col leading-tight">
+              <span className="text-xs sm:text-sm font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
+              <span className="text-[10px] sm:text-[11px] opacity-70">Live grid · live tracking</span>
+            </span>
+          </a>
         </div>
       </div>
 
