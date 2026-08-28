@@ -44,13 +44,7 @@ export default function ShieldPage() {
                 href="https://memetorrent.futuret3ch.com.au/shield"
                 className="px-4 py-2 rounded-full bg-cyan-400 text-black font-semibold text-sm"
               >
-                This page
-              </a>
-              <a
-                href="https://shield.futuret3ch.com.au"
-                className="px-4 py-2 rounded-full border border-white/20 text-sm"
-              >
-                shield.futuret3ch.com.au
+                memetorrent.futuret3ch.com.au/shield
               </a>
               <Link href="/login" className="px-4 py-2 rounded-full border border-white/20 text-sm">
                 Start 14-day trial
@@ -146,14 +140,14 @@ export default function ShieldPage() {
 
         <h2 id="api" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">API</h2>
         <p className="mt-3 text-sm opacity-80">
-          Public API on Contabo, next to Futuret3ch’s other APIs:{' '}
-          <a className="text-cyan-300 break-all" href="https://shield.futuret3ch.com.au/api/v1">
-            https://shield.futuret3ch.com.au/api/v1
+          Public API docs live on the Shield hub:{' '}
+          <a className="text-cyan-300 break-all" href="https://memetorrent.futuret3ch.com.au/shield#api">
+            https://memetorrent.futuret3ch.com.au/shield#api
           </a>
         </p>
         <p className="mt-2 text-sm opacity-70">
-          Auth, licenses, devices, scans, Guide, Family Link, Stripe webhooks. Head Office:{' '}
-          <span className="text-white/90">https://office.shield.futuret3ch.com.au</span> (staff only).
+          Auth, licenses, devices, scans, Guide, Family Link, Stripe webhooks. Head Office is staff-only
+          (same Futuret3ch ops desk — not a public hostname).
         </p>
         <p className="mt-2 text-sm opacity-70">
           Wallet:{' '}
