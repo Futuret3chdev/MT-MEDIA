@@ -163,21 +163,26 @@ export default function ShieldPage() {
         </p>
 
         <h2 id="api" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">
-          API
+          APIs
         </h2>
         <p className="mt-3 text-sm opacity-80">
-          Full endpoint list:{' '}
-          <Link className="text-cyan-300 break-all" href="/shield/api">
-            /shield/api
+          The site Developers API is unchanged:{' '}
+          <Link className="text-cyan-300 font-semibold" href="/developers">
+            /developers
           </Link>
-          {' · '}
-          <Link className="text-cyan-300" href="/shield/help">
-            {SHIELD_ARTICLES.length} help guides
-          </Link>
+          {' '}
+          (MT-Connect, social login, wallet). The nav <strong>API</strong> tab still goes there.
         </p>
         <p className="mt-2 text-sm opacity-70">
-          Auth, licenses, devices, scans, Guide, Family Link. Head Office is staff-only
-          (same Futuret3ch ops desk — not a public hostname).
+          Shield-only product endpoints (licenses, scans, Guide) are separate:{' '}
+          <Link className="text-cyan-300" href="/shield/api">
+            /shield/api
+          </Link>
+          . Help guides:{' '}
+          <Link className="text-cyan-300" href="/shield/help">
+            {SHIELD_ARTICLES.length} articles
+          </Link>
+          .
         </p>
         <p className="mt-2 text-sm opacity-70">
           Wallet:{' '}
