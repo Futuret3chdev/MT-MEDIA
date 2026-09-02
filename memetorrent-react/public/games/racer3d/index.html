@@ -5,12 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>MT Racer</title>
   <style>
-    html, body { margin: 0; height: 100%; background: #05070c; color: #e8fff4; font-family: system-ui, sans-serif; overflow: hidden; }
-    html, body { touch-action: none; }
+    html, body { margin: 0; height: 100%; background: #05070c; color: #e8fff4; font-family: system-ui, sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
     canvas { display: block; width: 100%; height: 100%; }
     #menuBtn { position: fixed; top: 10px; right: 12px; z-index: 9; display: none; min-height: 36px; padding: 6px 12px; font-size: 12px; }
-    #pads { display: none; position: fixed; left: 10px; right: 10px; bottom: 14px; z-index: 6; justify-content: space-between; align-items: flex-end; pointer-events: none; }
-    #pads button { pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; font-size: 13px; }
+    #pads { display: none; position: fixed; left: max(10px, env(safe-area-inset-left)); right: max(10px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); z-index: 6; justify-content: space-between; align-items: flex-end; pointer-events: none; }
+    #stick {
+      pointer-events: auto; width: 128px; height: 128px; border-radius: 50%;
+      background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.22); position: relative; touch-action: none;
+    }
+    #knob {
+      position: absolute; width: 52px; height: 52px; border-radius: 50%; background: #19d37e;
+      left: 38px; top: 38px; pointer-events: none;
+    }
+    #nitroBtn {
+      pointer-events: auto; width: 78px; height: 78px; border-radius: 50%; font-size: 11px; font-weight: 900;
+      user-select: none; -webkit-user-select: none;
+    }
     @media (pointer: coarse) { #pads { display: flex; } #hint { display: none; } }
     #hud { position: fixed; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; font-weight: 800; letter-spacing: .06em; pointer-events: none; z-index: 4; }
     #spd { color: #19d37e; font-size: 22px; }
@@ -40,14 +50,13 @@
   <div id="hint">A/D steer · W gas · Space nitro · Menu to garage</div>
   <button id="menuBtn" type="button">Menu</button>
   <div id="pads">
-    <button type="button" id="padL">◀</button>
-    <button type="button" id="padGas">GAS</button>
-    <button type="button" id="padR">▶</button>
+    <div id="stick"><div id="knob"></div></div>
+    <button type="button" id="nitroBtn">NITRO</button>
   </div>
   <div id="menu">
     <div class="card">
       <h1>MT RACER</h1>
-      <p>Pick a map. Pimp the ride. Some parts are free. Gold ones are $MT exclusive.</p>
+      <p>Pick a map. Pimp the ride. Race is 3 laps — beat the pack.</p>
       <div class="lab">Map</div>
       <div class="pick" id="maps"></div>
       <div class="lab">Paint</div>
@@ -302,19 +311,33 @@ document.getElementById('menuBtn').onclick = () => {
   document.getElementById('menuBtn').style.display = 'none';
   engine.pause();
 };
-function holdKey(id, code) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const on = (e) => { e.preventDefault(); keys[code] = true; };
-  const off = (e) => { e.preventDefault(); keys[code] = false; };
-  el.addEventListener('pointerdown', on);
-  el.addEventListener('pointerup', off);
-  el.addEventListener('pointerleave', off);
-  el.addEventListener('pointercancel', off);
+const stick = { x: 0, y: 0, on: false };
+const stickEl = document.getElementById('stick');
+const knobEl = document.getElementById('knob');
+function stickFrom(e) {
+  const r = stickEl.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2, max = r.width / 2 - 8;
+  let dx = e.clientX - cx, dy = e.clientY - cy;
+  const mag = Math.hypot(dx, dy) || 1;
+  if (mag > max) { dx = dx / mag * max; dy = dy / mag * max; }
+  knobEl.style.left = (r.width / 2 + dx - 26) + 'px';
+  knobEl.style.top = (r.height / 2 + dy - 26) + 'px';
+  stick.x = dx / max;
+  stick.y = -dy / max;
+  stick.on = true;
 }
-holdKey('padL', 'KeyA');
-holdKey('padR', 'KeyD');
-holdKey('padGas', 'KeyW');
+function stickReset() {
+  stick.x = 0; stick.y = 0; stick.on = false;
+  knobEl.style.left = '38px'; knobEl.style.top = '38px';
+}
+stickEl.addEventListener('pointerdown', (e) => { stickEl.setPointerCapture(e.pointerId); stickFrom(e); e.preventDefault(); });
+stickEl.addEventListener('pointermove', (e) => { if (stick.on) stickFrom(e); e.preventDefault(); });
+stickEl.addEventListener('pointerup', stickReset);
+stickEl.addEventListener('pointercancel', stickReset);
+const nitroBtn = document.getElementById('nitroBtn');
+nitroBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); keys.Space = true; });
+nitroBtn.addEventListener('pointerup', () => { keys.Space = false; });
+nitroBtn.addEventListener('pointercancel', () => { keys.Space = false; });
 
 function beep(f) {
   try {
@@ -329,11 +352,16 @@ function tick(now) {
   const dt = Math.min(0.033, (now - last) / 1000);
   last = now;
   if (playing) {
-    if (keys['KeyA'] || keys['ArrowLeft']) player.vx -= 18 * dt;
-    if (keys['KeyD'] || keys['ArrowRight']) player.vx += 18 * dt;
+    if (stick.on) {
+      player.vx += stick.x * 22 * dt;
+      if (Math.abs(stick.x) > 0.12) player.vx *= 0.94;
+    } else {
+      if (keys['KeyA'] || keys['ArrowLeft']) player.vx -= 18 * dt;
+      if (keys['KeyD'] || keys['ArrowRight']) player.vx += 18 * dt;
+    }
     player.vx *= 0.88;
     player.x = Math.max(-6.2, Math.min(6.2, player.x + player.vx * dt));
-    const gas = keys['KeyW'] || keys['ArrowUp'] ? 1 : 0.35;
+    const gas = (stick.on && stick.y > 0.12) || keys['KeyW'] || keys['ArrowUp'] ? 1 : (stick.on && stick.y < -0.35 ? 0.12 : 0.35);
     if (keys['Space'] && mt > 0) { nitro = 2.2; mt -= 4 * dt; beep(220); }
     if (nitro > 0) nitro -= dt;
     player.speed = THREE.MathUtils.lerp(player.speed, 16 + gas * 22 + (nitro > 0 ? 18 : 0), 0.08);
