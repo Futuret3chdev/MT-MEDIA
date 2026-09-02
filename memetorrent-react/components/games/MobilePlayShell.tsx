@@ -1,9 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CatalogGame } from '@/lib/mt-catalog';
+import GameWalletBridge from '@/components/wallet/GameWalletBridge';
 
-const BAR = 40;
+const BAR = 44;
+
+function injected(kind: string) {
+  if (kind === 'solflare') return (window as unknown as { solflare?: { connect: () => Promise<{ publicKey?: { toString: () => string } }> } }).solflare;
+  if (kind === 'backpack') return (window as unknown as { backpack?: { connect: () => Promise<{ publicKey?: { toString: () => string } }> } }).backpack;
+  const w = window as unknown as { phantom?: { solana?: { connect: () => Promise<{ publicKey?: { toString: () => string } }> } }; solana?: { connect: () => Promise<{ publicKey?: { toString: () => string } }> } };
+  return w.phantom?.solana || w.solana;
+}
 
 export default function MobilePlayShell({
   game,
@@ -15,6 +23,9 @@ export default function MobilePlayShell({
   src: string;
 }) {
   const [picker, setPicker] = useState(false);
+  const [addr, setAddr] = useState('');
+  const [user, setUser] = useState<{ username?: string; is_admin?: boolean } | null>(null);
+
   const live = useMemo(
     () => games.filter((g) => g.status === 'live' && g.id !== 'mtgames'),
     [games],
@@ -25,11 +36,79 @@ export default function MobilePlayShell({
       if (e.key === 'Escape') setPicker(false);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    try {
+      const saved = localStorage.getItem('mt-game-wallet') || '';
+      if (saved) setAddr(saved);
+    } catch { /* */ }
+    fetch('/api/portal/me', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => { if (d?.ok && d.user) setUser(d.user); })
+      .catch(() => {});
+    const onMsg = (e: MessageEvent) => {
+      if (e.data?.type === 'mt-wallet-ok' && e.data.addr) setAddr(e.data.addr);
+    };
+    window.addEventListener('message', onMsg);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('message', onMsg);
+    };
   }, []);
+
+  const connectWallet = useCallback(async (kind: string) => {
+    document.querySelectorAll('iframe').forEach((f) => {
+      try { f.contentWindow?.postMessage({ type: 'mt-wallet-request', wallet: kind }, '*'); } catch { /* */ }
+    });
+    const p = injected(kind);
+    if (p?.connect) {
+      try {
+        const res = await p.connect();
+        const pk = res?.publicKey;
+        const a = pk && (typeof pk.toString === 'function' ? pk.toString() : String(pk));
+        if (a) {
+          setAddr(a);
+          try { localStorage.setItem('mt-game-wallet', a); } catch { /* */ }
+          document.querySelectorAll('iframe').forEach((f) => {
+            try { f.contentWindow?.postMessage({ type: 'mt-wallet-ok', addr: a }, '*'); } catch { /* */ }
+          });
+          return;
+        }
+      } catch { /* deeplink */ }
+    }
+    if (/iPhone|Android/i.test(navigator.userAgent)) {
+      const url = encodeURIComponent(location.href);
+      const ref = encodeURIComponent(location.origin);
+      if (kind === 'solflare') location.href = `https://solflare.com/ul/v1/browse/${url}?ref=${ref}`;
+      else if (kind === 'backpack') location.href = `https://backpack.app/ul/browse/${url}?ref=${ref}`;
+      else location.href = `https://phantom.app/ul/v1/browse/${url}?ref=${ref}`;
+    }
+  }, []);
+
+  const short = addr ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : '';
+  const next = encodeURIComponent(`/play/${game.id}`);
+
+  const iconBtn = (kind: string, srcImg: string, label: string) => (
+    <button
+      type="button"
+      title={label}
+      onClick={() => connectWallet(kind)}
+      style={{
+        width: 28,
+        height: 28,
+        padding: 0,
+        border: '1px solid rgba(255,255,255,.2)',
+        borderRadius: 8,
+        overflow: 'hidden',
+        background: '#111',
+        cursor: 'pointer',
+      }}
+    >
+      <img src={srcImg} alt={label} style={{ width: '100%', height: '100%', display: 'block' }} />
+    </button>
+  );
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000' }}>
+      <GameWalletBridge />
       <div
         style={{
           position: 'fixed',
@@ -40,7 +119,7 @@ export default function MobilePlayShell({
           zIndex: 30,
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
+          gap: 8,
           padding: '0 10px',
           background: '#09090b',
           borderBottom: '1px solid rgba(255,255,255,.12)',
@@ -61,30 +140,43 @@ export default function MobilePlayShell({
             borderRadius: 999,
             padding: '6px 12px',
             cursor: 'pointer',
+            flexShrink: 0,
           }}
         >
           {picker ? 'Close' : 'Games'}
         </button>
-        <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
           {game.name}
         </span>
-        <a href="/catalog" style={{ marginLeft: 'auto', color: '#ccc', fontSize: 12, textDecoration: 'none' }}>
-          Catalog
-        </a>
-        <a
-          href="/catalog"
-          style={{
-            color: '#04140c',
-            background: '#19d37e',
-            fontSize: 12,
-            fontWeight: 800,
-            textDecoration: 'none',
-            borderRadius: 999,
-            padding: '6px 12px',
-          }}
-        >
-          Exit
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
+          {iconBtn('phantom', '/icons/phantom.svg', 'Phantom')}
+          {iconBtn('solflare', '/icons/solflare.svg', 'Solflare')}
+          {iconBtn('backpack', '/icons/backpack.png', 'Backpack')}
+          {short && <span style={{ fontSize: 10, color: '#19d37e', maxWidth: 72, overflow: 'hidden' }}>{short}</span>}
+          {user ? (
+            <a href="/portal" style={{ color: '#19d37e', fontSize: 11, textDecoration: 'none' }}>@{user.username}</a>
+          ) : (
+            <a href={`/login?next=${next}`} style={{ color: '#ccc', fontSize: 11, textDecoration: 'none' }}>Log in</a>
+          )}
+          {user?.is_admin && (
+            <a href="https://testers.futuret3ch.com.au/" style={{ color: '#fbbf24', fontSize: 11, textDecoration: 'none', fontWeight: 800 }}>Staff</a>
+          )}
+          <a href="/catalog" style={{ color: '#ccc', fontSize: 12, textDecoration: 'none' }}>Catalog</a>
+          <a
+            href="/catalog"
+            style={{
+              color: '#04140c',
+              background: '#19d37e',
+              fontSize: 12,
+              fontWeight: 800,
+              textDecoration: 'none',
+              borderRadius: 999,
+              padding: '6px 12px',
+            }}
+          >
+            Exit
+          </a>
+        </div>
       </div>
 
       {picker && (

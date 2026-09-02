@@ -104,13 +104,25 @@ export async function userBySession(token: string | undefined | null): Promise<P
   const conn = await getUserDb();
   try {
     await ensurePortalColumns(conn);
-    const [rows] = await conn.execute(
-      `SELECT id, username, email, wallet_address, license_key, license_tier, bio, avatar_url,
-              CAST(telegram_id AS CHAR) AS telegram_id,
-              CAST(discord_id AS CHAR) AS discord_id
-       FROM portal_users WHERE session_token = ? LIMIT 1`,
-      [token]
-    );
+    let rows;
+    try {
+      [rows] = await conn.execute(
+        `SELECT id, username, email, wallet_address, license_key, license_tier, bio, avatar_url,
+                CAST(telegram_id AS CHAR) AS telegram_id,
+                CAST(discord_id AS CHAR) AS discord_id,
+                is_admin
+         FROM portal_users WHERE session_token = ? LIMIT 1`,
+        [token]
+      );
+    } catch {
+      [rows] = await conn.execute(
+        `SELECT id, username, email, wallet_address, license_key, license_tier, bio, avatar_url,
+                CAST(telegram_id AS CHAR) AS telegram_id,
+                CAST(discord_id AS CHAR) AS discord_id
+         FROM portal_users WHERE session_token = ? LIMIT 1`,
+        [token]
+      );
+    }
     const user = (rows as PortalUser[])[0];
     if (!user) return null;
     if (!user.license_key) {
@@ -180,5 +192,6 @@ export function publicUser(user: PortalUser) {
     telegram_id: user.telegram_id ? String(user.telegram_id) : null,
     telegram_username: user.telegram_username || null,
     discord_id: user.discord_id ? String(user.discord_id) : null,
+    is_admin: Boolean((user as { is_admin?: boolean | number }).is_admin),
   };
 }
