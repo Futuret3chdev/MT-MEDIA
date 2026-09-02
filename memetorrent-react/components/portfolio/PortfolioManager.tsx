@@ -368,7 +368,9 @@ export default function PortfolioManager() {
               { id: 'core', label: 'MT Core\n(self-hosted)', x: '15%', y: '50%', delay: 0 },
               { id: 'wallet', label: 'INFINITE\nWALLET', x: '32%', y: '32%', delay: 0.2 },
               { id: 'token', label: '$MT +\nNative', x: '50%', y: '50%', delay: 0.4 },
-              { id: 'tap', label: 'TAP\nShop/Match', x: '67%', y: '25%', delay: 0.1 },
+              { id: 'tap', label: 'TAP\nPlay', x: '67%', y: '18%', delay: 0.1 },
+              { id: 'tapshop', label: 'TAPSHOP\nTrade', x: '82%', y: '28%', delay: 0.15 },
+              { id: 'tapmatch', label: 'TAPMATCH\nWork', x: '70%', y: '38%', delay: 0.2 },
               { id: 'games', label: 'Games &\nNFTs', x: '67%', y: '75%', delay: 0.3 },
               { id: 'bridges', label: '100+ Chain\nBridges', x: '85%', y: '50%', delay: 0.5 },
             ].map((node, idx) => (

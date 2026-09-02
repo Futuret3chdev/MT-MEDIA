@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     } else if (lower.includes('constellation') || lower.includes('map') || lower.includes('ecosystem map')) {
       reply = "The MT-ECO SYSTEM CONSTELLATION on the homepage is an interactive visual map showing MT Core, INFINITE WALLET, TAP, bridges, and more — all self-built and connected.";
     } else if (lower.includes('tap') || lower.includes('games') || lower.includes('p2e') || lower.includes('rockets')) {
-      reply = "TAP is our gaming & utility layer: TAP Shop, Match, Transport, and Studio. Earn Rockets in games like Cosmic Dash and Neon Salvage. Rockets and NFTs live in your INFINITE WALLET. See the TAP section on the homepage.";
+      reply = "There are three TAP apps: TAP (play — games and Rockets), TAPSHOP (trade — marketplace), and TAPMATCH (work — employees and employers, Fast Connect or long-term). All three logins are coming soon in this same MT portal. Rockets and NFTs live in INFINITE WALLET.";
     } else if (lower.includes('contact') || lower.includes('reach') || lower.includes('overlords')) {
       reply = "You can reach the Meme Overlords via the emails on this page (Support@MemeTorrent.com or Michael@MemeTorrent.com), the InnoBot chat here, or the social links in the main navbar. We reply fast.";
     } else {

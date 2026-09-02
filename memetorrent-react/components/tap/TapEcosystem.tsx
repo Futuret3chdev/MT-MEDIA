@@ -2,13 +2,7 @@
 
 import GameCard from '@/components/games/GameCard';
 import { CATALOG } from '@/lib/mt-catalog';
-
-const TAP_FEATURES = [
-  { name: 'TAP Shop', desc: 'In-game & cross-game item marketplace powered by INFINITE WALLET. Buy, sell, trade with $MT or Rockets.' },
-  { name: 'TAP Match', desc: 'Skill-based PvP & co-op matchmaking. Earn Rockets on-chain. Anti-cheat via our node.' },
-  { name: 'TAP Transport', desc: 'Seamless asset & identity bridging between games & chains. Self-built, no third parties.' },
-  { name: 'TAP Studio', desc: 'Creator tools: mint NFTs, design Rockets rewards, launch mini-games. 1¢ fees.' },
-];
+import { TAP_APPS } from '@/lib/tap-apps';
 
 const FEATURED = ['mt-world-pocket', 'mt-world-gallery', 'soccer-pro', 'puck', 'mte-pop', 'metro-vice', 'starfleet'];
 
@@ -17,22 +11,28 @@ export default function TapEcosystem() {
   const rest = CATALOG.filter((g) => !FEATURED.includes(g.id) && g.rated !== '18+' && g.kind !== 'adult');
 
   return (
-    <section id="tap" className="py-12 sm:py-20 border-t border-white/10 bg-black">
+    <section id="tap" className="py-12 sm:py-20 border-t border-white/10 bg-black scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-xs tracking-[3px] text-emerald-400 mb-3">TAP ECO SYSTEM</div>
         <div className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-[-1.5px] max-w-3xl mb-3 sm:mb-4">
-          Games. Cover. Play.
+          TAP. TAPSHOP. TAPMATCH.
         </div>
         <p className="max-w-2xl opacity-70 mb-8 sm:mb-10 text-sm sm:text-base">
-          Soccer Pro, Metro Vice, Starfleet and the rest of the library.
+          Three TAP apps. One MT portal login — coming soon. Play, trade, and work. Then the library below.
         </p>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-16">
-          {TAP_FEATURES.map((f) => (
-            <div key={f.name} className="rounded-3xl border border-white/10 p-7 bg-white/[0.015]">
-              <div className="font-semibold text-xl mb-2 tracking-tight">{f.name}</div>
-              <p className="text-sm opacity-70 leading-relaxed">{f.desc}</p>
-            </div>
+        <div className="grid sm:grid-cols-3 gap-4 sm:gap-6 mb-10 sm:mb-16">
+          {TAP_APPS.map((app) => (
+            <article
+              key={app.id}
+              id={app.id === 'tap' ? 'tap-play' : app.id}
+              className="rounded-3xl border border-sky-400/40 p-7 bg-white/[0.015] scroll-mt-28"
+            >
+              <div className="text-[10px] tracking-[2px] text-emerald-400 mb-2">{app.tag}</div>
+              <div className="font-semibold text-2xl mb-2 tracking-tight">{app.name}</div>
+              <div className="text-[10px] tracking-[2px] text-yellow-400 mb-3">LOGIN COMING SOON</div>
+              <p className="text-sm opacity-70 leading-relaxed">{app.desc}</p>
+            </article>
           ))}
         </div>
 

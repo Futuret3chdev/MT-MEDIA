@@ -29,7 +29,19 @@ export const PRODUCT_TABS: ProductTab[] = [
     id: 'tap',
     label: 'TAP',
     href: '/#tap',
-    blurb: 'TAP Shop, Match, Transport, Studio. Games that earn.',
+    blurb: 'Play layer. Games and Rockets. Login coming soon.',
+  },
+  {
+    id: 'tapshop',
+    label: 'TAPSHOP',
+    href: '/#tapshop',
+    blurb: 'Trade items with $MT and Rockets. Login coming soon.',
+  },
+  {
+    id: 'tapmatch',
+    label: 'TAPMATCH',
+    href: '/#tapmatch',
+    blurb: 'Employees and employers. Fast Connect or long-term. Login coming soon.',
   },
   {
     id: 'bot',

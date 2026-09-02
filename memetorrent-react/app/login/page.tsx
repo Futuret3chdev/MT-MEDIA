@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import { TAP_APPS } from '@/lib/tap-apps';
 
 function LoginForm() {
   const router = useRouter();
@@ -79,8 +80,19 @@ function LoginForm() {
       <p className="text-sm opacity-70 mb-6">
         {fromShield
           ? 'Use your account. You return to the Shield trial page.'
-          : 'Same account as the portal, chat, and studio.'}
+          : 'Same account as the portal, chat, and studio. TAP, TAPSHOP, and TAPMATCH logins are coming soon here.'}
       </p>
+      {!fromShield && (
+        <div className="grid grid-cols-3 gap-2 mb-6">
+          {TAP_APPS.map((app) => (
+            <div key={app.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-center">
+              <div className="text-sm font-semibold">{app.name}</div>
+              <div className="text-[10px] opacity-60 mt-1">{app.tag}</div>
+              <div className="text-[9px] text-yellow-400 mt-1 tracking-wider">COMING SOON</div>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="flex gap-2 mb-5">
         <button
           type="button"
