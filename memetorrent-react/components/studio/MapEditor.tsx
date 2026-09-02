@@ -1,85 +1,75 @@
 'use client';
 
-import { BRUSHES, TILE, THEMES, type MapSpec, type TileId } from '@/lib/studio-map';
-
-const CELL = 16;
+import { THEMES, type MapSpec, type TileId } from '@/lib/studio-map';
 
 export default function MapEditor({
   spec,
   brush,
-  onBrush,
+  cell = 18,
   onPaint,
+  onSample,
 }: {
   spec: MapSpec;
   brush: TileId;
-  onBrush: (b: TileId) => void;
+  cell?: number;
   onPaint: (x: number, y: number) => void;
+  onSample?: (x: number, y: number) => void;
 }) {
   const th = THEMES[spec.theme];
   const color = (t: TileId) => {
-    if (t === TILE.ground) return th.ground;
-    if (t === TILE.hazard) return th.hazard;
-    if (t === TILE.coin) return th.coin;
-    if (t === TILE.spawn) return th.accent;
-    if (t === TILE.exit) return '#ffffff';
-    if (t === TILE.enemy) return '#ff8fab';
-    if (t === TILE.spring) return '#90e0ef';
+    if (t === 1) return th.ground;
+    if (t === 2) return th.hazard;
+    if (t === 3) return th.coin;
+    if (t === 4) return th.accent;
+    if (t === 5) return '#ffffff';
+    if (t === 6) return '#ff8fab';
+    if (t === 7) return '#90e0ef';
     return 'transparent';
   };
 
+  const at = (e: React.PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = Math.floor((e.clientX - r.left) / cell);
+    const y = Math.floor((e.clientY - r.top) / cell);
+    return { x, y };
+  };
+
   return (
-    <div>
-      <div className="flex flex-wrap gap-1 mb-3">
-        {BRUSHES.map((b) => (
-          <button
-            key={b.id}
-            type="button"
-            onClick={() => onBrush(b.id)}
-            className={`px-2 py-1 rounded-lg text-xs ${
-              brush === b.id ? 'bg-emerald-400 text-black font-semibold' : 'border border-white/15 opacity-80'
-            }`}
-          >
-            {b.label}
-          </button>
-        ))}
-      </div>
+    <div
+      className="overflow-auto rounded-xl border border-white/10 select-none touch-none"
+      style={{ background: th.bg, maxHeight: 'min(70vh, 640px)' }}
+    >
       <div
-        className="overflow-auto rounded-xl border border-white/10"
-        style={{ background: th.bg, maxHeight: 380 }}
+        className="grid"
+        style={{
+          width: spec.cols * cell,
+          gridTemplateColumns: `repeat(${spec.cols}, ${cell}px)`,
+        }}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const { x, y } = at(e);
+          if (e.button === 2 || e.altKey) onSample?.(x, y);
+          else onPaint(x, y);
+        }}
+        onPointerMove={(e) => {
+          if (e.buttons !== 1) return;
+          const { x, y } = at(e);
+          onPaint(x, y);
+        }}
+        onContextMenu={(e) => e.preventDefault()}
       >
-        <div
-          className="grid"
-          style={{
-            width: spec.cols * CELL,
-            gridTemplateColumns: `repeat(${spec.cols}, ${CELL}px)`,
-          }}
-          onPointerDown={(e) => {
-            const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-            const x = Math.floor((e.clientX - r.left) / CELL);
-            const y = Math.floor((e.clientY - r.top) / CELL);
-            onPaint(x, y);
-          }}
-          onPointerMove={(e) => {
-            if (e.buttons !== 1) return;
-            const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-            const x = Math.floor((e.clientX - r.left) / CELL);
-            const y = Math.floor((e.clientY - r.top) / CELL);
-            onPaint(x, y);
-          }}
-        >
-          {spec.tiles.map((t, i) => (
-            <div
-              key={i}
-              style={{
-                width: CELL,
-                height: CELL,
-                background: color(t as TileId),
-                outline: '1px solid rgba(255,255,255,0.04)',
-              }}
-              title={`${i % spec.cols},${Math.floor(i / spec.cols)}`}
-            />
-          ))}
-        </div>
+        {spec.tiles.map((t, i) => (
+          <div
+            key={i}
+            style={{
+              width: cell,
+              height: cell,
+              background: color(t as TileId),
+              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)',
+            }}
+            title={`${i % spec.cols},${Math.floor(i / spec.cols)}`}
+          />
+        ))}
       </div>
     </div>
   );

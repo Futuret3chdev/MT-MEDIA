@@ -157,7 +157,7 @@ function MakerInner() {
         </div>
         <div>
           {mode === 'edit' ? (
-            <MapEditor spec={spec} brush={brush} onBrush={setBrush} onPaint={paint} />
+            <MapEditor spec={spec} brush={brush} onPaint={paint} />
           ) : (
             <PlatformPlay key={JSON.stringify(spec.tiles) + spec.theme} spec={spec} />
           )}
