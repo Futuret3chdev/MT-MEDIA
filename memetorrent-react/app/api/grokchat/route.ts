@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     } else if (lower.includes('bridge') || lower.includes('swap') || lower.includes('cross chain')) {
       reply = "You can bridge Native MT ↔ SPL $MT and perform swaps inside INFINITE WALLET. Real on-chain flows (with demo versions) are available right on the homepage under ONE-PLACE MANAGEMENT FLOWS.";
     } else if (lower.includes('develop') || lower.includes('sdk') || lower.includes('api') || lower.includes('build') || lower.includes('developer')) {
-      reply = "Developer resources, SDKs, and downloads are coming soon at /developers. We are building self-hosted infrastructure with a focus on transparency. Check the page for updates or ask me more specific questions.";
+      reply = "Play SDK is live at https://memetorrent.futuret3ch.com.au/developers — script tag /sdk/mt-play.js for wallet, portal login and scores inside the catalog play bar.";
     } else if (lower.includes('buy') || lower.includes('purchase') || lower.includes('get $mt') || lower.includes('how to buy')) {
       reply = "Use the BUY $MT NOW button in the top navigation bar. Connect your self-custodial wallet (Phantom, Solflare, or Backpack), enter the SOL amount, and sign the on-chain transaction directly. Everything stays in your control. See the Raydium fundamentals for how Solana swaps work: https://docs.raydium.io/solana-fundamentals";
     } else if (lower.includes('futuret3ch') || lower.includes('future t3ch') || lower.includes('the team') || lower.includes('who built') || lower.includes('company') || lower.includes('developed by')) {
