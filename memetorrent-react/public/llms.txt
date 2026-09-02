@@ -1,0 +1,25 @@
+# MemeTorrent / FutureT3ch developer APIs
+
+Base: https://memetorrent.futuret3ch.com.au
+Docs: https://memetorrent.futuret3ch.com.au/developers/docs
+CLI:  https://memetorrent.futuret3ch.com.au/cli/mt.js
+
+## Live (keyless)
+GET /api/v1/status
+GET /api/v1/cryptocurrency/quotes/latest?symbol=MT
+GET /api/v1/cryptocurrency/listings/latest
+GET /api/v1/cryptocurrency/ohlcv?interval=1h
+GET /api/v1/token/{mint}
+GET /api/v1/token/{mint}/holders
+GET /api/v1/token/{mint}/chart?range=24h
+GET /api/v1/pool/{address}
+GET /api/v1/chain/info
+
+Envelope: { status: { timestamp, error_code }, data }
+
+$MT mint: ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump
+Raydium pool: E3kdauLD47xLHAisLuvGTAnqD5MWWJojJYNMCoEvTHi7
+
+## Upcoming
+Infinite Wallet and MT-Chain use the same paths (chain=mt-chain, X-MT-API-KEY).
+GET /api/v1/wallet/preview
