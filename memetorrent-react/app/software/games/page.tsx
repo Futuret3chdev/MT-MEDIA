@@ -33,8 +33,32 @@ export default function SoftwareGamesPage() {
         Game software you can use.
       </h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        Browser tools for nights and builds — skin lab, score book, pads, covers. Android client still sits below with a license.
+        Browser tools for nights and builds — skin lab, score book, pads, covers. Android client uses a builder license.
+        Game software SDK:{' '}
+        <Link href="/software/games/sdk" className="text-emerald-400">
+          /software/games/sdk
+        </Link>
+        .
       </p>
+
+      <div className="rounded-2xl border border-emerald-400/30 p-6 mb-8" style={{ background: 'var(--card)' }}>
+        <div className="text-emerald-400 text-xs tracking-[2px] mb-2">SDK</div>
+        <h2 className="font-semibold text-xl mb-2">MT Games SDK</h2>
+        <p className="text-sm opacity-70 mb-4">
+          License check, scores, party codes for your APK / desktop client. Not the catalog Play iframe SDK.
+        </p>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <Link href="/software/games/sdk" className="font-semibold text-black bg-emerald-400 px-4 py-2 rounded-full">
+            Docs
+          </Link>
+          <a href="/sdk/mt-games.js" className="px-4 py-2 rounded-full border border-white/20">
+            mt-games.js
+          </a>
+          <a href="/sdk/games-example.html" className="px-4 py-2 rounded-full border border-white/20">
+            Example
+          </a>
+        </div>
+      </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="rounded-2xl p-6 border border-emerald-400/30" style={{ background: 'var(--card)' }}>

@@ -44,8 +44,11 @@ export const API_CATS: ApiCat[] = [
     title: 'Play SDK & scores',
     blurb: 'Catalog games: wallet from the play bar, portal user, leaderboards.',
     rows: [
-      { method: 'GET', path: '/sdk/mt-play.js', summary: 'Browser SDK' },
-      { method: 'GET', path: '/sdk/example.html', summary: 'Minimal tap example' },
+      { method: 'GET', path: '/sdk/mt-play.js', summary: 'Catalog Play SDK (iframe)' },
+      { method: 'GET', path: '/sdk/mt-games.js', summary: 'Game software SDK (licensed clients)' },
+      { method: 'GET', path: '/api/v1/games/license?key=', summary: 'Verify builder license' },
+      { method: 'GET', path: '/software/games/sdk', summary: 'Games SDK docs' },
+      { method: 'GET', path: '/sdk/example.html', summary: 'Play SDK tap example' },
       { method: 'GET', path: '/api/scores?game_id={id}', summary: 'Leaderboard', auth: 'none' },
       { method: 'POST', path: '/api/scores', summary: 'Post a score', auth: 'session' },
       { method: 'POST', path: '/api/sdk/submit', summary: 'Queue a catalog listing', auth: 'none' },

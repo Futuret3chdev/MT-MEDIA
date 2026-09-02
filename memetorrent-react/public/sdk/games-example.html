@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MT Games SDK example</title>
+  <style>
+    body { font-family: system-ui; background: #04140c; color: #e8fff4; padding: 24px; max-width: 32rem; }
+    input, button { font: inherit; padding: 8px 12px; border-radius: 8px; border: 0; }
+    button { background: #19d37e; color: #04140c; font-weight: 800; }
+    pre { background: #000; padding: 12px; border-radius: 12px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>MT Games SDK</h1>
+  <p>Paste a builder license (portal → Software / Developers).</p>
+  <input id="key" placeholder="MT-FREE-…" style="width:100%;margin:8px 0" />
+  <button type="button" id="go">Verify</button>
+  <pre id="out">idle</pre>
+  <script src="/sdk/mt-games.js"></script>
+  <script>
+    const g = MTGames.init({ gameId: 'sdk-games-demo' });
+    const out = document.getElementById('out');
+    document.getElementById('go').onclick = async () => {
+      const r = await g.verify(document.getElementById('key').value);
+      out.textContent = JSON.stringify(r, null, 2);
+    };
+    g.me().then((d) => {
+      if (d.ok && d.license_key) document.getElementById('key').value = d.license_key;
+    });
+  </script>
+</body>
+</html>

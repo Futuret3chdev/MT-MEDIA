@@ -6,7 +6,8 @@ param(
   [string]$Command = "help",
   [string]$Range = "24h",
   [string]$Game = "tap",
-  [string]$Limit = "10"
+  [string]$Limit = "10",
+  [string]$Key = ""
 )
 
 $Origin = if ($env:MT_API) { $env:MT_API.TrimEnd("/") } else { "https://memetorrent.futuret3ch.com.au" }
@@ -31,6 +32,7 @@ MT CLI  ($Origin)
   status
   chain
   scores [-Game tap] [-Limit 10]
+  license [-Key MT-FREE-…]
 
 Windows:
   irm $Origin/cli/mt.ps1 -OutFile mt.ps1
@@ -64,6 +66,11 @@ Windows:
   }
   "chain" {
     Get-Mt "/api/v1/chain/info" | ConvertTo-Json -Depth 8
+    break
+  }
+  { $_ -in @("license", "games-license") } {
+    if (-not $Key) { Write-Error "Need -Key MT-FREE-…"; exit 1 }
+    Get-Mt "/api/v1/games/license?key=$([uri]::EscapeDataString($Key))" | ConvertTo-Json -Depth 8
     break
   }
   "scores" {

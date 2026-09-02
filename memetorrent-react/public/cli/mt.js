@@ -42,6 +42,7 @@ async function main() {
   status
   chain
   scores --game tap [--limit 10]
+  license --key MT-FREE-…     Verify game software license
 
 Windows PowerShell:
   irm ${ORIGIN}/cli/mt.ps1 -OutFile mt.ps1
@@ -81,6 +82,15 @@ macOS / Linux (needs Node):
   }
   if (cmd === 'chain') {
     print(await get('/api/v1/chain/info'));
+    return;
+  }
+  if (cmd === 'license' || cmd === 'games-license') {
+    const key = flag('key', '');
+    if (!key) {
+      console.error('Need --key MT-FREE-…');
+      process.exit(1);
+    }
+    print(await get('/api/v1/games/license?key=' + encodeURIComponent(key)));
     return;
   }
   if (cmd === 'scores') {

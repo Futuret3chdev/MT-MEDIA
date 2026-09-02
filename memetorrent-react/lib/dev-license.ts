@@ -14,6 +14,32 @@ export type DevLicense = {
   created_at: string;
 };
 
+export async function verifyLicenseKey(key: string): Promise<{
+  ok: boolean;
+  license_key?: string;
+  tier?: DevTier;
+  handle?: string | null;
+  error?: string;
+}> {
+  const license_key = String(key || '').trim();
+  if (!/^MT-(FREE|PRO)-[A-F0-9]{10}$/i.test(license_key)) {
+    return { ok: false, error: 'Bad license key' };
+  }
+  const conn = await getUserDb();
+  try {
+    await ensureDevLicenseTable(conn);
+    const [rows] = await conn.execute(
+      'SELECT license_key, tier, handle FROM mt_dev_licenses WHERE license_key = ? LIMIT 1',
+      [license_key]
+    );
+    const row = (rows as { license_key: string; tier: DevTier; handle: string | null }[])[0];
+    if (!row) return { ok: false, error: 'Unknown license' };
+    return { ok: true, license_key: row.license_key, tier: (row.tier as DevTier) || 'free', handle: row.handle };
+  } finally {
+    await conn.end();
+  }
+}
+
 export function makeLicenseKey(tier: DevTier = 'free'): string {
   const body = crypto.randomBytes(5).toString('hex').toUpperCase();
   return `MT-${tier === 'pro' ? 'PRO' : 'FREE'}-${body}`;
