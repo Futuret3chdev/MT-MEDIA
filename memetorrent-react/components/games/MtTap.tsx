@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
 
 type Mode = 'levels' | 'classic' | 'frenzy' | 'zen' | 'sudden' | 'boss' | 'blitz';
 type Dot = { id: number; x: number; y: number; r: number; k: 'mt' | 'rug' | 'gold' | 'heart' | 'freeze' | 'boss'; life: number; max: number; hp?: number };
 
-export default function MtTap() {
+export default function MtTap({ embed = false }: { embed?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>('levels');
   const [playing, setPlaying] = useState(false);
@@ -58,6 +56,9 @@ export default function MtTap() {
       h = c.height = Math.max(320, c.clientHeight) * dpr;
     };
     size();
+    const onResize = () => size();
+    window.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
     const dots: Dot[] = [];
     const lv = spec(level);
     let pts = score;
@@ -235,8 +236,89 @@ export default function MtTap() {
       on = false;
       cancelAnimationFrame(id);
       c.removeEventListener('pointerdown', ptr);
+      window.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
     };
   }, [playing, mode]);
+
+  const modes = (['levels', 'classic', 'frenzy', 'zen', 'sudden', 'boss', 'blitz'] as Mode[]).map((m) => (
+    <button
+      key={m}
+      type="button"
+      onClick={() => pickMode(m)}
+      className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase ${
+        mode === m ? 'bg-emerald-400 text-black' : 'border border-white/15'
+      }`}
+    >
+      {m}
+    </button>
+  ));
+
+  const actions = (
+    <div className="flex gap-2">
+      {playing && (
+        <button type="button" onClick={stopPlay} className="rounded-full border border-white/20 px-4 py-2">
+          Stop
+        </button>
+      )}
+      {cleared && mode === 'levels' && (
+        <button
+          type="button"
+          onClick={() => { setLevel((n) => n + 1); setCleared(false); setPlaying(true); }}
+          className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2"
+        >
+          Level {level + 1}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => {
+          stopRef.current = false;
+          if (mode === 'levels' && !cleared && !playing) setScore(0);
+          if (mode !== 'levels') setScore(0);
+          setCombo(0);
+          setCleared(false);
+          setPlaying(true);
+        }}
+        className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2"
+      >
+        {playing ? 'Tapping…' : cleared ? 'Replay level' : mode === 'levels' ? `Start level ${level}` : 'Tap on'}
+      </button>
+    </div>
+  );
+
+  const stats = (
+    <div>
+      Score <span className="text-emerald-400 font-mono">{score}</span>
+      {combo >= 2 && <span className="ml-2 font-black text-emerald-400">$MT x{combo}</span>}
+      {fx && <span className="ml-2 text-emerald-300">{fx}</span>}
+      <span className="opacity-50 ml-3">best {best}</span>
+      {mode === 'levels' && (
+        <span className="ml-3 text-emerald-300">
+          Lv {level} · {goal} taps
+        </span>
+      )}
+      {playing && mode !== 'zen' && <span className="ml-3 opacity-60">{Math.ceil(time)}s</span>}
+    </div>
+  );
+
+  if (embed) {
+    return (
+      <div className="relative h-full w-full min-h-0 bg-black text-white flex flex-col">
+        {flash && (
+          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center text-emerald-400 font-black tracking-[0.12em] drop-shadow-[0_0_28px_#19d37e] text-6xl sm:text-8xl">
+            {flash}
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2 px-3 py-2 shrink-0">{modes}</div>
+        <canvas ref={ref} className="flex-1 w-full min-h-0 bg-black touch-none" />
+        <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 text-sm shrink-0 bg-black/80">
+          {stats}
+          {actions}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -245,73 +327,12 @@ export default function MtTap() {
           {flash}
         </div>
       )}
-      <div className="flex flex-wrap gap-2 mb-3">
-        {(['levels', 'classic', 'frenzy', 'zen', 'sudden', 'boss', 'blitz'] as Mode[]).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => pickMode(m)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase ${
-              mode === m ? 'bg-emerald-400 text-black' : 'border border-white/15'
-            }`}
-          >
-            {m}
-          </button>
-        ))}
-      </div>
+      <div className="flex flex-wrap gap-2 mb-3">{modes}</div>
       <canvas ref={ref} className="w-full h-[58vh] rounded-3xl border border-emerald-400/30 bg-black touch-none" />
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
-        <div>
-          Score <span className="text-emerald-400 font-mono">{score}</span>
-          {combo >= 2 && <span className="ml-2 font-black text-emerald-400">$MT x{combo}</span>}
-          {fx && <span className="ml-2 text-emerald-300">{fx}</span>}
-          <span className="opacity-50 ml-3">best {best}</span>
-          {mode === 'levels' && (
-            <span className="ml-3 text-emerald-300">
-              Lv {level} · {goal} taps
-            </span>
-          )}
-          {playing && mode !== 'zen' && <span className="ml-3 opacity-60">{Math.ceil(time)}s</span>}
-        </div>
-        <div className="flex gap-2">
-          {playing && (
-            <button type="button" onClick={stopPlay} className="rounded-full border border-white/20 px-4 py-2">
-              Stop
-            </button>
-          )}
-          {cleared && mode === 'levels' && (
-            <button
-              type="button"
-              onClick={() => { setLevel((n) => n + 1); setCleared(false); setPlaying(true); }}
-              className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2"
-            >
-              Level {level + 1}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              stopRef.current = false;
-              if (mode === 'levels' && !cleared && !playing) setScore(0);
-              if (mode !== 'levels') setScore(0);
-              setCombo(0);
-              setCleared(false);
-              setPlaying(true);
-            }}
-            className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2"
-          >
-            {playing ? 'Tapping…' : cleared ? 'Replay level' : mode === 'levels' ? `Start level ${level}` : 'Tap on'}
-          </button>
-        </div>
+        {stats}
+        {actions}
       </div>
-      <p className="mt-2 text-xs opacity-50">
-        Levels (tap goal + clock) · Classic · Frenzy · Zen (hit Stop to leave) · Sudden · Boss · Blitz.
-        Green MT · gold $ · pink + life · blue freeze · purple boss. Wallet = fatter taps.
-      </p>
-      <div className="mt-6 max-w-md">
-        <NightWallet name="" />
-      </div>
-      <NightDesk />
     </div>
   );
 }

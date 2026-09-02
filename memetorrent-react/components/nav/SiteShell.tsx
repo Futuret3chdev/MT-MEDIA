@@ -10,7 +10,7 @@ import GameWalletBridge from '@/components/wallet/GameWalletBridge';
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
   const [framed, setFramed] = useState(false);
-  const play = pathname.startsWith('/play/');
+  const play = pathname.startsWith('/play/') || pathname.startsWith('/tap/embed');
   useEffect(() => {
     const inFrame = window.self !== window.top;
     setFramed(inFrame);

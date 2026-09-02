@@ -85,7 +85,7 @@ export const CATALOG: CatalogGame[] = [
     name: 'MT Tap',
     kind: 'p2e',
     status: 'live',
-    play: '/tap',
+    play: '/tap/embed',
     img: '/games/covers/tap.jpg',
     blurb: 'Six modes. Green MT, gold, freeze, boss. Combos light $MT. Wallet + staff award.',
   },
