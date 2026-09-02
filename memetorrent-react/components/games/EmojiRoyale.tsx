@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import NightAward from '@/components/games/NightAward';
-import NightWallet from '@/components/games/NightWallet';
 
 type Round = {
   id: number;
@@ -202,7 +201,7 @@ export default function EmojiRoyale() {
         </div>
 
         <aside className="rounded-3xl border border-white/10 p-5 bg-black/40 space-y-4">
-          <NightWallet name={handle} />
+
           <div className="text-[11px] uppercase tracking-[2px] text-emerald-400 mb-3">Tonight</div>
           {!board.length && <p className="text-sm opacity-50">No hits yet.</p>}
           <ol className="space-y-1 text-sm">

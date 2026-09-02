@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
 
 const STOPS = [
   { name: 'Gallery', x: 0.78, y: 0.42, c: '#f4f1ea' },
@@ -11,7 +9,7 @@ const STOPS = [
   { name: 'Casino', x: 0.5, y: 0.78, c: '#19d37e' },
 ];
 
-export default function RadioTaxi() {
+export default function RadioTaxi({ embed = false }: { embed?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [fare, setFare] = useState(0);
   const keys = useRef<Record<string, boolean>>({});
@@ -34,6 +32,17 @@ export default function RadioTaxi() {
     const up = (e: KeyboardEvent) => { keys.current[e.code] = false; };
     addEventListener('keydown', down);
     addEventListener('keyup', up);
+    const ptr = (e: PointerEvent) => {
+      const r = c.getBoundingClientRect();
+      const nx = (e.clientX - r.left) / r.width - car.x;
+      const ny = (e.clientY - r.top) / r.height - car.y;
+      car.a = Math.atan2(nx, -ny);
+      keys.current['KeyW'] = true;
+    };
+    const pup = () => { keys.current['KeyW'] = false; };
+    c.addEventListener('pointerdown', ptr);
+    c.addEventListener('pointermove', (e) => { if (e.buttons) ptr(e); });
+    c.addEventListener('pointerup', pup);
     let last = performance.now();
     let on = true;
     const loop = (now: number) => {
@@ -68,12 +77,24 @@ export default function RadioTaxi() {
           }).catch(() => {});
         }
       }
-      ctx.fillStyle = '#0b1610';
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, '#1b3a4a');
+      sky.addColorStop(0.45, '#0f241c');
+      sky.addColorStop(1, '#0a1610');
+      ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h);
-      ctx.strokeStyle = '#14532d';
-      ctx.lineWidth = 40;
+      ctx.fillStyle = '#16301f';
+      ctx.fillRect(0, h * 0.52, w, h * 0.48);
+      ctx.strokeStyle = '#2a5a38';
+      ctx.lineWidth = Math.max(28, w * 0.08);
       ctx.beginPath(); ctx.moveTo(w * 0.5, 0); ctx.lineTo(w * 0.5, h); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, h * 0.5); ctx.lineTo(w, h * 0.5); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,180,0.35)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([12, 14]);
+      ctx.beginPath(); ctx.moveTo(w * 0.5, 0); ctx.lineTo(w * 0.5, h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, h * 0.5); ctx.lineTo(w, h * 0.5); ctx.stroke();
+      ctx.setLineDash([]);
       STOPS.forEach((s) => {
         ctx.fillStyle = s.c;
         ctx.fillRect(s.x * w - 22, s.y * h - 22, 44, 44);
@@ -90,8 +111,11 @@ export default function RadioTaxi() {
       ctx.save();
       ctx.translate(car.x * w, car.y * h);
       ctx.rotate(car.a);
-      ctx.fillStyle = '#19d37e';
-      ctx.fillRect(-10, -16, 20, 32);
+      ctx.fillStyle = '#f4c430';
+      ctx.fillRect(-12, -18, 24, 34);
+      ctx.fillStyle = '#111';
+      ctx.fillRect(-8, -8, 7, 7);
+      ctx.fillRect(1, -8, 7, 7);
       ctx.restore();
       requestAnimationFrame(loop);
     };
@@ -101,17 +125,17 @@ export default function RadioTaxi() {
       cancelAnimationFrame(id);
       removeEventListener('keydown', down);
       removeEventListener('keyup', up);
+      c.removeEventListener('pointerdown', ptr);
+      c.removeEventListener('pointerup', pup);
     };
   }, []);
 
   return (
-    <div>
-      <canvas ref={ref} className="w-full h-[58vh] rounded-3xl border border-emerald-400/30 bg-black" />
-      <p className="mt-2 text-sm">WASD / arrows · fares <span className="text-emerald-400 font-mono">{fare}</span></p>
-      <div className="mt-6 max-w-md">
-        <NightWallet name="" />
-      </div>
-      <NightDesk />
+    <div className={embed ? 'h-full w-full min-h-0 flex flex-col bg-[#0a1610]' : ''}>
+      <canvas ref={ref} className={embed ? 'flex-1 min-h-0 w-full touch-none' : 'w-full h-[58vh] rounded-3xl border border-amber-400/30 bg-black touch-none'} />
+      <p className={`text-sm ${embed ? 'px-3 py-2 shrink-0' : 'mt-2'}`}>
+        Drag to drive · WASD · fares <span className="text-amber-300 font-mono">{fare}</span>
+      </p>
     </div>
   );
 }

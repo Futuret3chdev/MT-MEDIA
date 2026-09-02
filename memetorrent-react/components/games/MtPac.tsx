@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
 
-export default function MtPac() {
+export default function MtPac({ embed = false }: { embed?: boolean }) {
   const [last, setLast] = useState(0);
 
   useEffect(() => {
@@ -19,24 +17,21 @@ export default function MtPac() {
   }, []);
 
   return (
-    <div>
+    <div className={embed ? 'h-full w-full bg-black' : ''}>
       <iframe
         src="/games/unix/1/index.html"
         title="MT Pac"
-        className="block w-full rounded-3xl border border-emerald-400/30 bg-black"
-        style={{ height: 'min(78vh, 760px)', minHeight: 560 }}
-        allow="autoplay; fullscreen"
+        className="block w-full bg-black"
+        style={embed ? { height: '100%', minHeight: 0, border: 0 } : { height: 'min(78vh, 760px)', minHeight: 560, borderRadius: 24, border: '1px solid rgba(25,211,126,.3)' }}
+        allow="autoplay; fullscreen; gamepad"
       />
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span>
-          Last run <span className="text-emerald-400 font-mono">{last}</span>
-        </span>
-        <p className="text-xs opacity-50">
-          Menu: Pac-Man, Ms. Pac-Man, Cookie-Man, Crazy Otto, $MT Pac, Learn. Then Play / Turbo / $MT / Practice / Cutscenes / About / High scores. Esc = in-game menu.
-        </p>
-      </div>
-      <div className="mt-6 max-w-md mx-auto"><NightWallet name="" /></div>
-      <NightDesk />
+      {!embed && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span>
+            Last run <span className="text-emerald-400 font-mono">{last}</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

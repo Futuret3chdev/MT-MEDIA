@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
 
 const SHAPES: number[][][] = [
   [[1, 1, 1, 1]],
@@ -34,7 +32,7 @@ function bag() {
   return o;
 }
 
-export default function MtTetris({ mob = false }: { mob?: boolean }) {
+export default function MtTetris({ mob = false, embed = false }: { mob?: boolean; embed?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
   const [lines, setLines] = useState(0);
@@ -290,6 +288,75 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
     { id: 'zen', label: 'Zen' },
   ];
 
+  const pad = mob ? (
+    <div className="shrink-0 px-2 pb-2">
+      <div className="grid grid-cols-5 gap-2">
+        <button type="button" onPointerDown={() => act.current('HOLD')} className="h-12 rounded-2xl bg-amber-400/15 border border-amber-300/40 text-xs font-black">HOLD</button>
+        <button type="button" onPointerDown={() => { act.current('L'); holdDir.current.L = performance.now(); }} onPointerUp={() => { holdDir.current.L = 0; }} className="h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">◀</button>
+        <button type="button" onPointerDown={() => act.current('D')} className="h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">▼</button>
+        <button type="button" onPointerDown={() => { act.current('R'); holdDir.current.R = performance.now(); }} onPointerUp={() => { holdDir.current.R = 0; }} className="h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">▶</button>
+        <button type="button" onPointerDown={() => act.current('HARD')} className="h-12 rounded-2xl bg-emerald-400 text-black text-xs font-black">DROP</button>
+      </div>
+      <div className="grid grid-cols-2 gap-2 mt-2">
+        <button type="button" onPointerDown={() => act.current('U')} className="h-11 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 font-bold">Rotate</button>
+        <button type="button" onPointerDown={() => act.current('180')} className="h-11 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 font-bold">180</button>
+      </div>
+    </div>
+  ) : null;
+
+  if (embed) {
+    return (
+      <div className="h-full w-full min-h-0 flex flex-col bg-[#05070c]">
+        {!playing && (
+          <div className="px-3 pt-3 shrink-0">
+            <div className="grid grid-cols-5 gap-2 max-w-3xl mx-auto">
+              {modes.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMode(m.id)}
+                  className={`rounded-xl px-2 py-2 text-xs font-bold border ${
+                    mode === m.id ? 'bg-emerald-400 text-black border-emerald-400' : 'border-white/15'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="flex-1 min-h-0 flex gap-2 px-2 py-2">
+          <div className="hidden sm:flex flex-col gap-2 shrink-0 justify-center">
+            {mini(holdId, 'Hold')}
+            {nextIds.map((id, i) => mini(id, i === 0 ? 'Next' : 'Then'))}
+          </div>
+          <canvas ref={ref} className="flex-1 min-h-0 w-full h-full bg-black touch-none block" />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm shrink-0">
+          <span>
+            <span className="text-emerald-400 font-mono">{score}</span>
+            {' · '}L{level}
+            {' · '}{lines} lines
+            {mode === 'ultra' ? ` · ${clock}s` : ''}
+            {combo > 1 ? <span className="text-amber-300"> · x{combo}</span> : null}
+            {flash ? <span className="ml-2 text-amber-300 font-black">{flash}</span> : null}
+          </span>
+          <div className="flex gap-2">
+            {playing && (
+              <button type="button" onClick={() => { stopRef.current = true; setPlaying(false); }} className="rounded-full border border-white/20 px-3 py-2 text-xs">
+                Stop
+              </button>
+            )}
+            <button type="button" onClick={() => { setScore(0); setPlaying(true); }} className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2">
+              {playing ? 'Stacking…' : 'Play ' + mode}
+            </button>
+          </div>
+        </div>
+        {pad}
+      </div>
+    );
+  }
+
   return (
     <div>
       {!playing && (
@@ -336,26 +403,7 @@ export default function MtTetris({ mob = false }: { mob?: boolean }) {
           </button>
         </div>
       </div>
-      {mob ? (
-        <div className="mt-3 max-w-sm mx-auto">
-          <div className="grid grid-cols-5 gap-2">
-            <button type="button" onPointerDown={() => act.current('HOLD')} className="h-14 rounded-2xl bg-amber-400/15 border border-amber-300/40 text-xs font-black">HOLD</button>
-            <button type="button" onPointerDown={() => { act.current('L'); holdDir.current.L = performance.now(); }} onPointerUp={() => { holdDir.current.L = 0; }} className="h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">◀</button>
-            <button type="button" onPointerDown={() => act.current('D')} className="h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">▼</button>
-            <button type="button" onPointerDown={() => { act.current('R'); holdDir.current.R = performance.now(); }} onPointerUp={() => { holdDir.current.R = 0; }} className="h-14 rounded-2xl bg-emerald-400/20 border border-emerald-400/40">▶</button>
-            <button type="button" onPointerDown={() => act.current('HARD')} className="h-14 rounded-2xl bg-emerald-400 text-black text-xs font-black">DROP</button>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            <button type="button" onPointerDown={() => act.current('U')} className="h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 font-bold">Rotate</button>
-            <button type="button" onPointerDown={() => act.current('180')} className="h-12 rounded-2xl bg-emerald-400/20 border border-emerald-400/40 font-bold">180</button>
-          </div>
-          <p className="mt-2 text-xs opacity-50 text-center">Swipe L/R, down soft, long down hard drop, tap rotate, long-press hold. Hold pads repeat.</p>
-        </div>
-      ) : (
-        <p className="mt-2 text-xs opacity-50 text-center">←→ DAS · ↓ soft · Space hard drop · Up/X rotate · Z 180 · C hold. Menu: Classic / Sprint / Ultra / $MT Fever / Zen.</p>
-      )}
-      <div className="mt-6 max-w-md mx-auto"><NightWallet name="" /></div>
-      <NightDesk />
+      {pad}
     </div>
   );
 }

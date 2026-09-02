@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import NightAward from '@/components/games/NightAward';
-import NightWallet from '@/components/games/NightWallet';
 
 type Puzzle = { id: string; emojis: string; hint: string; pack: string };
 
@@ -240,9 +239,7 @@ export default function EmojiNight() {
         </div>
       )}
 
-      <div className="mt-6">
-        <NightWallet name={meName} />
-      </div>
+
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm">
         <div>
@@ -252,6 +249,7 @@ export default function EmojiNight() {
         <div className="opacity-50">{left} left in this deck</div>
       </div>
 
+      {false && (
       <div className="mt-10 border-t border-white/10 pt-6">
         <button type="button" onClick={() => setDesk((v) => !v)} className="text-xs uppercase tracking-[2px] opacity-50">
           Staff desk
@@ -304,6 +302,7 @@ export default function EmojiNight() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

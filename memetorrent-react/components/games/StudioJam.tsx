@@ -1,8 +1,6 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
 
 const ROWS = ['kick', 'snare', 'hat', 'tone'];
 const COLS = 16;
@@ -56,7 +54,7 @@ export default function StudioJam() {
                 key={c}
                 type="button"
                 onClick={() => hit(r, c)}
-                className={`w-7 h-7 rounded-md border ${
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg border ${
                   beat === c ? 'border-white' : 'border-white/10'
                 } ${on ? 'bg-emerald-400' : 'bg-white/5'}`}
               />
@@ -67,10 +65,7 @@ export default function StudioJam() {
       <button type="button" onClick={play} className="mt-4 rounded-full bg-emerald-400 text-black font-black px-6 py-2">
         {playing.current ? 'Stop' : 'Play loop'}
       </button>
-      <div className="mt-6 max-w-md">
-        <NightWallet name="" />
-      </div>
-      <NightDesk />
+
     </div>
   );
 }

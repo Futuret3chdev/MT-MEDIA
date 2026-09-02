@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
+
 
 type Round = {
   id: number;
@@ -97,7 +96,7 @@ export default function SignalDesk() {
           )}
         </div>
         <aside className="space-y-4">
-          <NightWallet name={handle} />
+
           <div className="rounded-3xl border border-white/10 p-4 bg-black/40">
             <div className="text-[11px] uppercase tracking-[2px] text-emerald-400 mb-2">Tonight</div>
             <ol className="text-sm space-y-1">
@@ -111,7 +110,7 @@ export default function SignalDesk() {
           </div>
         </aside>
       </div>
-      <NightDesk names={board.map((b) => b.username)} />
+
     </div>
   );
 }

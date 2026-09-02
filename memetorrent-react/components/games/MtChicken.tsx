@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
 
 type Car = { x: number; y: number; v: number; w: number; kind: 'car' | 'truck' };
 
-export default function MtChicken() {
+export default function MtChicken({ embed = false }: { embed?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
@@ -79,7 +77,10 @@ export default function MtChicken() {
       const r = c.getBoundingClientRect();
       const nx = (e.clientX - r.left) / r.width;
       const ny = (e.clientY - r.top) / r.height;
-      hop(nx - hen.x, ny < hen.y - 0.04 ? -0.09 : ny > hen.y + 0.04 ? 0.09 : 0);
+      const dx = nx - hen.x;
+      const dy = ny - hen.y;
+      if (Math.abs(dx) > Math.abs(dy)) hop(dx > 0 ? 0.1 : -0.1, 0);
+      else hop(0, dy < 0 ? -0.1 : 0.1);
     };
     c.addEventListener('pointerdown', ptr);
     let on = true;
@@ -166,10 +167,10 @@ export default function MtChicken() {
   }, [playing]);
 
   return (
-    <div>
-      <canvas ref={ref} className="w-full h-[58vh] rounded-3xl border border-emerald-400/30 bg-green-950 touch-none" />
-      <div className="mt-3 flex justify-between text-sm">
-        <span>Lane <span className="text-emerald-400 font-mono">{score}</span> · best {best} {shield ? '· 🛡' : ''} · {'♥'.repeat(lives)}</span>
+    <div className={embed ? 'h-full w-full min-h-0 flex flex-col bg-[#10200c]' : ''}>
+      <canvas ref={ref} className={embed ? 'flex-1 min-h-0 w-full bg-[#10200c] touch-none' : 'w-full h-[58vh] rounded-3xl border border-lime-400/30 bg-green-950 touch-none'} />
+      <div className={`flex flex-wrap justify-between gap-2 text-sm ${embed ? 'px-3 py-2 shrink-0' : 'mt-3'}`}>
+        <span>Lane <span className="text-lime-300 font-mono">{score}</span> · best {best} {shield ? '· 🛡' : ''} · {'♥'.repeat(lives)}</span>
         <div className="flex gap-2">
           <button type="button" onClick={() => setNight((v) => !v)} className="rounded-full border border-white/20 px-3 py-2 text-xs">
             {night ? 'Day' : 'Night'}
@@ -179,14 +180,11 @@ export default function MtChicken() {
               Stop
             </button>
           )}
-          <button type="button" onClick={() => { setScore(0); setLives(3); setPlaying(true); }} className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2">
+          <button type="button" onClick={() => { setScore(0); setLives(3); setPlaying(true); }} className="rounded-full bg-lime-400 text-black font-bold px-5 py-2">
             {playing ? 'Crossing…' : 'Cross'}
           </button>
         </div>
       </div>
-      <p className="mt-2 text-xs opacity-50">3 lives. 🟢 $MT. 🛡 shield. Night/Day. Trucks. Far sidewalk wraps + bonus. Cars speed up each lane.</p>
-      <div className="mt-6 max-w-md"><NightWallet name="" /></div>
-      <NightDesk />
     </div>
   );
 }

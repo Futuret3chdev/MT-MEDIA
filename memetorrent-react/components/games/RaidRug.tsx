@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
+
 
 type State = {
   code: string;
@@ -126,10 +125,7 @@ export default function RaidRug() {
           )}
         </div>
       )}
-      <div className="mt-6 max-w-md">
-        <NightWallet name={name} />
-      </div>
-      <NightDesk names={room?.players} />
+
     </div>
   );
 }

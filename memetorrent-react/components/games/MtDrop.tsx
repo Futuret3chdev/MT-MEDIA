@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
 
-export default function MtDrop() {
+export default function MtDrop({ embed = false }: { embed?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
   const [over, setOver] = useState(false);
@@ -98,9 +96,9 @@ export default function MtDrop() {
   }, [over === false ? 0 : 1]);
 
   return (
-    <div>
-      <canvas ref={ref} className="w-full h-[62vh] rounded-3xl border border-emerald-400/30 bg-black touch-none" />
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+    <div className={embed ? 'h-full w-full min-h-0 flex flex-col bg-black' : ''}>
+      <canvas ref={ref} className={embed ? 'flex-1 min-h-0 w-full bg-black touch-none' : 'w-full h-[62vh] rounded-3xl border border-emerald-400/30 bg-black touch-none'} />
+      <div className={`flex flex-wrap items-center justify-between gap-3 ${embed ? 'px-3 py-2 shrink-0' : 'mt-3'}`}>
         <div className="text-sm">Score <span className="text-emerald-400 font-mono">{score}</span></div>
         {over && (
           <button type="button" onClick={() => { setScore(0); setOver(false); }} className="rounded-full bg-emerald-400 text-black font-bold px-4 py-2">
@@ -108,10 +106,6 @@ export default function MtDrop() {
           </button>
         )}
       </div>
-      <div className="mt-6 max-w-md">
-        <NightWallet name="" />
-      </div>
-      <NightDesk />
     </div>
   );
 }

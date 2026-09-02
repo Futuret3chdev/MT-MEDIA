@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import NightDesk from '@/components/games/NightDesk';
-import NightWallet from '@/components/games/NightWallet';
 
 type Pad = { x: number; y: number; w: number; kind: 'solid' | 'break' | 'move' | 'boost' };
 
-export default function MtDash() {
+export default function MtDash({ embed = false }: { embed?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
@@ -208,29 +206,24 @@ export default function MtDash() {
   }, [playing]);
 
   return (
-    <div>
-      <canvas ref={ref} className="w-full h-[64vh] rounded-3xl border border-emerald-400/30 bg-black touch-none" />
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+    <div className={embed ? 'h-full w-full min-h-0 flex flex-col bg-[#040c18]' : ''}>
+      <canvas ref={ref} className={embed ? 'flex-1 min-h-0 w-full bg-[#040c18] touch-none' : 'w-full h-[64vh] rounded-3xl border border-cyan-400/30 bg-black touch-none'} />
+      <div className={`flex flex-wrap items-center justify-between gap-3 text-sm ${embed ? 'px-3 py-2 shrink-0' : 'mt-3'}`}>
         <div>
-          Score <span className="text-emerald-400 font-mono">{score}</span>
+          Score <span className="text-cyan-300 font-mono">{score}</span>
           <span className="opacity-50 ml-3">best {best}</span>
           {boostLeft > 0 && (
-            <span className="ml-3 font-black text-emerald-400">$MT BOOST {boostLeft}s</span>
+            <span className="ml-3 font-black text-amber-300">BOOST {boostLeft}s</span>
           )}
         </div>
         <button
           type="button"
           onClick={() => { setOver(false); setScore(0); setPlaying(true); }}
-          className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2"
+          className="rounded-full bg-cyan-400 text-black font-bold px-5 py-2"
         >
           {playing ? 'Dashing…' : over ? 'Dash again' : 'Start dash'}
         </button>
       </div>
-      <p className="mt-2 text-xs opacity-50">A/D or drag. Pads stay in jump range. 💰 $MT stash = 10s jump boost. 🟢 coins · 🧹 rugs.</p>
-      <div className="mt-6 max-w-md">
-        <NightWallet name="" />
-      </div>
-      <NightDesk />
     </div>
   );
 }

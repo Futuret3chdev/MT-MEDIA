@@ -6,7 +6,12 @@
   <title>MT Racer</title>
   <style>
     html, body { margin: 0; height: 100%; background: #05070c; color: #e8fff4; font-family: system-ui, sans-serif; overflow: hidden; }
+    html, body { touch-action: none; }
     canvas { display: block; width: 100%; height: 100%; }
+    #menuBtn { position: fixed; top: 10px; right: 12px; z-index: 9; display: none; min-height: 36px; padding: 6px 12px; font-size: 12px; }
+    #pads { display: none; position: fixed; left: 10px; right: 10px; bottom: 14px; z-index: 6; justify-content: space-between; align-items: flex-end; pointer-events: none; }
+    #pads button { pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; font-size: 13px; }
+    @media (pointer: coarse) { #pads { display: flex; } #hint { display: none; } }
     #hud { position: fixed; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; font-weight: 800; letter-spacing: .06em; pointer-events: none; z-index: 4; }
     #spd { color: #19d37e; font-size: 22px; }
     #menu {
@@ -32,7 +37,13 @@
 </head>
 <body>
   <div id="hud"><div id="spd">0 KM/H</div><div id="dist">0 m · $MT 0</div></div>
-  <div id="hint">A/D or arrows to steer · hold W / ↑ to gas · Space nitro if you have $MT</div>
+  <div id="hint">A/D steer · W gas · Space nitro · Menu to garage</div>
+  <button id="menuBtn" type="button">Menu</button>
+  <div id="pads">
+    <button type="button" id="padL">◀</button>
+    <button type="button" id="padGas">GAS</button>
+    <button type="button" id="padR">▶</button>
+  </div>
   <div id="menu">
     <div class="card">
       <h1>MT RACER</h1>
@@ -49,16 +60,7 @@
       </div>
       <div class="lab">Pimp</div>
       <div class="pick" id="kits"></div>
-      <div class="wallet">
-        <b style="color:#19d37e">$MT exclusive</b>
-        <p id="wmsg">Connect in this box to unlock Alpine, Gold Coast, gold rims, dragon wing, $MT hood.</p>
-        <div class="pick">
-          <button type="button" data-w="phantom">Phantom</button>
-          <button type="button" data-w="solflare">Solflare</button>
-          <button type="button" data-w="backpack">Backpack</button>
-        </div>
-        <div id="waddr"></div>
-      </div>
+      <p id="wmsg" class="lab">Connect wallet on the play bar to unlock $MT maps and gold parts.</p>
       <button id="go">Light it up</button>
     </div>
   </div>
@@ -106,7 +108,16 @@ const KITS = {
 };
 let mapId = 'city';
 const kitOn = { spoiler: false, glow: false, rims: false, goldrims: false, wing: false, hood: false };
-let walletAddr = localStorage.getItem('mt-racer-wallet') || localStorage.getItem('mt-fruit-wallet') || '';
+let walletAddr = localStorage.getItem('mt-game-wallet') || localStorage.getItem('mt-racer-wallet') || localStorage.getItem('mt-fruit-wallet') || '';
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'mt-wallet-ok' && e.data.addr) {
+    walletAddr = e.data.addr;
+    try { localStorage.setItem('mt-racer-wallet', walletAddr); } catch {}
+    const msg = document.getElementById('wmsg');
+    if (msg) msg.textContent = '$MT maps and gold parts unlocked from the play-bar wallet.';
+    paintPicks();
+  }
+});
 
 function hasWallet() { return !!walletAddr; }
 
@@ -129,26 +140,9 @@ function applyMap(id) {
   document.querySelectorAll('#maps button').forEach((b) => b.classList.toggle('on', b.dataset.map === id));
 }
 
-async function connectW(type) {
-  const p = type === 'solflare' ? window.solflare : type === 'backpack' ? window.backpack : (window.phantom?.solana || window.solana);
-  const msg = document.getElementById('wmsg');
-  if (!p?.connect) { msg.textContent = 'Install Phantom, Solflare, or Backpack, then tap here.'; return; }
-  try {
-    const res = await p.connect();
-    const pk = res?.publicKey || p.publicKey;
-    walletAddr = pk && (pk.toString ? pk.toString() : String(pk));
-    localStorage.setItem('mt-racer-wallet', walletAddr || '');
-    document.getElementById('waddr').textContent = 'Connected · ' + walletAddr.slice(0, 4) + '…' + walletAddr.slice(-4);
-    msg.textContent = '$MT exclusive maps and parts unlocked.';
-    paintPicks();
-  } catch (e) {
-    msg.textContent = e?.message || 'Wallet closed.';
-  }
-}
-document.querySelectorAll('[data-w]').forEach((b) => b.onclick = () => connectW(b.getAttribute('data-w')));
 if (walletAddr) {
-  document.getElementById('waddr').textContent = 'Connected · ' + walletAddr.slice(0, 4) + '…';
-  document.getElementById('wmsg').textContent = '$MT exclusive maps and parts unlocked.';
+  const msg = document.getElementById('wmsg');
+  if (msg) msg.textContent = '$MT exclusive maps and parts unlocked.';
 }
 
 function paintPicks() {
@@ -158,7 +152,7 @@ function paintPicks() {
   ).join('');
   maps.querySelectorAll('button').forEach((b) => b.onclick = () => {
     const m = MAPS[b.dataset.map];
-    if (m.mt && !hasWallet()) { document.getElementById('wmsg').textContent = 'Connect wallet in this box for $MT exclusive maps.'; return; }
+    if (m.mt && !hasWallet()) { document.getElementById('wmsg').textContent = 'Connect wallet on the play bar for $MT exclusive maps.'; return; }
     applyMap(b.dataset.map);
   });
   const kits = document.getElementById('kits');
@@ -167,7 +161,7 @@ function paintPicks() {
   ).join('');
   kits.querySelectorAll('button').forEach((b) => b.onclick = () => {
     const k = KITS[b.dataset.kit];
-    if (k.mt && !hasWallet()) { document.getElementById('wmsg').textContent = 'Connect wallet in this box for $MT exclusive parts.'; return; }
+    if (k.mt && !hasWallet()) { document.getElementById('wmsg').textContent = 'Connect wallet on the play bar for $MT exclusive parts.'; return; }
     kitOn[b.dataset.kit] = !kitOn[b.dataset.kit];
     paintPicks();
   });
@@ -292,8 +286,28 @@ document.getElementById('go').onclick = () => {
   for (let i = 0; i < 12; i++) makeCoin(-15 - i * 18, [-4.4, 0, 4.4][i % 3]);
   dist = 0; mt = 0; nitro = 0; playing = true;
   document.getElementById('menu').style.display = 'none';
+  document.getElementById('menuBtn').style.display = 'block';
   engine.volume = 0.28; engine.play().catch(() => {});
 };
+document.getElementById('menuBtn').onclick = () => {
+  playing = false;
+  document.getElementById('menu').style.display = 'flex';
+  document.getElementById('menuBtn').style.display = 'none';
+  engine.pause();
+};
+function holdKey(id, code) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const on = (e) => { e.preventDefault(); keys[code] = true; };
+  const off = (e) => { e.preventDefault(); keys[code] = false; };
+  el.addEventListener('pointerdown', on);
+  el.addEventListener('pointerup', off);
+  el.addEventListener('pointerleave', off);
+  el.addEventListener('pointercancel', off);
+}
+holdKey('padL', 'KeyA');
+holdKey('padR', 'KeyD');
+holdKey('padGas', 'KeyW');
 
 function beep(f) {
   try {
@@ -321,16 +335,19 @@ function tick(now) {
     segs.forEach((s) => {
       s.z += dz;
       if (s.z > 10) s.z -= 48 * 8;
-      s.slab.position.z = s.z;
-      s.line.position.z = s.z;
-      if (s.line2) s.line2.position.z = s.z;
-      if (s.line3) s.line3.position.z = s.z;
-      s.l.position.z = s.z;
-      s.r.position.z = s.z;
+      const cx = Math.sin(s.z * 0.045) * 7 + Math.sin(s.z * 0.013) * 3.5;
+      s.slab.position.set(cx, 0, s.z);
+      s.line.position.set(cx, 0.16, s.z);
+      if (s.line2) s.line2.position.set(cx - 3, 0.16, s.z);
+      if (s.line3) s.line3.position.set(cx + 3, 0.16, s.z);
+      s.l.position.set(cx - 9.1, 0.28, s.z);
+      s.r.position.set(cx + 9.1, 0.28, s.z);
     });
     props.forEach((b, i) => {
       b.position.z += dz;
       if (b.position.z > 10) b.position.z -= 240;
+      const side = i % 2 ? 1 : -1;
+      b.position.x = side * (12 + (i % 5)) + Math.sin(b.position.z * 0.045) * 7;
     });
     traffic.forEach((t) => {
       t.z += (player.speed - t.spd) * dt;
@@ -352,10 +369,11 @@ function tick(now) {
         beep(660);
       }
     });
-    player.mesh.position.set(player.x, 0.35, 0);
+    const roadAtCar = Math.sin(0 * 0.045) * 7;
+    player.mesh.position.set(roadAtCar + player.x, 0.35, 0);
     player.mesh.rotation.z = -player.vx * 0.03;
-    camera.position.set(player.x * 0.25, 2.15, 5.4);
-    camera.lookAt(player.x * 0.2, 0.15, -22);
+    camera.position.set(roadAtCar + player.x * 0.25, 2.15, 5.4);
+    camera.lookAt(roadAtCar + player.x * 0.2, 0.15, -22);
     engine.playbackRate = 0.85 + player.speed / 80;
     document.getElementById('spd').textContent = Math.round(player.speed * 9) + ' KM/H';
     document.getElementById('dist').textContent = Math.round(dist) + ' m · $MT ' + Math.floor(mt);
