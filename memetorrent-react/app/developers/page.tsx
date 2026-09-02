@@ -248,7 +248,7 @@ export default function DevelopersPage() {
           <h2 className="text-xl font-semibold mb-2">Submit a listing</h2>
           <p className="text-sm opacity-80 mb-4">
             We queue it and add it to the catalog / Games switcher. You can also email{' '}
-            <a className="text-emerald-400" href="mailto:Support@MemeTorrent.com">Support@MemeTorrent.com</a>.
+            <a className="text-emerald-400" href="mailto:support@futuret3ch.com.au">support@futuret3ch.com.au</a>.
           </p>
           <form onSubmit={submit} className="grid sm:grid-cols-2 gap-3">
             {field('gameId', 'gameId (my-game)', { required: true })}
