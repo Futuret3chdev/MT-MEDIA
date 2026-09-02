@@ -49,8 +49,10 @@ html, body {
 }
 #gameCanvas {
     display: block;
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
     touch-action: none;
     background: #0d5016;
 }
@@ -1124,7 +1126,7 @@ button.ghost {
   #menuToggle { min-width: 56px; height: 28px; font-size: 12px; padding: 0 10px; }
   .player-info { font-size: 12px; padding: 2px 8px; }
   .player-name-line { max-width: 72px; }
-  #gameContainer { inset: 0; }
+  #gameContainer, #tableFit, #gameCanvas { inset: 0; width: 100% !important; height: 100% !important; }
   #instructions { display: none; }
   #menuOverlay { top: 40px; height: calc(100dvh - 44px); max-width: min(360px, 46vw); }
   #chatBox { width: 220px; height: 150px; bottom: 52px; }
@@ -1388,16 +1390,9 @@ function viewportBox() {
 }
 
 function resizeCanvas() {
-    const fit = document.getElementById('tableFit');
-    const vv = viewportBox();
-    const w = Math.max(1, Math.floor(vv.w));
-    const h = Math.max(1, Math.floor(vv.h));
-    if (fit) {
-      fit.style.width = w + 'px';
-      fit.style.height = h + 'px';
-    }
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
+    /* Bitmap stays 900x450. CSS stretches it to the full window like MT WORLD. */
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
 }
 
 window.addEventListener('resize', resizeCanvas);
@@ -1409,13 +1404,7 @@ window.addEventListener('orientationchange', function () {
 if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', resizeCanvas);
 }
-if (window.ResizeObserver) {
-    const box = document.getElementById('gameContainer');
-    if (box) new ResizeObserver(resizeCanvas).observe(box);
-}
 resizeCanvas();
-setTimeout(resizeCanvas, 50);
-setTimeout(resizeCanvas, 400);
 
     const Engine = Matter.Engine,
         World = Matter.World,
