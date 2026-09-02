@@ -222,7 +222,6 @@ export default function MobilePlayShell({
         title={game.name}
         src={src}
         allow="clipboard-write; fullscreen; autoplay; gamepad"
-        allowFullScreen
         style={{
           position: 'fixed',
           top: BAR,

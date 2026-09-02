@@ -55,7 +55,7 @@ export const CATALOG: CatalogGame[] = [
     name: 'MTE POP',
     kind: 'arcade',
     status: 'live',
-    play: 'https://mte-pop.vercel.app',
+    play: 'https://mte-pop.vercel.app/?play=1',
     img: '/games/covers/mte-pop.jpg',
     blurb: 'Puzzle pop — MTECOSYSTEM match adventure.',
     source: 'https://github.com/Futuret3chdev/mte-pop',
