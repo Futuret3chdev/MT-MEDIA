@@ -36,7 +36,7 @@
   <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js" } }</script>
 </head>
 <body>
-  <div id="hud"><div id="spd">0 KM/H</div><div id="dist">0 m · $MT 0</div></div>
+  <div id="hud"><div id="spd">0 KM/H</div><div id="place">P– · LAP 0/3</div></div>
   <div id="hint">A/D steer · W gas · Space nitro · Menu to garage</div>
   <button id="menuBtn" type="button">Menu</button>
   <div id="pads">
@@ -255,7 +255,7 @@ function spawnTraffic() {
   const cols = [0xfb7185, 0x38bdf8, 0xfbbf24, 0xa78bfa];
   for (let i = 0; i < 8; i++) {
     const m = carMesh(cols[i % cols.length]);
-    const o = { mesh: m, x: [-4.4, 0, 4.4][i % 3], z: -20 - i * 14, spd: 8 + Math.random() * 6 };
+    const o = { mesh: m, x: [-4.4, 0, 4.4][i % 3], z: -20 - i * 14, spd: 10 + Math.random() * 8, race: 18 + i * 16 };
     traffic.push(o);
   }
 }
@@ -271,10 +271,16 @@ const keys = {};
 addEventListener('keydown', (e) => { keys[e.code] = true; });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 
-let playing = false, dist = 0, mt = 0, nitro = 0, last = performance.now();
+const LAPS = 3;
+const LAP_LEN = 384;
+let playing = false, dist = 0, mt = 0, nitro = 0, race = 0, finished = false, last = performance.now();
 const engine = document.getElementById('engine');
 
 document.getElementById('go').onclick = () => {
+  const title = document.querySelector('#menu .card h1');
+  const sub = document.querySelector('#menu .card p');
+  if (title) title.textContent = 'MT RACER';
+  if (sub) sub.textContent = 'Pick a map. Pimp the ride. Race is 3 laps — beat the pack.';
   size();
   applyMap(mapId);
   if (player.mesh) scene.remove(player.mesh);
@@ -284,9 +290,10 @@ document.getElementById('go').onclick = () => {
   coins.forEach((c) => scene.remove(c.mesh));
   coins.length = 0;
   for (let i = 0; i < 12; i++) makeCoin(-15 - i * 18, [-4.4, 0, 4.4][i % 3]);
-  dist = 0; mt = 0; nitro = 0; playing = true;
+  dist = 0; mt = 0; nitro = 0; race = 0; finished = false; playing = true;
   document.getElementById('menu').style.display = 'none';
   document.getElementById('menuBtn').style.display = 'block';
+  document.getElementById('place').textContent = 'P' + (traffic.length + 1) + '/' + (traffic.length + 1) + ' · LAP 1/' + LAPS;
   engine.volume = 0.28; engine.play().catch(() => {});
 };
 document.getElementById('menuBtn').onclick = () => {
@@ -332,25 +339,24 @@ function tick(now) {
     player.speed = THREE.MathUtils.lerp(player.speed, 16 + gas * 22 + (nitro > 0 ? 18 : 0), 0.08);
     const dz = player.speed * dt;
     dist += dz * 4;
+    race += dz;
     segs.forEach((s) => {
       s.z += dz;
       if (s.z > 10) s.z -= 48 * 8;
-      const cx = Math.sin(s.z * 0.045) * 7 + Math.sin(s.z * 0.013) * 3.5;
-      s.slab.position.set(cx, 0, s.z);
-      s.line.position.set(cx, 0.16, s.z);
-      if (s.line2) s.line2.position.set(cx - 3, 0.16, s.z);
-      if (s.line3) s.line3.position.set(cx + 3, 0.16, s.z);
-      s.l.position.set(cx - 9.1, 0.28, s.z);
-      s.r.position.set(cx + 9.1, 0.28, s.z);
+      s.slab.position.set(0, 0, s.z);
+      s.line.position.set(0, 0.16, s.z);
+      if (s.line2) s.line2.position.set(-3, 0.16, s.z);
+      if (s.line3) s.line3.position.set(3, 0.16, s.z);
+      s.l.position.set(-9.1, 0.28, s.z);
+      s.r.position.set(9.1, 0.28, s.z);
     });
-    props.forEach((b, i) => {
+    props.forEach((b) => {
       b.position.z += dz;
       if (b.position.z > 10) b.position.z -= 240;
-      const side = i % 2 ? 1 : -1;
-      b.position.x = side * (12 + (i % 5)) + Math.sin(b.position.z * 0.045) * 7;
     });
     traffic.forEach((t) => {
       t.z += (player.speed - t.spd) * dt;
+      t.race += t.spd * dt;
       if (t.z > 12) { t.z -= 120; t.x = [-4.4, 0, 4.4][Math.floor(Math.random() * 3)]; }
       t.mesh.position.set(t.x, 0.35, t.z);
       if (Math.abs(t.x - player.x) < 1.1 && Math.abs(t.z - player.z) < 2.1) {
@@ -369,15 +375,32 @@ function tick(now) {
         beep(660);
       }
     });
-    const roadAtCar = Math.sin(0 * 0.045) * 7;
-    player.mesh.position.set(roadAtCar + player.x, 0.35, 0);
+    player.mesh.position.set(player.x, 0.35, 0);
     player.mesh.rotation.z = -player.vx * 0.03;
-    camera.position.set(roadAtCar + player.x * 0.25, 2.15, 5.4);
-    camera.lookAt(roadAtCar + player.x * 0.2, 0.15, -22);
+    camera.position.set(player.x * 0.25, 2.15, 5.4);
+    camera.lookAt(player.x * 0.2, 0.15, -22);
     engine.playbackRate = 0.85 + player.speed / 80;
+    const field = traffic.length + 1;
+    const place = 1 + traffic.filter((t) => t.race > race).length;
+    const lap = Math.min(LAPS, 1 + Math.floor(race / LAP_LEN));
     document.getElementById('spd').textContent = Math.round(player.speed * 9) + ' KM/H';
-    document.getElementById('dist').textContent = Math.round(dist) + ' m · $MT ' + Math.floor(mt);
-    if (leftBehind()) { /* keep running */ }
+    document.getElementById('place').textContent = 'P' + place + '/' + field + ' · LAP ' + lap + '/' + LAPS;
+    if (!finished && race >= LAPS * LAP_LEN) {
+      finished = true;
+      playing = false;
+      engine.pause();
+      document.getElementById('menuBtn').style.display = 'none';
+      document.getElementById('menu').style.display = 'flex';
+      const card = document.querySelector('#menu .card h1');
+      if (card) card.textContent = 'P' + place + ' OF ' + field;
+      const sub = document.querySelector('#menu .card p');
+      if (sub) sub.textContent = 'Race over · ' + LAPS + ' laps · ' + Math.round(dist) + ' m';
+      fetch('/api/scores', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_id: 'racer', score: Math.max(1, field + 1 - place) * 100 + Math.round(dist) })
+      }).catch(() => {});
+    }
   } else {
     camera.position.set(0, 2.4, 6);
     camera.lookAt(0, 0.2, -20);
