@@ -112,13 +112,18 @@ export default function ShieldPage() {
         </div>
 
         <h2 id="downloads" className="mt-16 text-xs tracking-[0.2em] uppercase opacity-50">Downloads</h2>
-        <p className="mt-3 text-sm opacity-70">Mac is live on the Shield app. Windows, iPhone, Android, and the browser extension share the same account when published.</p>
+        <p className="mt-3 text-sm opacity-70">
+          Install files live here.{' '}
+          <Link href="/shield/downloads" className="text-cyan-300">
+            All packages →
+          </Link>
+        </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Pill icon={ICONS.download} label="Mac" />
-          <Pill icon={ICONS.download} label="Windows" />
-          <Pill icon={ICONS.download} label="iPhone companion" />
-          <Pill icon={ICONS.download} label="Android" />
-          <Pill icon={ICONS.download} label="Browser extension" />
+          <Pill icon={ICONS.download} label="Mac" href="/downloads/shield/Shield-mac.zip" />
+          <Pill icon={ICONS.download} label="Windows" href="/downloads/shield/Shield-windows.zip" />
+          <Pill icon={ICONS.download} label="iPhone companion" href="/shield/downloads" />
+          <Pill icon={ICONS.download} label="Android" href="/downloads/shield/android/README.txt" />
+          <Pill icon={ICONS.download} label="Browser extension" href="/downloads/shield/Shield-extension.zip" />
         </div>
 
         <h2 id="docs" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">
@@ -261,11 +266,15 @@ function Card({
   );
 }
 
-function Pill({ icon, label }: { icon: string; label: string }) {
+function Pill({ icon, label, href }: { icon: string; label: string; href: string }) {
   return (
-    <span className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-white/15 text-sm">
+    <a
+      href={href}
+      download={href.endsWith('.zip') || href.endsWith('.txt')}
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-cyan-400/40 text-sm text-cyan-200 hover:bg-cyan-400/10"
+    >
       <img src={icon} alt="" className="w-6 h-6 rounded-md object-cover" />
       {label}
-    </span>
+    </a>
   );
 }

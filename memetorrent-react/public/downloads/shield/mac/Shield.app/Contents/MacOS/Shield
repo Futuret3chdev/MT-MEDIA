@@ -1,0 +1,3 @@
+#!/bin/bash
+open "https://memetorrent.futuret3ch.com.au/shield"
+open "https://memetorrent.futuret3ch.com.au/login?next=/shield/trial&from=shield-mac"

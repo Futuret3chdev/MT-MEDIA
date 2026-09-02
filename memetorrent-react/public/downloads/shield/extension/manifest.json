@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Futuret3ch Shield",
+  "version": "1.0.0",
+  "description": "Open Shield hub, trial, help, and live grid from the toolbar.",
+  "action": {
+    "default_title": "Shield",
+    "default_popup": "popup.html"
+  },
+  "host_permissions": ["https://memetorrent.futuret3ch.com.au/*", "https://*.futuret3ch.com.au/*"]
+}
