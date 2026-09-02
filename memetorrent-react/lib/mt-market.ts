@@ -87,8 +87,12 @@ export async function fetchMtMarket(): Promise<MtMarket> {
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null);
 
-  const [tokenJ, poolsJ, hourJ, dayJ, pumpJ, dexJ] = await Promise.all([
-    geckoToken, geckoPools, ohlcvH, ohlcvD, pump, dex,
+  const raydium = fetch(`https://api-v3.raydium.io/pools/info/ids?ids=${MT_POOL}`, { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+
+  const [tokenJ, poolsJ, hourJ, dayJ, pumpJ, dexJ, rayJ] = await Promise.all([
+    geckoToken, geckoPools, ohlcvH, ohlcvD, pump, dex, raydium,
   ]);
 
   const ta = tokenJ?.data?.attributes || {};
@@ -97,7 +101,6 @@ export async function fetchMtMarket(): Promise<MtMarket> {
   if (ta.decimals) market.decimals = Number(ta.decimals) || 6;
   market.price = num(ta.price_usd);
   market.fdv = num(ta.fdv_usd);
-  market.liquidity = num(ta.total_reserve_in_usd);
   market.volume24h = num(ta.volume_usd?.h24);
   market.supply = num(ta.normalized_total_supply);
   if (market.supply <= 0 && num(ta.total_supply) > 0) {
@@ -107,6 +110,7 @@ export async function fetchMtMarket(): Promise<MtMarket> {
   const pool = poolsJ?.data?.[0]?.attributes || {};
   if (!market.price) market.price = num(pool.token_price_usd || pool.base_token_price_usd);
   if (!market.fdv) market.fdv = num(pool.fdv_usd);
+  market.liquidity = num(pool.reserve_in_usd);
   if (pool.address) market.pair = pool.address;
   if (pool.pool_created_at) market.createdAt = pool.pool_created_at;
   const ch = pool.price_change_percentage || {};
@@ -126,6 +130,14 @@ export async function fetchMtMarket(): Promise<MtMarket> {
       if (!market.price && sup) market.price = market.marketCap / sup;
     }
     if (!market.marketCap) market.marketCap = num(pumpJ.usd_market_cap);
+  }
+
+  const ray = rayJ?.data?.[0];
+  if (ray) {
+    const tvl = num(ray.tvl);
+    if (tvl > 0) market.liquidity = tvl;
+    const vol = num(ray.day?.volume);
+    if (vol > market.volume24h) market.volume24h = vol;
   }
 
   const pair = dexJ?.pairs?.[0];

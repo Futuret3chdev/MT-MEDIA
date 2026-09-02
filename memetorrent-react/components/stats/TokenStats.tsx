@@ -224,9 +224,9 @@ export default function TokenStats() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <Stat label="Market Cap" value={safeStats.market_cap} sub="Circulating × price" />
+            <Stat label="Market Cap" value={safeStats.market_cap} sub="Price × supply" />
             <Stat label="FDV" value={safeStats.fdv || '—'} sub="Fully diluted" />
-            <Stat label="Liquidity" value={safeStats.liquidity || '—'} sub="Pool reserves" />
+            <Stat label="Liquidity" value={safeStats.liquidity || '—'} sub="Raydium pool (both sides)" />
             <Stat
               label="24h Volume"
               value={safeStats.total_buy_volume ?? '—'}
