@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { getTokenStats, MTStatsRaw, getTopHolders, TopHolder, getTokenSecurity, TokenSecurity } from '@/lib/api';
+import { getTokenStats, MTStatsLive, getTopHolders, TopHolder, getTokenSecurity, TokenSecurity } from '@/lib/api';
 
 // 100+ chains we plan to bridge with. Binance prominently included. Real images (not just names).
 const BRIDGE_CHAINS: string[] = [
@@ -77,10 +77,32 @@ function getChainLogo(chain: string): string {
   return logos[key] || '';
 }
 
+function chartPath(pts: number[], w = 640, h = 160) {
+  if (pts.length < 2) return '';
+  const min = Math.min(...pts);
+  const max = Math.max(...pts);
+  const span = max - min || 1;
+  return pts
+    .map((p, i) => {
+      const x = (i / (pts.length - 1)) * w;
+      const y = h - ((p - min) / span) * (h - 12) - 6;
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+}
+
+function pct(n: number) {
+  if (!Number.isFinite(n)) return '0.0%';
+  const s = `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+  return s;
+}
+
 export default function TokenStats() {
-  const [stats, setStats] = useState<MTStatsRaw | null>(null);
+  const [stats, setStats] = useState<MTStatsLive | null>(null);
   const [topHolders, setTopHolders] = useState<TopHolder[]>([]);
   const [security, setSecurity] = useState<TokenSecurity | null>(null);
+  const [range, setRange] = useState<'24h' | '7d'>('24h');
+  const [copied, setCopied] = useState(false);
 
   // Only chains that have actual logo images (no names at all in the UI)
   const displayChains = BRIDGE_CHAINS.filter(
@@ -102,22 +124,24 @@ export default function TokenStats() {
     return () => clearInterval(i);
   }, []);
 
-  // Always render the card; use fallbacks if live data fails (e.g. network/DNS issues)
-  // No fake numbers - only real or empty
   const safeStats = stats || {
-    price: '0',
-    market_cap: '$0',
-    current_supply: '0',
+    price: '—',
+    market_cap: '—',
+    current_supply: '—',
     name: 'MemeTorrent',
     symbol: '$MT',
     total_buys: '0',
     total_sells: '0',
-    total_buy_volume: '$0',
-    total_sell_volume: '$0',
+    total_buy_volume: '—',
+    total_sell_volume: '—',
+    liquidity: '—',
+    fdv: '—',
   };
 
-  const priceNum = parseFloat(safeStats.price || '0');
-  const marketCapNum = parseFloat((safeStats.market_cap || '$0').replace(/[$,]/g, ''));
+  const priceNum = stats?.priceNum ?? parseFloat(safeStats.price || '0');
+  const up = (stats?.change24h || 0) >= 0;
+  const points = range === '7d' ? (stats?.points7d || []) : (stats?.points24h || []);
+  const path = chartPath(points);
 
   return (
     <section id="stats" className="py-12">
@@ -136,18 +160,22 @@ export default function TokenStats() {
         >
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-y-3 mb-6">
             <div>
-              <div className="text-emerald-400 text-xs tracking-[3px] mb-1">LIVE ON SOLANA • PUMP.FUN + RAYDIUM</div>
+              <div className="text-emerald-400 text-xs tracking-[3px] mb-1">LIVE ON SOLANA • RAYDIUM $MT/SOL</div>
               <div className="text-3xl sm:text-4xl font-semibold tracking-tight">MT Token Stats</div>
-              <div className="text-xs opacity-60 mt-1">Live data • Auto-refreshes every 15s</div>
-              {/* Contract Address - short display + copy for mobile friendliness */}
+              <div className="text-xs opacity-60 mt-1">Live from GeckoTerminal · auto-refresh 15s{stats ? '' : ' · loading…'}</div>
               <div className="mt-3 p-3 rounded-xl border border-emerald-400/30 bg-emerald-400/5">
                 <div className="text-[10px] opacity-70 mb-0.5 tracking-widest">CONTRACT ADDRESS (COPY)</div>
-                <button 
-                  onClick={() => navigator.clipboard.writeText('ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump')} 
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText('ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump');
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1200);
+                  }}
                   className="font-mono text-sm sm:text-base text-emerald-400 hover:text-emerald-300 active:text-white font-semibold break-all text-left w-full"
                   title="Click to copy full $MT contract"
                 >
-                  ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump
+                  {copied ? 'Copied' : 'ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump'}
                 </button>
               </div>
             </div>
@@ -157,23 +185,57 @@ export default function TokenStats() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <Stat label="Price" value={`$${safeStats.price}`} sub={`~${Math.round(priceNum * 1_000_000_000).toLocaleString()} per 1B`} />
-            <Stat label="Market Cap" value={safeStats.market_cap} sub="Based on current supply" />
-            <Stat label="Current Supply" value={safeStats.current_supply} sub="Live • Pump.fun curve" />
-            <Stat label="Liquidity" value={safeStats.liquidity || '$0'} sub="Raydium pool" />
-            {safeStats.fdv && safeStats.fdv !== safeStats.market_cap && (
-              <Stat label="FDV" value={safeStats.fdv!} sub="Fully diluted" />
-            )}
-            <Stat 
-              label="24h Volume" 
-              value={safeStats.total_buy_volume ?? "0"} 
-              sub={`Buys ${safeStats.total_buys || 0} / Sells ${safeStats.total_sells || 0}`} 
-            />
-            <div className="rounded-2xl border border-white/10 p-4 sm:p-5 bg-black/30">
-              <div className="text-xs uppercase tracking-wide opacity-60 mb-1">Decimals</div>
-              <div className="text-2xl sm:text-3xl font-semibold tabular-nums tracking-[-1px]">{safeStats.decimals ?? 6}</div>
+          <div className="mb-6 rounded-2xl border border-white/10 bg-black/40 p-4 sm:p-5">
+            <div className="flex flex-wrap items-end justify-between gap-3 mb-3">
+              <div>
+                <div className="text-xs uppercase tracking-wide opacity-60">Price</div>
+                <div className="text-3xl sm:text-4xl font-semibold tabular-nums">
+                  {priceNum > 0 ? `$${priceNum.toFixed(8).replace(/0+$/, '')}` : (stats ? '—' : '…')}
+                </div>
+                <div className={`text-sm font-semibold ${up ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {pct(stats?.change24h || 0)} 24h
+                  <span className="opacity-60 font-normal ml-2">{pct(stats?.change6h || 0)} 6h · {pct(stats?.change1h || 0)} 1h</span>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                {(['24h', '7d'] as const).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRange(r)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${range === r ? 'bg-emerald-400 text-black' : 'border border-white/15 opacity-70'}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
             </div>
+            <svg viewBox="0 0 640 160" className="w-full h-36 sm:h-44" preserveAspectRatio="none">
+              {path ? (
+                <>
+                  <path d={`${path} L640,160 L0,160 Z`} fill={up ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)'} />
+                  <path d={path} fill="none" stroke={up ? '#34d399' : '#f87171'} strokeWidth="2.2" />
+                </>
+              ) : (
+                <text x="12" y="84" fill="#64748b" fontSize="14">{stats ? 'No candle history yet' : 'Loading chart…'}</text>
+              )}
+            </svg>
+            <div className="text-[10px] opacity-50 mt-1">{range === '24h' ? 'Hourly closes' : 'Daily closes'} · Raydium pool {stats?.pair?.slice(0, 4)}…{stats?.pair?.slice(-4)}</div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <Stat label="Market Cap" value={safeStats.market_cap} sub="Circulating × price" />
+            <Stat label="FDV" value={safeStats.fdv || '—'} sub="Fully diluted" />
+            <Stat label="Liquidity" value={safeStats.liquidity || '—'} sub="Pool reserves" />
+            <Stat
+              label="24h Volume"
+              value={safeStats.total_buy_volume ?? '—'}
+              sub={`Buys ${safeStats.total_buys || 0} / Sells ${safeStats.total_sells || 0}`}
+            />
+            <Stat label="Supply" value={safeStats.current_supply} sub={`${safeStats.decimals ?? 6} decimals`} />
+            <Stat label="Per 1B $MT" value={priceNum > 0 ? `$${Math.round(priceNum * 1_000_000_000).toLocaleString()}` : '—'} sub="USD value of 1,000,000,000" />
+            <Stat label="Holders" value={security?.holder_count || '—'} sub="On-chain accounts" />
+            <Stat label="Pool created" value={stats?.createdAt ? stats.createdAt.slice(0, 10) : '2025-02-07'} sub="UTC" />
           </div>
 
           {/* On-chain data rendered directly here using public APIs (GoPlus for security, Birdeye/DexScreener for others) — no external links */}
