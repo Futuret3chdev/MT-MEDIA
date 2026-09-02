@@ -1,29 +1,32 @@
 package main
 
 import (
+	"archive/zip"
+	"bytes"
 	"embed"
+	"encoding/json"
+	"io"
 	"io/fs"
 	"log"
 	"net"
 	"net/http"
 	"os/exec"
+	"path"
 	"runtime"
+	"strings"
 	"time"
 )
 
-//go:embed all:web
-var web embed.FS
+//go:embed web templates
+var bundled embed.FS
 
 func openApp(url string) {
-	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
-		cmd = exec.Command("cmd", "/c", "start", "", "msedge", "--app="+url)
-		if err := cmd.Start(); err == nil {
+		if exec.Command("cmd", "/c", "start", "", "msedge", "--app="+url).Start() == nil {
 			return
 		}
-		cmd = exec.Command("cmd", "/c", "start", "", "chrome", "--app="+url)
-		if err := cmd.Start(); err == nil {
+		if exec.Command("cmd", "/c", "start", "", "chrome", "--app="+url).Start() == nil {
 			return
 		}
 		_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
@@ -36,8 +39,94 @@ func openApp(url string) {
 	}
 }
 
+type exportBody struct {
+	Name string `json:"name"`
+	HTML string `json:"html"`
+}
+
+func zipTemplate(root, html, filename string) ([]byte, error) {
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	err := fs.WalkDir(bundled, root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		rel := strings.TrimPrefix(p, root+"/")
+		if rel == "app/src/main/assets/index.html" || rel == "game.html" || rel == "MTMadeGame/game.html" {
+			return nil
+		}
+		f, err := bundled.Open(p)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		w, err := zw.Create(path.Join(filename, rel))
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(w, f)
+		return err
+	})
+	if err != nil {
+		zw.Close()
+		return nil, err
+	}
+	assetName := path.Join(filename, "app/src/main/assets/index.html")
+	if root == "templates/ios" {
+		assetName = path.Join(filename, "MTMadeGame/game.html")
+	}
+	w, err := zw.Create(assetName)
+	if err != nil {
+		zw.Close()
+		return nil, err
+	}
+	if _, err := io.WriteString(w, html); err != nil {
+		zw.Close()
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func exportHandler(root, prefix string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "POST", 405)
+			return
+		}
+		var body exportBody
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, "bad json", 400)
+			return
+		}
+		if body.HTML == "" {
+			http.Error(w, "need html", 400)
+			return
+		}
+		name := strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' {
+				return r
+			}
+			return '-'
+		}, body.Name)
+		if name == "" {
+			name = prefix
+		}
+		z, err := zipTemplate(root, body.HTML, name)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", "attachment; filename="+name+"-"+prefix+".zip")
+		_, _ = w.Write(z)
+	}
+}
+
 func main() {
-	sub, err := fs.Sub(web, "web")
+	sub, err := fs.Sub(bundled, "web")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,8 +136,11 @@ func main() {
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.FS(sub)))
+	mux.HandleFunc("/export/android", exportHandler("templates/android", "android-studio"))
+	mux.HandleFunc("/export/ios", exportHandler("templates/ios", "ios"))
 	go func() { _ = http.Serve(ln, mux) }()
 	url := "http://" + ln.Addr().String() + "/"
+	log.Println("MT Maker", url)
 	time.Sleep(150 * time.Millisecond)
 	openApp(url)
 	select {}
