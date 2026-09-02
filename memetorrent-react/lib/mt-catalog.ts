@@ -46,7 +46,7 @@ export const CATALOG: CatalogGame[] = [
     name: 'MT Puck',
     kind: 'p2e',
     status: 'live',
-    play: '/puck',
+    play: '/games/puck3d/index.html',
     img: '/games/covers/puck.jpg',
     blurb: '3D rink. You skate the puck, crowd in the stands, hit sounds. Wallet + staff award.',
   },
