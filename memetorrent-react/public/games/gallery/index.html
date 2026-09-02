@@ -79,6 +79,7 @@
     @media (hover: hover) and (pointer: fine) {
       .pad, #lookHint, #jump { display: none; }
     }
+    html.in-play-shell a.hud-exit { display: none !important; }
     #panel {
       display: none; position: fixed; inset: 0; z-index: 30;
       background: rgba(0,0,0,.72); align-items: flex-end; justify-content: center;
@@ -285,6 +286,7 @@
   </script>
   <script type="module">
 import * as THREE from 'three';
+if (window.self !== window.top) document.documentElement.classList.add('in-play-shell');
 
 const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
 const hint = document.getElementById('hint');

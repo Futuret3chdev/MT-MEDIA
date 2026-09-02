@@ -71,6 +71,20 @@ export default function MobilePlayShell({
         <a href="/catalog" style={{ marginLeft: 'auto', color: '#ccc', fontSize: 12, textDecoration: 'none' }}>
           Catalog
         </a>
+        <a
+          href="/catalog"
+          style={{
+            color: '#04140c',
+            background: '#19d37e',
+            fontSize: 12,
+            fontWeight: 800,
+            textDecoration: 'none',
+            borderRadius: 999,
+            padding: '6px 12px',
+          }}
+        >
+          Exit
+        </a>
       </div>
 
       {picker && (
