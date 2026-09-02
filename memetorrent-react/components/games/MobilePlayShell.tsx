@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CatalogGame } from '@/lib/mt-catalog';
 import GameWalletBridge from '@/components/wallet/GameWalletBridge';
+import PlayStaffMenu from '@/components/games/PlayStaffMenu';
 
 const BAR = 44;
 
@@ -127,28 +128,31 @@ export default function MobilePlayShell({
           fontFamily: 'system-ui, sans-serif',
         }}
       >
-        <button
-          type="button"
-          onClick={() => setPicker((v) => !v)}
-          aria-expanded={picker}
-          style={{
-            fontSize: 12,
-            fontWeight: 800,
-            background: picker ? '#19d37e' : 'rgba(255,255,255,.08)',
-            color: picker ? '#04140c' : '#fff',
-            border: '1px solid rgba(255,255,255,.2)',
-            borderRadius: 999,
-            padding: '6px 12px',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          {picker ? 'Close' : 'Games'}
-        </button>
-        <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
-          {game.name}
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <button
+            type="button"
+            onClick={() => setPicker((v) => !v)}
+            aria-expanded={picker}
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              background: picker ? '#19d37e' : 'rgba(255,255,255,.08)',
+              color: picker ? '#04140c' : '#fff',
+              border: '1px solid rgba(255,255,255,.2)',
+              borderRadius: 999,
+              padding: '6px 12px',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            {picker ? 'Close' : 'Games'}
+          </button>
+          <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
+            {game.name}
+          </span>
+        </div>
+        <PlayStaffMenu gameId={game.id} gameName={game.name} />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, minWidth: 0 }}>
           {iconBtn('phantom', '/icons/phantom.svg', 'Phantom')}
           {iconBtn('solflare', '/icons/solflare.svg', 'Solflare')}
           {iconBtn('backpack', '/icons/backpack.png', 'Backpack')}
@@ -157,9 +161,6 @@ export default function MobilePlayShell({
             <a href="/portal" style={{ color: '#19d37e', fontSize: 11, textDecoration: 'none' }}>@{user.username}</a>
           ) : (
             <a href={`/login?next=${next}`} style={{ color: '#ccc', fontSize: 11, textDecoration: 'none' }}>Log in</a>
-          )}
-          {user?.is_admin && (
-            <a href="https://testers.futuret3ch.com.au/" style={{ color: '#fbbf24', fontSize: 11, textDecoration: 'none', fontWeight: 800 }}>Staff</a>
           )}
           <a href="/catalog" style={{ color: '#ccc', fontSize: 12, textDecoration: 'none' }}>Catalog</a>
           <a
