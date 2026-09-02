@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MT Games</title>
+  <style>
+    body { margin:0; font-family:system-ui; background:#04140c; color:#e8fff4; }
+    header { padding:16px; border-bottom:1px solid #14532d; display:flex; justify-content:space-between; align-items:center; }
+    a { color:#19d37e; }
+    main { padding:16px; display:grid; gap:10px; }
+    .card { border:1px solid #14532d; border-radius:16px; padding:14px; text-decoration:none; color:inherit; display:block; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>MT Games</strong>
+    <a href="https://memetorrent.futuret3ch.com.au/software/developers">License</a>
+  </header>
+  <main>
+    <a class="card" href="https://memetorrent.futuret3ch.com.au/software/games">Software tools</a>
+    <a class="card" href="https://memetorrent.futuret3ch.com.au/catalog">Play catalog</a>
+    <a class="card" href="https://memetorrent.futuret3ch.com.au/software/games/sdk">Games SDK</a>
+    <a class="card" href="https://memetorrent.futuret3ch.com.au/play/tap">Tap</a>
+    <p id="lic" style="opacity:.7;font-size:13px">Checking license…</p>
+  </main>
+  <script src="https://memetorrent.futuret3ch.com.au/sdk/mt-games.js"></script>
+  <script>
+    const g = MTGames.init({ gameId: 'mt-games-client' });
+    g.me().then((d) => {
+      document.getElementById('lic').textContent = d.ok && d.license_key
+        ? ('License ' + d.license_key)
+        : 'Sign in on the hub for a builder license.';
+    });
+  </script>
+</body>
+</html>
