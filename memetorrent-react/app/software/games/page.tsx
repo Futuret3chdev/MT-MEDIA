@@ -61,49 +61,66 @@ export default function SoftwareGamesPage() {
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        <div className="rounded-2xl p-6 border border-emerald-400/30" style={{ background: 'var(--card)' }}>
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <h2 className="font-semibold text-xl">Android</h2>
-            <span className="text-[11px] tracking-wide px-2 py-0.5 rounded-full border text-emerald-400 border-emerald-400/40">
-              Live
-            </span>
-          </div>
-          <p className="text-sm opacity-70 mb-5">
-            MT Games for Android. Requires a developer license.
-          </p>
-          {licensed ? (
-            <div className="space-y-3">
-              <a
-                href={APK}
-                download
+        {[
+          {
+            name: 'Windows Maker',
+            note: 'Standalone MT Maker. Paint a level, play it, export a .html game. Runs on this PC — not a website tab.',
+            href: '/downloads/MTMaker.exe',
+            label: 'Download MT Maker (.exe)',
+          },
+          {
+            name: 'Android Maker',
+            note: 'Make games on the phone. Simpler than Android Studio: paint, play, export. Sideload APK; sign an AAB for Play.',
+            href: '/downloads/MTMaker.apk',
+            label: 'Download Maker APK',
+            extra: { href: APK, label: 'Play client APK (MT Games)' },
+          },
+          {
+            name: 'Mac · iOS Maker',
+            note: 'MT Maker on the Mac. Export HTML games here; use the Xcode zip on a Mac to put a title on the App Store.',
+            href: '/downloads/MTMaker-macos-arm.zip',
+            label: 'Download Maker (Apple Silicon)',
+            extra: { href: '/downloads/MTMaker-macos.zip', label: 'Intel Mac' },
+          },
+          {
+            name: 'iOS (App Store project)',
+            note: 'Xcode project of the maker. Archive on a Mac with an Apple Developer account.',
+            href: '/downloads/MTMaker-ios-xcode.zip',
+            label: 'Download Xcode project',
+          },
+        ].map((p) => (
+          <div key={p.name} className="rounded-2xl p-6 border border-emerald-400/30" style={{ background: 'var(--card)' }}>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <h2 className="font-semibold text-xl">{p.name}</h2>
+              <span className="text-[11px] tracking-wide px-2 py-0.5 rounded-full border text-emerald-400 border-emerald-400/40">
+                Live
+              </span>
+            </div>
+            <p className="text-sm opacity-70 mb-5">{p.note}</p>
+            {licensed ? (
+              <div className="space-y-3">
+                <a
+                  href={p.href}
+                  download
+                  className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm"
+                >
+                  {p.label}
+                </a>
+                {p.extra && (
+                  <a href={p.extra.href} download className="block text-sm text-emerald-400">
+                    {p.extra.label} →
+                  </a>
+                )}
+                <div className="text-xs opacity-50 font-mono break-all">License {key}</div>
+              </div>
+            ) : (
+              <Link
+                href="/software/developers"
                 className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm"
               >
-                Download Android APK
-              </a>
-              <div className="text-xs opacity-50 font-mono break-all">License {key}</div>
-            </div>
-          ) : (
-            <Link
-              href="/software/developers"
-              className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm"
-            >
-              Get free license first
-            </Link>
-          )}
-        </div>
-
-        {[
-          ['iOS', 'App Store client.'],
-          ['Windows', 'Desktop client.'],
-          ['macOS', 'Mac client.'],
-        ].map(([name, note]) => (
-          <div key={name} className="rounded-2xl p-6 border border-white/10" style={{ background: 'var(--card)' }}>
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <h2 className="font-semibold text-xl">{name}</h2>
-              <span className="text-[11px] tracking-wide px-2 py-0.5 rounded-full border opacity-50 border-white/15">Later</span>
-            </div>
-            <p className="text-sm opacity-70 mb-5">{note}</p>
-            <span className="text-sm opacity-40">Available later</span>
+                Get free license first
+              </Link>
+            )}
           </div>
         ))}
       </div>

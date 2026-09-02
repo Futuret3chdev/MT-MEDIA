@@ -6,3 +6,6 @@ shield-native/android/local.properties
 shield-native/android/*.jks
 memetorrent-react/public/downloads/shield/Shield-windows-app.zip
 memetorrent-react/public/downloads/shield/Shield-linux.AppImage
+games-native/node_modules/
+games-native/android/.gradle/
+games-native/android/app/build/

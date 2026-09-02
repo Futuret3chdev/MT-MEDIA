@@ -3,35 +3,198 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MT Games</title>
+  <title>MT Maker</title>
   <style>
-    body { margin:0; font-family:system-ui; background:#04140c; color:#e8fff4; }
-    header { padding:16px; border-bottom:1px solid #14532d; display:flex; justify-content:space-between; align-items:center; }
-    a { color:#19d37e; }
-    main { padding:16px; display:grid; gap:10px; }
-    .card { border:1px solid #14532d; border-radius:16px; padding:14px; text-decoration:none; color:inherit; display:block; }
+    :root { --bg:#0b1020; --g:#2a3348; --a:#19d37e; --h:#ff4d6a; --c:#ffd166; }
+    * { box-sizing: border-box; }
+    html,body { margin:0; height:100%; background:#07090f; color:#e8eaf0; font-family:system-ui,sans-serif; }
+    header { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 10px; border-bottom:1px solid #1e293b; }
+    header strong { color:var(--a); }
+    header input, header select, header button { font:inherit; background:#111827; color:#fff; border:1px solid #334155; border-radius:8px; padding:6px 10px; }
+    header button.primary { background:var(--a); color:#04140c; border:0; font-weight:800; }
+    #brushes { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; }
+    #brushes button { border:1px solid #334155; background:#111827; color:#fff; border-radius:999px; padding:6px 10px; font-size:12px; }
+    #brushes button.on { background:var(--a); color:#04140c; }
+    #stage { display:flex; justify-content:center; padding:8px; overflow:auto; }
+    canvas { background:var(--bg); image-rendering:pixelated; cursor:crosshair; border-radius:8px; max-width:100%; }
+    #msg { font-size:12px; opacity:.7; padding:0 10px 10px; }
   </style>
 </head>
 <body>
   <header>
-    <strong>MT Games</strong>
-    <a href="https://memetorrent.futuret3ch.com.au/software/developers">License</a>
+    <strong>MT Maker</strong>
+    <input id="name" value="Night Run" />
+    <select id="theme">
+      <option value="night">Night</option>
+      <option value="forest">Forest</option>
+      <option value="city">City</option>
+      <option value="space">Space</option>
+    </select>
+    <button type="button" id="play">Play</button>
+    <button type="button" id="stop" hidden>Stop</button>
+    <button type="button" class="primary" id="exportHtml">Export game.html</button>
+    <button type="button" id="exportJson">Export JSON</button>
+    <a href="https://memetorrent.futuret3ch.com.au/software/games/sdk" style="color:#19d37e;font-size:12px">SDK</a>
   </header>
-  <main>
-    <a class="card" href="https://memetorrent.futuret3ch.com.au/software/games">Software tools</a>
-    <a class="card" href="https://memetorrent.futuret3ch.com.au/catalog">Play catalog</a>
-    <a class="card" href="https://memetorrent.futuret3ch.com.au/software/games/sdk">Games SDK</a>
-    <a class="card" href="https://memetorrent.futuret3ch.com.au/play/tap">Tap</a>
-    <p id="lic" style="opacity:.7;font-size:13px">Checking license…</p>
-  </main>
-  <script src="https://memetorrent.futuret3ch.com.au/sdk/mt-games.js"></script>
+  <div id="brushes"></div>
+  <div id="stage"><canvas id="c"></canvas></div>
+  <div id="msg">Paint a level. Play it here. Export a standalone HTML game. 1–8 brushes. This is a program on this PC, not a website tab.</div>
   <script>
-    const g = MTGames.init({ gameId: 'mt-games-client' });
-    g.me().then((d) => {
-      document.getElementById('lic').textContent = d.ok && d.license_key
-        ? ('License ' + d.license_key)
-        : 'Sign in on the hub for a builder license.';
-    });
+const TILE = { empty:0, ground:1, hazard:2, coin:3, spawn:4, exit:5, enemy:6, spring:7 };
+const BRUSHES = [
+  [0,'Erase'],[1,'Ground'],[2,'Spike'],[3,'Coin'],[4,'Start'],[5,'Exit'],[6,'Enemy'],[7,'Spring']
+];
+const THEMES = {
+  night: { bg:'#0b1020', ground:'#2a3348', accent:'#00ff99', hazard:'#ff4d6a', coin:'#ffd166' },
+  forest: { bg:'#0d1a12', ground:'#2d5a3d', accent:'#9ef01a', hazard:'#e85d04', coin:'#ffe66d' },
+  city: { bg:'#140c18', ground:'#3d2b56', accent:'#ff4dff', hazard:'#ff006e', coin:'#00f5d4' },
+  space: { bg:'#070712', ground:'#1b2744', accent:'#48cae4', hazard:'#c77dff', coin:'#f4d35e' }
+};
+const COLS=32, ROWS=16, CELL=22;
+const tiles = new Array(COLS*ROWS).fill(0);
+for (let x=0;x<COLS;x++) tiles[(ROWS-1)*COLS+x]=1;
+tiles[(ROWS-2)*COLS+2]=4;
+tiles[(ROWS-5)*COLS+10]=1; tiles[(ROWS-5)*COLS+11]=1; tiles[(ROWS-5)*COLS+12]=1;
+tiles[(ROWS-6)*COLS+11]=3;
+tiles[(ROWS-2)*COLS+20]=2;
+tiles[(ROWS-8)*COLS+22]=1; tiles[(ROWS-8)*COLS+23]=1; tiles[(ROWS-8)*COLS+24]=1;
+tiles[(ROWS-9)*COLS+24]=5;
+tiles[(ROWS-2)*COLS+14]=6;
+let brush=1, playing=false, keys={}, raf=0;
+const cv=document.getElementById('c');
+const ctx=cv.getContext('2d');
+cv.width=COLS*CELL; cv.height=ROWS*CELL;
+
+const bar=document.getElementById('brushes');
+BRUSHES.forEach(([id,label])=>{
+  const b=document.createElement('button');
+  b.textContent=(id+1)+' '+label;
+  b.onclick=()=>{ brush=id; [...bar.children].forEach(x=>x.classList.toggle('on', x===b)); };
+  if(id===1) b.classList.add('on');
+  bar.appendChild(b);
+});
+
+function th(){ return THEMES[document.getElementById('theme').value]; }
+function color(t){
+  const T=th();
+  return [null,T.ground,T.hazard,T.coin,'#fff',T.accent,'#ff8fab','#90e0ef'][t];
+}
+function draw(){
+  const T=th();
+  ctx.fillStyle=T.bg; ctx.fillRect(0,0,cv.width,cv.height);
+  for(let i=0;i<tiles.length;i++){
+    const t=tiles[i]; if(!t) continue;
+    const x=(i%COLS)*CELL, y=Math.floor(i/COLS)*CELL;
+    ctx.fillStyle=color(t);
+    if(t===2){ ctx.beginPath(); ctx.moveTo(x,y+CELL); ctx.lineTo(x+CELL/2,y); ctx.lineTo(x+CELL,y+CELL); ctx.fill(); }
+    else if(t===3){ ctx.beginPath(); ctx.arc(x+CELL/2,y+CELL/2,CELL*0.28,0,6.28); ctx.fill(); }
+    else ctx.fillRect(x+1,y+1,CELL-2,CELL-2);
+  }
+  if(playing){
+    ctx.fillStyle='#19d37e';
+    ctx.fillRect(player.x, player.y, 14, 16);
+  }
+}
+function paintAt(e){
+  const r=cv.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/CELL*(cv.width/r.width));
+  const y=Math.floor((e.clientY-r.top)/CELL*(cv.height/r.height));
+  if(x<0||y<0||x>=COLS||y>=ROWS||playing) return;
+  const i=y*COLS+x;
+  if(brush===4){ for(let k=0;k<tiles.length;k++) if(tiles[k]===4) tiles[k]=0; }
+  tiles[i]=brush;
+  draw();
+}
+cv.onpointerdown=e=>{ cv.setPointerCapture(e.pointerId); paintAt(e); };
+cv.onpointermove=e=>{ if(e.buttons) paintAt(e); };
+
+let player={x:20,y:20,vx:0,vy:0};
+function spawn(){
+  const i=tiles.indexOf(4);
+  const x=i<0?20:(i%COLS)*CELL+4;
+  const y=i<0?20:Math.floor(i/COLS)*CELL-16;
+  player={x,y,vx:0,vy:0};
+}
+function solid(px,py){
+  const cx=Math.floor((px+7)/CELL), cy=Math.floor((py+15)/CELL);
+  if(cx<0||cy<0||cx>=COLS||cy>=ROWS) return 1;
+  const t=tiles[cy*COLS+cx];
+  return t===1||t===7?t:0;
+}
+function cellAt(px,py){
+  const cx=Math.floor((px+7)/CELL), cy=Math.floor((py+8)/CELL);
+  if(cx<0||cy<0||cx>=COLS||cy>=ROWS) return 0;
+  return tiles[cy*COLS+cx];
+}
+function tick(){
+  if(!playing) return;
+  if(keys['ArrowLeft']||keys['KeyA']) player.vx-=0.4;
+  if(keys['ArrowRight']||keys['KeyD']) player.vx+=0.4;
+  player.vx*=0.8;
+  player.vy+=0.45;
+  player.x+=player.vx;
+  if(solid(player.x, player.y)) { player.x-=player.vx; player.vx=0; }
+  player.y+=player.vy;
+  if(solid(player.x, player.y)) {
+    player.y-=player.vy; player.vy=0;
+    if(keys['ArrowUp']||keys['KeyW']||keys['Space']) player.vy=-8.2;
+  }
+  const hit=cellAt(player.x, player.y);
+  if(hit===2||hit===6) spawn();
+  if(hit===3){ const i=Math.floor((player.y+8)/CELL)*COLS+Math.floor((player.x+7)/CELL); tiles[i]=0; }
+  if(hit===5){ document.getElementById('msg').textContent='You reached the exit. Export the game or keep painting.'; stopPlay(); }
+  if(player.y>ROWS*CELL) spawn();
+  draw();
+  raf=requestAnimationFrame(tick);
+}
+function stopPlay(){ playing=false; cancelAnimationFrame(raf); document.getElementById('play').hidden=false; document.getElementById('stop').hidden=true; draw(); }
+document.getElementById('play').onclick=()=>{ playing=true; spawn(); document.getElementById('play').hidden=true; document.getElementById('stop').hidden=false; tick(); };
+document.getElementById('stop').onclick=stopPlay;
+addEventListener('keydown',e=>{ keys[e.code]=true; if(['Space','ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault(); });
+addEventListener('keyup',e=>{ keys[e.code]=false; });
+
+function spec(){
+  return { type:'platformer', name:document.getElementById('name').value, theme:document.getElementById('theme').value, cols:COLS, rows:ROWS, tiles:tiles.slice() };
+}
+function download(name, text, type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type}));
+  a.download=name; a.click();
+}
+document.getElementById('exportJson').onclick=()=>download((spec().name||'level')+'.json', JSON.stringify(spec()), 'application/json');
+document.getElementById('exportHtml').onclick=()=>{
+  const s=spec();
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${s.name}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;background:#000;color:#fff;font-family:system-ui}canvas{display:block;margin:10px auto;background:#111}</style></head>
+<body><p style="text-align:center">${s.name} · arrows / WASD</p><canvas id="c"></canvas>
+<script>
+const COLS=${COLS},ROWS=${ROWS},CELL=24,tiles=${JSON.stringify(s.tiles)};
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+cv.width=COLS*CELL;cv.height=ROWS*CELL;
+let p={x:20,y:20,vx:0,vy:0},keys={};
+const i=tiles.indexOf(4); if(i>=0){p.x=(i%COLS)*CELL+4;p.y=Math.floor(i/COLS)*CELL-16;}
+function solid(x,y){const cx=Math.floor((x+7)/CELL),cy=Math.floor((y+15)/CELL);if(cx<0||cy>=ROWS)return 1;const t=tiles[cy*COLS+cx];return t===1||t===7;}
+function cell(x,y){const cx=Math.floor((x+7)/CELL),cy=Math.floor((y+8)/CELL);if(cx<0||cy>=ROWS)return 0;return tiles[cy*COLS+cx];}
+addEventListener('keydown',e=>keys[e.code]=true); addEventListener('keyup',e=>keys[e.code]=false);
+function loop(){
+  if(keys.ArrowLeft||keys.KeyA)p.vx-=.4; if(keys.ArrowRight||keys.KeyD)p.vx+=.4;
+  p.vx*=.8; p.vy+=.45; p.x+=p.vx; if(solid(p.x,p.y)){p.x-=p.vx;p.vx=0;} p.y+=p.vy;
+  if(solid(p.x,p.y)){p.y-=p.vy;p.vy=0; if(keys.ArrowUp||keys.KeyW||keys.Space)p.vy=-8.2;}
+  const h=cell(p.x,p.y); if(h===2||h===6){const i=tiles.indexOf(4);p.x=(i%COLS)*CELL+4;p.y=Math.floor(i/COLS)*CELL-16;p.vx=p.vy=0;}
+  if(h===3){tiles[Math.floor((p.y+8)/CELL)*COLS+Math.floor((p.x+7)/CELL)]=0;}
+  ctx.fillStyle='#0b1020';ctx.fillRect(0,0,cv.width,cv.height);
+  for(let i=0;i<tiles.length;i++){const t=tiles[i]; if(!t)continue; const x=(i%COLS)*CELL,y=(i/COLS|0)*CELL;
+    ctx.fillStyle=['','#2a3348','#ff4d6a','#ffd166','#fff','#19d37e','#ff8fab','#90e0ef'][t]; ctx.fillRect(x+1,y+1,CELL-2,CELL-2);}
+  ctx.fillStyle='#19d37e'; ctx.fillRect(p.x,p.y,14,16);
+  requestAnimationFrame(loop);
+}
+loop();
+<\/script></body></html>`;
+  download((s.name||'game').replace(/\s+/g,'-')+'.html', html, 'text/html');
+  document.getElementById('msg').textContent='Saved a standalone HTML game. Send it to anyone — no server required.';
+};
+draw();
   </script>
 </body>
 </html>
