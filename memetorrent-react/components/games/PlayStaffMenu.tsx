@@ -114,18 +114,23 @@ export default function PlayStaffMenu({ gameId, gameName }: { gameId: string; ga
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-label="Staff"
+        title="Staff"
         style={{
-          fontSize: 12,
+          width: 28,
+          height: 28,
+          padding: 0,
+          fontSize: 11,
           fontWeight: 800,
           color: open || panel ? '#04140c' : '#fbbf24',
-          background: open || panel ? '#fbbf24' : 'rgba(251,191,36,.12)',
-          border: '1px solid rgba(251,191,36,.45)',
-          borderRadius: 999,
-          padding: '6px 14px',
+          background: open || panel ? '#fbbf24' : 'transparent',
+          border: '1px solid rgba(251,191,36,.4)',
+          borderRadius: 8,
           cursor: 'pointer',
+          lineHeight: 1,
         }}
       >
-        Staff
+        S
       </button>
 
       {open && (
@@ -133,8 +138,7 @@ export default function PlayStaffMenu({ gameId, gameName }: { gameId: string; ga
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
+            right: 0,
             minWidth: 148,
             background: '#111113',
             border: '1px solid rgba(255,255,255,.16)',
@@ -172,8 +176,9 @@ export default function PlayStaffMenu({ gameId, gameName }: { gameId: string; ga
           style={{
             position: 'fixed',
             top: 44,
-            left: '50%',
-            transform: 'translateX(-50%)',
+            right: 8,
+            left: 'auto',
+            transform: 'none',
             width: 'min(360px, calc(100vw - 16px))',
             zIndex: 39,
             background: 'rgba(9,9,11,.97)',

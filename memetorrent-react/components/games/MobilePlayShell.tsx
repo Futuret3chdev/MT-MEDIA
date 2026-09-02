@@ -134,7 +134,6 @@ export default function MobilePlayShell({
             {game.name}
           </span>
         </div>
-        <PlayStaffMenu gameId={game.id} gameName={game.name} />
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, minWidth: 0 }}>
           {iconBtn('phantom', '/icons/phantom.svg', 'Phantom')}
           {iconBtn('solflare', '/icons/solflare.svg', 'Solflare')}
@@ -145,7 +144,6 @@ export default function MobilePlayShell({
           ) : (
             <a href={`/login?next=${next}`} style={{ color: '#ccc', fontSize: 11, textDecoration: 'none' }}>Log in</a>
           )}
-          <a href="/catalog" style={{ color: '#ccc', fontSize: 12, textDecoration: 'none' }}>Catalog</a>
           <a
             href="/catalog"
             style={{
@@ -160,6 +158,7 @@ export default function MobilePlayShell({
           >
             Exit
           </a>
+          <PlayStaffMenu gameId={game.id} gameName={game.name} />
         </div>
       </div>
 
