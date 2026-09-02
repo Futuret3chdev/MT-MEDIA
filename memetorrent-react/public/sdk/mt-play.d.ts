@@ -4,18 +4,27 @@ export type MTUser = {
   is_admin?: boolean;
 } | null;
 
+export type MTResult<T = Record<string, unknown>> = { ok: true } & T | { ok: false; error: string };
+
 export type MTPlayClient = {
   version: string;
   origin: string;
   gameId: string;
-  on(event: 'wallet' | 'user' | 'wallet-request', fn: (data: unknown) => void): () => void;
+  on(event: 'wallet' | 'user' | 'wallet-request' | 'pause' | 'resume' | 'visibility', fn: (data: unknown) => void): () => void;
   wallet(): string;
   setWallet(addr: string): void;
   requestWallet(kind?: 'phantom' | 'solflare' | 'backpack'): void;
-  me(): Promise<MTUser>;
-  postScore(score: number, extra?: { gameId?: string; room?: string }): Promise<{ ok?: boolean }>;
-  scores(query?: { gameId?: string; limit?: number }): Promise<{ ok?: boolean; scores?: unknown[] }>;
+  me(): Promise<MTResult<{ user: MTUser }>>;
+  postScore(score: number, extra?: { gameId?: string; room?: string; playerName?: string }): Promise<MTResult>;
+  scores(query?: { gameId?: string; limit?: number; period?: string; room?: string }): Promise<MTResult<{ scores?: unknown[] }>>;
   loginUrl(next?: string): string;
+  openLogin(): void;
+  inPlayShell(): boolean;
+  isFramed(): boolean;
+  paused(): boolean;
+  exit(): void;
+  openCatalog(): void;
+  ping(): { ok: true; version: string; framed: boolean; gameId: string };
 };
 
 export type MTPlay = {

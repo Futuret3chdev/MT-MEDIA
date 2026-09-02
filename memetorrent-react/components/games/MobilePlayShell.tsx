@@ -29,15 +29,39 @@ export default function MobilePlayShell({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setPicker(false);
     };
+    const pingIframe = (type: string) => {
+      document.querySelectorAll('iframe').forEach((f) => {
+        try { f.contentWindow?.postMessage({ type }, '*'); } catch { /* */ }
+      });
+    };
+    const onMsg = (e: MessageEvent) => {
+      const t = e.data?.type;
+      if (t === 'mt-play-exit') {
+        location.href = '/catalog';
+        return;
+      }
+      if (t === 'mt-play-login' && typeof e.data?.url === 'string') {
+        location.href = e.data.url;
+      }
+    };
     window.addEventListener('keydown', onKey);
+    window.addEventListener('message', onMsg);
     fetch('/api/portal/me', { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => { if (d?.ok && d.user) setUser(d.user); })
       .catch(() => {});
     return () => {
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('message', onMsg);
+      pingIframe('mt-play-pause');
     };
   }, []);
+
+  useEffect(() => {
+    document.querySelectorAll('iframe').forEach((f) => {
+      try { f.contentWindow?.postMessage({ type: picker ? 'mt-play-pause' : 'mt-play-resume' }, '*'); } catch { /* */ }
+    });
+  }, [picker]);
 
   const next = encodeURIComponent(`/play/${game.id}`);
 

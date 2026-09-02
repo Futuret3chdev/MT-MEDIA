@@ -1,0 +1,8 @@
+{
+  "name": "@futuret3ch/mt-play",
+  "version": "1.1.0",
+  "description": "MemeTorrent Play SDK — wallets, portal identity, scores, play-shell exit",
+  "main": "mt-play.js",
+  "types": "mt-play.d.ts",
+  "license": "MIT"
+}
