@@ -40,7 +40,7 @@ export default function MobilePlayShell({
         style={{
           position: 'fixed',
           zIndex: 20,
-          top: 8,
+          top: 56,
           left: 8,
           fontSize: 11,
           fontWeight: 700,
