@@ -159,3 +159,76 @@ body {
   animation: logo-dance 2.6s ease-in-out infinite;
   will-change: transform;
 }
+
+/* Play chrome */
+.mt-play-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: linear-gradient(180deg, #101828 0%, #0b1220 100%);
+  border-bottom: 1px solid rgba(25, 211, 126, 0.22);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+.mt-play-picker {
+  position: fixed;
+  z-index: 31;
+  top: 44px;
+  left: 0;
+  right: 0;
+  padding: 12px 14px 16px;
+  background: linear-gradient(180deg, #0f1a2e 0%, #0a1220 100%);
+  border-bottom: 1px solid rgba(25, 211, 126, 0.28);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  color: #fff;
+}
+.mt-play-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 10px 8px;
+  max-height: min(42vh, 280px);
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mt-play-picker-grid::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.mt-play-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #dbeafe;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-align: center;
+  line-height: 1.15;
+}
+.mt-play-chip img {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  object-fit: cover;
+  display: block;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+.mt-play-chip.is-on {
+  color: #19d37e;
+}
+.mt-play-chip.is-on img {
+  border-color: #19d37e;
+  box-shadow: 0 0 0 3px rgba(25, 211, 126, 0.28), 0 6px 16px rgba(0, 0, 0, 0.35);
+}

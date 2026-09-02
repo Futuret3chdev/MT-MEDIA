@@ -110,24 +110,7 @@ export default function MobilePlayShell({
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000' }}>
       <GameWalletBridge />
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: BAR,
-          zIndex: 30,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '0 10px',
-          background: '#09090b',
-          borderBottom: '1px solid rgba(255,255,255,.12)',
-          color: '#fff',
-          fontFamily: 'system-ui, sans-serif',
-        }}
-      >
+      <div className="mt-play-bar">
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <button
             type="button"
@@ -181,37 +164,17 @@ export default function MobilePlayShell({
       </div>
 
       {picker && (
-        <div
-          style={{
-            position: 'fixed',
-            zIndex: 31,
-            top: BAR,
-            left: 0,
-            right: 0,
-            padding: 12,
-            background: 'rgba(9,9,11,.97)',
-            color: '#fff',
-            borderBottom: '1px solid rgba(255,255,255,.12)',
-          }}
-        >
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div className="mt-play-picker">
+          <div className="mt-play-picker-grid">
             {live.map((g) => (
               <a
                 key={g.id}
                 href={`/play/${g.id}`}
                 onClick={() => setPicker(false)}
-                style={{
-                  flex: '0 0 92px',
-                  border: g.id === game.id ? '2px solid #19d37e' : '1px solid #333',
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  color: '#fff',
-                  textDecoration: 'none',
-                  fontSize: 10,
-                }}
+                className={`mt-play-chip${g.id === game.id ? ' is-on' : ''}`}
               >
-                <img src={g.img} alt="" style={{ width: '100%', height: 56, objectFit: 'cover', display: 'block' }} />
-                <div style={{ padding: 4 }}>{g.name}</div>
+                <img src={g.img} alt="" />
+                {g.name}
               </a>
             ))}
           </div>
