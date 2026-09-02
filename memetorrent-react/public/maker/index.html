@@ -3,26 +3,68 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MT Maker</title>
+  <title>MT Android Studio</title>
   <style>
-    :root { --bg:#0b1020; --g:#2a3348; --a:#19d37e; --h:#ff4d6a; --c:#ffd166; }
-    * { box-sizing: border-box; }
-    html,body { margin:0; height:100%; background:#07090f; color:#e8eaf0; font-family:system-ui,sans-serif; }
-    header { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 10px; border-bottom:1px solid #1e293b; }
-    header strong { color:var(--a); }
-    header input, header select, header button { font:inherit; background:#111827; color:#fff; border:1px solid #334155; border-radius:8px; padding:6px 10px; }
-    header button.primary { background:var(--a); color:#04140c; border:0; font-weight:800; }
-    #brushes { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; }
-    #brushes button { border:1px solid #334155; background:#111827; color:#fff; border-radius:999px; padding:6px 10px; font-size:12px; }
-    #brushes button.on { background:var(--a); color:#04140c; }
-    #stage { display:flex; justify-content:center; padding:8px; overflow:auto; }
-    canvas { background:var(--bg); image-rendering:pixelated; cursor:crosshair; border-radius:8px; max-width:100%; }
-    #msg { font-size:12px; opacity:.7; padding:0 10px 10px; }
+    :root {
+      --bg:#2b2b2b; --panel:#3c3f41; --edge:#515658; --text:#bbb;
+      --a:#6a8759; --accent:#499c54; --tab:#4b4f51; --on:#4e5254;
+    }
+    * { box-sizing:border-box; }
+    html,body { margin:0; height:100%; background:#2b2b2b; color:#bbb; font:13px/1.4 "Segoe UI",system-ui,sans-serif; }
+    #ide { display:grid; height:100%; grid-template-rows:36px 32px 1fr 120px; }
+    #titlebar {
+      background:#3c3f41; display:flex; align-items:center; gap:10px;
+      padding:0 10px; border-bottom:1px solid #1e1e1e; user-select:none;
+    }
+    #titlebar strong { color:#a5c261; letter-spacing:.3px; }
+    #titlebar .win { margin-left:auto; opacity:.5; font-size:11px; }
+    #toolbar {
+      background:#3c3f41; display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+      padding:4px 8px; border-bottom:1px solid #1e1e1e;
+    }
+    #toolbar input, #toolbar select, #toolbar button {
+      font:inherit; background:#45494a; color:#ccc; border:1px solid #646464;
+      border-radius:3px; padding:3px 8px;
+    }
+    #toolbar button.primary { background:#499c54; color:#fff; border-color:#3d7a45; font-weight:700; }
+    #toolbar button.run { background:#3574f0; color:#fff; border-color:#2b5fc4; font-weight:700; }
+    #main { display:grid; grid-template-columns:200px 1fr; min-height:0; }
+    #tree { background:#3c3f41; border-right:1px solid #1e1e1e; overflow:auto; padding:8px 0; }
+    #tree h4 { margin:0 10px 6px; font-size:10px; letter-spacing:1px; color:#808080; }
+    #tree button {
+      display:block; width:100%; text-align:left; background:transparent; color:#bbb;
+      border:0; padding:4px 12px; font:inherit; cursor:pointer;
+    }
+    #tree button:hover, #tree button.on { background:#4b6eaf; color:#fff; }
+    #work { display:flex; flex-direction:column; min-width:0; min-height:0; }
+    #tabs { display:flex; background:#3c3f41; border-bottom:1px solid #1e1e1e; }
+    #tabs button { background:#3c3f41; color:#888; border:0; border-right:1px solid #1e1e1e; padding:6px 14px; font:inherit; }
+    #tabs button.on { background:#4e5254; color:#fff; }
+    #stage { flex:1; overflow:auto; background:#2b2b2b; padding:10px; }
+    canvas { background:#0b1020; image-rendering:pixelated; cursor:crosshair; border:1px solid #1e1e1e; max-width:100%; }
+    #brushes { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+    #brushes button { border:1px solid #646464; background:#45494a; color:#ccc; border-radius:3px; padding:4px 8px; font-size:12px; }
+    #brushes button.on { background:#499c54; color:#fff; border-color:#3d7a45; }
+    pre.code {
+      margin:0; padding:12px; background:#2b2b2b; color:#a9b7c6; font:12px/1.45 ui-monospace,Consolas,monospace;
+      white-space:pre-wrap; border:1px solid #1e1e1e;
+    }
+    #log {
+      background:#2b2b2b; border-top:1px solid #1e1e1e; color:#a9b7c6;
+      font:12px/1.4 ui-monospace,Consolas,monospace; padding:8px 10px; overflow:auto; white-space:pre-wrap;
+    }
+    #log .ok { color:#6a8759; }
+    #log .bad { color:#d1675a; }
   </style>
 </head>
 <body>
-  <header>
-    <strong>MT Maker</strong>
+<div id="ide">
+  <div id="titlebar">
+    <strong>MT Android Studio</strong>
+    <span id="proj">app · Night Run</span>
+    <span class="win">FutureT3ch · our Android IDE — not Google’s</span>
+  </div>
+  <div id="toolbar">
     <input id="name" value="Night Run" />
     <select id="theme">
       <option value="night">Night</option>
@@ -30,18 +72,41 @@
       <option value="city">City</option>
       <option value="space">Space</option>
     </select>
-    <button type="button" id="play">Play</button>
-    <button type="button" id="stop" hidden>Stop</button>
-    <button type="button" class="primary" id="exportHtml">Export game.html</button>
-    <button type="button" id="exportAndroid">Export Android Studio project</button>
-    <button type="button" id="exportIos">Export Xcode project</button>
-    <button type="button" id="exportJson">Export JSON</button>
-    <a href="https://memetorrent.futuret3ch.com.au/software/games/sdk" style="color:#19d37e;font-size:12px">SDK</a>
-  </header>
-  <div id="brushes"></div>
-  <div id="stage"><canvas id="c"></canvas></div>
-  <div id="msg">Paint a level. Play it here. Export game.html, or Export Android Studio project and open that folder in Android Studio to compile the APK — Maker does not replace Studio.</div>
-  <script>
+    <button type="button" class="run" id="play">▶ Run</button>
+    <button type="button" id="stop" hidden>■ Stop</button>
+    <button type="button" class="primary" id="buildApk">Build APK</button>
+    <button type="button" id="exportHtml">Save game.html</button>
+    <button type="button" id="exportJson">Save JSON</button>
+  </div>
+  <div id="main">
+    <aside id="tree">
+      <h4>PROJECT</h4>
+      <button type="button" class="on" data-tab="design">app/src/main/game (Design)</button>
+      <button type="button" data-tab="html">app/src/main/assets/index.html</button>
+      <button type="button" data-tab="manifest">AndroidManifest.xml</button>
+      <button type="button" data-tab="activity">MainActivity.java</button>
+    </aside>
+    <div id="work">
+      <div id="tabs">
+        <button type="button" class="on" data-tab="design">Design</button>
+        <button type="button" data-tab="html">index.html</button>
+        <button type="button" data-tab="manifest">Manifest</button>
+        <button type="button" data-tab="activity">MainActivity</button>
+      </div>
+      <div id="stage">
+        <div id="pane-design">
+          <div id="brushes"></div>
+          <canvas id="c"></canvas>
+        </div>
+        <pre class="code" id="pane-html" hidden></pre>
+        <pre class="code" id="pane-manifest" hidden></pre>
+        <pre class="code" id="pane-activity" hidden></pre>
+      </div>
+    </div>
+  </div>
+  <div id="log">MT Android Studio ready. Paint a level, ▶ Run it here, then Build APK. This IDE compiles the Android package — you do not need Google Android Studio.</div>
+</div>
+<script>
 const TILE = { empty:0, ground:1, hazard:2, coin:3, spawn:4, exit:5, enemy:6, spring:7 };
 const BRUSHES = [
   [0,'Erase'],[1,'Ground'],[2,'Spike'],[3,'Coin'],[4,'Start'],[5,'Exit'],[6,'Enemy'],[7,'Spring']
@@ -76,6 +141,14 @@ BRUSHES.forEach(([id,label])=>{
   bar.appendChild(b);
 });
 
+function logLine(text, cls){
+  const el=document.getElementById('log');
+  const span=document.createElement('div');
+  if(cls) span.className=cls;
+  span.textContent=text;
+  el.appendChild(span);
+  el.scrollTop=el.scrollHeight;
+}
 function th(){ return THEMES[document.getElementById('theme').value]; }
 function color(t){
   const T=th();
@@ -144,13 +217,13 @@ function tick(){
   const hit=cellAt(player.x, player.y);
   if(hit===2||hit===6) spawn();
   if(hit===3){ const i=Math.floor((player.y+8)/CELL)*COLS+Math.floor((player.x+7)/CELL); tiles[i]=0; }
-  if(hit===5){ document.getElementById('msg').textContent='You reached the exit. Export the game or keep painting.'; stopPlay(); }
+  if(hit===5){ logLine('Run: reached exit.','ok'); stopPlay(); }
   if(player.y>ROWS*CELL) spawn();
   draw();
   raf=requestAnimationFrame(tick);
 }
 function stopPlay(){ playing=false; cancelAnimationFrame(raf); document.getElementById('play').hidden=false; document.getElementById('stop').hidden=true; draw(); }
-document.getElementById('play').onclick=()=>{ playing=true; spawn(); document.getElementById('play').hidden=true; document.getElementById('stop').hidden=false; tick(); };
+document.getElementById('play').onclick=()=>{ playing=true; spawn(); document.getElementById('play').hidden=true; document.getElementById('stop').hidden=false; logLine('Run: emulator preview (this window).'); tick(); };
 document.getElementById('stop').onclick=stopPlay;
 addEventListener('keydown',e=>{ keys[e.code]=true; if(['Space','ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup',e=>{ keys[e.code]=false; });
@@ -158,15 +231,9 @@ addEventListener('keyup',e=>{ keys[e.code]=false; });
 function spec(){
   return { type:'platformer', name:document.getElementById('name').value, theme:document.getElementById('theme').value, cols:COLS, rows:ROWS, tiles:tiles.slice() };
 }
-function download(name, text, type){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([text],{type}));
-  a.download=name; a.click();
-}
-document.getElementById('exportJson').onclick=()=>download((spec().name||'level')+'.json', JSON.stringify(spec()), 'application/json');
-document.getElementById('exportHtml').onclick=()=>{
+function gameHTML(){
   const s=spec();
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${s.name}</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${s.name}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>html,body{margin:0;background:#000;color:#fff;font-family:system-ui}canvas{display:block;margin:10px auto;background:#111}</style></head>
 <body><p style="text-align:center">${s.name} · arrows / WASD</p><canvas id="c"></canvas>
@@ -193,136 +260,88 @@ function loop(){
 }
 loop();
 <\/script></body></html>`;
-  download((s.name||'game').replace(/\s+/g,'-')+'.html', html, 'text/html');
-  document.getElementById('msg').textContent='Saved a standalone HTML game. Send it to anyone — no server required.';
-  window.__lastHtml = html;
-};
-function crc32(data){
-  if(typeof crc32.t==='undefined'){
-    const t=new Uint32Array(256);
-    for(let i=0;i<256;i++){ let c=i; for(let k=0;k<8;k++) c=c&1?0xedb88320^(c>>>1):c>>>1; t[i]=c>>>0; }
-    crc32.t=t;
-  }
-  let crc=0xffffffff;
-  for(let i=0;i<data.length;i++) crc=crc32.t[(crc^data[i])&255]^(crc>>>8);
-  return (crc^0xffffffff)>>>0;
 }
-function zipStore(files){
-  const enc=new TextEncoder();
-  const u16=n=>{const b=new Uint8Array(2); new DataView(b.buffer).setUint16(0,n,true); return b;};
-  const u32=n=>{const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0,n,true); return b;};
-  const chunks=[], central=[]; let offset=0;
-  for(const f of files){
-    const name=enc.encode(f.name.replace(/\\/g,'/'));
-    const data=typeof f.data==='string'?enc.encode(f.data):f.data;
-    const crc=crc32(data);
-    const local=[u32(0x04034b50),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data];
-    chunks.push(...local);
-    central.push(u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name);
-    offset+=30+name.length+data.length;
-  }
-  const centralStart=offset;
-  let centralSize=0;
-  for(const c of central){ chunks.push(c); centralSize+=c.length; }
-  const n=files.length;
-  chunks.push(u32(0x06054b50),u16(0),u16(0),u16(n),u16(n),u32(centralSize),u32(centralStart),u16(0));
-  const total=chunks.reduce((s,p)=>s+p.length,0);
-  const out=new Uint8Array(total);
-  let o=0; for(const p of chunks){ out.set(p,o); o+=p.length; }
-  return out;
-}
-function saveZip(filename, files){
+function download(name, text, type){
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([zipStore(files)],{type:'application/zip'}));
-  a.download=filename; a.click();
+  a.href=URL.createObjectURL(new Blob([text],{type}));
+  a.download=name; a.click();
+}
+function downloadBytes(name, buf, type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([buf],{type}));
+  a.download=name; a.click();
 }
 function slug(s){ return String(s||'game').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'')||'game'; }
-function androidStudioFiles(html, folder){
-  const p=n=>folder+'/'+n;
-  return [
-    {name:p('README.txt'), data:'MT Maker → Android Studio\n\nThis zip is an Android Studio project. Maker wrote the game.\nYou still compile the APK in Android Studio — same as any other Android app.\n\n1. Unzip.\n2. Android Studio → File → Open → this folder (the one with settings.gradle).\n3. Trust the project. Let Gradle sync.\n4. Run on a phone or emulator.\n5. Play Store: Build → Generate Signed Bundle / APK.\n\nGame file: app/src/main/assets/index.html\napplicationId: au.com.futuret3ch.made in app/build.gradle — change it before Play.\nJDK 17 is required (Android Studio ships it).\nIf Studio asks to generate a Gradle wrapper, let it (Gradle 8.2).\n'},
-    {name:p('settings.gradle'), data:"pluginManagement {\n    repositories {\n        google()\n        mavenCentral()\n        gradlePluginPortal()\n    }\n}\ndependencyResolutionManagement {\n    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)\n    repositories {\n        google()\n        mavenCentral()\n    }\n}\nrootProject.name = \"MTMadeGame\"\ninclude ':app'\n"},
-    {name:p('build.gradle'), data:"plugins {\n    id 'com.android.application' version '8.2.2' apply false\n}\n"},
-    {name:p('gradle.properties'), data:'org.gradle.jvmargs=-Xmx2048m\nandroid.useAndroidX=true\nandroid.nonTransitiveRClass=true\n'},
-    {name:p('gradle/wrapper/gradle-wrapper.properties'), data:'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.2.1-all.zip\nnetworkTimeout=10000\nvalidateDistributionUrl=true\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n'},
-    {name:p('app/build.gradle'), data:"plugins { id 'com.android.application' }\nandroid {\n    namespace 'au.com.futuret3ch.made'\n    compileSdk 34\n    defaultConfig {\n        applicationId 'au.com.futuret3ch.made'\n        minSdk 24\n        targetSdk 34\n        versionCode 1\n        versionName '1.0'\n    }\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_17\n        targetCompatibility JavaVersion.VERSION_17\n    }\n    buildTypes {\n        release { minifyEnabled false }\n    }\n}\ndependencies {\n    implementation 'androidx.appcompat:appcompat:1.6.1'\n}\n"},
-    {name:p('app/src/main/AndroidManifest.xml'), data:'<?xml version="1.0" encoding="utf-8"?>\n<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <application\n        android:label="@string/app_name"\n        android:icon="@drawable/ic_launcher"\n        android:usesCleartextTraffic="true"\n        android:theme="@style/Theme.AppCompat.NoActionBar">\n        <activity\n            android:name=".MainActivity"\n            android:exported="true"\n            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"\n            android:hardwareAccelerated="true">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>\n        </activity>\n    </application>\n</manifest>\n'},
-    {name:p('app/src/main/java/au/com/futuret3ch/made/MainActivity.java'), data:'package au.com.futuret3ch.made;\n\nimport android.os.Bundle;\nimport android.view.View;\nimport android.webkit.WebSettings;\nimport android.webkit.WebView;\nimport android.webkit.WebViewClient;\nimport androidx.appcompat.app.AppCompatActivity;\n\npublic class MainActivity extends AppCompatActivity {\n    private WebView web;\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        web = new WebView(this);\n        WebSettings s = web.getSettings();\n        s.setJavaScriptEnabled(true);\n        s.setDomStorageEnabled(true);\n        s.setAllowFileAccess(true);\n        s.setMediaPlaybackRequiresUserGesture(false);\n        web.setWebViewClient(new WebViewClient());\n        web.setOverScrollMode(View.OVER_SCROLL_NEVER);\n        web.loadUrl("file:///android_asset/index.html");\n        setContentView(web);\n    }\n    @Override\n    public void onBackPressed() {\n        if (web != null && web.canGoBack()) web.goBack();\n        else super.onBackPressed();\n    }\n}\n'},
-    {name:p('app/src/main/res/values/strings.xml'), data:'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="app_name">MT Game</string>\n</resources>\n'},
-    {name:p('app/src/main/res/drawable/ic_launcher.xml'), data:'<?xml version="1.0" encoding="utf-8"?>\n<vector xmlns:android="http://schemas.android.com/apk/res/android"\n    android:width="108dp" android:height="108dp"\n    android:viewportWidth="108" android:viewportHeight="108">\n    <path android:fillColor="#04140C" android:pathData="M0,0h108v108h-108z"/>\n    <path android:fillColor="#19D37E" android:pathData="M22,78 L54,24 L86,78 Z"/>\n</vector>\n'},
-    {name:p('app/src/main/assets/index.html'), data:html}
-  ];
-}
-function xcodeFiles(html, folder){
-  const p=n=>folder+'/'+n;
-  const pbx=`// !$*UTF8*$!
-{
-	archiveVersion = 1;
-	classes = {
-	};
-	objectVersion = 56;
-	objects = {
-		A10000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* AppDelegate.swift */; };
-		A10000000000000000000002 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* ViewController.swift */; };
-		A10000000000000000000003 /* game.html in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* game.html */; };
-		A20000000000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		A20000000000000000000002 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		A20000000000000000000003 /* game.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = game.html; sourceTree = "<group>"; };
-		A20000000000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A20000000000000000000005 /* MTMadeGame.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MTMadeGame.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A30000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		A40000000000000000000001 = {isa = PBXGroup; children = (A40000000000000000000002 /* MTMadeGame */, A40000000000000000000003 /* Products */,); sourceTree = "<group>"; };
-		A40000000000000000000002 /* MTMadeGame */ = {isa = PBXGroup; children = (A20000000000000000000001 /* AppDelegate.swift */, A20000000000000000000002 /* ViewController.swift */, A20000000000000000000003 /* game.html */, A20000000000000000000004 /* Info.plist */,); path = MTMadeGame; sourceTree = "<group>"; };
-		A40000000000000000000003 /* Products */ = {isa = PBXGroup; children = (A20000000000000000000005 /* MTMadeGame.app */,); name = Products; sourceTree = "<group>"; };
-		A50000000000000000000001 /* MTMadeGame */ = {isa = PBXNativeTarget; buildConfigurationList = A70000000000000000000002; buildPhases = (A60000000000000000000001 /* Sources */, A30000000000000000000001 /* Frameworks */, A60000000000000000000002 /* Resources */,); buildRules = (); dependencies = (); name = MTMadeGame; productName = MTMadeGame; productReference = A20000000000000000000005; productType = "com.apple.product-type.application"; };
-		A80000000000000000000001 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1500; LastUpgradeCheck = 1500; TargetAttributes = {A50000000000000000000001 = {CreatedOnToolsVersion = 15.0;};};}; buildConfigurationList = A70000000000000000000001; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base,); mainGroup = A40000000000000000000001; productRefGroup = A40000000000000000000003; projectDirPath = ""; projectRoot = ""; targets = (A50000000000000000000001 /* MTMadeGame */,); };
-		A60000000000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000003 /* game.html in Resources */,); runOnlyForDeploymentPostprocessing = 0; };
-		A60000000000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001 /* AppDelegate.swift in Sources */, A10000000000000000000002 /* ViewController.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
-		A90000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = NO; DEBUG_INFORMATION_FORMAT = dwarf; ENABLE_TESTABILITY = YES; GCC_DYNAMIC_NO_PIC = NO; GCC_OPTIMIZATION_LEVEL = 0; IPHONEOS_DEPLOYMENT_TARGET = 15.0; MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE; ONLY_ACTIVE_ARCH = YES; SDKROOT = iphoneos; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG; SWIFT_OPTIMIZATION_LEVEL = "-Onone";}; name = Debug; };
-		A90000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = NO; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; IPHONEOS_DEPLOYMENT_TARGET = 15.0; MTL_ENABLE_DEBUG_INFO = NO; SDKROOT = iphoneos; SWIFT_COMPILATION_MODE = wholemodule; VALIDATE_PRODUCT = YES;}; name = Release; };
-		A90000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = MTMadeGame/Info.plist; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks",); MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = au.com.futuret3ch.made; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Debug; };
-		A90000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = MTMadeGame/Info.plist; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks",); MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = au.com.futuret3ch.made; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Release; };
-		A70000000000000000000001 /* Build configuration list for PBXProject "MTMadeGame" */ = {isa = XCConfigurationList; buildConfigurations = (A90000000000000000000001 /* Debug */, A90000000000000000000002 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		A70000000000000000000002 /* Build configuration list for PBXNativeTarget "MTMadeGame" */ = {isa = XCConfigurationList; buildConfigurations = (A90000000000000000000003 /* Debug */, A90000000000000000000004 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-	};
-	rootObject = A80000000000000000000001 /* Project object */;
-}
-`;
-  return [
-    {name:p('README.txt'), data:'MT Maker → Xcode\n\nThis zip is an Xcode project. Maker wrote the game.\nYou still compile and sign in Xcode on a Mac — same as any other iOS app.\n\n1. Unzip.\n2. Open MTMadeGame.xcodeproj in Xcode.\n3. Signing & Capabilities → your Apple Team.\n4. Run, or Product → Archive for the App Store.\n\nGame file: MTMadeGame/game.html\nBundle id: au.com.futuret3ch.made — change it before you list.\nApple Developer Program is required to list on the App Store.\n'},
-    {name:p('MTMadeGame.xcodeproj/project.pbxproj'), data:pbx},
-    {name:p('MTMadeGame/AppDelegate.swift'), data:'import UIKit\n\n@main\nclass AppDelegate: UIResponder, UIApplicationDelegate {\n    var window: UIWindow?\n    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {\n        let window = UIWindow(frame: UIScreen.main.bounds)\n        window.rootViewController = ViewController()\n        window.makeKeyAndVisible()\n        self.window = window\n        return true\n    }\n}\n'},
-    {name:p('MTMadeGame/ViewController.swift'), data:'import UIKit\nimport WebKit\n\nclass ViewController: UIViewController, WKNavigationDelegate {\n    var web: WKWebView!\n    override func viewDidLoad() {\n        super.viewDidLoad()\n        view.backgroundColor = .black\n        let config = WKWebViewConfiguration()\n        config.allowsInlineMediaPlayback = true\n        web = WKWebView(frame: view.bounds, configuration: config)\n        web.autoresizingMask = [.flexibleWidth, .flexibleHeight]\n        web.navigationDelegate = self\n        web.scrollView.bounces = false\n        web.isOpaque = false\n        web.backgroundColor = .black\n        view.addSubview(web)\n        if let url = Bundle.main.url(forResource: "game", withExtension: "html") {\n            web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())\n        }\n    }\n    override var prefersStatusBarHidden: Bool { true }\n}\n'},
-    {name:p('MTMadeGame/Info.plist'), data:'<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n	<key>CFBundleDevelopmentRegion</key><string>en</string>\n	<key>CFBundleDisplayName</key><string>MT Game</string>\n	<key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>\n	<key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>\n	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>\n	<key>CFBundleName</key><string>$(PRODUCT_NAME)</string>\n	<key>CFBundlePackageType</key><string>APPL</string>\n	<key>CFBundleShortVersionString</key><string>1.0</string>\n	<key>CFBundleVersion</key><string>1</string>\n	<key>LSRequiresIPhoneOS</key><true/>\n	<key>UILaunchScreen</key><dict/>\n	<key>UIStatusBarHidden</key><true/>\n	<key>UISupportedInterfaceOrientations</key>\n	<array>\n		<string>UIInterfaceOrientationPortrait</string>\n		<string>UIInterfaceOrientationLandscapeLeft</string>\n		<string>UIInterfaceOrientationLandscapeRight</string>\n	</array>\n</dict>\n</plist>\n'},
-    {name:p('MTMadeGame/game.html'), data:html}
-  ];
-}
-async function exportZip(kind){
-  if(!window.__lastHtml) document.getElementById('exportHtml').click();
-  const html = window.__lastHtml;
-  if(!html){ document.getElementById('msg').textContent='Export game.html once first.'; return; }
-  const folder=slug(spec().name);
-  try {
-    const res = await fetch('/export/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:spec().name,html})});
-    if(res.ok){
-      const blob = await res.blob();
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download=folder+'-'+kind+'.zip';
-      a.click();
-    } else {
-      throw new Error('no local exporter');
+
+const MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
+<manifest package="au.com.futuret3ch.made">
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
+    <application android:label="MT Game" android:icon="@drawable/ic_launcher">
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>`;
+const ACTIVITY = `package au.com.futuret3ch.made;
+
+import android.os.Bundle;
+import android.webkit.WebView;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+    @Override protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        WebView web = new WebView(this);
+        web.getSettings().setJavaScriptEnabled(true);
+        web.loadUrl("file:///android_asset/index.html");
+        setContentView(web);
     }
-  } catch(e){
-    saveZip(folder+'-'+kind+'.zip', kind==='android' ? androidStudioFiles(html, folder) : xcodeFiles(html, folder));
-  }
-  document.getElementById('msg').textContent= kind==='android'
-    ? 'Unzip → Android Studio → File → Open that folder → Run. That is how you compile the APK.'
-    : 'Unzip → open MTMadeGame.xcodeproj in Xcode → sign → Archive.';
+}`;
+
+function showTab(id){
+  document.querySelectorAll('#tabs button, #tree button').forEach(b=>b.classList.toggle('on', b.dataset.tab===id));
+  document.getElementById('pane-design').hidden = id!=='design';
+  document.getElementById('pane-html').hidden = id!=='html';
+  document.getElementById('pane-manifest').hidden = id!=='manifest';
+  document.getElementById('pane-activity').hidden = id!=='activity';
+  if(id==='html') document.getElementById('pane-html').textContent = gameHTML();
+  if(id==='manifest') document.getElementById('pane-manifest').textContent = MANIFEST;
+  if(id==='activity') document.getElementById('pane-activity').textContent = ACTIVITY;
 }
-document.getElementById('exportAndroid').onclick=()=>exportZip('android');
-document.getElementById('exportIos').onclick=()=>exportZip('ios');
+document.querySelectorAll('#tabs button, #tree button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.getElementById('name').oninput=()=>{
+  document.getElementById('proj').textContent='app · '+document.getElementById('name').value;
+};
+
+document.getElementById('exportJson').onclick=()=>download((spec().name||'level')+'.json', JSON.stringify(spec()), 'application/json');
+document.getElementById('exportHtml').onclick=()=>{
+  const html=gameHTML();
+  download(slug(spec().name)+'.html', html, 'text/html');
+  logLine('Saved '+slug(spec().name)+'.html','ok');
+};
+
+document.getElementById('buildApk').onclick=async ()=>{
+  const html=gameHTML();
+  const name=slug(spec().name);
+  logLine('Build APK: packaging '+name+' …');
+  try {
+    const res=await fetch('/build/apk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:spec().name,html})});
+    if(!res.ok){
+      const t=await res.text();
+      throw new Error(t||('HTTP '+res.status));
+    }
+    const buf=await res.arrayBuffer();
+    downloadBytes(name+'.apk', buf, 'application/vnd.android.package-archive');
+    logLine('BUILD SUCCESSFUL — '+name+'.apk ('+buf.byteLength+' bytes). Sideload on a phone. This IDE signed it; Google Android Studio was not used.','ok');
+  } catch(e){
+    logLine('Build APK needs the MT Android Studio app (Windows / Mac / Android download). This browser preview cannot compile packages. '+e.message,'bad');
+  }
+};
+
 draw();
-  </script>
+</script>
 </body>
 </html>

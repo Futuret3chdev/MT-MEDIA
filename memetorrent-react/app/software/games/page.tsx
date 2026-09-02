@@ -30,11 +30,11 @@ export default function SoftwareGamesPage() {
       </div>
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mt-4 mb-2">Software · Games</div>
       <h1 className="text-4xl sm:text-5xl font-semibold tracking-[-1.6px] mb-4">
-        Game software you can use.
+        MT Android Studio
       </h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        Maker writes the game. Android Studio still compiles the APK. Xcode still signs iOS.
-        SDK:{' '}
+        Our own Android IDE. Paint a game, ▶ Run it, hit Build APK. The APK is compiled and signed here —
+        you do not need Google’s Android Studio. SDK:{' '}
         <Link href="/software/games/sdk" className="text-emerald-400">
           /software/games/sdk
         </Link>
@@ -42,19 +42,18 @@ export default function SoftwareGamesPage() {
       </p>
 
       <div className="rounded-2xl border border-white/10 p-6 mb-8" style={{ background: 'var(--card)' }}>
-        <div className="text-emerald-400 text-xs tracking-[2px] mb-2">How Android games get made</div>
-        <h2 className="font-semibold text-xl mb-3">MT Maker → Android Studio → APK</h2>
+        <div className="text-emerald-400 text-xs tracking-[2px] mb-2">Our Android Studio</div>
+        <h2 className="font-semibold text-xl mb-3">Design → Run → Build APK</h2>
         <ol className="text-sm opacity-80 space-y-2 list-decimal pl-5 mb-4">
-          <li>Paint the level in MT Maker (Windows, Mac, phone, or in this browser).</li>
-          <li>Export Android Studio project — a Gradle folder with your game in <code className="text-emerald-400">app/src/main/assets/index.html</code>.</li>
-          <li>Open that folder in Android Studio (File → Open). That is the normal Android app workflow.</li>
-          <li>Green Run for a phone / emulator. Build → Generate Signed Bundle / APK for Play.</li>
+          <li>Open MT Android Studio (Windows, Mac, or the Android app).</li>
+          <li>Paint the level in the Design editor. ▶ Run previews it in the IDE.</li>
+          <li>Build APK — this IDE packages and signs the Android app. Sideload the .apk on a phone.</li>
         </ol>
         <p className="text-sm opacity-60 mb-4">
-          Maker does not replace Android Studio. Same for iOS: Export Xcode project, then Archive in Xcode.
+          Google Android Studio is not part of this path. MT Android Studio is the compiler.
         </p>
         <a href="/maker/" className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm">
-          Open Maker in this browser
+          Open MT Android Studio in this browser
         </a>
       </div>
 
@@ -80,28 +79,29 @@ export default function SoftwareGamesPage() {
       <div className="grid sm:grid-cols-2 gap-4">
         {[
           {
-            name: 'Windows Maker',
-            note: 'Paint a level, play it, Export game.html or Export Android Studio project. Runs on this PC.',
-            href: '/downloads/MTMaker.exe',
-            label: 'Download MT Maker (.exe)',
+            name: 'Windows · MT Android Studio',
+            note: 'Standalone IDE. Design, Run, Build APK on this PC. Install the .apk on any Android phone.',
+            href: '/downloads/MTStudio.exe',
+            label: 'Download MT Android Studio (.exe)',
+            extra: { href: '/downloads/MTMaker.exe', label: 'Same app as MTMaker.exe' },
           },
           {
-            name: 'Android Maker',
-            note: 'Make the game on the phone, then Export Android Studio project and copy the zip to a PC. Open that folder in Android Studio to compile the APK — Studio still builds it.',
-            href: '/downloads/MTMaker.apk',
-            label: 'Download Maker APK',
+            name: 'Android · MT Android Studio',
+            note: 'The same IDE on a phone. Design and Run here. Build APK from the Windows or Mac IDE.',
+            href: '/downloads/MTStudio.apk',
+            label: 'Download Studio APK',
             extra: { href: APK, label: 'Play client APK (MT Games)' },
           },
           {
-            name: 'Mac · iOS Maker',
-            note: 'Make the game on the Mac. Export Xcode project, open MTMadeGame.xcodeproj, then Archive. Xcode still signs.',
-            href: '/downloads/MTMaker-macos-arm.zip',
-            label: 'Download Maker (Apple Silicon)',
-            extra: { href: '/downloads/MTMaker-macos.zip', label: 'Intel Mac' },
+            name: 'Mac · MT Android Studio',
+            note: 'The same IDE on a Mac. Build APK from here. iOS listing still uses Xcode on a Mac with an Apple account.',
+            href: '/downloads/MTStudio-macos-arm.zip',
+            label: 'Download Studio (Apple Silicon)',
+            extra: { href: '/downloads/MTStudio-macos.zip', label: 'Intel Mac' },
           },
           {
             name: 'iOS (App Store project)',
-            note: 'Xcode project of the maker app itself (not a game you painted). Archive on a Mac with an Apple Developer account.',
+            note: 'Xcode project of this IDE itself. Archive on a Mac with an Apple Developer account.',
             href: '/downloads/MTMaker-ios-xcode.zip',
             label: 'Download Xcode project',
           },

@@ -55,6 +55,9 @@ func zipTemplate(root, html, filename string) ([]byte, error) {
 		if rel == "app/src/main/assets/index.html" || rel == "game.html" || rel == "MTMadeGame/game.html" {
 			return nil
 		}
+		if strings.Contains(rel, "/build/") || strings.HasSuffix(rel, "local.properties") {
+			return nil
+		}
 		f, err := bundled.Open(p)
 		if err != nil {
 			return err
@@ -90,6 +93,19 @@ func zipTemplate(root, html, filename string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func slugName(s, fallback string) string {
+	name := strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' {
+			return r
+		}
+		return '-'
+	}, s)
+	if name == "" {
+		return fallback
+	}
+	return name
+}
+
 func exportHandler(root, prefix string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -105,15 +121,7 @@ func exportHandler(root, prefix string) http.HandlerFunc {
 			http.Error(w, "need html", 400)
 			return
 		}
-		name := strings.Map(func(r rune) rune {
-			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' {
-				return r
-			}
-			return '-'
-		}, body.Name)
-		if name == "" {
-			name = prefix
-		}
+		name := slugName(body.Name, prefix)
 		z, err := zipTemplate(root, body.HTML, name)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
@@ -123,6 +131,31 @@ func exportHandler(root, prefix string) http.HandlerFunc {
 		w.Header().Set("Content-Disposition", "attachment; filename="+name+"-"+prefix+".zip")
 		_, _ = w.Write(z)
 	}
+}
+
+func buildAPKHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST", 405)
+		return
+	}
+	var body exportBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "bad json", 400)
+		return
+	}
+	if body.HTML == "" {
+		http.Error(w, "need html", 400)
+		return
+	}
+	apk, err := buildGameAPK(body.HTML)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	name := slugName(body.Name, "MTGame")
+	w.Header().Set("Content-Type", "application/vnd.android.package-archive")
+	w.Header().Set("Content-Disposition", "attachment; filename="+name+".apk")
+	_, _ = w.Write(apk)
 }
 
 func main() {
@@ -136,11 +169,12 @@ func main() {
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.FS(sub)))
-	mux.HandleFunc("/export/android", exportHandler("templates/android", "android-studio"))
+	mux.HandleFunc("/build/apk", buildAPKHandler)
+	mux.HandleFunc("/export/android", exportHandler("templates/android", "gradle"))
 	mux.HandleFunc("/export/ios", exportHandler("templates/ios", "ios"))
 	go func() { _ = http.Serve(ln, mux) }()
 	url := "http://" + ln.Addr().String() + "/"
-	log.Println("MT Maker", url)
+	log.Println("MT Android Studio", url)
 	time.Sleep(150 * time.Millisecond)
 	openApp(url)
 	select {}
