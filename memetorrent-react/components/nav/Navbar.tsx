@@ -89,10 +89,16 @@ export default function Navbar() {
 
   // Mobile detection for tips
   const [isMobile, setIsMobile] = useState(false);
+  const [compact, setCompact] = useState(true);
   useEffect(() => {
     if (typeof navigator !== 'undefined') {
       setIsMobile(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
     }
+    const mq = window.matchMedia('(max-width: 1100px), (pointer: coarse)');
+    const apply = () => setCompact(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
   }, []);
 
   // Wallet adapter for manual connect buttons (needed for mobile deeplinks for Phantom/Solflare/Backpack)
@@ -201,14 +207,57 @@ export default function Navbar() {
 
   return (
     <header className="w-full border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-5 flex items-center justify-between text-sm">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2 sm:py-5 flex items-center justify-between text-sm">
         <Link href="/" className="font-semibold tracking-tight flex items-center gap-2 hover:opacity-80 transition">
           <span className="text-emerald-400">MT</span> ECO SYSTEM
         </Link>
 
-        <div className="flex items-center gap-3 sm:gap-6 text-sm">
+        <div className="flex items-center gap-2 sm:gap-6 text-sm">
+          <div className="mt-nav-compact ml-auto items-center gap-1.5">
+            {portalUser ? (
+              <>
+                <NoticeBell />
+                <a
+                  href="/portal"
+                  className="flex items-center gap-1 max-w-[7rem] opacity-90"
+                  title="Account"
+                >
+                  {portalUser.avatar_url ? (
+                    <img src={portalUser.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                  ) : (
+                    <span className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs">👤</span>
+                  )}
+                  <span className="truncate text-xs">@{portalUser.username}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="text-[11px] px-2 py-1 border border-white/20 rounded-full"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAuth('login')}
+                className="text-[11px] px-2 py-1 border border-white/20 rounded-full"
+              >
+                Log in
+              </button>
+            )}
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-xl leading-none"
+              aria-label="Menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? '✕' : '☰'}
+            </button>
+          </div>
           {/* Desktop nav links - use /# so they work correctly even from /contact */}
-          <div className="hidden md:flex items-center gap-5">
+          <div className="mt-nav-desktop items-center gap-5">
             <a href="/#tokenomics" className="opacity-70 hover:opacity-100">TOKENOMICS</a>
             <a href="/#utilities" className="opacity-70 hover:opacity-100">UTILITIES</a>
             <a href="/#tap" className="opacity-70 hover:opacity-100">TAP</a>
@@ -239,27 +288,19 @@ export default function Navbar() {
           {/* Status icon (replaces Launch) — pulls live summary from /status services.json */}
           <a 
             href="/status" 
-            className="flex items-center gap-1.5 text-xs sm:text-sm px-3 py-1 rounded-xl border border-white/20 hover:bg-white/5"
+            className="mt-nav-desktop items-center gap-1.5 text-xs sm:text-sm px-3 py-1 rounded-xl border border-white/20 hover:bg-white/5"
             title="System Status"
           >
             <span className="inline-block w-2 h-2 rounded-full bg-[#19d37e]"></span>
             <span>Status <span className="text-[#19d37e]">{servicesData.services.length}/7</span></span>
           </a>
 
-          {/* Mobile hamburger */}
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-            className="md:hidden p-2 text-xl leading-none"
-            aria-label="Toggle menu"
-          >
-            ☰
-          </button>
         </div>
       </div>
 
       {/* Mobile nav menu - use /# so anchors work from subpages like /contact */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/10 bg-black px-4 py-3 flex flex-col gap-2 text-sm">
+      {compact && mobileMenuOpen && (
+        <div className="border-t border-white/10 bg-black px-4 py-3 flex flex-col gap-2 text-sm">
           <a href="/#tokenomics" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TOKENOMICS</a>
           <a href="/#utilities" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">UTILITIES</a>
           <a href="/#tap" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAP</a>
@@ -283,7 +324,6 @@ export default function Navbar() {
           <a href="/software" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">SOFTWARE</a>
           <a href="/contact" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CONTACT</a>
           <a href="/#stats" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">LIVE $MT</a>
-          <a href="/status" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">Status</a>
           <button 
             onClick={() => { setMobileMenuOpen(false); setShowBuyPanel(true); }}
             className="py-1 text-left font-medium text-emerald-400 hover:opacity-100"
@@ -291,74 +331,29 @@ export default function Navbar() {
             BUY $MT NOW
           </button>
           <a href={LINKS.wallet} target="_blank" onClick={() => setMobileMenuOpen(false)} className="py-1 font-medium">Infinite Wallet</a>
-          {portalUser ? (
-            <>
-              <div className="py-1 flex items-center gap-2">
-                <NoticeBell />
-                <span className="text-xs opacity-70">Notifications</span>
-              </div>
-              <a href="/portal" onClick={() => setMobileMenuOpen(false)} className="py-1 text-emerald-400">
-                @{portalUser.username}
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  logout();
-                }}
-                className="py-1 text-left"
-              >
-                Log out
-              </button>
-              <a
-                href="/shield"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mt-1 inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-2 py-1.5"
-              >
-                <img src="/icons/shield-mark.jpg" alt="" className="w-9 h-9 rounded-lg object-cover" />
-                <span className="text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
-              </a>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  openAuth('login');
-                }}
-                className="py-1 text-left"
-              >
-                Log in
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  openAuth('register');
-                }}
-                className="py-1 text-left"
-              >
-                Register
-              </button>
-              <div className="flex items-center gap-2 pt-1">
-                <LiveScoreIcon />
-              </div>
-              <a
-                href="/shield"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mt-1 inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-2 py-1.5"
-              >
-                <img src="/icons/shield-mark.jpg" alt="" className="w-9 h-9 rounded-lg object-cover" />
-                <span className="text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
-              </a>
-            </>
+          <a href={portalUser ? '/chat' : '/login?next=/chat'} onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">CHAT</a>
+          <a href="/status" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">Status</a>
+          <a href="/shield" onClick={() => setMobileMenuOpen(false)} className="mt-1 inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-2 py-1.5">
+            <img src="/icons/shield-mark.jpg" alt="" className="w-9 h-9 rounded-lg object-cover" />
+            <span className="text-xs font-black tracking-[0.22em] text-cyan-300">SHIELD</span>
+          </a>
+          {!portalUser && (
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                openAuth('register');
+              }}
+              className="py-1 text-left"
+            >
+              Register
+            </button>
           )}
         </div>
       )}
 
       {/* Social icons row under the main nav links - using original Font Awesome icons in brand colors */}
-      <div className="border-t border-white/10">
+      <div className="mt-nav-social border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex flex-wrap items-center gap-x-3 sm:gap-x-5 text-xs sm:text-sm social-row">
           <a href="https://discord.gg/FxT7q7fpkT" target="_blank" rel="noopener" title="Discord" style={{ color: '#5865F2' }}>
             <i className="fab fa-discord text-lg sm:text-xl"></i>

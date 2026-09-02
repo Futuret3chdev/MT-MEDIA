@@ -1,5 +1,61 @@
 @import "tailwindcss";
 
+/* Catalog play iframe: hide page chrome, fill the phone. */
+html.mt-embed,
+html.mt-embed body {
+  height: 100% !important;
+  min-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #000 !important;
+}
+html.mt-embed main {
+  height: 100% !important;
+  min-height: 100% !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+html.mt-embed main > div {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  min-height: 100% !important;
+}
+html.mt-embed main a,
+html.mt-embed main h1,
+html.mt-embed main p,
+html.mt-embed main .uppercase {
+  display: none !important;
+}
+html.mt-embed iframe {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  z-index: 30;
+}
+html.mt-embed canvas {
+  max-height: none !important;
+}
+
+/* Slim phone header by default. Full categories only on a real desktop mouse. */
+.mt-nav-compact { display: flex; }
+.mt-nav-desktop { display: none; }
+.mt-nav-social { display: none; }
+.mt-foot-links { display: none; }
+@media (min-width: 1101px) and (hover: hover) and (pointer: fine) {
+  .mt-nav-compact { display: none !important; }
+  .mt-nav-desktop { display: flex !important; }
+  .mt-nav-social { display: block !important; }
+  .mt-foot-links { display: flex !important; }
+}
+
 /* =========================
    BASE COLORS (TAILWIND SAFE)
 ========================= */

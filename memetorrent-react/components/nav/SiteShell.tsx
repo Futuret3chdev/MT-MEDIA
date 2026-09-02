@@ -5,15 +5,21 @@ import Footer from '@/components/footer/Footer';
 import Navbar from '@/components/nav/Navbar';
 import GameWalletBridge from '@/components/wallet/GameWalletBridge';
 
-/** Hide nav/footer when this page is inside an iframe so chrome is not stacked. */
+/** Hide nav/footer in iframes and on /play so games get the full screen. */
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const [framed, setFramed] = useState(false);
+  const [play, setPlay] = useState(false);
   useEffect(() => {
-    setFramed(window.self !== window.top);
+    const inFrame = window.self !== window.top;
+    const onPlay = location.pathname.startsWith('/play/');
+    setFramed(inFrame);
+    setPlay(onPlay);
+    if (inFrame) document.documentElement.classList.add('mt-embed');
+    else document.documentElement.classList.remove('mt-embed');
   }, []);
 
-  if (framed) {
-    return <main className="min-h-screen">{children}</main>;
+  if (framed || play) {
+    return <main className="min-h-0 h-dvh overflow-hidden">{children}</main>;
   }
 
   return (

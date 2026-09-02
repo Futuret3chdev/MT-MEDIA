@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { CATALOG, getGame, isStaticPlay } from '@/lib/mt-catalog';
+import { CATALOG, getGame } from '@/lib/mt-catalog';
 import PlayLink from '@/components/auth/PlayLink';
 
 export function generateStaticParams() {
@@ -16,7 +16,6 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
   const g = getGame(id);
   if (!g) notFound();
   const external = g.play.startsWith('http');
-  const needsShell = isStaticPlay(g.play);
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
       <div className="flex flex-wrap gap-4 text-sm">
@@ -35,11 +34,12 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
             {g.rated === '18+' ? '18+' : g.kind} · {g.status}
           </div>
           <h1 className="text-4xl font-semibold tracking-tight mb-3">{g.name}</h1>
-          <p className="opacity-70 max-w-2xl mb-6">{g.blurb}</p>
+          <p className="opacity-70 max-w-2xl mb-2">{g.blurb}</p>
+          <p className="text-sm text-emerald-400/90 mb-6">On a phone: Play, then turn the screen sideways. Landscape is the real table.</p>
           <div className="flex flex-wrap gap-3">
             <PlayLink
-              href={external ? g.play : needsShell ? `/play/${g.id}` : g.play}
-              external={external}
+              href={g.id === 'mtgames' ? g.play : `/play/${g.id}`}
+              external={g.id === 'mtgames' && external}
               className="font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-5 py-2 rounded-full text-sm"
             >
               Play

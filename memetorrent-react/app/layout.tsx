@@ -3,6 +3,12 @@ import SiteShell from '@/components/nav/SiteShell';
 import { WalletAdapterProvider } from '@/components/wallet/WalletAdapterProvider';
 import MtTracker from '@/components/analytics/MtTracker';
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover' as const,
+};
+
 export const metadata = {
   title: 'MT-ECO SYSTEM | $MT • INFINITE WALLET • 1¢ Fees — by Futuret3ch and MemeTorrent',
   description: 'Next-generation decentralized on-chain network. Native $MT token. Self-built INFINITE WALLET. NFTs, Rockets, self-built bridges. No third parties. Infinite possibilities.',
@@ -15,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-build="2026-08-18-soft-kit">
+    <html lang="en" data-build="2026-08-29-play-shell">
       <head>
         {/* Font Awesome for social icons in original brand colors */}
         <link 
