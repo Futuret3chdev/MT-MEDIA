@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Futuret3ch Shield",
+  "version": "1.0.0",
+  "description": "Shield companion: hub, trial, Guide, panic. Does not scan the whole disk from the browser.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Shield",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://memetorrent.futuret3ch.com.au/*",
+    "https://*.futuret3ch.com.au/*"
+  ]
+}

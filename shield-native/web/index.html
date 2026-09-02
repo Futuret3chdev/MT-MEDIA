@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Shield</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <img src="icon-64.png" alt="" width="36" height="36" />
+    <div>
+      <strong>Shield</strong>
+      <div class="sub" id="plat">this device</div>
+    </div>
+    <a class="btn" href="https://memetorrent.futuret3ch.com.au/login?next=/shield/trial&from=shield-app">Trial</a>
+  </header>
+  <nav>
+    <button data-tab="grid" class="on">Grid</button>
+    <button data-tab="panic">Panic</button>
+    <button data-tab="guide">Guide</button>
+    <button data-tab="account">Account</button>
+  </nav>
+  <main>
+    <section id="grid" class="tab on">
+      <h2>Live grid</h2>
+      <p class="hint">Interfaces and peers on <em>this</em> device. utun/awdl are this computer, not extra phones.</p>
+      <button type="button" id="scan">Refresh scan</button>
+      <ul id="ifaces"></ul>
+    </section>
+    <section id="panic" class="tab">
+      <h2>Panic lock</h2>
+      <p class="hint">Turns off sharing listeners on this device only. Does not hack anyone else.</p>
+      <button type="button" id="panicBtn" class="danger">Lock sharing</button>
+      <pre id="panicLog"></pre>
+    </section>
+    <section id="guide" class="tab">
+      <h2>Guide</h2>
+      <p class="hint">Threat-level help. Refuses attack advice.</p>
+      <label>Level
+        <select id="level">
+          <option>everyday</option>
+          <option>elevated</option>
+          <option>stalking</option>
+          <option>child</option>
+        </select>
+      </label>
+      <div id="guideOut" class="card"></div>
+    </section>
+    <section id="account" class="tab">
+      <h2>Account</h2>
+      <p id="who">Checking portal…</p>
+      <a class="btn" href="https://memetorrent.futuret3ch.com.au/login?next=/shield">Sign in</a>
+      <a class="link" href="https://memetorrent.futuret3ch.com.au/shield/help">Help</a>
+      <a class="link" href="https://memetorrent.futuret3ch.com.au/shield/business">Business</a>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

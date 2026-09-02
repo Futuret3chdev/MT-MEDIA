@@ -119,11 +119,11 @@ export default function ShieldPage() {
           </Link>
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Pill icon={ICONS.download} label="Mac" href="/downloads/shield/Shield-mac.zip" />
-          <Pill icon={ICONS.download} label="Windows" href="/downloads/shield/Shield-windows.zip" />
-          <Pill icon={ICONS.download} label="iPhone companion" href="/shield/downloads" />
-          <Pill icon={ICONS.download} label="Android" href="/downloads/shield/android/README.txt" />
-          <Pill icon={ICONS.download} label="Browser extension" href="/downloads/shield/Shield-extension.zip" />
+          <Pill icon={ICONS.download} label="Android APK" href="/downloads/shield/Shield-android.apk" />
+          <Pill icon={ICONS.download} label="iOS (Xcode)" href="/downloads/shield/Shield-ios-xcode.zip" />
+          <Pill icon={ICONS.download} label="Chrome extension" href="/downloads/shield/Shield-chrome-extension.zip" />
+          <Pill icon={ICONS.download} label="Firefox extension" href="/downloads/shield/Shield-firefox-extension.zip" />
+          <Pill icon={ICONS.download} label="All packages" href="/shield/downloads" />
         </div>
 
         <h2 id="docs" className="mt-16 scroll-mt-28 text-xs tracking-[0.2em] uppercase opacity-50">

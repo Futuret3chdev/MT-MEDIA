@@ -9,34 +9,40 @@ export const metadata: Metadata = {
 
 const FILES = [
   {
-    id: 'mac',
-    label: 'Mac',
-    file: '/downloads/shield/Shield-mac.zip',
-    note: 'Unzip → Shield.app → right-click Open. Opens the hub and trial.',
-  },
-  {
-    id: 'windows',
-    label: 'Windows',
-    file: '/downloads/shield/Shield-windows.zip',
-    note: 'Unzip → double-click Shield.cmd. Opens the hub and trial.',
-  },
-  {
-    id: 'extension',
-    label: 'Browser extension',
-    file: '/downloads/shield/Shield-extension.zip',
-    note: 'Chrome / Edge / Brave: chrome://extensions → Developer mode → Load unpacked (unzipped folder).',
-  },
-  {
     id: 'android',
-    label: 'Android',
-    file: '/downloads/shield/android/README.txt',
-    note: 'Open the hub in Chrome → Add to Home screen. Native APK when the signed build is published.',
+    label: 'Android APK (Play / sideload)',
+    file: '/downloads/shield/Shield-android.apk',
+    note: 'Install on a phone to test. For Play Console, open the android/ folder in Android Studio, generate a signed AAB (package au.com.futuret3ch.shield).',
   },
   {
     id: 'ios',
-    label: 'iPhone companion',
-    file: '/shield',
-    note: 'Safari → Share → Add to Home Screen. Companion only — Apple does not allow a full-disk AV.',
+    label: 'iOS Xcode project (App Store)',
+    file: '/downloads/shield/Shield-ios-xcode.zip',
+    note: 'Must archive on a Mac with Xcode + Apple Developer. Product → Archive → App Store Connect. Linux cannot sign an IPA.',
+  },
+  {
+    id: 'chrome',
+    label: 'Chrome / Edge / Brave extension',
+    file: '/downloads/shield/Shield-chrome-extension.zip',
+    note: 'Unzip → chrome://extensions → Developer mode → Load unpacked. Zip is Web Store upload-ready (icons 16/48/128).',
+  },
+  {
+    id: 'firefox',
+    label: 'Firefox extension',
+    file: '/downloads/shield/Shield-firefox-extension.zip',
+    note: 'Unzip to test. Upload the zip at addons.mozilla.org (id shield@futuret3ch.com.au).',
+  },
+  {
+    id: 'win',
+    label: 'Windows (system app source)',
+    file: '/downloads/shield/STORE.md',
+    note: 'Electron desktop: on a Windows PC run npm install && npm run pack:win in shield-native. Produces Shield.exe with tray + local grid.',
+  },
+  {
+    id: 'mac',
+    label: 'Mac (system app source)',
+    file: '/downloads/shield/STORE.md',
+    note: 'On a Mac: npm run pack:mac then sign/notarize. Unsigned zip: right-click Open.',
   },
 ];
 
@@ -65,7 +71,7 @@ export default function ShieldDownloadsPage() {
               </div>
               <a
                 href={f.file}
-                download={f.file.endsWith('.zip') || f.file.endsWith('.txt')}
+                download={/\.(zip|apk|txt)$/.test(f.file)}
                 className="px-4 py-2 rounded-full bg-cyan-400 text-black font-semibold text-sm"
               >
                 Download

@@ -1,0 +1,6 @@
+{
+  "appId": "au.com.futuret3ch.shield",
+  "appName": "Shield",
+  "webDir": "web",
+  "server": { "androidScheme": "https" }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "futuret3ch-shield",
+  "version": "1.0.0",
+  "description": "Futuret3ch Shield — live grid and panic lock on this device",
+  "main": "electron/main.js",
+  "author": "Futuret3ch",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "pack:linux": "electron-builder --linux AppImage --publish never",
+    "pack:win": "electron-builder --win portable --publish never",
+    "pack:mac": "electron-builder --mac zip --publish never",
+    "cap:sync": "npx cap sync"
+  },
+  "build": {
+    "appId": "au.com.futuret3ch.shield",
+    "productName": "Shield",
+    "files": ["electron/**", "web/**"],
+    "directories": { "output": "dist" },
+    "linux": { "target": ["AppImage"], "category": "Utility" },
+    "win": { "target": ["portable", "nsis"], "icon": "web/icon-256.png" },
+    "mac": { "target": ["zip"], "icon": "web/icon-512.png", "category": "public.app-category.utilities" },
+    "nsis": { "oneClick": true, "perMachine": false }
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/ios": "^6.1.2"
+  }
+}
