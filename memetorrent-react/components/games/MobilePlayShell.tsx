@@ -68,9 +68,9 @@ export default function MobilePlayShell({
       el.style.height = `${h}px`;
     }
     if (frame) {
-      frame.style.position = 'absolute';
-      frame.style.left = '0';
-      frame.style.top = '0';
+      frame.style.position = 'fixed';
+      frame.style.left = `${left}px`;
+      frame.style.top = `${top}px`;
       frame.style.width = `${w}px`;
       frame.style.height = `${h}px`;
     }
@@ -134,13 +134,12 @@ export default function MobilePlayShell({
       allow="clipboard-write; fullscreen; autoplay; gamepad"
       allowFullScreen
       style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
+        position: 'fixed',
+        inset: 0,
         width: '100%',
         height: '100%',
-        minHeight: '100%',
         border: 0,
+        zIndex: 1,
       }}
     />
   );
@@ -194,18 +193,11 @@ export default function MobilePlayShell({
   return (
     <div
       id="mt-play-shell"
-      className="fixed inset-0 z-[90] bg-black flex flex-col overflow-hidden"
+      className="fixed inset-0 z-[90] bg-black overflow-hidden"
     >
-      {!showGate && phone && (
-        <button
-          type="button"
-          onClick={() => setPicker((v) => !v)}
-          className="absolute z-[5] top-2 left-2 text-[11px] font-semibold bg-black/70 border border-white/20 rounded-full px-3 py-1"
-        >
-          Games
-        </button>
-      )}
-      {!showGate && !phone && (
+      {iframe}
+      {gate}
+      {!showGate && (
         <button
           type="button"
           onClick={() => setPicker((v) => !v)}
@@ -220,10 +212,6 @@ export default function MobilePlayShell({
           {switcher}
         </div>
       )}
-      <div className="flex-1 min-h-0 relative">
-        {gate}
-        {iframe}
-      </div>
     </div>
   );
 }

@@ -26,27 +26,26 @@ html, body {
     margin: 0;
     width: 100%;
     height: 100%;
+    height: 100dvh;
     overflow: hidden;
     touch-action: none;
 }
 
-/* GAME AREA */
+/* GAME AREA — same idea as MT WORLD: canvas fills the window */
 #gameContainer {
     position: fixed;
-    top: 52px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #050505;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a3d12;
     overflow: hidden;
     z-index: 1;
 }
 #tableFit {
-    line-height: 0;
-    flex: 0 0 auto;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 #gameCanvas {
     display: block;
@@ -1125,7 +1124,7 @@ button.ghost {
   #menuToggle { min-width: 56px; height: 28px; font-size: 12px; padding: 0 10px; }
   .player-info { font-size: 12px; padding: 2px 8px; }
   .player-name-line { max-width: 72px; }
-  #gameContainer { top: 36px; }
+  #gameContainer { inset: 0; }
   #instructions { display: none; }
   #menuOverlay { top: 40px; height: calc(100dvh - 44px); max-width: min(360px, 46vw); }
   #chatBox { width: 220px; height: 150px; bottom: 52px; }
@@ -1389,14 +1388,16 @@ function viewportBox() {
 }
 
 function resizeCanvas() {
-    const box = document.getElementById('gameContainer');
     const fit = document.getElementById('tableFit');
-    const r = box ? box.getBoundingClientRect() : { width: viewportBox().w, height: viewportBox().h - 52 };
-    const maxW = Math.max(160, r.width);
-    const maxH = Math.max(90, r.height);
-    const scale = Math.min(maxW / 900, maxH / 450);
-    fit.style.width = Math.floor(900 * scale) + 'px';
-    fit.style.height = Math.floor(450 * scale) + 'px';
+    const vv = viewportBox();
+    const w = Math.max(1, Math.floor(vv.w));
+    const h = Math.max(1, Math.floor(vv.h));
+    if (fit) {
+      fit.style.width = w + 'px';
+      fit.style.height = h + 'px';
+    }
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
 }
 
 window.addEventListener('resize', resizeCanvas);
