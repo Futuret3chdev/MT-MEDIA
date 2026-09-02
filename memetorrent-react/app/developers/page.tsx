@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react';
 
 const ORIGIN = 'https://memetorrent.futuret3ch.com.au';
 const CURL = `curl "${ORIGIN}/api/v1/cryptocurrency/quotes/latest?symbol=MT"`;
-const CLI = `curl -fsSL ${ORIGIN}/cli/mt.js -o mt.js && chmod +x mt.js
-./mt.js quotes`;
+const CLI_UNIX = `curl -fsSL ${ORIGIN}/cli/mt.js -o mt.js && chmod +x mt.js
+node mt.js quotes`;
+const CLI_WIN = `irm ${ORIGIN}/cli/mt.ps1 -OutFile mt.ps1
+powershell -File .\\mt.ps1 quotes`;
 
 function Copy({ text }: { text: string }) {
   const [ok, setOk] = useState(false);
@@ -137,14 +139,23 @@ export default function DevelopersPage() {
         </section>
 
         <section id="cli" className="mb-14">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <h2 className="text-2xl font-semibold">CLI</h2>
-            <Copy text={CLI} />
+          <h2 className="text-2xl font-semibold mb-3">CLI</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <h3 className="text-sm font-semibold">Windows PowerShell</h3>
+                <Copy text={CLI_WIN} />
+              </div>
+              <pre className="bg-black/70 border border-white/10 rounded-2xl p-4 text-xs overflow-auto whitespace-pre-wrap">{CLI_WIN}</pre>
+            </div>
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <h3 className="text-sm font-semibold">macOS / Linux</h3>
+                <Copy text={CLI_UNIX} />
+              </div>
+              <pre className="bg-black/70 border border-white/10 rounded-2xl p-4 text-xs overflow-auto whitespace-pre-wrap">{CLI_UNIX}</pre>
+            </div>
           </div>
-          <pre className="bg-black/70 border border-white/10 rounded-2xl p-4 text-xs overflow-auto">{CLI}</pre>
-          <p className="text-sm opacity-60 mt-2">
-            Or <code>curl -fsSL {ORIGIN}/cli/install.sh | sh</code> then <code>mt quotes</code>.
-          </p>
         </section>
 
         <section className="mb-14">

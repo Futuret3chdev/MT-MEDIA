@@ -43,9 +43,13 @@ async function main() {
   chain
   scores --game tap [--limit 10]
 
-Install:
-  curl -fsSL ${ORIGIN}/cli/mt.js -o mt.js && chmod +x mt.js
-  ./mt.js quotes
+Windows PowerShell:
+  irm ${ORIGIN}/cli/mt.ps1 -OutFile mt.ps1
+  powershell -File .\\mt.ps1 quotes
+
+macOS / Linux (needs Node):
+  curl -fsSL ${ORIGIN}/cli/mt.js -o mt.js
+  node mt.js quotes
 `);
     return;
   }

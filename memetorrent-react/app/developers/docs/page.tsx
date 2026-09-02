@@ -76,7 +76,8 @@ export default function DocsPage() {
             <span className="text-emerald-400">MT</span> Docs
           </Link>
           <Link href="/developers" className="opacity-60">Landing</Link>
-          <Link href="/cli/mt.js" className="opacity-60">CLI</Link>
+          <Link href="/cli/mt.ps1" className="opacity-60">CLI (Windows)</Link>
+          <Link href="/cli/mt.js" className="opacity-60">CLI (Node)</Link>
           <a href="/llms.txt" className="opacity-60">llms.txt</a>
           <Link href="/studio" className="ml-auto text-emerald-400">Studio</Link>
         </div>
