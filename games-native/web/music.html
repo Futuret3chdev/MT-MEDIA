@@ -1,81 +1,195 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MT Music / SFX</title>
+<title>MT Sound Studio</title>
 <link rel="stylesheet" href="kit.css"/>
 <style>
-  body{background:#10081c;color:#ede9fe}
-  .step{width:22px;height:28px;border:1px solid #4c1d95;background:#1e1b4b;margin:1px}
-  .step.on{background:#8b5cf6}
-  .row{display:flex;align-items:center;gap:6px;margin:4px 0}
+  body{background:#0c0814;color:#ede9fe}
+  .step{width:18px;height:26px;border:1px solid #3b0764;background:#1e1b4b;margin:1px;padding:0}
+  .step.on{background:#a78bfa}
+  .step.play{outline:1px solid #fde68a}
+  .trk{display:flex;align-items:center;gap:4px;margin:3px 0}
+  .trk.mute{opacity:.35}
+  #viz{width:100%;height:56px;background:#09060f}
+  select.note{width:52px;background:#1e1b4b;color:#fff;border:1px solid #4c1d95}
 </style>
 </head><body>
 <div class="top" style="background:#1e1140">
-  <strong style="color:#c4b5fd">MT Music / SFX</strong>
+  <strong style="color:#c4b5fd">MT Sound Studio</strong>
   <nav id="nav"></nav>
   <button class="btn p" style="background:#7c3aed;color:#fff;margin-left:auto" id="play">Play</button>
   <button class="btn" id="wav">Export WAV</button>
+  <button class="btn" id="togame">Send to World</button>
 </div>
-<div class="grid">
+<div class="grid" style="grid-template-columns:1fr 260px">
   <div class="card">
-    <label class="row">BPM <input id="bpm" type="number" value="120"></label>
+    <canvas id="viz" width="720" height="56"></canvas>
     <div id="grid"></div>
+    <p style="opacity:.6;font-size:12px">Click steps. Bass/Lead pick a note. Load a WAV onto a track or record the mic.</p>
   </div>
+  <aside class="card">
+    <label class="row">BPM <input id="bpm" type="number" value="128" min="60" max="200"></label>
+    <label class="row">Swing <input id="swing" type="range" min="0" max="50" value="8"></label>
+    <label class="row">Bars <select id="bars"><option>1</option><option selected>2</option><option>4</option></select></label>
+    <button class="btn" id="preset-house">Preset: house</button>
+    <button class="btn" id="preset-8bit">Preset: 8-bit</button>
+    <button class="btn" id="preset-night">Preset: night</button>
+    <h3>Sample</h3>
+    <select id="samptrk"></select>
+    <input id="samp" type="file" accept="audio/*">
+    <button class="btn" id="rec">Record mic</button>
+    <p class="log" id="log">Clock is sample-accurate. Export writes a real WAV.</p>
+  </aside>
 </div>
 <script src="kit.js"></script>
 <script>
 document.getElementById('nav').innerHTML = MT.nav('music');
-const NAMES=['Kick','Snare','Hat','Tone'];
-const steps=NAMES.map(()=>Array(16).fill(false));
+const TRK=[
+  {n:'Kick', kind:'kick', vol:.9},
+  {n:'Snare', kind:'snare', vol:.7},
+  {n:'Hat', kind:'hat', vol:.45},
+  {n:'Clap', kind:'clap', vol:.55},
+  {n:'Bass', kind:'bass', vol:.7, note:0},
+  {n:'Lead', kind:'lead', vol:.35, note:7},
+  {n:'Pad', kind:'pad', vol:.2, note:4},
+  {n:'Noise', kind:'noise', vol:.2}
+];
+const NOTES=['C2','D2','E2','F2','G2','A2','B2','C3','D3','E3','F3','G3','A3','C4'];
+const FREQ=NOTES.map((_,i)=>65.41*Math.pow(2,i/12));
+const STEPS=32;
+const steps=TRK.map(()=>Array(STEPS).fill(false));
+const mute=TRK.map(()=>false);
+const samples=TRK.map(()=>null);
 const grid=document.getElementById('grid');
-NAMES.forEach((n,ti)=>{
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML=`<span style="width:56px">${n}</span>`;
-  for(let s=0;s<16;s++){
-    const b=document.createElement('button'); b.className='step'; b.onclick=()=>{ steps[ti][s]=!steps[ti][s]; b.classList.toggle('on', steps[ti][s]); };
+const sel=document.getElementById('samptrk');
+TRK.forEach((t,ti)=>{
+  const row=document.createElement('div'); row.className='trk'; row.id='r'+ti;
+  const lab=document.createElement('button'); lab.className='btn'; lab.textContent=t.n; lab.style.width='58px';
+  lab.onclick=()=>{ mute[ti]=!mute[ti]; row.classList.toggle('mute', mute[ti]); };
+  row.appendChild(lab);
+  if(t.note!=null){
+    const s=document.createElement('select'); s.className='note';
+    NOTES.forEach((n,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=n; if(i===t.note) o.selected=true; s.appendChild(o); });
+    s.onchange=()=>t.note=+s.value; row.appendChild(s);
+  } else { const sp=document.createElement('span'); sp.style.width='52px'; row.appendChild(sp); }
+  for(let s=0;s<STEPS;s++){
+    const b=document.createElement('button'); b.className='step'+(s%4===0?' ':''); b.dataset.t=ti; b.dataset.s=s;
+    b.onclick=()=>{ steps[ti][s]=!steps[ti][s]; b.classList.toggle('on', steps[ti][s]); };
     row.appendChild(b);
   }
+  const v=document.createElement('input'); v.type='range'; v.min=0; v.max=100; v.value=t.vol*100; v.oninput=()=>t.vol=v.value/100;
+  row.appendChild(v);
   grid.appendChild(row);
+  const o=document.createElement('option'); o.value=ti; o.textContent=t.n; sel.appendChild(o);
 });
-let ctx, playing=false, timer=null, i=0;
-function beep(kind, t){
-  const o=ctx.createOscillator(), g=ctx.createGain();
-  const types={0: {f:80,type:'sine',d:.12}, 1:{f:180,type:'triangle',d:.1}, 2:{f:6000,type:'square',d:.04}, 3:{f:220,type:'sawtooth',d:.18}};
-  const k=types[kind]; o.type=k.type; o.frequency.value=k.f; g.gain.value=.15;
-  g.gain.exponentialRampToValueAtTime(.001, t+k.d);
-  o.connect(g).connect(ctx.destination); o.start(t); o.stop(t+k.d);
+let ac=null, playing=false, stepI=0, nextT=0, timer=null;
+function ctx(){ ac=ac||new AudioContext(); return ac; }
+function noiseBuf(){
+  if(!ctx()._n){ const b=ctx().createBuffer(1, ctx().sampleRate*0.2, ctx().sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; ctx()._n=b; }
+  return ctx()._n;
 }
-function tick(){
-  const bpm=+document.getElementById('bpm').value||120;
-  const dt=60/bpm/4;
-  const t=ctx.currentTime;
-  steps.forEach((row,ti)=>{ if(row[i]) beep(ti, t); });
-  i=(i+1)%16;
-  timer=setTimeout(tick, dt*1000);
-}
-document.getElementById('play').onclick=()=>{
-  ctx=ctx||new AudioContext();
-  playing=!playing; document.getElementById('play').textContent=playing?'Stop':'Play';
-  if(playing){ i=0; tick(); } else clearTimeout(timer);
-};
-document.getElementById('wav').onclick=async ()=>{
-  const bpm=+document.getElementById('bpm').value||120;
-  const sr=44100, beat=60/bpm/4, len=Math.ceil(16*beat*sr);
-  const ac=new OfflineAudioContext(1,len,sr);
-  function tone(kind, at){
-    const o=ac.createOscillator(), g=ac.createGain();
-    const k=[{f:80,type:'sine',d:.12},{f:180,type:'triangle',d:.1},{f:6000,type:'square',d:.04},{f:220,type:'sawtooth',d:.18}][kind];
-    o.type=k.type; o.frequency.value=k.f; g.gain.value=.2; g.gain.exponentialRampToValueAtTime(.001, at+k.d);
-    o.connect(g).connect(ac.destination); o.start(at); o.stop(at+k.d);
+function voice(kind, t, note, vol, sample){
+  const c=ctx();
+  if(sample){
+    const s=c.createBufferSource(); s.buffer=sample; const g=c.createGain(); g.gain.value=vol; g.gain.exponentialRampToValueAtTime(.001, t+0.4);
+    s.connect(g).connect(c.destination); s.start(t); return;
   }
-  for(let s=0;s<16;s++) steps.forEach((row,ti)=>{ if(row[s]) tone(ti, s*beat); });
-  const buf=await ac.startRendering();
-  const pcm=buf.getChannelData(0);
-  const out=new ArrayBuffer(44+pcm.length*2); const v=new DataView(out);
-  const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
-  w(0,'RIFF'); v.setUint32(4,36+pcm.length*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,pcm.length*2,true);
-  let o=44; for(let i=0;i<pcm.length;i++){ let s=Math.max(-1,Math.min(1,pcm[i])); v.setInt16(o,s<0?s*0x8000:s*0x7fff,true); o+=2; }
-  MT.download('pattern.wav', new Blob([out],{type:'audio/wav'}),'audio/wav');
+  if(kind==='kick'){
+    const o=c.createOscillator(), g=c.createGain(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(40,t+.12);
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+.18); o.connect(g).connect(c.destination); o.start(t); o.stop(t+.2);
+  } else if(kind==='snare'||kind==='clap'||kind==='hat'||kind==='noise'){
+    const s=c.createBufferSource(); s.buffer=noiseBuf(); const f=c.createBiquadFilter(); f.type=kind==='hat'?'highpass':'bandpass'; f.frequency.value=kind==='hat'?8000:kind==='clap'?1800:1200;
+    const g=c.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+(kind==='hat'?.05:.16));
+    s.connect(f).connect(g).connect(c.destination); s.start(t); s.stop(t+.2);
+  } else {
+    const o=c.createOscillator(), g=c.createGain(); o.type=kind==='bass'?'sawtooth':kind==='pad'?'triangle':'square';
+    o.frequency.value=FREQ[note||0]*(kind==='lead'?2:1);
+    g.gain.setValueAtTime(0.001,t); g.gain.exponentialRampToValueAtTime(vol,t+.02); g.gain.exponentialRampToValueAtTime(.001,t+(kind==='pad'?0.5:.22));
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+.55);
+  }
+}
+function scheduler(){
+  if(!playing) return;
+  const c=ctx(); const bpm=+document.getElementById('bpm').value||128;
+  const swing=+document.getElementById('swing').value/100;
+  const stepDur=(60/bpm)/4;
+  while(nextT<c.currentTime+0.12){
+    const sw=(stepI%2===1)? stepDur*swing : 0;
+    TRK.forEach((tr,ti)=>{ if(!mute[ti] && steps[ti][stepI%STEPS]) voice(tr.kind, nextT+sw, tr.note, tr.vol, samples[ti]); });
+    document.querySelectorAll('.step.play').forEach(b=>b.classList.remove('play'));
+    document.querySelectorAll('.step[data-s="'+(stepI%STEPS)+'"]').forEach(b=>b.classList.add('play'));
+    stepI++; nextT+=stepDur;
+  }
+  drawViz();
+  timer=requestAnimationFrame(scheduler);
+}
+function drawViz(){
+  const v=document.getElementById('viz'), g=v.getContext('2d');
+  g.fillStyle='#09060f'; g.fillRect(0,0,v.width,v.height);
+  g.fillStyle='#a78bfa';
+  for(let i=0;i<32;i++){ const h=6+Math.random()*40*(playing?1:0.15); g.fillRect(8+i*22, 56-h, 16, h); }
+}
+document.getElementById('play').onclick=async ()=>{
+  ctx(); if(ac.state==='suspended') await ac.resume();
+  playing=!playing; document.getElementById('play').textContent=playing?'Stop':'Play';
+  if(playing){ stepI=0; nextT=ctx().currentTime+0.05; scheduler(); } else cancelAnimationFrame(timer);
 };
+document.getElementById('samp').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const buf=await ctx().decodeAudioData(await f.arrayBuffer());
+  samples[+sel.value]=buf; log('Sample on '+TRK[+sel.value].n);
+};
+let rec=null, recChunks=[];
+document.getElementById('rec').onclick=async ()=>{
+  if(rec){ rec.stop(); rec=null; document.getElementById('rec').textContent='Record mic'; return; }
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  rec=new MediaRecorder(stream); recChunks=[];
+  rec.ondataavailable=ev=>{ if(ev.data.size) recChunks.push(ev.data); };
+  rec.onstop=async ()=>{
+    const blob=new Blob(recChunks,{type:'audio/webm'});
+    const buf=await ctx().decodeAudioData(await blob.arrayBuffer());
+    samples[+sel.value]=buf; log('Mic take on '+TRK[+sel.value].n);
+  };
+  rec.start(); document.getElementById('rec').textContent='Stop rec';
+};
+function fillPreset(fn){ TRK.forEach((_,ti)=>steps[ti].fill(false)); fn(); document.querySelectorAll('.step').forEach(b=>b.classList.toggle('on', steps[+b.dataset.t][+b.dataset.s])); }
+document.getElementById('preset-house').onclick=()=>fillPreset(()=>{
+  for(let i=0;i<32;i+=4) steps[0][i]=true; for(let i=4;i<32;i+=8) steps[1][i]=true;
+  for(let i=0;i<32;i+=2) steps[2][i]=true; steps[3][4]=steps[3][12]=steps[3][20]=steps[3][28]=true;
+  for(let i=0;i<32;i+=8) steps[4][i]=true; steps[5][16]=steps[5][24]=true;
+});
+document.getElementById('preset-8bit').onclick=()=>fillPreset(()=>{
+  for(let i=0;i<32;i+=8) steps[0][i]=true; steps[1][8]=steps[1][24]=true;
+  for(let i=2;i<32;i+=4) steps[2][i]=true; for(let i=0;i<32;i+=2) steps[5][i]=i%4!==2;
+  steps[4][0]=steps[4][6]=steps[4][12]=steps[4][18]=true;
+});
+document.getElementById('preset-night').onclick=()=>fillPreset(()=>{
+  steps[0][0]=steps[0][16]=true; steps[6][0]=steps[6][8]=steps[6][16]=steps[6][24]=true;
+  steps[4][4]=steps[4][20]=true; steps[2][6]=steps[2][14]=steps[2][22]=steps[2][30]=true;
+  steps[7][12]=true;
+});
+document.getElementById('wav').onclick=async ()=>{
+  const bpm=+document.getElementById('bpm').value||128; const bars=+document.getElementById('bars').value||2;
+  const sr=44100, stepDur=60/bpm/4, len=Math.ceil(STEPS*bars*stepDur*sr);
+  const off=new OfflineAudioContext(1,len,sr);
+  function nbuf(){ const b=off.createBuffer(1, sr*0.2, sr); const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
+  function vox(kind,t,note,vol){
+    if(kind==='kick'){ const o=off.createOscillator(), g=off.createGain(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(40,t+.12); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+.18); o.connect(g).connect(off.destination); o.start(t); o.stop(t+.2); return; }
+    if(kind==='snare'||kind==='hat'||kind==='clap'||kind==='noise'){ const s=off.createBufferSource(); s.buffer=nbuf(); const f=off.createBiquadFilter(); f.type=kind==='hat'?'highpass':'bandpass'; f.frequency.value=kind==='hat'?8000:1500; const g=off.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+.14); s.connect(f).connect(g).connect(off.destination); s.start(t); return; }
+    const o=off.createOscillator(), g=off.createGain(); o.type=kind==='bass'?'sawtooth':'square'; o.frequency.value=FREQ[note||0]; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+.25); o.connect(g).connect(off.destination); o.start(t); o.stop(t+.3);
+  }
+  for(let bar=0;bar<bars;bar++) for(let s=0;s<STEPS;s++) TRK.forEach((tr,ti)=>{ if(!mute[ti]&&steps[ti][s]) vox(tr.kind, (bar*STEPS+s)*stepDur, tr.note, tr.vol); });
+  const buf=await off.startRendering(); const pcm=buf.getChannelData(0);
+  const out=new ArrayBuffer(44+pcm.length*2); const dv=new DataView(out);
+  const w=(o,s)=>{ for(let i=0;i<s.length;i++) dv.setUint8(o+i,s.charCodeAt(i)); };
+  w(0,'RIFF'); dv.setUint32(4,36+pcm.length*2,true); w(8,'WAVE'); w(12,'fmt '); dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true); dv.setUint32(24,sr,true); dv.setUint32(28,sr*2,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true); w(36,'data'); dv.setUint32(40,pcm.length*2,true);
+  let o=44; for(let i=0;i<pcm.length;i++){ const s=Math.max(-1,Math.min(1,pcm[i])); dv.setInt16(o,s<0?s*0x8000:s*0x7fff,true); o+=2; }
+  const blob=new Blob([out],{type:'audio/wav'});
+  MT.download('mt-track.wav', blob, 'audio/wav');
+  const reader=new FileReader(); reader.onload=()=>{ MT.set('mt-world-track', reader.result); log('WAV exported and sent to World 3D bed.'); }; reader.readAsDataURL(blob);
+};
+document.getElementById('togame').onclick=()=>document.getElementById('wav').click();
+function log(s){ document.getElementById('log').textContent=s+'\n'+document.getElementById('log').textContent; }
+log('8 tracks · 32 steps · samples · mic · swing · export WAV');
 </script>
 </body></html>
