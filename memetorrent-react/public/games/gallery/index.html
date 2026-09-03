@@ -309,8 +309,8 @@ if (window.self !== window.top) document.documentElement.classList.add('in-play-
 
 const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
 const hint = document.getElementById('hint');
-if (coarse) hint.textContent = 'Stick walk · drag look · Jump · photo house is east of the Gallery';
-else hint.textContent = 'Photo house is east of the Gallery — walk through the front door';
+if (coarse) hint.textContent = 'Stick walk · drag look · Jump · photo house is SE of the plaza';
+else hint.textContent = 'Photo house is south-east of the plaza — walk through the front door';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x12061c);
@@ -1309,7 +1309,7 @@ function undoPiece() {
 myHouse = loadHouse();
 if (myHouse) rebuildHouse();
 
-const PHOTO_HOUSE = { cx: 32, cz: 8, w: 11, d: 9, h: 5.15 };
+const PHOTO_HOUSE = { cx: 24, cz: 24, w: 11, d: 9, h: 5.15 };
 const photoHouseGroup = new THREE.Group();
 scene.add(photoHouseGroup);
 
@@ -1364,13 +1364,12 @@ function loadPhotoHousePayload() {
 }
 
 function facadeTexture(payload) {
-  const fallback = defaultFacadeCanvas().toDataURL('image/png');
-  const src = (payload && typeof payload.facade === 'string' && payload.facade.indexOf('data:') === 0) ? payload.facade : fallback;
-  const tex = new THREE.TextureLoader().load(src, undefined, undefined, () => {
-    const img = new Image();
-    img.onload = () => { tex.image = img; tex.needsUpdate = true; };
-    img.src = fallback;
-  });
+  let tex;
+  if (payload && typeof payload.facade === 'string' && payload.facade.indexOf('data:') === 0) {
+    tex = new THREE.TextureLoader().load(payload.facade);
+  } else {
+    tex = new THREE.CanvasTexture(defaultFacadeCanvas());
+  }
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
   return tex;
@@ -1383,80 +1382,87 @@ function spawnPhotoHouse() {
   const wallC = 0x6b4423, trimC = 0x44403c, roofC = 0x7f1d1d, floorC = 0x8b5a2b;
   const payload = loadPhotoHousePayload();
   const tex = facadeTexture(payload);
+  const mat = new THREE.MeshLambertMaterial({
+    map: tex, side: THREE.DoubleSide, emissive: 0x3f2a14, emissiveMap: tex, emissiveIntensity: 0.35
+  });
+  const totalH = h + gable;
+  const sideLen = (w - doorW) / 2;
+  const u0 = sideLen / w, u1 = (sideLen + doorW) / w, vD = doorH / totalH, vH = h / totalH;
+  const zf = north - 0.28;
 
   phBox(w - 0.5, 0.12, d - 0.5, cx, 0.06, cz, floorC, { ghost: true, ground: true });
+  phBox(t, h, d, west, h / 2, cz, wallC);
   phBox(t, h, d, east, h / 2, cz, wallC);
-  phBox(w, h, t, cx, h / 2, north, 0x5c4033);
   phBox(w, h, t, cx, h / 2, south, 0x5c4033);
-  const sideLen = (d - doorW) / 2;
-  phBox(t, h, sideLen, west, h / 2, cz - doorW / 2 - sideLen / 2, trimC);
-  phBox(t, h, sideLen, west, h / 2, cz + doorW / 2 + sideLen / 2, trimC);
-  phBox(t, h - doorH, doorW, west, doorH + (h - doorH) / 2, cz, trimC);
+  phBox(sideLen, h, t, cx - doorW / 2 - sideLen / 2, h / 2, north, trimC);
+  phBox(sideLen, h, t, cx + doorW / 2 + sideLen / 2, h / 2, north, trimC);
+  phBox(doorW, h - doorH, t, cx, doorH + (h - doorH) / 2, north, trimC);
 
-  const shape = new THREE.Shape();
-  shape.moveTo(-w / 2, 0);
-  shape.lineTo(w / 2, 0);
-  shape.lineTo(w / 2, h);
-  shape.lineTo(0, h + gable);
-  shape.lineTo(-w / 2, h);
-  shape.closePath();
-  const hole = new THREE.Path();
-  hole.moveTo(-doorW / 2, 0.02);
-  hole.lineTo(doorW / 2, 0.02);
-  hole.lineTo(doorW / 2, doorH);
-  hole.lineTo(-doorW / 2, doorH);
-  hole.closePath();
-  shape.holes.push(hole);
-  const geo = new THREE.ShapeGeometry(shape);
-  const pos = geo.attributes.position;
-  const uv = new Float32Array(pos.count * 2);
-  const totalH = h + gable;
-  for (let i = 0; i < pos.count; i++) {
-    uv[i * 2] = (pos.getX(i) + w / 2) / w;
-    uv[i * 2 + 1] = pos.getY(i) / totalH;
+  function facadePiece(uA, uB, vA, vB, pw, ph, x, y) {
+    const geo = new THREE.PlaneGeometry(pw, ph);
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+      uv.setXY(i, uA + uv.getX(i) * (uB - uA), vA + uv.getY(i) * (vB - vA));
+    }
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, y, zf);
+    mesh.rotation.y = Math.PI;
+    photoHouseGroup.add(mesh);
   }
-  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-  const front = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide }));
-  front.position.set(west - 0.03, 0, cz);
-  front.rotation.y = -Math.PI / 2;
-  photoHouseGroup.add(front);
+  facadePiece(0, u0, 0, vH, sideLen, h, cx + doorW / 2 + sideLen / 2, h / 2);
+  facadePiece(u1, 1, 0, vH, sideLen, h, cx - doorW / 2 - sideLen / 2, h / 2);
+  facadePiece(u0, u1, vD, vH, doorW, h - doorH, cx, doorH + (h - doorH) / 2);
+  const gableGeo = new THREE.BufferGeometry();
+  const hw = w / 2;
+  gableGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+    -hw, h, 0, hw, h, 0, 0, h + gable, 0
+  ]), 3));
+  gableGeo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([
+    0, vH, 1, vH, 0.5, 1
+  ]), 2));
+  gableGeo.computeVertexNormals();
+  const gableMesh = new THREE.Mesh(gableGeo, mat);
+  gableMesh.position.set(cx, 0, zf);
+  gableMesh.rotation.y = Math.PI;
+  photoHouseGroup.add(gableMesh);
 
   const roofL = new THREE.Mesh(new THREE.BoxGeometry(w + 0.9, 0.22, d / 2 + 1.5), new THREE.MeshLambertMaterial({ color: roofC }));
   roofL.position.set(cx, h + 0.95, cz - d / 4 - 0.1);
   roofL.rotation.x = 0.52;
-  const roofR = roofL.clone();
-  roofR.position.z = cz + d / 4 + 0.1;
+  const roofR = new THREE.Mesh(new THREE.BoxGeometry(w + 0.9, 0.22, d / 2 + 1.5), new THREE.MeshLambertMaterial({ color: roofC }));
+  roofR.position.set(cx, h + 0.95, cz + d / 4 + 0.1);
   roofR.rotation.x = -0.52;
-  photoHouseGroup.add(roofL, roofR);
+  photoHouseGroup.add(roofL);
+  photoHouseGroup.add(roofR);
   phBox(0.7, 1.8, 0.7, cx + 3.2, h + 1.6, cz - 1.4, 0x44403c, { ghost: true });
 
-  phBox(3.4, 0.18, 2.6, west - 1.5, 0.1, cz, 0x57534e, { ghost: true, ground: true });
-  phBox(1.8, 0.22, 1.2, west - 2.6, 0.12, cz, 0x78716c, { ghost: true, ground: true });
-  for (let i = 0; i < 9; i++) {
-    phBox(1.5, 0.07, 1.5, 16 + i * 1.65, 0.04, cz, i % 2 ? 0x365314 : 0x3f3f46, { ghost: true, ground: true });
+  phBox(4.4, 0.16, 2.8, cx, 0.1, north - 1.6, 0x57534e, { ghost: true, ground: true });
+  phBox(2.2, 0.2, 1.2, cx, 0.12, north - 2.9, 0x78716c, { ghost: true, ground: true });
+  for (let i = 0; i < 6; i++) {
+    phBox(1.5, 0.07, 1.5, cx, 0.04, 8.5 + i * 1.55, i % 2 ? 0x365314 : 0x3f3f46, { ghost: true, ground: true });
   }
 
   const lamp = new THREE.PointLight(0xfbbf24, 1.15, 16);
   lamp.position.set(cx, 3.2, cz);
   photoHouseGroup.add(lamp);
   const doorwayGlow = new THREE.PointLight(0xfde68a, 0.85, 8);
-  doorwayGlow.position.set(west - 0.4, 1.6, cz);
+  doorwayGlow.position.set(cx, 1.6, north - 0.5);
   photoHouseGroup.add(doorwayGlow);
 
   phBox(1.6, 0.7, 0.9, cx + 1.6, 0.42, cz + 1.4, 0x5c4033, { ghost: true });
   phBox(0.55, 0.7, 0.55, cx + 0.6, 0.42, cz + 1.4, 0x6b4423, { ghost: true });
-  phBox(1.4, 0.38, 2, cx - 2.4, 0.28, cz - 2.2, 0x1e3a5f, { ghost: true });
-  phBox(0.18, 1.1, 0.18, west + 1.2, 0.7, north + 1.1, 0xfde68a, { ghost: true });
+  phBox(1.4, 0.38, 2, cx - 2.4, 0.28, cz + 1.2, 0x1e3a5f, { ghost: true });
+  phBox(0.18, 1.1, 0.18, west + 1.2, 0.7, south - 1.1, 0xfde68a, { ghost: true });
 
   const innerArt = new THREE.Mesh(
     new THREE.PlaneGeometry(2.4, 1.7),
     new THREE.MeshBasicMaterial({ map: tex })
   );
-  innerArt.position.set(east - 0.28, 2.15, cz);
-  innerArt.rotation.y = Math.PI / 2;
+  innerArt.position.set(cx, 2.15, south - 0.28);
+  innerArt.rotation.y = Math.PI;
   photoHouseGroup.add(innerArt);
 
-  [[cx - 2.6, 2.5, north - 0.22, 0], [cx + 2.6, 2.5, north - 0.22, 0], [cx - 2.6, 2.5, south + 0.22, Math.PI]].forEach(([x, y, z, rot]) => {
+  [[west - 0.22, 2.5, cz - 2, Math.PI / 2], [east + 0.22, 2.5, cz - 2, -Math.PI / 2], [west - 0.22, 2.5, cz + 2, Math.PI / 2]].forEach(([x, y, z, rot]) => {
     const win = new THREE.Mesh(
       new THREE.PlaneGeometry(1.5, 1.2),
       new THREE.MeshBasicMaterial({ color: 0xfde68a, transparent: true, opacity: 0.55 })
@@ -1470,29 +1476,35 @@ function spawnPhotoHouse() {
   const sg = signC.getContext('2d');
   sg.fillStyle = '#111827'; sg.fillRect(0, 0, 512, 128);
   sg.fillStyle = '#fde68a'; sg.font = '800 42px system-ui'; sg.textAlign = 'center';
-  sg.fillText(payload ? 'PHOTO HOUSE' : 'PHOTO HOUSE', 256, 58);
+  sg.fillText('PHOTO HOUSE', 256, 58);
   sg.fillStyle = '#e7c07b'; sg.font = '600 22px system-ui';
   sg.fillText(payload ? 'Walk in the front door' : 'Drop a photo in Photography Studio', 256, 96);
   const signTex = new THREE.CanvasTexture(signC);
   signTex.colorSpace = THREE.SRGBColorSpace;
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 0.9), new THREE.MeshBasicMaterial({ map: signTex }));
-  sign.position.set(west - 1.1, 3.35, cz + 3.4);
-  sign.rotation.y = -Math.PI / 2;
+  sign.position.set(cx + 4.1, 3.2, north - 0.9);
+  sign.rotation.y = Math.PI;
   photoHouseGroup.add(sign);
 
-  places.push({ name: 'Photo house', x: cx, z: cz, r: 8 });
+  places.push({ name: 'Photo house', x: cx, z: cz, r: 12 });
 }
 
 function goToPhotoHouse() {
-  player.x = PHOTO_HOUSE.cx - PHOTO_HOUSE.w / 2 - 3.4;
-  player.z = PHOTO_HOUSE.cz;
+  player.x = PHOTO_HOUSE.cx;
+  player.z = PHOTO_HOUSE.cz - PHOTO_HOUSE.d / 2 - 3.6;
   player.y = EYE;
-  player.yaw = -Math.PI / 2;
+  player.yaw = Math.PI;
   player.pitch = 0;
+  if (new URLSearchParams(location.search).has('inside')) player.z = PHOTO_HOUSE.cz;
   toast('Photo house ahead — walk through the front door');
 }
 
-spawnPhotoHouse();
+try {
+  spawnPhotoHouse();
+} catch (err) {
+  console.warn('photo house', err);
+  toast('Photo house failed to build — plaza still works');
+}
 if (new URLSearchParams(location.search).has('house')) goToPhotoHouse();
 
 function topUnder(nx, nz, feet) {
