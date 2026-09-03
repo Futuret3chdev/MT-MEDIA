@@ -19,6 +19,7 @@ type User = {
   telegram_id: string | null;
   telegram_username?: string | null;
   discord_id: string | null;
+  is_admin?: boolean;
 };
 
 const USER_NAV: { id: UserTab; label: string }[] = [
@@ -54,6 +55,7 @@ export default function PortalPage() {
   const [friendQ, setFriendQ] = useState('');
   const [friendHits, setFriendHits] = useState<{ username: string; email: string; self?: boolean }[]>([]);
   const [friendMsg, setFriendMsg] = useState('');
+  const [tapStaff, setTapStaff] = useState(false);
 
 
   useEffect(() => {
@@ -67,6 +69,14 @@ export default function PortalPage() {
           setBio(d.user.bio || '');
           setWallet(d.user.wallet_address || '');
           setAvatar(d.user.avatar_url || '');
+          fetch('/api/v1/tapmatch/staff', { credentials: 'include', cache: 'no-store' })
+            .then((r) => r.json())
+            .then((s) =>
+              setTapStaff(
+                Boolean(s?.data?.staff) || Boolean(d.user.is_admin) || d.user.username === '376937'
+              )
+            )
+            .catch(() => setTapStaff(Boolean(d.user.is_admin) || d.user.username === '376937'));
           fetch('/api/scores?mine=1', { credentials: 'include' })
             .then((r) => r.json())
             .then((s) => setScores(s.scores || []))
@@ -214,12 +224,16 @@ export default function PortalPage() {
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">
           {[
             { href: 'https://mt.futuret3ch.com.au/', label: 'Wallet', icon: '👛', external: true },
-            { href: '/catalog', label: 'Games', icon: '🎮' },
-            { href: '/portal/tap', label: 'TAP', icon: '🚗' },
-            { href: '/portal/tapshop', label: 'TAPSHOP', icon: '🛒' },
-            { href: '/portal/tapmatch', label: 'TAPMATCH', icon: '🤝' },
-            { href: '/chat', label: 'Chat', icon: '💬' },
-            { href: '/shield', label: 'Shield', icon: '🛡' },
+            { href: '/catalog', label: 'Games', icon: '🎮', external: false },
+            ...(tapStaff
+              ? [
+                  { href: '/portal/tap', label: 'TAP', icon: '🚗', external: false },
+                  { href: '/portal/tapshop', label: 'TAPSHOP', icon: '🛒', external: false },
+                  { href: '/portal/tapmatch', label: 'TAPMATCH', icon: '🤝', external: false },
+                ]
+              : []),
+            { href: '/chat', label: 'Chat', icon: '💬', external: false },
+            { href: '/shield', label: 'Shield', icon: '🛡', external: false },
           ].map((app) => (
             <Link
               key={app.label}

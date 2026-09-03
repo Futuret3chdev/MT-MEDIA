@@ -544,6 +544,8 @@ export async function handleTapV1(opts: {
     }
 
     if (root === 'tap' && rest[0] === 'quote' && method === 'GET') {
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAP is staff only. Closed to the public.', 401, 401);
       const lane = laneOf(q.get('lane') || 'trips');
       if (!lane) return v1err('lane must be trips, packages, or food', 400, 400);
       const quote = await tapQuote({
@@ -559,7 +561,9 @@ export async function handleTapV1(opts: {
     }
 
     if (root === 'tap' && rest[0] === 'me' && method === 'GET') {
-      const user = await sessionUser();
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAP is staff only. Closed to the public.', 401, 401);
+      const user = actor.user;
       if (!user) return v1err('Sign in to the MT Portal first. TAP accounts are included.', 401, 401);
       const res = v1ok({
         username: user.username,
@@ -571,6 +575,8 @@ export async function handleTapV1(opts: {
     }
 
     if (root === 'tap' && rest[0] === 'jobs' && method === 'GET') {
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAP is staff only. Closed to the public.', 401, 401);
       const lane = laneOf(q.get('lane'));
       const id = rest[1];
       if (id) {
@@ -627,8 +633,9 @@ export async function handleTapV1(opts: {
     }
 
     if (root === 'tap' && rest[0] === 'jobs' && method === 'POST') {
-      const user = await sessionUser();
-      if (!user) return v1err('Sign in to the MT Portal to create a TAP job.', 401, 401);
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAP is staff only. Closed to the public.', 401, 401);
+      const user = actor.user || { email: actor.email, username: actor.username };
       let body: Record<string, unknown> = {};
       try {
         body = await opts.request.json();
@@ -675,6 +682,8 @@ export async function handleTapV1(opts: {
           listings: '/api/v1/tapshop/listings',
         });
       }
+      const shopStaff = await tapMatchActor();
+      if (!shopStaff.staff) return v1err('TAPSHOP is staff only. Closed to the public.', 401, 401);
       const live = (await withDb(async (conn) => {
         const [rows] = await conn.execute(
           'SELECT id, title, blurb, price_mt, status, username, created_at FROM mt_tapshop_listings WHERE status = ? ORDER BY created_at DESC LIMIT 40',
@@ -696,8 +705,9 @@ export async function handleTapV1(opts: {
     }
 
     if (root === 'tapshop' && rest[0] === 'listings' && method === 'POST') {
-      const user = await sessionUser();
-      if (!user) return v1err('Sign in to the MT Portal to list on TAPSHOP.', 401, 401);
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAPSHOP is staff only. Closed to the public.', 401, 401);
+      const user = actor.user || { email: actor.email, username: actor.username };
       let body: Record<string, unknown> = {};
       try {
         body = await opts.request.json();
@@ -1001,12 +1011,12 @@ export async function handleTapV1(opts: {
     if (root === 'tapmatch' && rest[0] === 'jobs' && method === 'GET') {
       const connect = connectOf(q.get('connect') || q.get('type'));
       const mine = q.get('mine') === '1';
-      const actor = mine ? await tapMatchActor() : null;
-      if (mine && actor && !actor.staff) return v1err('TAPMATCH is staff preview.', 401, 401);
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAPMATCH is staff only. Closed to the public.', 401, 401);
       const live = (await withDb(async (conn) => {
         const params: string[] = [];
         let where = 'WHERE 1=1';
-        if (mine && actor) {
+        if (mine) {
           where += ' AND email = ?';
           params.push(actor.email);
         } else {

@@ -1,12 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import TapMatchApp from '@/components/tap/tapmatch/TapMatchApp';
 
-export default function TapMatchDesk({
+export default function TapStaffGate({
   user,
+  children,
 }: {
-  user: { username: string; is_admin?: boolean } | null;
+  user: { username?: string; is_admin?: boolean } | null;
+  children: React.ReactNode;
 }) {
   const [staff, setStaff] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -51,24 +52,22 @@ export default function TapMatchDesk({
       setPin('');
       setPassword('');
     } catch {
-      setGateMsg('Could not reach TAPMATCH staff gate');
+      setGateMsg('Could not open TAP');
     } finally {
       setGateBusy(false);
     }
   }
 
   if (checking) {
-    return <div className="opacity-60 text-sm">Checking TAPMATCH staff access…</div>;
+    return <div className="opacity-60 text-sm">Checking TAP access…</div>;
   }
 
   if (!staff) {
     return (
       <section className="rounded-3xl border border-sky-400/30 bg-sky-400/5 p-6 sm:p-8 max-w-lg">
-        <div className="text-[10px] tracking-[3px] text-sky-400 mb-2">STAFF PREVIEW</div>
-        <h2 className="text-xl font-semibold mb-2">TAPMATCH is closed</h2>
+        <h2 className="text-xl font-semibold mb-2">TAP is closed</h2>
         <p className="text-sm opacity-70 mb-6">
-          Work matching is in staff preview. Public accounts stay on the TAP desk. Staff sign in here
-          with the admin user.
+          TAP, TAPSHOP, and TAPMATCH are staff only. Not open to the public.
         </p>
         <form onSubmit={staffLogin} className="space-y-3">
           <input
@@ -91,7 +90,7 @@ export default function TapMatchDesk({
             disabled={gateBusy}
             className="w-full rounded-full bg-sky-400 text-black font-bold py-2"
           >
-            {gateBusy ? 'Checking…' : 'Open TAPMATCH'}
+            {gateBusy ? 'Checking…' : 'Open TAP'}
           </button>
         </form>
         {gateMsg && <p className="text-sm mt-3 text-amber-200">{gateMsg}</p>}
@@ -99,5 +98,5 @@ export default function TapMatchDesk({
     );
   }
 
-  return <TapMatchApp user={user} />;
+  return <>{children}</>;
 }

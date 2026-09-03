@@ -18,7 +18,7 @@ export const TAP_APPS = [
     name: "TAPMATCH",
     tag: "Work",
     href: "/portal/tapmatch",
-    desc: "Employees and employers. Fast Connect or long-term. Staff preview is on the TAPMATCH desk.",
+    desc: "Employees and employers. Fast Connect or long-term.",
   },
 ] as const;
 

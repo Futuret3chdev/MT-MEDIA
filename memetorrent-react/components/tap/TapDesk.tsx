@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { TAP_APPS, type TapAppId } from '@/lib/tap-apps';
-import TapMatchDesk from '@/components/tap/TapMatchDesk';
+import TapMatchApp from '@/components/tap/tapmatch/TapMatchApp';
 import TapGo from '@/components/tap/TapGo';
+import TapStaffGate from '@/components/tap/TapStaffGate';
 
 type User = { username: string; email: string; avatar_url: string | null; is_admin?: boolean };
 
@@ -21,24 +22,8 @@ export default function TapDesk({ app }: { app: TapAppId }) {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading && app !== 'tapmatch') {
+  if (loading) {
     return <div className="max-w-6xl mx-auto px-4 py-20 opacity-60">Opening TAP desk…</div>;
-  }
-
-  if (!user && app !== 'tapmatch') {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-20">
-        <div className="uppercase text-xs tracking-[3px] text-sky-400 mb-2">TAP desk</div>
-        <h1 className="text-4xl font-semibold tracking-tight mb-4">Sign in to the portal first</h1>
-        <p className="opacity-70 mb-6">
-          Your community account already includes TAP, TAPSHOP, and TAPMATCH. Use the account icon
-          in the top bar — then open this desk from the portal.
-        </p>
-        <Link href="/portal" className="text-sky-400 hover:opacity-80">
-          ← Portal
-        </Link>
-      </div>
-    );
   }
 
   return (
@@ -48,54 +33,48 @@ export default function TapDesk({ app }: { app: TapAppId }) {
           <div>
             <div className="uppercase text-[10px] tracking-[4px] text-sky-400 mb-2">TAP desk</div>
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">{current.name}</h1>
-            <p className="text-sm opacity-60 mt-1">
-              {user ? `@${user.username} · TAP account included with your portal login` : 'Staff preview'}
-            </p>
+            <p className="text-sm opacity-60 mt-1">Staff only</p>
           </div>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <Link href="/developers/docs#tap" className="text-sky-400 hover:opacity-80">
-              TAP API
-            </Link>
-            <Link href="/portal" className="opacity-60 hover:opacity-100">
-              ← Community portal
-            </Link>
-          </div>
+          <Link href="/" className="text-sm opacity-60 hover:opacity-100">
+            ← Home
+          </Link>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-10">
-          {TAP_APPS.map((a) => {
-            const on = a.id === app;
-            return (
-              <Link
-                key={a.id}
-                href={a.href}
-                className={`px-5 py-2.5 rounded-2xl text-sm font-semibold tracking-wide border ${
-                  on
-                    ? 'border-sky-400 bg-sky-400 text-black'
-                    : 'border-sky-400/30 bg-sky-400/5 opacity-80 hover:opacity-100'
-                }`}
-              >
-                {a.name}
-                <span className="ml-2 text-[10px] font-normal tracking-[1px] opacity-70">{a.tag}</span>
-              </Link>
-            );
-          })}
-        </div>
+        <TapStaffGate user={user}>
+          <div className="flex flex-wrap gap-2 mb-10">
+            {TAP_APPS.map((a) => {
+              const on = a.id === app;
+              return (
+                <Link
+                  key={a.id}
+                  href={a.href}
+                  className={`px-5 py-2.5 rounded-2xl text-sm font-semibold tracking-wide border ${
+                    on
+                      ? 'border-sky-400 bg-sky-400 text-black'
+                      : 'border-sky-400/30 bg-sky-400/5 opacity-80 hover:opacity-100'
+                  }`}
+                >
+                  {a.name}
+                  <span className="ml-2 text-[10px] font-normal tracking-[1px] opacity-70">{a.tag}</span>
+                </Link>
+              );
+            })}
+          </div>
 
-        {app === 'tap' && <TapGo user={user} />}
+          {app === 'tap' && <TapGo user={user} />}
 
-        {app === 'tapshop' && (
-          <section className="rounded-3xl border border-sky-400/30 bg-sky-400/5 p-6 sm:p-8">
-            <h2 className="text-xl font-semibold mb-2">Trade</h2>
-            <p className="text-sm opacity-70 max-w-xl mb-4">
-              TAPSHOP is your trade account — items, $MT, and Rockets. Floor opens here; it is not mixed
-              with portal profile or chat.
-            </p>
-            <div className="text-xs tracking-[2px] text-sky-300">Marketplace floor — building out</div>
-          </section>
-        )}
+          {app === 'tapshop' && (
+            <section className="rounded-3xl border border-sky-400/30 bg-sky-400/5 p-6 sm:p-8">
+              <h2 className="text-xl font-semibold mb-2">Trade</h2>
+              <p className="text-sm opacity-70 max-w-xl mb-4">
+                TAPSHOP is your trade account — items, $MT, and Rockets.
+              </p>
+              <div className="text-xs tracking-[2px] text-sky-300">Marketplace floor — building out</div>
+            </section>
+          )}
 
-        {app === 'tapmatch' && <TapMatchDesk user={user} />}
+          {app === 'tapmatch' && <TapMatchApp user={user} />}
+        </TapStaffGate>
       </div>
     </div>
   );
