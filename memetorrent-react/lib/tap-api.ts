@@ -828,7 +828,13 @@ export async function handleTapV1(opts: {
       const scored = all
         .map((job) => {
           const match = scoreJobMatch(
-            { connect: String(job.connect), role: String(job.role), blurb: job.blurb, location: job.location, skills: job.skills },
+            {
+              connect: String(job.connect || ''),
+              role: String(job.role || ''),
+              blurb: job.blurb == null ? null : String(job.blurb),
+              location: job.location == null ? null : String(job.location),
+              skills: Array.isArray(job.skills) ? job.skills.map((s) => String(s)) : [],
+            },
             {
               skills: profile.setup ? profile.skills : [],
               location: profile.setup ? String(profile.location || '') : '',
