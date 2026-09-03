@@ -297,8 +297,8 @@
   </script>
   <script type="module">
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { SkeletonUtils } from 'three/addons/utils/SkeletonUtils.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js';
+import { clone as cloneSkinned } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/utils/SkeletonUtils.js';
 if (window.self !== window.top) document.documentElement.classList.add('in-play-shell');
 
 const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
@@ -898,7 +898,14 @@ function fitModel(root) {
 function attachGltf(g, spec) {
   const gltf = MODEL_LIB[spec.model];
   if (!gltf) { g.userData.pending = spec; return; }
-  const root = SkeletonUtils.clone(gltf.scene);
+  if (g.userData.root) return;
+  let root;
+  try {
+    root = cloneSkinned(gltf.scene);
+  } catch (err) {
+    console.warn('clone', err);
+    root = gltf.scene.clone(true);
+  }
   root.traverse((o) => {
     if (!o.isMesh) return;
     o.castShadow = true;
@@ -987,23 +994,41 @@ function rebuildMe() {
     body: inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc, cast: inv.cast || 'vanguard', username: inv.name || 'You'
   });
 }
-function loadModels() {
-  const loader = new GLTFLoader();
-  return Promise.all(['soldier', 'xbot', 'michelle'].map((id) => new Promise((resolve, reject) => {
-    loader.load('/games/world/models/' + id + '.glb', (gltf) => {
-      MODEL_LIB[id] = gltf;
-      resolve();
-    }, undefined, reject);
-  }))).then(() => {
-    sharedClips = MODEL_LIB.soldier ? MODEL_LIB.soldier.animations.slice() : [];
+function flushPending() {
+  if (meMesh && meMesh.userData.pending) {
+    const spec = meMesh.userData.pending;
+    meMesh.userData.pending = null;
+    attachGltf(meMesh, spec);
+  }
+  others.forEach((o) => {
+    if (o.mesh && o.mesh.userData.pending) {
+      const spec = o.mesh.userData.pending;
+      o.mesh.userData.pending = null;
+      attachGltf(o.mesh, spec);
+    }
   });
 }
-loadModels().then(() => {
+function loadModels() {
+  const loader = new GLTFLoader();
   rebuildMe();
-  others.forEach((o) => {
-    if (o.mesh && o.mesh.userData.pending) attachGltf(o.mesh, o.mesh.userData.pending);
+  ['soldier', 'xbot', 'michelle'].forEach((id) => {
+    loader.load(
+      '/games/world/models/' + id + '.glb',
+      (gltf) => {
+        MODEL_LIB[id] = gltf;
+        if (id === 'soldier') sharedClips = gltf.animations.slice();
+        flushPending();
+        if (meMesh && meMesh.userData.cast) {
+          const spec = CAST.find((c) => c.id === meMesh.userData.cast);
+          if (spec && spec.model === id && !meMesh.userData.root) attachGltf(meMesh, spec);
+        }
+      },
+      undefined,
+      (err) => console.warn('GLB failed', id, err)
+    );
   });
-}).catch((err) => { console.warn(err); rebuildMe(); });
+}
+loadModels();
 
 const CS = 32;
 const chunks = new Map();
