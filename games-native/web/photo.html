@@ -220,8 +220,13 @@ function drawHouse(){
   ictx.beginPath(); ictx.moveTo(pts[4].x,pts[4].y); ictx.lineTo(pts[5].x,pts[5].y); ictx.lineTo(ridge.x,ridge.y); ictx.fillStyle='#7f1d1d'; ictx.fill();
 }
 function saveHouse(){
-  const payload={ name:'Photo house', facade:fac.toDataURL('image/png'), iso:iso.toDataURL('image/png'), geom:geom(), at:Date.now() };
-  try { MT.set('mt-photo-house', payload); } catch(e){ status('House built (storage full — export PNG instead)'); }
+  const small=document.createElement('canvas');
+  small.width=512; small.height=640;
+  small.getContext('2d').drawImage(fac,0,0,512,640);
+  const payload={ name:'Photo house', facade:small.toDataURL('image/jpeg',0.72), geom:geom(), at:Date.now() };
+  const raw=JSON.stringify(payload);
+  try { MT.set('mt-photo-house', payload); } catch(e){ status('House built (storage full — still sending you in)'); }
+  try { sessionStorage.setItem('mt-photo-house', raw); } catch(e){}
   return payload;
 }
 function runPipeline(){
@@ -255,15 +260,11 @@ stage.addEventListener('drop', e=>{ e.preventDefault(); const f=e.dataTransfer.f
 addEventListener('paste', e=>{ const f=[...e.clipboardData.files][0]; if(f) loadFile(f); });
 $('game').onclick=()=>{
   if(img) runPipeline();
-  const house=(window.MT&&MT.get('mt-photo-house',null));
-  if(!house){ status('Load a photo first.'); return; }
-  location.href='/games/gallery/?house=1';
+  location.href='/games/gallery/index.html?house=1&enter=1';
 };
 $('sendw').onclick=()=>{
   if(img) runPipeline();
-  const house=(window.MT&&MT.get('mt-photo-house',null));
-  if(!house){ status('Load a photo first.'); return; }
-  location.href='/games/gallery/?house=1';
+  location.href='/games/gallery/index.html?house=1&enter=1';
 };
 $('pngf').onclick=()=>fac.toBlob(b=>MT.download('facade.png',b,'image/png'));
 $('pngi').onclick=()=>iso.toBlob(b=>MT.download('house3d.png',b,'image/png'));

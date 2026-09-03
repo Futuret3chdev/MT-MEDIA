@@ -111,6 +111,58 @@
     .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 12px; }
     .chip-row button { min-width: 44px; min-height: 44px; border-radius: 10px; border: 2px solid #fff3; padding: 0; }
     .chip-row button.on { outline: 3px solid #19d37e; }
+    html.dressing #joyL, html.dressing #jump, html.dressing #lookHint, html.dressing #act, html.dressing #hint { display: none !important; }
+    #dressDock {
+      display: none; position: fixed; inset: 0; z-index: 28; pointer-events: none;
+    }
+    html.dressing #dressDock { display: flex; }
+    #dressStageWrap {
+      pointer-events: auto; position: relative;
+      background: radial-gradient(ellipse at 50% 70%, #1a3d2c, #07140e);
+    }
+    #dressPrev { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+    .dress-stage-bar {
+      position: absolute; left: 8px; right: 8px; bottom: 8px;
+      display: flex; gap: 6px; padding: 8px;
+      background: rgba(16,38,28,.88); border-radius: 12px;
+    }
+    .dress-stage-bar button, .look-tabs button, .chip-row button.name {
+      background: #163226; color: #e8fff4; border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px; font-weight: 800; cursor: pointer;
+    }
+    .dress-stage-bar button { flex: 1; min-height: 36px; }
+    .dress-stage-bar button.on, .look-tabs button.on, .chip-row button.name.on {
+      background: var(--mt); color: var(--ink); outline: none;
+    }
+    .dress-hint { font-size: 11px; opacity: .75; margin: 0 0 8px; }
+    .look-tabs { display: flex; gap: 6px; margin: 0 0 8px; }
+    .look-tabs button { flex: 1; min-height: 40px; }
+    .look-pane { display: none; }
+    .look-pane.open { display: block; }
+    .look-label { font-size: 12px; font-weight: 800; margin: 10px 0 4px; opacity: .88; }
+    .chip-row button.name { min-width: auto; padding: 8px 10px; font-size: 12px; }
+    #dressControls {
+      pointer-events: auto; background: #10261c; overflow: auto;
+      padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+      border-left: 1px solid rgba(25,211,126,.28);
+    }
+    .dress-controls-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .dress-controls-head b { font-size: 16px; }
+    .cgi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 12px; }
+    .cast-card.cgi { padding: 0; overflow: hidden; min-height: 0; display: flex; flex-direction: column; background: #0b1a12; }
+    .cast-card.cgi img { width: 100%; aspect-ratio: 2/3; object-fit: cover; object-position: top; display: block; background: #07140e; }
+    .cast-card.cgi span { display: block; padding: 6px 4px 8px; font-size: 11px; text-align: center; }
+    @media (max-width: 799px) {
+      html.dressing #dressDock { flex-direction: column; }
+      #dressStageWrap { flex: 0 0 44vh; height: 44vh; }
+      #dressControls { flex: 1; min-height: 0; border-left: 0; border-top: 1px solid rgba(25,211,126,.28); }
+      .cgi-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (min-width: 800px) {
+      html.dressing #dressDock { flex-direction: row; }
+      #dressStageWrap { flex: 1; min-width: 0; }
+      #dressControls { width: min(42vw, 440px); flex: 0 0 min(42vw, 440px); }
+    }
     #online { opacity: .8; font-size: 12px; }
     #rps { display: none; position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.7); align-items: center; justify-content: center; }
     #rps.open { display: flex; }
@@ -125,7 +177,7 @@
     .wallet-box p { margin: 0 0 10px; font-size: 12px; opacity: .8; }
     .wallet-box .row button { min-height: 42px; }
     #walletAddr, #walletAddr2 { font-size: 12px; color: var(--mt); margin-top: 8px; word-break: break-all; }
-    .sheet button:not(.ghost):not(.swatch) {
+    .sheet button:not(.ghost):not(.swatch):not(.name):not(.look-tab):not(.view-btn):not(.cast-card) {
       background: var(--mt); color: var(--ink); border: 0; border-radius: 10px;
       padding: 8px 12px; font-weight: 800; cursor: pointer;
     }
@@ -142,6 +194,15 @@
       background: #163226; color: #e8fff4; font-weight: 700; cursor: pointer;
     }
     #buildBar button.on { background: var(--mt); color: var(--ink); }
+    #enterHouse {
+      position: fixed; left: 50%; z-index: 24;
+      bottom: calc(92px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      background: #fbbf24; color: #111827; font-weight: 900;
+      border: 0; border-radius: 999px; padding: 14px 22px; font-size: 16px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.45); cursor: pointer;
+    }
+    #enterHouse.hide { display: none; }
   </style>
 </head>
 <body>
@@ -160,6 +221,7 @@
       <button class="hud-btn" id="btnDress"><i>👕</i><span>Dress</span></button>
       <button class="hud-btn" id="btnCam"><i>📷</i><span>Chase</span></button>
       <button class="hud-btn" id="btnHome"><i>🏠</i><span>House</span></button>
+      <button class="hud-btn" id="btnEnterHouse"><i>🚪</i><span>Enter</span></button>
       <button class="hud-btn" id="btnSocial"><i>👥</i><span>People</span></button>
       <button class="hud-btn" id="hang"><i>🖼️</i><span>Art</span></button>
     </nav>
@@ -190,6 +252,7 @@
     <button id="buildDone">Done</button>
   </div>
   <div id="hint">WASD walk · mouse look · click a frame to hang art</div>
+  <button type="button" id="enterHouse">Walk in the front door</button>
   <div id="joyL" class="pad"><div id="joyKnob"></div></div>
   <div id="lookHint">drag to look</div>
   <button id="jump" class="fab">Jump</button>
@@ -236,30 +299,10 @@
         <div class="sku"><span>Bartender — serve at a bar</span><button id="jobBar">Take</button></div>
         <div id="jobStatus" style="margin-top:8px;opacity:.8"></div>
       </div>
-      <div id="sheetDress" class="sheet">
-        <b>Make your person</b>
-        <p style="opacity:.7;font-size:12px">Tap a preset, then change hair, face, weight, height, and clothes. Always a solid body — nothing invisible.</p>
-        <div class="cast-grid" id="castGrid"></div>
-        <div class="look-row"><span>Weight</span><input id="lkWeight" type="range" min="0" max="9" value="4"></div>
-        <div class="look-row"><span>Height</span><input id="lkHeight" type="range" min="0" max="9" value="5"></div>
-        <div>Skin</div>
-        <div class="chip-row" id="lkSkin"></div>
-        <div>Hair</div>
-        <div class="chip-row" id="lkHair"></div>
-        <div>Hair color</div>
-        <div class="chip-row" id="lkHairCol"></div>
-        <div>Eyes</div>
-        <div class="chip-row" id="lkEyes"></div>
-        <div>Shirt</div>
-        <div class="chip-row" id="lkShirt"></div>
-        <div>Pants</div>
-        <div class="chip-row" id="lkPants"></div>
-        <button type="button" id="lkApply" style="width:100%;margin-top:8px">Wear this</button>
-      </div>
       <div id="sheetHome" class="sheet">
         <b>House</b>
-        <p style="opacity:.7;font-size:12px">The Photography house is a real building east of the Gallery. Walk through the front door. Claim a lot below to design your own.</p>
-        <div class="sku"><span>Photo house — walk inside</span><button id="goPhotoHouse">Go there</button></div>
+        <p style="opacity:.7;font-size:12px">The Photography house is the brick house next to the plaza. Tap Enter — you walk through the front door into the room.</p>
+        <div class="sku"><span>Photo house — walk inside</span><button id="goPhotoHouse">Walk in</button></div>
         <div class="sku"><span>First cabin — free lot, then design</span><button id="rentHome">Claim lot</button></div>
         <div class="sku"><span>Buy a house — 120¢</span><button id="buyHome">Buy + design</button></div>
         <div class="sku"><span>$MT villa (exclusive)</span><button id="buyVilla">Villa + design</button></div>
@@ -288,6 +331,84 @@
       <button class="ghost" id="lifeClose" style="width:100%;margin-top:12px">Close</button>
     </div>
   </div>
+  <div id="dressDock">
+    <div id="dressStageWrap">
+      <canvas id="dressPrev" width="640" height="900"></canvas>
+      <div class="dress-stage-bar">
+        <button type="button" class="view-btn" id="dressViewFace">Face</button>
+        <button type="button" class="view-btn on" id="dressViewFull">Full body</button>
+      </div>
+    </div>
+    <div id="dressControls">
+      <div class="dress-controls-head">
+        <b>Dress</b>
+        <button type="button" id="dressClose">Done</button>
+      </div>
+      <p class="dress-hint">They stay on the side. Tap a CGI person, then change clothes — updates live.</p>
+      <div class="look-tabs">
+        <button type="button" class="look-tab on" data-tab="people">People</button>
+        <button type="button" class="look-tab" data-tab="face">Face</button>
+        <button type="button" class="look-tab" data-tab="hair">Hair</button>
+        <button type="button" class="look-tab" data-tab="body">Body</button>
+        <button type="button" class="look-tab" data-tab="clothes">Clothes</button>
+      </div>
+      <div id="tab-people" class="look-pane open">
+        <div class="look-label">CGI people — 50 looks, then dress them</div>
+        <div class="cgi-grid" id="castGrid"></div>
+      </div>
+      <div id="tab-face" class="look-pane">
+        <div class="look-label">Face shape</div>
+        <div class="chip-row" id="lkFace"></div>
+        <div class="look-label">Eyes</div>
+        <div class="chip-row" id="lkEyeShape"></div>
+        <div class="look-label">Eye color</div>
+        <div class="chip-row" id="lkEyes"></div>
+        <div class="look-label">Brows</div>
+        <div class="chip-row" id="lkBrows"></div>
+        <div class="look-label">Nose</div>
+        <div class="chip-row" id="lkNose"></div>
+        <div class="look-label">Mouth</div>
+        <div class="chip-row" id="lkMouth"></div>
+        <div class="look-label">Lips</div>
+        <div class="chip-row" id="lkLips"></div>
+        <div class="look-label">Ears</div>
+        <div class="chip-row" id="lkEars"></div>
+        <div class="look-label">Facial hair</div>
+        <div class="chip-row" id="lkBeard"></div>
+        <div class="look-label">Glasses</div>
+        <div class="chip-row" id="lkGlasses"></div>
+        <div class="look-label">Makeup</div>
+        <div class="chip-row" id="lkMakeup"></div>
+      </div>
+      <div id="tab-hair" class="look-pane">
+        <div class="look-label">Hair style</div>
+        <div class="chip-row" id="lkHair"></div>
+        <div class="look-label">Hair color</div>
+        <div class="chip-row" id="lkHairCol"></div>
+        <div class="look-label">Hat</div>
+        <div class="chip-row" id="lkHat"></div>
+      </div>
+      <div id="tab-body" class="look-pane">
+        <div class="look-row"><span>Weight</span><input id="lkWeight" type="range" min="0" max="9" value="4"></div>
+        <div class="look-row"><span>Height</span><input id="lkHeight" type="range" min="0" max="9" value="5"></div>
+        <div class="look-label">Skin</div>
+        <div class="chip-row" id="lkSkin"></div>
+      </div>
+      <div id="tab-clothes" class="look-pane">
+        <div class="look-label">Top</div>
+        <div class="chip-row" id="lkTop"></div>
+        <div class="look-label">Top color</div>
+        <div class="chip-row" id="lkShirt"></div>
+        <div class="look-label">Bottom</div>
+        <div class="chip-row" id="lkBottom"></div>
+        <div class="look-label">Bottom color</div>
+        <div class="chip-row" id="lkPants"></div>
+        <div class="look-label">Shoes</div>
+        <div class="chip-row" id="lkShoes"></div>
+      </div>
+      <button type="button" id="lkApply" style="width:100%;margin-top:8px">Wear this</button>
+    </div>
+  </div>
   <div id="rps">
     <div class="card">
       <b id="rpsTitle">Play together</b>
@@ -309,8 +430,8 @@ if (window.self !== window.top) document.documentElement.classList.add('in-play-
 
 const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
 const hint = document.getElementById('hint');
-if (coarse) hint.textContent = 'Stick walk · drag look · Jump · photo house is SE of the plaza';
-else hint.textContent = 'Photo house is south-east of the plaza — walk through the front door';
+if (coarse) hint.textContent = 'Stick walk · drag look · Jump · tap Enter to walk into the photo house';
+else hint.textContent = 'The brick house is beside you — tap Enter or walk through the open front door';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x12061c);
@@ -616,7 +737,7 @@ function applyArt(id, url) {
 }
 Object.entries(hung).forEach(([id, url]) => applyArt(id, url));
 
-const player = { x: 0, y: 1.65, z: 8, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, grounded: false };
+const player = { x: 0, y: 1.65, z: 8, vx: 0, vy: 0, vz: 0, yaw: -Math.PI / 2, pitch: 0, grounded: false };
 const move = { x: 0, z: 0 };
 const keys = {};
 let jumping = false;
@@ -874,30 +995,112 @@ function buildPet() {
 buildPet();
 
 const SKINS = ['ffe7cc', 'f1c27d', 'e0ac69', 'c68642', '8d5524', '4b2e1a', 'd8a07a', 'f5d0c5'];
-const HAIR_C = ['1a1a1a', '3f2a14', 'c9a227', 'f5f5f4', '7c2d12', '1e3a5f', 'e11d48', 'a78bfa'];
-const HAIR_N = ['Short', 'Bun', 'Long', 'Mohawk', 'Afro', 'Tail'];
-const EYES = ['2b2118', '3b82f6', '16a34a', '7c3aed', '111827', 'b45309'];
-const SHIRTS = ['19d37e', '1d4ed8', 'b91c1c', '111827', 'f59e0b', '7c3aed', '14b8a6', 'ec4899'];
-const PANTS = ['1e293b', '0f172a', '1d4ed8', '7c2d12', '365314', '4c1d95', '334155', '9a3412'];
-const PRESETS = [
-  { id: 'nova', name: 'Nova', look: { skin: 0, hair: 0, hairC: 3, weight: 3, height: 5, shirt: 0, pants: 0, eyes: 4 } },
-  { id: 'rex', name: 'Rex', look: { skin: 5, hair: 0, hairC: 0, weight: 7, height: 7, shirt: 2, pants: 1, eyes: 4 } },
-  { id: 'mira', name: 'Mira', look: { skin: 2, hair: 2, hairC: 0, weight: 4, height: 4, shirt: 5, pants: 0, eyes: 3 } },
-  { id: 'kai', name: 'Kai', look: { skin: 1, hair: 0, hairC: 0, weight: 4, height: 5, shirt: 6, pants: 2, eyes: 1 } },
-  { id: 'sol', name: 'Sol', look: { skin: 7, hair: 3, hairC: 3, weight: 3, height: 6, shirt: 3, pants: 0, eyes: 1 } },
-  { id: 'jade', name: 'Jade', look: { skin: 3, hair: 5, hairC: 4, weight: 4, height: 5, shirt: 4, pants: 1, eyes: 2 } },
-  { id: 'omar', name: 'Omar', look: { skin: 4, hair: 0, hairC: 1, weight: 6, height: 6, shirt: 4, pants: 3, eyes: 0 } },
-  { id: 'vex', name: 'Vex', look: { skin: 5, hair: 2, hairC: 0, weight: 3, height: 5, shirt: 6, pants: 0, eyes: 1 } }
+const SKIN_N = ['Fair', 'Light', 'Tan', 'Gold', 'Brown', 'Deep', 'Warm', 'Rosy'];
+const HAIR_C = ['1a1a1a', '3f2a14', 'c9a227', 'f5f5f4', '7c2d12', '1e3a5f', 'e11d48', 'a78bfa', '0f766e', '9a3412'];
+const HAIR_CN = ['Black', 'Brown', 'Blonde', 'White', 'Auburn', 'Navy', 'Pink', 'Violet', 'Teal', 'Ginger'];
+const HAIR_N = ['Short', 'Bun', 'Long', 'Mohawk', 'Afro', 'Ponytail', 'Pixie', 'Braids', 'Curly', 'Bald', 'Twins', 'Bob'];
+const EYES = ['2b2118', '3b82f6', '16a34a', '7c3aed', '111827', 'b45309', '0e7490', 'be123c'];
+const EYE_N = ['Brown', 'Blue', 'Green', 'Violet', 'Black', 'Hazel', 'Teal', 'Red'];
+const SHIRTS = ['19d37e', '1d4ed8', 'b91c1c', '111827', 'f59e0b', '7c3aed', '14b8a6', 'ec4899', 'f8fafc', '9a3412'];
+const SHIRT_N = ['Mint', 'Blue', 'Red', 'Black', 'Gold', 'Purple', 'Teal', 'Pink', 'White', 'Rust'];
+const PANTS = ['1e293b', '0f172a', '1d4ed8', '7c2d12', '365314', '4c1d95', '334155', '9a3412', 'f8fafc', 'ec4899'];
+const PANT_N = ['Slate', 'Ink', 'Blue', 'Brown', 'Olive', 'Grape', 'Grey', 'Rust', 'White', 'Pink'];
+const LIPS = ['c08497', 'e11d48', '9f1239', 'b45309', '7f1d1d', 'db2777', '44403c', 'fda4af'];
+const LIP_N = ['Natural', 'Rose', 'Wine', 'Nude', 'Dark', 'Berry', 'Brown', 'Pink'];
+const FACE_N = ['Round', 'Oval', 'Square', 'Long', 'Heart', 'Chubby'];
+const BROW_N = ['Arched', 'Straight', 'Thick', 'Thin', 'Unibrow', 'None'];
+const EYESHAPE_N = ['Round', 'Almond', 'Narrow', 'Large', 'Sleepy', 'Wide'];
+const NOSE_N = ['Small', 'Button', 'Wide', 'Long', 'Hooked', 'Flat'];
+const MOUTH_N = ['Smile', 'Soft', 'Neutral', 'Wide', 'Frown', 'Smirk'];
+const EAR_N = ['Normal', 'Small', 'Large', 'Pointed'];
+const BEARD_N = ['None', 'Stubble', 'Mustache', 'Goatee', 'Beard', 'Full', 'Soul', 'Burns'];
+const GLASS_N = ['None', 'Round', 'Square', 'Sun', 'Brow', 'Cat-eye'];
+const MAKEUP_N = ['None', 'Blush', 'Liner', 'Both'];
+const TOP_N = ['Tee', 'Tank', 'Hoodie', 'Jacket', 'Dress', 'Vest', 'Polo', 'Sweater', 'Crop', 'Overalls'];
+const BOTTOM_N = ['Jeans', 'Shorts', 'Skirt', 'Cargo', 'Sweats', 'Skinny', 'Capri', 'Wide'];
+const SHOE_N = ['Sneakers', 'Boots', 'Sandals', 'Heels', 'Bare', 'Dress'];
+const HAT_N = ['None', 'Cap', 'Beanie', 'Cowboy', 'Bow', 'Crown'];
+const LOOK_KEYS = ['skin', 'hair', 'hairC', 'weight', 'height', 'shirt', 'pants', 'eyes', 'face', 'brows', 'eyeshape', 'nose', 'mouth', 'lips', 'beard', 'glasses', 'top', 'bottom', 'shoes', 'hat', 'makeup', 'ears'];
+const CAST = [
+  { id: 'nova', name: 'Nova', look: { skin: 0, hair: 0, hairC: 3, weight: 3, height: 5, shirt: 0, pants: 0, eyes: 4, face: 1, top: 3, bottom: 5 } },
+  { id: 'rex', name: 'Rex', look: { skin: 5, hair: 0, hairC: 0, weight: 7, height: 7, shirt: 4, pants: 1, eyes: 4, face: 2, beard: 4, top: 3, bottom: 3, brows: 2, shoes: 1 } },
+  { id: 'mira', name: 'Mira', look: { skin: 2, hair: 2, hairC: 0, weight: 4, height: 4, shirt: 5, pants: 0, eyes: 3, face: 4, top: 4, bottom: 2, mouth: 0, makeup: 1, glasses: 5 } },
+  { id: 'kai', name: 'Kai', look: { skin: 1, hair: 6, hairC: 0, weight: 4, height: 5, shirt: 6, pants: 2, eyes: 1, face: 1, top: 6, bottom: 1, glasses: 1 } },
+  { id: 'sol', name: 'Sol', look: { skin: 7, hair: 3, hairC: 3, weight: 3, height: 6, shirt: 3, pants: 0, eyes: 1, face: 3, top: 2, bottom: 4, hat: 1 } },
+  { id: 'jade', name: 'Jade', look: { skin: 3, hair: 11, hairC: 4, weight: 4, height: 5, shirt: 4, pants: 1, eyes: 2, face: 0, top: 8, bottom: 2, makeup: 3, lips: 1 } },
+  { id: 'omar', name: 'Omar', look: { skin: 4, hair: 9, hairC: 1, weight: 6, height: 6, shirt: 4, pants: 3, eyes: 0, face: 5, beard: 5, top: 5, bottom: 0, glasses: 2 } },
+  { id: 'vex', name: 'Vex', look: { skin: 5, hair: 7, hairC: 7, weight: 3, height: 5, shirt: 6, pants: 9, eyes: 1, face: 1, top: 1, bottom: 7, ears: 3, makeup: 2 } },
+  { id: 'bo', name: 'Bo', look: { skin: 1, hair: 0, hairC: 0, weight: 4, height: 5, shirt: 6, pants: 3, eyes: 4, face: 1, top: 2, bottom: 3, glasses: 2 } },
+  { id: 'zara', name: 'Zara', look: { skin: 5, hair: 4, hairC: 1, weight: 4, height: 5, shirt: 4, pants: 1, eyes: 0, face: 0, top: 2, bottom: 5 } },
+  { id: 'rhea', name: 'Rhea', look: { skin: 0, hair: 2, hairC: 4, weight: 3, height: 5, shirt: 7, pants: 2, eyes: 5, face: 1, top: 3, bottom: 0 } },
+  { id: 'idris', name: 'Idris', look: { skin: 5, hair: 0, hairC: 0, weight: 6, height: 8, shirt: 8, pants: 2, eyes: 0, face: 2, top: 0, bottom: 0, shoes: 0 } },
+  { id: 'yuki', name: 'Yuki', look: { skin: 1, hair: 11, hairC: 0, weight: 3, height: 4, shirt: 4, pants: 1, eyes: 4, face: 1, top: 3, bottom: 2 } },
+  { id: 'cruz', name: 'Cruz', look: { skin: 3, hair: 0, hairC: 1, weight: 5, height: 6, shirt: 2, pants: 3, eyes: 0, face: 2, beard: 2, top: 3, bottom: 0, shoes: 1 } },
+  { id: 'amara', name: 'Amara', look: { skin: 3, hair: 2, hairC: 1, weight: 4, height: 5, shirt: 6, pants: 4, eyes: 0, face: 4, top: 4, bottom: 2, makeup: 1 } },
+  { id: 'flynn', name: 'Flynn', look: { skin: 0, hair: 3, hairC: 3, weight: 3, height: 6, shirt: 3, pants: 1, eyes: 4, face: 3, top: 1, bottom: 0 } },
+  { id: 'noor', name: 'Noor', look: { skin: 2, hair: 2, hairC: 1, weight: 4, height: 5, shirt: 8, pants: 0, eyes: 0, face: 1, top: 7, bottom: 0, hat: 2 } },
+  { id: 'theo', name: 'Theo', look: { skin: 1, hair: 0, hairC: 1, weight: 6, height: 6, shirt: 2, pants: 0, eyes: 4, face: 2, beard: 5, top: 7, bottom: 0, shoes: 5 } },
+  { id: 'lila', name: 'Lila', look: { skin: 2, hair: 8, hairC: 1, weight: 4, height: 4, shirt: 2, pants: 2, eyes: 0, face: 0, top: 8, bottom: 0, mouth: 0 } },
+  { id: 'kenji', name: 'Kenji', look: { skin: 1, hair: 6, hairC: 0, weight: 4, height: 6, shirt: 3, pants: 1, eyes: 4, face: 1, top: 3, bottom: 5, shoes: 5 } },
+  { id: 'sable', name: 'Sable', look: { skin: 0, hair: 2, hairC: 0, weight: 3, height: 5, shirt: 3, pants: 1, eyes: 4, face: 3, top: 3, bottom: 2, lips: 4, makeup: 2, shoes: 3 } },
+  { id: 'oren', name: 'Oren', look: { skin: 0, hair: 0, hairC: 9, weight: 6, height: 6, shirt: 2, pants: 3, eyes: 5, face: 2, beard: 5, top: 3, bottom: 3, shoes: 1 } },
+  { id: 'minh', name: 'Minh', look: { skin: 1, hair: 0, hairC: 0, weight: 4, height: 5, shirt: 9, pants: 1, eyes: 4, face: 1, top: 3, bottom: 0 } },
+  { id: 'freya', name: 'Freya', look: { skin: 0, hair: 7, hairC: 2, weight: 4, height: 6, shirt: 3, pants: 0, eyes: 1, face: 1, top: 3, bottom: 0, shoes: 1 } },
+  { id: 'dante', name: 'Dante', look: { skin: 2, hair: 0, hairC: 0, weight: 5, height: 6, shirt: 3, pants: 1, eyes: 0, face: 2, beard: 1, top: 3, bottom: 0 } },
+  { id: 'priya', name: 'Priya', look: { skin: 3, hair: 5, hairC: 1, weight: 4, height: 4, shirt: 2, pants: 2, eyes: 4, face: 1, top: 9, bottom: 0, glasses: 1 } },
+  { id: 'malik', name: 'Malik', look: { skin: 4, hair: 0, hairC: 0, weight: 5, height: 6, shirt: 8, pants: 3, eyes: 0, face: 2, beard: 4, top: 5, bottom: 0, hat: 1 } },
+  { id: 'quinn', name: 'Quinn', look: { skin: 1, hair: 0, hairC: 3, weight: 3, height: 5, shirt: 3, pants: 0, eyes: 2, face: 1, top: 2, bottom: 4 } },
+  { id: 'bea', name: 'Bea', look: { skin: 0, hair: 8, hairC: 4, weight: 7, height: 4, shirt: 7, pants: 2, eyes: 5, face: 5, top: 4, bottom: 2, mouth: 0 } },
+  { id: 'hugo', name: 'Hugo', look: { skin: 1, hair: 0, hairC: 1, weight: 8, height: 7, shirt: 3, pants: 3, eyes: 4, face: 5, beard: 4, top: 2, bottom: 3, hat: 2 } },
+  { id: 'ines', name: 'Ines', look: { skin: 0, hair: 6, hairC: 1, weight: 3, height: 5, shirt: 8, pants: 2, eyes: 4, face: 1, top: 0, bottom: 1 } },
+  { id: 'jace', name: 'Jace', look: { skin: 2, hair: 0, hairC: 0, weight: 4, height: 5, shirt: 0, pants: 0, eyes: 1, face: 1, top: 0, bottom: 1, hat: 1 } },
+  { id: 'kira', name: 'Kira', look: { skin: 1, hair: 2, hairC: 6, weight: 3, height: 4, shirt: 7, pants: 0, eyes: 0, face: 0, top: 2, bottom: 5 } },
+  { id: 'leon', name: 'Leon', look: { skin: 5, hair: 0, hairC: 0, weight: 5, height: 6, shirt: 2, pants: 1, eyes: 0, face: 2, top: 3, bottom: 0 } },
+  { id: 'mae', name: 'Mae', look: { skin: 1, hair: 1, hairC: 0, weight: 3, height: 4, shirt: 2, pants: 2, eyes: 4, face: 1, top: 4, bottom: 2 } },
+  { id: 'nico', name: 'Nico', look: { skin: 2, hair: 0, hairC: 1, weight: 5, height: 6, shirt: 8, pants: 2, eyes: 0, face: 2, beard: 1, top: 0, bottom: 1 } },
+  { id: 'odette', name: 'Odette', look: { skin: 0, hair: 1, hairC: 3, weight: 4, height: 5, shirt: 3, pants: 0, eyes: 2, face: 1, top: 3, bottom: 0, shoes: 5 } },
+  { id: 'pax', name: 'Pax', look: { skin: 0, hair: 0, hairC: 3, weight: 3, height: 6, shirt: 3, pants: 1, eyes: 4, face: 3, top: 7, bottom: 5 } },
+  { id: 'rumi', name: 'Rumi', look: { skin: 3, hair: 2, hairC: 0, weight: 4, height: 5, shirt: 0, pants: 0, eyes: 5, face: 1, top: 3, bottom: 0 } },
+  { id: 'seth', name: 'Seth', look: { skin: 4, hair: 0, hairC: 0, weight: 5, height: 6, shirt: 3, pants: 1, eyes: 0, face: 2, beard: 1, top: 0, bottom: 0 } },
+  { id: 'tia', name: 'Tia', look: { skin: 2, hair: 5, hairC: 1, weight: 4, height: 4, shirt: 2, pants: 1, eyes: 0, face: 0, top: 0, bottom: 1 } },
+  { id: 'ulrich', name: 'Ulrich', look: { skin: 0, hair: 0, hairC: 1, weight: 5, height: 6, shirt: 1, pants: 0, eyes: 4, face: 2, glasses: 2, top: 7, bottom: 0 } },
+  { id: 'vera', name: 'Vera', look: { skin: 0, hair: 11, hairC: 0, weight: 3, height: 5, shirt: 3, pants: 0, eyes: 2, face: 1, top: 3, bottom: 0 } },
+  { id: 'wynn', name: 'Wynn', look: { skin: 3, hair: 2, hairC: 0, weight: 5, height: 6, shirt: 2, pants: 2, eyes: 0, face: 2, top: 3, bottom: 0 } },
+  { id: 'xiao', name: 'Xiao', look: { skin: 1, hair: 0, hairC: 0, weight: 3, height: 5, shirt: 6, pants: 0, eyes: 4, face: 1, glasses: 1, top: 2, bottom: 4 } },
+  { id: 'yasmin', name: 'Yasmin', look: { skin: 2, hair: 2, hairC: 0, weight: 4, height: 5, shirt: 3, pants: 1, eyes: 0, face: 4, makeup: 3, lips: 1, top: 3, bottom: 5 } },
+  { id: 'zed', name: 'Zed', look: { skin: 5, hair: 4, hairC: 0, weight: 5, height: 6, shirt: 4, pants: 0, eyes: 0, face: 2, top: 2, bottom: 1 } },
+  { id: 'anouk', name: 'Anouk', look: { skin: 0, hair: 11, hairC: 2, weight: 3, height: 5, shirt: 3, pants: 2, eyes: 1, face: 1, top: 3, bottom: 1 } },
+  { id: 'bodhi', name: 'Bodhi', look: { skin: 2, hair: 0, hairC: 2, weight: 4, height: 6, shirt: 8, pants: 1, eyes: 1, face: 1, top: 1, bottom: 1 } },
+  { id: 'nyx', name: 'Nyx', look: { skin: 5, hair: 2, hairC: 0, weight: 3, height: 5, shirt: 4, pants: 1, eyes: 0, face: 4, top: 4, bottom: 2, makeup: 1, lips: 2 } }
 ];
-function defaultLook() { return { ...PRESETS[0].look }; }
+const PRESETS = CAST;
+function defaultLook() {
+  return {
+    skin: 0, hair: 0, hairC: 3, weight: 3, height: 5, shirt: 0, pants: 0, eyes: 4,
+    face: 1, brows: 0, eyeshape: 1, nose: 0, mouth: 0, lips: 0, beard: 0, glasses: 0,
+    top: 0, bottom: 0, shoes: 0, hat: 0, makeup: 0, ears: 0, cast: 0
+  };
+}
 function encodeLook(L) {
-  const x = (n) => Math.max(0, Math.min(9, n | 0)).toString(36);
-  return 'c' + x(L.skin) + x(L.hair) + x(L.hairC) + x(L.weight) + x(L.height) + x(L.shirt) + x(L.pants) + x(L.eyes);
+  L = { ...defaultLook(), ...(L || {}) };
+  const x = (n) => Math.max(0, Math.min(35, n | 0)).toString(36);
+  const cast = Math.max(0, Math.min(99, L.cast | 0));
+  return 'c' + LOOK_KEYS.map((k) => x(L[k])).join('') + cast.toString(36).padStart(2, '0');
 }
 function decodeLook(code) {
-  if (!code || code[0] !== 'c' || code.length < 9) return defaultLook();
-  const d = (i) => parseInt(code[i], 36) || 0;
-  return { skin: d(1), hair: d(2), hairC: d(3), weight: d(4), height: d(5), shirt: d(6), pants: d(7), eyes: d(8) };
+  const base = defaultLook();
+  if (!code || code[0] !== 'c') return base;
+  LOOK_KEYS.forEach((k, i) => {
+    if (code.length > i + 1) {
+      const v = parseInt(code[i + 1], 36);
+      if (!Number.isNaN(v)) base[k] = v;
+    }
+  });
+  if (code.length >= LOOK_KEYS.length + 3) {
+    const v = parseInt(code.slice(LOOK_KEYS.length + 1, LOOK_KEYS.length + 3), 36);
+    if (!Number.isNaN(v)) base.cast = v;
+  }
+  return base;
 }
 function col(hex) { return new THREE.Color('#' + hex); }
 function mat(hex) { return new THREE.MeshLambertMaterial({ color: col(hex) }); }
@@ -907,6 +1110,39 @@ function addPivoted(parent, mesh, x, y, z, drop) {
   parent.add(mesh);
   return mesh;
 }
+function part(parent, geo, material, x, y, z, sx, sy, sz, rx, ry, rz) {
+  const m = new THREE.Mesh(geo, material);
+  m.position.set(x || 0, y || 0, z || 0);
+  if (sx != null) m.scale.set(sx, sy == null ? sx : sy, sz == null ? sx : sz);
+  if (rx) m.rotation.x = rx;
+  if (ry) m.rotation.y = ry;
+  if (rz) m.rotation.z = rz;
+  parent.add(m);
+  return m;
+}
+function dumpGroup(obj) {
+  if (!obj) return;
+  obj.traverse((o) => {
+    if (o.geometry) o.geometry.dispose();
+    if (o.material) {
+      const ms = Array.isArray(o.material) ? o.material : [o.material];
+      ms.forEach((m) => { if (m && m.dispose) m.dispose(); });
+    }
+  });
+}
+const texCache = new Map();
+function getCastTex(i) {
+  const c = CAST[i];
+  if (!c) return null;
+  if (texCache.has(c.id)) return texCache.get(c.id);
+  const t = new THREE.TextureLoader().load('/games/gallery/cast/' + c.id + '.jpg', () => {
+    t.needsUpdate = true;
+    if ((inv.look && (inv.look.cast | 0) === i + 1)) rebuildMe();
+  });
+  t.colorSpace = THREE.SRGBColorSpace;
+  texCache.set(c.id, t);
+  return t;
+}
 function makePerson(L) {
   L = { ...defaultLook(), ...(L || {}) };
   const g = new THREE.Group();
@@ -915,75 +1151,312 @@ function makePerson(L) {
   const pants = mat(PANTS[L.pants % PANTS.length]);
   const hairM = mat(HAIR_C[L.hairC % HAIR_C.length]);
   const eyeM = mat(EYES[L.eyes % EYES.length]);
+  const lipM = mat(LIPS[L.lips % LIPS.length]);
+  const white = mat('f8fafc');
+  const pupilM = mat('0b1220');
+  const frameM = mat('111827');
+  const sunM = new THREE.MeshLambertMaterial({ color: col('1e293b'), transparent: true, opacity: 0.72, side: THREE.DoubleSide });
+  const blushM = new THREE.MeshLambertMaterial({ color: col('fb7185'), transparent: true, opacity: 0.45 });
+  const shoeM = mat(L.shoes === 3 ? '9f1239' : (L.shoes === 5 ? '1c1917' : '111827'));
   const w = 0.72 + L.weight * 0.045;
   const hMul = 0.9 + L.height * 0.025;
+  const top = L.top % TOP_N.length;
+  const bottom = L.bottom % BOTTOM_N.length;
+  const isDress = top === 4;
+  const sleeved = top === 2 || top === 3 || top === 7;
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.32 + L.weight * 0.012, 14), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.02; g.add(shadow);
-  const hip = new THREE.Mesh(new THREE.SphereGeometry(0.16 * w, 12, 10), pants);
-  hip.position.y = 0.92; hip.scale.set(1.15, 0.7, 1); g.add(hip);
-  const torso = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 12), shirt);
-  torso.position.y = 1.22; torso.scale.set(w, 1.15, 0.7); g.add(torso);
-  if (L.weight >= 6) {
-    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.16 + (L.weight - 5) * 0.03, 12, 10), shirt);
-    belly.position.set(0, 1.08, 0.08); g.add(belly);
+
+  const hipCol = isDress || bottom === 2 ? shirt : pants;
+  const hip = part(g, new THREE.SphereGeometry(0.16 * w, 12, 10), hipCol, 0, 0.92, 0, 1.15, 0.7, 1);
+  const torsoH = top === 8 ? 0.85 : (top === 2 || top === 7 ? 1.28 : 1.15);
+  const torso = part(g, new THREE.SphereGeometry(0.22, 14, 12), shirt, 0, top === 8 ? 1.28 : 1.22, 0, w * (top === 2 || top === 7 ? 1.08 : 1), torsoH, 0.7);
+  if (L.weight >= 6 || top === 8) {
+    const belly = part(g, new THREE.SphereGeometry(0.14 + Math.max(0, L.weight - 4) * 0.025, 12, 10), top === 8 ? skin : shirt, 0, 1.06, 0.08);
   }
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.12, 10), skin);
-  neck.position.y = 1.48; g.add(neck);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 14), skin);
-  head.position.y = 1.64; g.add(head);
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.07, 6), skin);
-  nose.rotation.x = Math.PI / 2; nose.position.set(0, 1.62, 0.14); g.add(nose);
-  [[-0.05, 1.67, 0.12], [0.05, 1.67, 0.12]].forEach((p) => {
-    const e = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), eyeM);
-    e.position.set(p[0], p[1], p[2]); g.add(e);
-  });
-  [[-0.05, 1.71, 0.12], [0.05, 1.71, 0.12]].forEach((p) => {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.02), hairM);
-    b.position.set(p[0], p[1], p[2]); g.add(b);
-  });
-  const hs = L.hair % 6;
-  if (hs === 0) {
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.155, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.7), hairM);
-    cap.position.y = 1.68; g.add(cap);
-  } else if (hs === 1) {
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.8), hairM);
-    cap.position.y = 1.68; g.add(cap);
-    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), hairM);
-    bun.position.set(0, 1.8, -0.04); g.add(bun);
-  } else if (hs === 2) {
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.6), hairM);
-    cap.position.y = 1.67; g.add(cap);
-    const longh = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.45, 4, 8), hairM);
-    longh.position.set(0, 1.38, -0.1); g.add(longh);
-  } else if (hs === 3) {
-    for (let i = 0; i < 5; i++) {
-      const spike = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.08), hairM);
-      spike.position.set((i - 2) * 0.035, 1.78, 0); g.add(spike);
+  if (top === 1) {
+    part(g, new THREE.BoxGeometry(0.04, 0.22, 0.04), shirt, -0.12 * w, 1.4, 0.02);
+    part(g, new THREE.BoxGeometry(0.04, 0.22, 0.04), shirt, 0.12 * w, 1.4, 0.02);
+  }
+  if (top === 2) {
+    part(g, new THREE.SphereGeometry(0.17, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.55), shirt, 0, 1.7, -0.05);
+    part(g, new THREE.BoxGeometry(0.22 * w, 0.12, 0.08), shirt, 0, 1.12, 0.14);
+  }
+  if (top === 3) {
+    part(g, new THREE.BoxGeometry(0.18, 0.08, 0.08), shirt, 0, 1.42, 0.12, 1.2, 1, 1);
+    part(g, new THREE.BoxGeometry(0.08, 0.28, 0.04), shirt, -0.08, 1.28, 0.16, 1, 1, 1, 0, 0, 0.35);
+    part(g, new THREE.BoxGeometry(0.08, 0.28, 0.04), shirt, 0.08, 1.28, 0.16, 1, 1, 1, 0, 0, -0.35);
+  }
+  if (top === 6) {
+    part(g, new THREE.TorusGeometry(0.07, 0.018, 6, 10, Math.PI), shirt, 0, 1.46, 0.08, 1, 1, 1, Math.PI / 2);
+  }
+  if (top === 5) {
+    part(g, new THREE.BoxGeometry(0.28 * w, 0.42, 0.08), shirt, 0, 1.22, 0.12);
+  }
+  if (isDress) {
+    part(g, new THREE.CylinderGeometry(0.13 * w, 0.3 * w, 0.7, 14), shirt, 0, 0.7, 0);
+    part(g, new THREE.TorusGeometry(0.13 * w, 0.018, 6, 12), shirt, 0, 1.04, 0, 1, 1, 1, Math.PI / 2);
+  }
+  if (top === 9) {
+    part(g, new THREE.BoxGeometry(0.28 * w, 0.22, 0.08), pants, 0, 1.18, 0.12);
+    part(g, new THREE.BoxGeometry(0.04, 0.28, 0.03), pants, -0.1 * w, 1.38, 0.04);
+    part(g, new THREE.BoxGeometry(0.04, 0.28, 0.03), pants, 0.1 * w, 1.38, 0.04);
+  }
+  if (bottom === 2 && !isDress) {
+    part(g, new THREE.CylinderGeometry(0.12 * w, 0.24 * w, 0.4, 12), pants, 0, 0.72, 0);
+  }
+  if (bottom === 3) {
+    part(g, new THREE.BoxGeometry(0.08, 0.12, 0.06), pants, -0.16 * w, 0.7, 0.06);
+    part(g, new THREE.BoxGeometry(0.08, 0.12, 0.06), pants, 0.16 * w, 0.7, 0.06);
+  }
+  part(g, new THREE.CylinderGeometry(0.06, 0.07, 0.12, 10), skin, 0, 1.48, 0);
+
+  const faces = [
+    { sx: 1, sy: 1, sz: 1 },
+    { sx: 0.88, sy: 1.14, sz: 0.95 },
+    { sx: 1.1, sy: 0.92, sz: 1.04 },
+    { sx: 0.82, sy: 1.26, sz: 0.9 },
+    { sx: 1.06, sy: 1.08, sz: 0.92 },
+    { sx: 1.2, sy: 0.94, sz: 1.14 }
+  ];
+  const fs = faces[L.face % faces.length];
+  const headG = new THREE.Group();
+  headG.position.y = 1.64;
+  g.add(headG);
+  const head = part(headG, new THREE.SphereGeometry(0.15, 16, 14), skin, 0, 0, 0, fs.sx, fs.sy, fs.sz);
+  if (L.face === 2) part(headG, new THREE.BoxGeometry(0.18, 0.08, 0.14), skin, 0, -0.08, 0.02);
+  if (L.face === 4) part(headG, new THREE.SphereGeometry(0.05, 8, 8), skin, 0, -0.12, 0.04, 0.8, 0.7, 0.8);
+  if (L.face === 5) {
+    part(headG, new THREE.SphereGeometry(0.07, 8, 8), skin, -0.1, -0.02, 0.08);
+    part(headG, new THREE.SphereGeometry(0.07, 8, 8), skin, 0.1, -0.02, 0.08);
+  }
+  const earS = L.ears === 1 ? 0.7 : (L.ears === 2 ? 1.35 : 1);
+  const earGeo = L.ears === 3 ? new THREE.ConeGeometry(0.035, 0.1, 6) : new THREE.SphereGeometry(0.04, 8, 8);
+  part(headG, earGeo, skin, -0.15 * fs.sx, L.ears === 3 ? 0.04 : 0, 0, earS, earS, earS, L.ears === 3 ? 0 : 0, 0, L.ears === 3 ? 0.5 : 0);
+  part(headG, earGeo.clone(), skin, 0.15 * fs.sx, L.ears === 3 ? 0.04 : 0, 0, earS, earS, earS, L.ears === 3 ? 0 : 0, 0, L.ears === 3 ? -0.5 : 0);
+
+  const cgiIdx = (L.cast | 0) - 1;
+  const cgiOn = cgiIdx >= 0 && CAST[cgiIdx];
+  if (cgiOn) {
+    const baseTex = getCastTex(cgiIdx);
+    if (baseTex) {
+      const faceTex = baseTex.clone();
+      faceTex.repeat.set(0.4, 0.24);
+      faceTex.offset.set(0.3, 0.7);
+      faceTex.needsUpdate = true;
+      const faceMat = new THREE.MeshLambertMaterial({ map: faceTex, depthWrite: true });
+      const plate = new THREE.Mesh(new THREE.CircleGeometry(0.14, 20), faceMat);
+      plate.position.set(0, 0.02, 0.155);
+      headG.add(plate);
+      const back = new THREE.Mesh(new THREE.CircleGeometry(0.145, 20), new THREE.MeshLambertMaterial({ color: 0x111827 }));
+      back.position.set(0, 0.02, 0.148);
+      headG.add(back);
     }
-  } else if (hs === 4) {
-    const afro = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), hairM);
-    afro.position.y = 1.74; g.add(afro);
-  } else {
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.7), hairM);
-    cap.position.y = 1.68; g.add(cap);
-    const tail = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.28, 4, 8), hairM);
-    tail.position.set(0, 1.5, -0.12); g.add(tail);
   }
-  const ll = new THREE.Mesh(new THREE.CapsuleGeometry(0.07 * w, 0.38, 4, 8), pants);
-  const rl = new THREE.Mesh(new THREE.CapsuleGeometry(0.07 * w, 0.38, 4, 8), pants);
-  addPivoted(g, ll, -0.1 * w, 0.92, 0, -0.22);
-  addPivoted(g, rl, 0.1 * w, 0.92, 0, -0.22);
-  const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.16), mat('111827'));
-  const shoeR = shoeL.clone();
-  shoeL.position.set(-0.1 * w, 0.06, 0.03); shoeR.position.set(0.1 * w, 0.06, 0.03); g.add(shoeL, shoeR);
-  const la = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.34, 4, 8), skin);
-  const ra = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.34, 4, 8), skin);
+
+  const esList = [
+    { sx: 1, sy: 1, sp: 0.05 },
+    { sx: 1.4, sy: 0.72, sp: 0.05 },
+    { sx: 1.28, sy: 0.46, sp: 0.05 },
+    { sx: 1.32, sy: 1.28, sp: 0.055 },
+    { sx: 1.38, sy: 0.4, sp: 0.05 },
+    { sx: 1.15, sy: 0.9, sp: 0.07 }
+  ];
+  const es = esList[L.eyeshape % esList.length];
+  if (!cgiOn) {
+  function addEye(hx) {
+    const wrap = new THREE.Group();
+    wrap.position.set(hx, 0.02, 0.132);
+    wrap.scale.set(es.sx, es.sy, 1);
+    part(wrap, new THREE.SphereGeometry(0.02, 10, 8), white);
+    part(wrap, new THREE.SphereGeometry(0.014, 8, 8), eyeM, 0, 0, 0.012);
+    part(wrap, new THREE.SphereGeometry(0.007, 6, 6), pupilM, 0, 0, 0.02);
+    headG.add(wrap);
+  }
+  addEye(-es.sp); addEye(es.sp);
+
+  const br = L.brows % BROW_N.length;
+  if (br !== 5) {
+    if (br === 4) {
+      part(headG, new THREE.BoxGeometry(0.16, 0.016, 0.02), hairM, 0, 0.08, 0.12);
+    } else {
+      const bh = br === 2 ? 0.022 : (br === 3 ? 0.007 : 0.012);
+      const rot = br === 1 ? 0 : 0.28;
+      part(headG, new THREE.BoxGeometry(0.055, bh, 0.02), hairM, -es.sp, 0.075, 0.12, 1, 1, 1, 0, 0, rot);
+      part(headG, new THREE.BoxGeometry(0.055, bh, 0.02), hairM, es.sp, 0.075, 0.12, 1, 1, 1, 0, 0, -rot);
+    }
+  }
+
+  const ns = L.nose % NOSE_N.length;
+  if (ns === 0) part(headG, new THREE.ConeGeometry(0.022, 0.06, 6), skin, 0, -0.015, 0.15, 1, 1, 1, Math.PI / 2);
+  else if (ns === 1) part(headG, new THREE.SphereGeometry(0.028, 8, 8), skin, 0, -0.02, 0.155);
+  else if (ns === 2) part(headG, new THREE.SphereGeometry(0.036, 8, 8), skin, 0, -0.025, 0.15, 1.5, 0.7, 1);
+  else if (ns === 3) part(headG, new THREE.ConeGeometry(0.024, 0.1, 6), skin, 0, -0.03, 0.16, 1, 1, 1, Math.PI / 2);
+  else if (ns === 4) {
+    part(headG, new THREE.ConeGeometry(0.024, 0.08, 6), skin, 0, -0.02, 0.15, 1, 1, 1, Math.PI / 2);
+    part(headG, new THREE.SphereGeometry(0.02, 8, 8), skin, 0, -0.05, 0.17);
+  } else part(headG, new THREE.BoxGeometry(0.055, 0.024, 0.05), skin, 0, -0.02, 0.15);
+
+  const ms = L.mouth % MOUTH_N.length;
+  if (ms === 0) part(headG, new THREE.TorusGeometry(0.035, 0.008, 6, 12, Math.PI), lipM, 0, -0.08, 0.13, 1, 1, 1, 0, 0, Math.PI);
+  else if (ms === 1) part(headG, new THREE.TorusGeometry(0.028, 0.007, 6, 10, Math.PI), lipM, 0, -0.075, 0.13, 1, 1, 1, 0, 0, Math.PI);
+  else if (ms === 2) part(headG, new THREE.BoxGeometry(0.06, 0.012, 0.016), lipM, 0, -0.08, 0.132);
+  else if (ms === 3) part(headG, new THREE.BoxGeometry(0.09, 0.014, 0.016), lipM, 0, -0.08, 0.132);
+  else if (ms === 4) part(headG, new THREE.TorusGeometry(0.032, 0.008, 6, 12, Math.PI), lipM, 0, -0.09, 0.13);
+  else part(headG, new THREE.TorusGeometry(0.03, 0.008, 6, 10, Math.PI * 0.7), lipM, 0.02, -0.08, 0.13, 1, 1, 1, 0.15, 0.35, Math.PI * 0.8);
+
+  const mk = L.makeup % MAKEUP_N.length;
+  if (mk === 1 || mk === 3) {
+    part(headG, new THREE.SphereGeometry(0.028, 8, 8), blushM, -0.09, -0.03, 0.12);
+    part(headG, new THREE.SphereGeometry(0.028, 8, 8), blushM, 0.09, -0.03, 0.12);
+  }
+  if (mk === 2 || mk === 3) {
+    part(headG, new THREE.BoxGeometry(0.05, 0.006, 0.01), frameM, -es.sp, 0.055, 0.132, es.sx, 1, 1);
+    part(headG, new THREE.BoxGeometry(0.05, 0.006, 0.01), frameM, es.sp, 0.055, 0.132, es.sx, 1, 1);
+  }
+  }
+
+  const bd = L.beard % BEARD_N.length;
+  if (bd === 1) part(headG, new THREE.SphereGeometry(0.12, 10, 8), hairM, 0, -0.08, 0.06, 1, 0.45, 0.9);
+  if (bd === 2 || bd === 5) {
+    part(headG, new THREE.BoxGeometry(0.08, 0.018, 0.03), hairM, 0, -0.045, 0.14);
+  }
+  if (bd === 3 || bd === 6) part(headG, new THREE.SphereGeometry(bd === 6 ? 0.018 : 0.035, 8, 8), hairM, 0, -0.12, 0.1);
+  if (bd === 4 || bd === 5) part(headG, new THREE.SphereGeometry(0.1, 10, 8), hairM, 0, -0.1, 0.04, 1.05, 0.7, 1);
+  if (bd === 7) {
+    part(headG, new THREE.BoxGeometry(0.03, 0.1, 0.04), hairM, -0.13, -0.02, 0.04);
+    part(headG, new THREE.BoxGeometry(0.03, 0.1, 0.04), hairM, 0.13, -0.02, 0.04);
+  }
+
+  const hs = L.hair % HAIR_N.length;
+  if (hs !== 9) {
+    if (hs === 0 || hs === 6) part(headG, new THREE.SphereGeometry(hs === 6 ? 0.15 : 0.155, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.7), hairM, 0, 0.04, 0);
+    if (hs === 6) {
+      part(headG, new THREE.BoxGeometry(0.04, 0.05, 0.04), hairM, -0.08, 0.1, 0.04);
+      part(headG, new THREE.BoxGeometry(0.04, 0.06, 0.04), hairM, 0.06, 0.12, 0.02);
+    }
+    if (hs === 1) {
+      part(headG, new THREE.SphereGeometry(0.15, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.8), hairM, 0, 0.04, 0);
+      part(headG, new THREE.SphereGeometry(0.07, 10, 8), hairM, 0, 0.16, -0.04);
+    }
+    if (hs === 2) {
+      part(headG, new THREE.SphereGeometry(0.16, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.55), hairM, 0, 0.03, 0);
+      part(headG, new THREE.CapsuleGeometry(0.07, 0.5, 4, 8), hairM, 0, -0.28, -0.1);
+    }
+    if (hs === 3) {
+      for (let i = 0; i < 5; i++) part(headG, new THREE.BoxGeometry(0.032, 0.22, 0.07), hairM, (i - 2) * 0.03, 0.2, 0);
+    }
+    if (hs === 4) part(headG, new THREE.SphereGeometry(0.2, 12, 10), hairM, 0, 0.1, 0);
+    if (hs === 5) {
+      part(headG, new THREE.SphereGeometry(0.15, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.7), hairM, 0, 0.04, 0);
+      part(headG, new THREE.CapsuleGeometry(0.04, 0.32, 4, 8), hairM, 0, -0.12, -0.12);
+    }
+    if (hs === 7) {
+      part(headG, new THREE.SphereGeometry(0.15, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.7), hairM, 0, 0.04, 0);
+      part(headG, new THREE.CapsuleGeometry(0.03, 0.42, 4, 8), hairM, -0.08, -0.18, -0.06);
+      part(headG, new THREE.CapsuleGeometry(0.03, 0.42, 4, 8), hairM, 0.08, -0.18, -0.06);
+    }
+    if (hs === 8) {
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        part(headG, new THREE.SphereGeometry(0.07, 8, 8), hairM, Math.cos(a) * 0.1, 0.08 + (i % 2) * 0.04, Math.sin(a) * 0.08);
+      }
+    }
+    if (hs === 10) {
+      part(headG, new THREE.SphereGeometry(0.15, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.7), hairM, 0, 0.04, 0);
+      part(headG, new THREE.CapsuleGeometry(0.035, 0.36, 4, 8), hairM, -0.12, -0.1, -0.04);
+      part(headG, new THREE.CapsuleGeometry(0.035, 0.36, 4, 8), hairM, 0.12, -0.1, -0.04);
+    }
+    if (hs === 11) part(headG, new THREE.SphereGeometry(0.17, 12, 12, 0, Math.PI * 2, 0, Math.PI / 1.35), hairM, 0, 0.02, 0);
+  }
+
+  const gl = L.glasses % GLASS_N.length;
+  if (gl) {
+    const lens = gl === 3 ? sunM : frameM;
+    const rx = gl === 5 ? 0.04 : 0.036;
+    const ry = gl === 2 ? 1.1 : (gl === 5 ? 0.75 : 1);
+    if (gl === 2) {
+      part(headG, new THREE.BoxGeometry(0.07, 0.05, 0.012), lens, -es.sp, 0.03, 0.145);
+      part(headG, new THREE.BoxGeometry(0.07, 0.05, 0.012), lens, es.sp, 0.03, 0.145);
+    } else {
+      part(headG, new THREE.TorusGeometry(rx, 0.006, 6, 12), frameM, -es.sp, 0.03, 0.145, 1, ry, 1);
+      part(headG, new THREE.TorusGeometry(rx, 0.006, 6, 12), frameM, es.sp, 0.03, 0.145, 1, ry, 1);
+      if (gl === 3) {
+        part(headG, new THREE.CircleGeometry(rx * 0.9, 12), sunM, -es.sp, 0.03, 0.145);
+        part(headG, new THREE.CircleGeometry(rx * 0.9, 12), sunM, es.sp, 0.03, 0.145);
+      }
+    }
+    part(headG, new THREE.BoxGeometry(0.04, 0.01, 0.01), frameM, 0, 0.03, 0.145);
+    if (gl === 4) part(headG, new THREE.BoxGeometry(0.18, 0.012, 0.012), frameM, 0, 0.055, 0.14);
+    part(headG, new THREE.BoxGeometry(0.12, 0.01, 0.01), frameM, -0.12, 0.03, 0.08, 1, 1, 1, 0, 0.8, 0);
+    part(headG, new THREE.BoxGeometry(0.12, 0.01, 0.01), frameM, 0.12, 0.03, 0.08, 1, 1, 1, 0, -0.8, 0);
+  }
+
+  const ht = L.hat % HAT_N.length;
+  if (ht === 1) {
+    part(headG, new THREE.CylinderGeometry(0.12, 0.13, 0.08, 12), shirt, 0, 0.16, 0);
+    part(headG, new THREE.BoxGeometry(0.16, 0.02, 0.1), shirt, 0, 0.12, 0.1);
+  } else if (ht === 2) {
+    part(headG, new THREE.SphereGeometry(0.17, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.5), hairM, 0, 0.08, 0);
+  } else if (ht === 3) {
+    part(headG, new THREE.CylinderGeometry(0.22, 0.22, 0.02, 16), mat('7c2d12'), 0, 0.14, 0);
+    part(headG, new THREE.CylinderGeometry(0.08, 0.1, 0.1, 10), mat('7c2d12'), 0, 0.2, 0);
+  } else if (ht === 4) {
+    part(headG, new THREE.SphereGeometry(0.04, 8, 8), mat('ec4899'), 0, 0.18, 0);
+    part(headG, new THREE.BoxGeometry(0.1, 0.04, 0.02), mat('ec4899'), -0.08, 0.18, 0, 1, 1, 1, 0, 0, 0.4);
+    part(headG, new THREE.BoxGeometry(0.1, 0.04, 0.02), mat('ec4899'), 0.08, 0.18, 0, 1, 1, 1, 0, 0, -0.4);
+  } else if (ht === 5) {
+    part(headG, new THREE.CylinderGeometry(0.1, 0.12, 0.08, 8), mat('eab308'), 0, 0.18, 0);
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2;
+      part(headG, new THREE.ConeGeometry(0.02, 0.08, 5), mat('eab308'), Math.cos(a) * 0.1, 0.24, Math.sin(a) * 0.1);
+    }
+  }
+
+  const legMat = (isDress || bottom === 2) ? skin : pants;
+  const fat = (bottom === 4 || bottom === 7) ? 1.2 : (bottom === 5 ? 0.82 : 1);
+  const legLen = bottom === 1 ? 0.2 : (bottom === 6 ? 0.28 : 0.38);
+  const ll = new THREE.Mesh(new THREE.CapsuleGeometry(0.07 * w * fat, legLen, 4, 8), legMat);
+  const rl = new THREE.Mesh(new THREE.CapsuleGeometry(0.07 * w * fat, legLen, 4, 8), legMat);
+  addPivoted(g, ll, -0.1 * w, 0.92, 0, -0.18);
+  addPivoted(g, rl, 0.1 * w, 0.92, 0, -0.18);
+  if (bottom === 1 || bottom === 6) {
+    const calfL = part(ll, new THREE.CapsuleGeometry(0.055 * w, 0.22, 4, 8), skin, 0, -0.42, 0);
+    const calfR = part(rl, new THREE.CapsuleGeometry(0.055 * w, 0.22, 4, 8), skin, 0, -0.42, 0);
+  }
+  const sh = L.shoes % SHOE_N.length;
+  if (sh === 4) {
+    part(g, new THREE.SphereGeometry(0.05, 8, 8), skin, -0.1 * w, 0.05, 0.04);
+    part(g, new THREE.SphereGeometry(0.05, 8, 8), skin, 0.1 * w, 0.05, 0.04);
+  } else if (sh === 1) {
+    part(g, new THREE.BoxGeometry(0.11, 0.14, 0.18), shoeM, -0.1 * w, 0.1, 0.03);
+    part(g, new THREE.BoxGeometry(0.11, 0.14, 0.18), shoeM, 0.1 * w, 0.1, 0.03);
+  } else if (sh === 2) {
+    part(g, new THREE.BoxGeometry(0.1, 0.03, 0.16), shoeM, -0.1 * w, 0.03, 0.04);
+    part(g, new THREE.BoxGeometry(0.1, 0.03, 0.16), shoeM, 0.1 * w, 0.03, 0.04);
+  } else if (sh === 3) {
+    part(g, new THREE.BoxGeometry(0.09, 0.04, 0.16), shoeM, -0.1 * w, 0.08, 0.04);
+    part(g, new THREE.BoxGeometry(0.09, 0.04, 0.16), shoeM, 0.1 * w, 0.08, 0.04);
+    part(g, new THREE.CylinderGeometry(0.015, 0.02, 0.08, 6), shoeM, -0.1 * w, 0.04, -0.04);
+    part(g, new THREE.CylinderGeometry(0.015, 0.02, 0.08, 6), shoeM, 0.1 * w, 0.04, -0.04);
+  } else {
+    part(g, new THREE.BoxGeometry(0.1, 0.06, 0.16), shoeM, -0.1 * w, 0.06, 0.03);
+    part(g, new THREE.BoxGeometry(0.1, 0.06, 0.16), shoeM, 0.1 * w, 0.06, 0.03);
+  }
+
+  const armM = sleeved ? shirt : skin;
+  const la = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, sleeved ? 0.36 : 0.34, 4, 8), armM);
+  const ra = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, sleeved ? 0.36 : 0.34, 4, 8), armM);
   addPivoted(g, la, -0.26 * w, 1.32, 0, -0.2);
   addPivoted(g, ra, 0.26 * w, 1.32, 0, -0.2);
+  if (top === 0 || top === 6 || top === 8) {
+    part(g, new THREE.SphereGeometry(0.07, 8, 8), shirt, -0.26 * w, 1.3, 0);
+    part(g, new THREE.SphereGeometry(0.07, 8, 8), shirt, 0.26 * w, 1.3, 0);
+  }
   g.scale.set(1, hMul, 1);
-  return { g, ll, rl, la, ra, torso, head };
+  return { g, ll, rl, la, ra, torso, head: headG };
 }
-if (!inv.look) inv.look = defaultLook();
+inv.look = { ...defaultLook(), ...(inv.look || {}) };
 const others = new Map();
 function avatarMesh(p) {
   const L = p.look || decodeLook(p.body) || defaultLook();
@@ -1014,17 +1487,22 @@ function animateAvatar(g, moving, grounded, dt, speed) {
 }
 
 let chaseCam = true;
+let chaseWanted = true;
+let houseWalk = null;
 let meMesh = null;
+let dressPrev = null;
 function rebuildMe() {
   if (meMesh) {
     scene.remove(meMesh);
     if (meMesh.userData.tag) meMesh.userData.tag.remove();
+    dumpGroup(meMesh);
   }
   meMesh = avatarMesh({
     look: inv.look || defaultLook(),
     body: encodeLook(inv.look || defaultLook()),
     username: inv.name || 'You'
   });
+  refreshDressPreview();
 }
 rebuildMe();
 
@@ -1309,7 +1787,8 @@ function undoPiece() {
 myHouse = loadHouse();
 if (myHouse) rebuildHouse();
 
-const PHOTO_HOUSE = { cx: 24, cz: 24, w: 11, d: 9, h: 5.15 };
+const PHOTO_HOUSE_V = 'enter-4';
+const PHOTO_HOUSE = { cx: 18, cz: 16, w: 11, d: 9, h: 5.15 };
 const photoHouseGroup = new THREE.Group();
 scene.add(photoHouseGroup);
 
@@ -1360,7 +1839,13 @@ function phBox(w, h, d, x, y, z, color, opts = {}) {
 }
 
 function loadPhotoHousePayload() {
-  try { return JSON.parse(localStorage.getItem('mt-photo-house') || 'null'); } catch { return null; }
+  for (const store of [localStorage, sessionStorage]) {
+    try {
+      const v = JSON.parse(store.getItem('mt-photo-house') || 'null');
+      if (v && typeof v.facade === 'string') return v;
+    } catch { /* ignore */ }
+  }
+  return null;
 }
 
 function facadeTexture(payload) {
@@ -1377,7 +1862,7 @@ function facadeTexture(payload) {
 
 function spawnPhotoHouse() {
   const { cx, cz, w, d, h } = PHOTO_HOUSE;
-  const t = 0.42, doorW = 2.3, doorH = 2.55, gable = 1.85;
+  const t = 0.42, doorW = 3.2, doorH = 2.55, gable = 1.85;
   const west = cx - w / 2, east = cx + w / 2, north = cz - d / 2, south = cz + d / 2;
   const wallC = 0x6b4423, trimC = 0x44403c, roofC = 0x7f1d1d, floorC = 0x8b5a2b;
   const payload = loadPhotoHousePayload();
@@ -1391,12 +1876,12 @@ function spawnPhotoHouse() {
   const zf = north - 0.28;
 
   phBox(w - 0.5, 0.12, d - 0.5, cx, 0.06, cz, floorC, { ghost: true, ground: true });
-  phBox(t, h, d, west, h / 2, cz, wallC);
-  phBox(t, h, d, east, h / 2, cz, wallC);
+  phBox(t, h, d - 0.2, west, h / 2, cz + 0.1, wallC);
+  phBox(t, h, d - 0.2, east, h / 2, cz + 0.1, wallC);
   phBox(w, h, t, cx, h / 2, south, 0x5c4033);
-  phBox(sideLen, h, t, cx - doorW / 2 - sideLen / 2, h / 2, north, trimC);
-  phBox(sideLen, h, t, cx + doorW / 2 + sideLen / 2, h / 2, north, trimC);
-  phBox(doorW, h - doorH, t, cx, doorH + (h - doorH) / 2, north, trimC);
+  phBox(sideLen, h, t, cx - (doorW + sideLen) / 2, h / 2, north, trimC);
+  phBox(sideLen, h, t, cx + (doorW + sideLen) / 2, h / 2, north, trimC);
+  phBox(w, 1.45, t, cx, h - 0.72, north, trimC);
 
   function facadePiece(uA, uB, vA, vB, pw, ph, x, y) {
     const geo = new THREE.PlaneGeometry(pw, ph);
@@ -1438,16 +1923,18 @@ function spawnPhotoHouse() {
 
   phBox(4.4, 0.16, 2.8, cx, 0.1, north - 1.6, 0x57534e, { ghost: true, ground: true });
   phBox(2.2, 0.2, 1.2, cx, 0.12, north - 2.9, 0x78716c, { ghost: true, ground: true });
-  for (let i = 0; i < 6; i++) {
-    phBox(1.5, 0.07, 1.5, cx, 0.04, 8.5 + i * 1.55, i % 2 ? 0x365314 : 0x3f3f46, { ghost: true, ground: true });
+  for (let i = 0; i < 7; i++) {
+    const u = i / 6;
+    phBox(1.4, 0.07, 1.4, u * cx, 0.04, 8 + u * (north - 3.2 - 8), i % 2 ? 0x365314 : 0x3f3f46, { ghost: true, ground: true });
   }
 
-  const lamp = new THREE.PointLight(0xfbbf24, 1.15, 16);
+  const lamp = new THREE.PointLight(0xfbbf24, 2.1, 18);
   lamp.position.set(cx, 3.2, cz);
   photoHouseGroup.add(lamp);
-  const doorwayGlow = new THREE.PointLight(0xfde68a, 0.85, 8);
+  const doorwayGlow = new THREE.PointLight(0xfde68a, 1.2, 10);
   doorwayGlow.position.set(cx, 1.6, north - 0.5);
   photoHouseGroup.add(doorwayGlow);
+  photoHouseGroup.add(new THREE.AmbientLight(0xffe7c4, 0.35));
 
   phBox(1.6, 0.7, 0.9, cx + 1.6, 0.42, cz + 1.4, 0x5c4033, { ghost: true });
   phBox(0.55, 0.7, 0.55, cx + 0.6, 0.42, cz + 1.4, 0x6b4423, { ghost: true });
@@ -1456,7 +1943,7 @@ function spawnPhotoHouse() {
 
   const innerArt = new THREE.Mesh(
     new THREE.PlaneGeometry(2.4, 1.7),
-    new THREE.MeshBasicMaterial({ map: tex })
+    new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
   );
   innerArt.position.set(cx, 2.15, south - 0.28);
   innerArt.rotation.y = Math.PI;
@@ -1489,14 +1976,23 @@ function spawnPhotoHouse() {
   places.push({ name: 'Photo house', x: cx, z: cz, r: 12 });
 }
 
+function insidePhotoHouse(px = player.x, pz = player.z) {
+  const { cx, cz, w, d } = PHOTO_HOUSE;
+  return Math.abs(px - cx) < w / 2 - 0.55 && Math.abs(pz - cz) < d / 2 - 0.35;
+}
+
 function goToPhotoHouse() {
-  player.x = PHOTO_HOUSE.cx;
-  player.z = PHOTO_HOUSE.cz - PHOTO_HOUSE.d / 2 - 3.6;
+  const { cx, cz, d } = PHOTO_HOUSE;
+  const north = cz - d / 2;
+  player.x = cx;
+  player.z = north - 3.1;
   player.y = EYE;
   player.yaw = Math.PI;
   player.pitch = 0;
-  if (new URLSearchParams(location.search).has('inside')) player.z = PHOTO_HOUSE.cz;
-  toast('Photo house ahead — walk through the front door');
+  player.vy = 0;
+  chaseCam = false;
+  houseWalk = { x0: player.x, z0: player.z, x1: cx, z1: cz, t: 0 };
+  toast('Walking through the front door');
 }
 
 try {
@@ -1505,7 +2001,10 @@ try {
   console.warn('photo house', err);
   toast('Photo house failed to build — plaza still works');
 }
-if (new URLSearchParams(location.search).has('house')) goToPhotoHouse();
+{
+  const q = new URLSearchParams(location.search);
+  if (q.has('house') || q.has('enter') || q.has('inside')) goToPhotoHouse();
+}
 
 function topUnder(nx, nz, feet) {
   let best = 0;
@@ -1646,7 +2145,25 @@ function doInteract() {
   pickFrame();
 }
 
+function openDress() {
+  closeSheet();
+  document.documentElement.classList.add('dressing');
+  paintDress();
+  startDressPreview();
+}
+function closeDress() {
+  document.documentElement.classList.remove('dressing');
+  stopDressPreview();
+}
+function closeSheet() {
+  const life = document.getElementById('life');
+  life.style.display = 'none';
+  life.classList.remove('dressing');
+  closeDress();
+}
 function openSheet(id) {
+  if (id === 'sheetDress') { openDress(); return; }
+  closeDress();
   const life = document.getElementById('life');
   life.style.display = 'flex';
   document.querySelectorAll('.sheet').forEach((s) => s.classList.remove('open'));
@@ -1654,7 +2171,6 @@ function openSheet(id) {
   if (id === 'sheetBag') paintBag();
   if (id === 'sheetShop') paintShop();
   if (id === 'sheetSocial') paintSocial();
-  if (id === 'sheetDress') paintDress();
 }
 function chips(el, colors, key, names) {
   if (!el) return;
@@ -1663,38 +2179,161 @@ function chips(el, colors, key, names) {
     `<button type="button" class="${cur === i ? 'on' : ''}" style="background:#${c}" title="${names ? names[i] : ''}" onclick="window.mtwLook('${key}',${i})"></button>`
   ).join('');
 }
+function nameChips(el, names, key) {
+  if (!el) return;
+  const cur = (inv.look || defaultLook())[key] | 0;
+  el.innerHTML = names.map((n, i) =>
+    `<button type="button" class="name ${cur === i ? 'on' : ''}" onclick="window.mtwLook('${key}',${i})">${n}</button>`
+  ).join('');
+}
 function paintDress() {
-  if (!inv.look) inv.look = defaultLook();
+  inv.look = { ...defaultLook(), ...(inv.look || {}) };
   const L = inv.look;
   const grid = document.getElementById('castGrid');
   if (grid) {
-    grid.innerHTML = PRESETS.map((c) =>
-      `<button type="button" class="cast-card" onclick="window.mtwPreset('${c.id}')">${c.name}</button>`
+    grid.innerHTML = CAST.map((c, i) =>
+      `<button type="button" class="cast-card cgi${(L.cast | 0) === i + 1 ? ' on' : ''}" onclick="window.mtwCast(${i})"><img src="/games/gallery/cast/${c.id}.jpg" alt="${c.name}"><span>${c.name}</span></button>`
     ).join('');
   }
   const w = document.getElementById('lkWeight');
   const h = document.getElementById('lkHeight');
   if (w) w.value = L.weight;
   if (h) h.value = L.height;
-  chips(document.getElementById('lkSkin'), SKINS, 'skin');
-  chips(document.getElementById('lkHair'), ['334155', '334155', '334155', '334155', '334155', '334155'], 'hair', HAIR_N);
-  const hairBtns = document.getElementById('lkHair');
-  if (hairBtns) [...hairBtns.children].forEach((b, i) => { b.textContent = HAIR_N[i]; b.style.background = '#' + HAIR_C[L.hairC % HAIR_C.length]; b.style.color = '#fff'; b.style.fontSize = '11px'; b.style.minWidth = '56px'; });
-  chips(document.getElementById('lkHairCol'), HAIR_C, 'hairC');
-  chips(document.getElementById('lkEyes'), EYES, 'eyes');
-  chips(document.getElementById('lkShirt'), SHIRTS, 'shirt');
-  chips(document.getElementById('lkPants'), PANTS, 'pants');
+  chips(document.getElementById('lkSkin'), SKINS, 'skin', SKIN_N);
+  nameChips(document.getElementById('lkHair'), HAIR_N, 'hair');
+  chips(document.getElementById('lkHairCol'), HAIR_C, 'hairC', HAIR_CN);
+  chips(document.getElementById('lkEyes'), EYES, 'eyes', EYE_N);
+  chips(document.getElementById('lkShirt'), SHIRTS, 'shirt', SHIRT_N);
+  chips(document.getElementById('lkPants'), PANTS, 'pants', PANT_N);
+  chips(document.getElementById('lkLips'), LIPS, 'lips', LIP_N);
+  nameChips(document.getElementById('lkFace'), FACE_N, 'face');
+  nameChips(document.getElementById('lkBrows'), BROW_N, 'brows');
+  nameChips(document.getElementById('lkEyeShape'), EYESHAPE_N, 'eyeshape');
+  nameChips(document.getElementById('lkNose'), NOSE_N, 'nose');
+  nameChips(document.getElementById('lkMouth'), MOUTH_N, 'mouth');
+  nameChips(document.getElementById('lkEars'), EAR_N, 'ears');
+  nameChips(document.getElementById('lkBeard'), BEARD_N, 'beard');
+  nameChips(document.getElementById('lkGlasses'), GLASS_N, 'glasses');
+  nameChips(document.getElementById('lkMakeup'), MAKEUP_N, 'makeup');
+  nameChips(document.getElementById('lkTop'), TOP_N, 'top');
+  nameChips(document.getElementById('lkBottom'), BOTTOM_N, 'bottom');
+  nameChips(document.getElementById('lkShoes'), SHOE_N, 'shoes');
+  nameChips(document.getElementById('lkHat'), HAT_N, 'hat');
 }
 window.mtwPreset = (id) => {
-  const p = PRESETS.find((x) => x.id === id);
+  const i = CAST.findIndex((x) => x.id === id);
+  if (i < 0) return;
+  window.mtwCast(i);
+};
+window.mtwCast = (i) => {
+  const p = CAST[i];
   if (!p) return;
-  inv.look = { ...p.look };
-  saveInv(); rebuildMe(); paintDress(); toast('Preset ' + p.name + ' — now tweak sliders');
+  inv.look = { ...defaultLook(), ...p.look, cast: i + 1 };
+  saveInv(); rebuildMe(); paintDress(); toast(p.name + ' — now dress them');
 };
 window.mtwLook = (key, i) => {
-  if (!inv.look) inv.look = defaultLook();
+  inv.look = { ...defaultLook(), ...(inv.look || {}) };
   inv.look[key] = i;
   saveInv(); rebuildMe(); paintDress();
+};
+
+function ensureDressPreview() {
+  const canvas = document.getElementById('dressPrev');
+  if (!canvas) return null;
+  if (dressPrev) return dressPrev;
+  const sc = new THREE.Scene();
+  sc.background = new THREE.Color(0x07140e);
+  const cam = new THREE.PerspectiveCamera(32, 1, 0.08, 20);
+  const rend = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'low-power' });
+  rend.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  sc.add(new THREE.HemisphereLight(0xf7fff9, 0x1a0a28, 1.15));
+  const key = new THREE.DirectionalLight(0xffffff, 1.15);
+  key.position.set(0.4, 2.0, 2.4);
+  const fillL = new THREE.PointLight(0x9affc9, 0.9, 9);
+  fillL.position.set(-1.0, 1.6, 1.6);
+  sc.add(key, fillL);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(0.7, 24), new THREE.MeshLambertMaterial({ color: 0x10261c }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0;
+  sc.add(floor);
+  dressPrev = { scene: sc, camera: cam, renderer: rend, person: null, ud: null, yaw: 0.35, auto: true, mode: 'face', drag: null, idle: 0 };
+  canvas.addEventListener('pointerdown', (e) => {
+    dressPrev.drag = { x: e.clientX, yaw: dressPrev.yaw };
+    dressPrev.auto = false;
+    dressPrev.idle = 0;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dressPrev.drag) return;
+    dressPrev.yaw = dressPrev.drag.yaw + (e.clientX - dressPrev.drag.x) * 0.012;
+  });
+  const endDrag = () => { if (dressPrev) dressPrev.drag = null; };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  return dressPrev;
+}
+function sizeDressPreview() {
+  if (!dressPrev) return;
+  const canvas = document.getElementById('dressPrev');
+  if (!canvas) return;
+  const w = Math.max(1, canvas.clientWidth);
+  const h = Math.max(1, canvas.clientHeight);
+  if (canvas.width !== w || canvas.height !== h) {
+    dressPrev.renderer.setSize(w, h, false);
+    dressPrev.camera.aspect = w / h;
+    dressPrev.camera.updateProjectionMatrix();
+  }
+}
+function refreshDressPreview() {
+  if (!dressPrev && !document.documentElement.classList.contains('dressing')) return;
+  const p = ensureDressPreview();
+  if (!p) return;
+  if (p.person) {
+    p.scene.remove(p.person);
+    dumpGroup(p.person);
+  }
+  const built = makePerson(inv.look || defaultLook());
+  p.person = built.g;
+  p.ud = { ll: built.ll, rl: built.rl, la: built.la, ra: built.ra, torso: built.torso, head: built.head, phase: 0 };
+  p.scene.add(p.person);
+  sizeDressPreview();
+}
+function startDressPreview() {
+  ensureDressPreview();
+  const on = document.querySelector('.look-tab.on');
+  const tab = on && on.dataset.tab;
+  setDressView(tab === 'face' || tab === 'hair' ? 'face' : 'full');
+  refreshDressPreview();
+  requestAnimationFrame(() => sizeDressPreview());
+}
+function stopDressPreview() {
+  if (!dressPrev) return;
+  dressPrev.auto = true;
+}
+function setDressView(mode) {
+  if (!dressPrev) ensureDressPreview();
+  if (dressPrev) dressPrev.mode = mode;
+  document.getElementById('dressViewFace')?.classList.toggle('on', mode === 'face');
+  document.getElementById('dressViewFull')?.classList.toggle('on', mode === 'full');
+}
+function tickDressPreview(dt) {
+  if (!document.documentElement.classList.contains('dressing') || !dressPrev) return;
+  const p = dressPrev;
+  sizeDressPreview();
+  if (!p.drag) p.idle += dt;
+  if (p.idle > 2.2) p.auto = true;
+  if (p.auto && p.person) p.yaw += dt * 0.55;
+  if (p.person) p.person.rotation.y = p.yaw;
+  if (p.ud) animateAvatar({ userData: p.ud, position: p.person.position }, false, true, dt, 0.25);
+  const face = p.mode === 'face';
+  p.camera.position.set(0, face ? 1.62 : 0.95, face ? 1.12 : 2.45);
+  p.camera.lookAt(0, face ? 1.62 : 0.88, 0);
+  p.renderer.render(p.scene, p.camera);
+}
+window.mtwDressTab = (tab) => {
+  document.querySelectorAll('.look-tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('.look-pane').forEach((p) => p.classList.toggle('open', p.id === 'tab-' + tab));
+  setDressView(tab === 'face' || tab === 'hair' ? 'face' : 'full');
 };
 function paintSocial() {
   const near = nearestPlayer();
@@ -1769,7 +2408,13 @@ document.getElementById('btnJob').onclick = () => openSheet('sheetJob');
 document.getElementById('btnDress').onclick = () => openSheet('sheetDress');
 document.getElementById('btnHome').onclick = () => openSheet('sheetHome');
 document.getElementById('btnSocial').onclick = () => openSheet('sheetSocial');
-document.getElementById('lifeClose').onclick = () => { document.getElementById('life').style.display = 'none'; };
+document.getElementById('lifeClose').onclick = () => closeSheet();
+document.getElementById('dressClose').onclick = () => closeDress();
+document.querySelectorAll('.look-tab').forEach((b) => {
+  b.onclick = () => window.mtwDressTab(b.dataset.tab);
+});
+document.getElementById('dressViewFace').onclick = () => setDressView('face');
+document.getElementById('dressViewFull').onclick = () => setDressView('full');
 document.querySelectorAll('[data-w]').forEach((b) => {
   b.onclick = () => connectWallet(b.getAttribute('data-w'));
 });
@@ -1782,7 +2427,7 @@ document.getElementById('craftMeal').onclick = () => {
   const el = document.getElementById(id);
   if (!el) return;
   el.oninput = () => {
-    if (!inv.look) inv.look = defaultLook();
+    inv.look = { ...defaultLook(), ...(inv.look || {}) };
     inv.look[id === 'lkWeight' ? 'weight' : 'height'] = +el.value;
     saveInv();
     rebuildMe();
@@ -1791,10 +2436,18 @@ document.getElementById('craftMeal').onclick = () => {
 const wear = document.getElementById('lkApply');
 if (wear) wear.onclick = () => { saveInv(); rebuildMe(); toast('Worn'); };
 document.getElementById('btnCam').onclick = () => {
-  chaseCam = !chaseCam;
-  document.querySelector('#btnCam span').textContent = chaseCam ? 'Chase' : 'Eyes';
-  toast(chaseCam ? 'Chase cam — you can see your skin' : 'First person');
+  chaseWanted = !chaseWanted;
+  chaseCam = chaseWanted;
+  document.querySelector('#btnCam span').textContent = chaseWanted ? 'Chase' : 'Eyes';
+  toast(chaseWanted ? 'Chase cam — you can see your skin' : 'First person');
 };
+function startHouseEntry() {
+  document.getElementById('life').style.display = 'none';
+  goToPhotoHouse();
+}
+document.getElementById('goPhotoHouse').onclick = startHouseEntry;
+document.getElementById('btnEnterHouse').onclick = startHouseEntry;
+document.getElementById('enterHouse').onclick = startHouseEntry;
 document.getElementById('jobWood').onclick = () => { job = 'wood'; localStorage.setItem('mtw-job', job); toast('Bring 8 wood back to the plaza shop'); };
 document.getElementById('jobFish').onclick = () => { job = 'fish'; localStorage.setItem('mtw-job', job); toast('Bring 6 fish back to the plaza shop'); };
 document.getElementById('jobBar').onclick = () => { job = 'bar'; localStorage.setItem('mtw-job', job); toast('Serve at a bar or open yours'); };
@@ -1820,10 +2473,7 @@ document.getElementById('buyVilla').onclick = () => {
   claimHouse('villa');
 };
 document.getElementById('designHome').onclick = () => startDesigner();
-document.getElementById('goPhotoHouse').onclick = () => {
-  document.getElementById('life').style.display = 'none';
-  goToPhotoHouse();
-};
+
 document.getElementById('goHome').onclick = () => {
   if (!myHouse) { toast('No lot yet'); return; }
   player.x = myHouse.x;
@@ -2007,10 +2657,28 @@ function tick() {
   const wishX = ix * cos + iz * sin;
   const wishZ = -ix * sin + iz * cos;
   const dt = 1 / 60;
-  const nx = player.x + wishX * speed * dt;
-  const nz = player.z + wishZ * speed * dt;
-  if (!blockedSolid(nx, player.y, player.z)) player.x = nx;
-  if (!blockedSolid(player.x, player.y, nz)) player.z = nz;
+  if (houseWalk) {
+    houseWalk.t += dt / 1.05;
+    const t = Math.min(1, houseWalk.t);
+    const s = t * t * (3 - 2 * t);
+    player.x = houseWalk.x0 + (houseWalk.x1 - houseWalk.x0) * s;
+    player.z = houseWalk.z0 + (houseWalk.z1 - houseWalk.z0) * s;
+    player.y = EYE;
+    player.yaw = Math.PI;
+    player.vy = 0;
+    player.grounded = true;
+    if (t >= 1) {
+      houseWalk = null;
+      player.x = PHOTO_HOUSE.cx;
+      player.z = PHOTO_HOUSE.cz;
+      toast('You are inside the photo house');
+    }
+  } else {
+    const nx = player.x + wishX * speed * dt;
+    const nz = player.z + wishZ * speed * dt;
+    if (!blockedSolid(nx, player.y, player.z)) player.x = nx;
+    if (!blockedSolid(player.x, player.y, nz)) player.z = nz;
+  }
 
   if ((keys['Space'] || jumping) && player.grounded) {
     player.vy = 6.6;
@@ -2120,11 +2788,16 @@ function tick() {
     inv.fish -= 6; inv.coins += 16; job = ''; localStorage.removeItem('mtw-job'); saveInv(); paintBag(); toast('Fisher paid +16¢');
   }
 
-  const movingMe = Math.hypot(wishX, wishZ) > 0.05;
+  const inPhoto = insidePhotoHouse() || !!houseWalk;
+  const useChase = chaseWanted && !inPhoto;
+  chaseCam = useChase;
+  const enterBtn = document.getElementById('enterHouse');
+  if (enterBtn) enterBtn.classList.toggle('hide', inPhoto);
+  const movingMe = Math.hypot(wishX, wishZ) > 0.05 || !!houseWalk;
   if (meMesh) {
     meMesh.position.set(player.x, 0, player.z);
     meMesh.rotation.y = player.yaw + Math.PI;
-    meMesh.visible = chaseCam;
+    meMesh.visible = useChase;
     animateAvatar(meMesh, movingMe && player.grounded, player.grounded, dt, speed / 4.4);
     if (meMesh.userData.tag) meMesh.userData.tag.style.display = chaseCam ? 'block' : 'none';
   }
@@ -2151,7 +2824,7 @@ function tick() {
     f.mesh.rotation.x = Math.sin(f.t * 0.5) * 0.15;
   });
   moon.rotation.y += dt * 0.05;
-  if (chaseCam) {
+  if (useChase) {
     const back = 7.4;
     camera.position.set(
       player.x + Math.sin(player.yaw) * back,
@@ -2180,6 +2853,7 @@ function tick() {
   document.getElementById('place').textContent = here;
 
   renderer.render(scene, camera);
+  tickDressPreview(dt);
   requestAnimationFrame(tick);
 }
 
@@ -2187,6 +2861,7 @@ addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
+  sizeDressPreview();
 });
 addEventListener('orientationchange', () => setTimeout(() => dispatchEvent(new Event('resize')), 200));
 

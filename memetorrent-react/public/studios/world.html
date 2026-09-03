@@ -181,7 +181,7 @@ function loadHouse(){
   himg=new Image(); himg.onload=render; himg.src=house.facade;
   for(let x=hx;x<hx+4;x++) for(let z=hz;z<hz+3;z++){ setb(x,1,z,4); setb(x,2,z,4); }
 }
-document.getElementById('house').onclick=()=>{ location.href='/games/gallery/?house=1'; };
+document.getElementById('house').onclick=()=>{ location.href='/games/gallery/index.html?house=1&enter=1'; };
 document.getElementById('music').onclick=()=>{
   const src=MT.get('mt-world-track', null);
   if(!src){ document.getElementById('hud').textContent='Export a WAV in Sound Studio first (Send to World).'; return; }
@@ -208,7 +208,7 @@ addEventListener('keydown',e=>keys[e.code]=true); addEventListener('keyup',e=>ke
 <\/script></body></html>`;
   window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})));
 };
-if(MT.get('mt-photo-house')) document.getElementById('hud').innerHTML='Photo house is in <a href="/games/gallery/?house=1" style="color:#e879f9">MT World</a> — walk through the front door.';
+if(MT.get('mt-photo-house')) document.getElementById('hud').innerHTML='Photo house is in <a href="/games/gallery/index.html?house=1&enter=1" style="color:#e879f9">MT World</a> — walk through the front door.';
 tick();
 </script>
 </body></html>
