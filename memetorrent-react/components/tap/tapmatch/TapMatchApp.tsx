@@ -8,6 +8,7 @@ import {
   WORKER_CATEGORIES,
 } from '@/lib/tapmatch-catalog';
 import ShiftPicker from '@/components/tap/tapmatch/ShiftPicker';
+import AvailabilityCal from '@/components/tap/tapmatch/AvailabilityCal';
 
 type Seat = 'worker' | 'business';
 type View =
@@ -22,7 +23,8 @@ type View =
   | 'applicants'
   | 'job'
   | 'job-edit'
-  | 'person';
+  | 'person'
+  | 'help';
 
 type Profile = {
   setup?: boolean;
@@ -40,6 +42,9 @@ type Profile = {
   business_name?: string;
   status?: string;
   username?: string;
+  availability?: Record<string, boolean>;
+  notifications?: boolean;
+  autoApply?: boolean;
 };
 
 type Shift = { start: string; end: string };
@@ -137,9 +142,10 @@ export default function TapMatchApp({
   const [busy, setBusy] = useState(false);
   const [home, setHome] = useState<{
     badge?: { latestBadge: string };
-    worker?: { pending: number; accepted: number; completed: number };
+    worker?: { pending: number; accepted: number; completed: number; matched?: number };
     business?: { open: number; applications: number };
   } | null>(null);
+  const [reviews, setReviews] = useState<{ rating: number; text?: string; from_username?: string }[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [apps, setApps] = useState<AppRow[]>([]);
   const [posted, setPosted] = useState<Job[]>([]);
@@ -163,6 +169,9 @@ export default function TapMatchApp({
     notes: '',
     business_name: '',
     status: 'available',
+    availability: {},
+    notifications: true,
+    autoApply: false,
   });
 
   const [post, setPost] = useState({
@@ -249,7 +258,16 @@ export default function TapMatchApp({
     if (view === 'manager' && seat === 'business') loadPosted().catch(() => {});
     if (view === 'applicants') loadPosted().catch(() => {});
     if (view === 'home') loadHome().catch(() => {});
-  }, [view, profile?.setup, seat, loadMatches, loadMine, loadPosted, loadHome]);
+    if (view === 'profile' && profile?.username) {
+      fetch(`/api/v1/tapmatch/reviews?username=${encodeURIComponent(profile.username)}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      })
+        .then((r) => r.json())
+        .then((d) => setReviews(Array.isArray(d?.data?.reviews) ? d.data.reviews : []))
+        .catch(() => setReviews([]));
+    }
+  }, [view, profile?.setup, profile?.username, seat, loadMatches, loadMine, loadPosted, loadHome]);
 
   const shownJobs = useMemo(() => {
     let list = jobs;
@@ -351,7 +369,11 @@ export default function TapMatchApp({
         setMsg(d.status.error_message || 'Could not post');
         return;
       }
-      setMsg(post.id ? `Updated ${post.role}` : `Posted ${post.role}`);
+      setMsg(
+        post.id
+          ? `Updated ${post.role}`
+          : `Posted ${post.role}${d?.data?.matched ? ` · ${d.data.matched} matched` : ''}`
+      );
       setPost({
         id: '',
         role: '',
@@ -490,10 +512,11 @@ export default function TapMatchApp({
             )}
           </div>
           {seat === 'worker' ? (
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Stat label="Completed" value={home?.worker?.completed ?? 0} />
               <Stat label="Pending" value={home?.worker?.pending ?? 0} />
               <Stat label="Accepted" value={home?.worker?.accepted ?? 0} />
+              <Stat label="Matched" value={home?.worker?.matched ?? 0} />
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 gap-3">
@@ -514,6 +537,7 @@ export default function TapMatchApp({
                 <button className={ghost} onClick={() => setView('manager')}>Job manager</button>
                 <button className={ghost} onClick={() => setView('profile')}>Profile</button>
                 <button className={ghost} onClick={() => setView('settings')}>Settings</button>
+                <button className={ghost} onClick={() => setView('help')}>Help</button>
               </>
             ) : (
               <>
@@ -700,6 +724,7 @@ export default function TapMatchApp({
               <span key={s} className="text-[11px] rounded-full border border-white/15 px-2 py-0.5 opacity-80">{s}</span>
             ))}
           </div>
+          <AvailabilityCal value={person.availability || {}} readOnly />
         </section>
       )}
 
@@ -819,6 +844,17 @@ export default function TapMatchApp({
               <span key={s} className="text-[11px] rounded-full border border-white/15 px-2 py-0.5 opacity-80">{s}</span>
             ))}
           </div>
+          <AvailabilityCal value={profile.availability || {}} readOnly />
+          {reviews.length > 0 && (
+            <div className="space-y-2">
+              {reviews.map((r, i) => (
+                <div key={i} className="rounded-xl border border-white/10 p-3 text-sm">
+                  <div className="text-sky-300">{r.rating}/5 {r.from_username ? `· @${r.from_username}` : ''}</div>
+                  {r.text && <p className="opacity-70">{r.text}</p>}
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <button className={btn} onClick={() => setView('edit')}>Edit profile</button>
             <button className={ghost} onClick={() => setView('prefs')}>Preferences</button>
@@ -873,6 +909,13 @@ export default function TapMatchApp({
                 {s}
               </Chip>
             ))}
+          </div>
+          <div className="sm:col-span-2">
+            <div className="text-sm font-semibold mb-2">Availability</div>
+            <AvailabilityCal
+              value={draft.availability || {}}
+              onChange={(availability) => setDraft({ ...draft, availability })}
+            />
           </div>
           <button type="submit" disabled={busy} className={btn + ' sm:col-span-2'}>{busy ? 'Saving…' : 'Save profile'}</button>
         </form>
@@ -963,8 +1006,40 @@ export default function TapMatchApp({
               </button>
             ))}
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draft.notifications !== false}
+              onChange={(e) => setDraft({ ...draft, notifications: e.target.checked })}
+            />
+            Match notifications
+          </label>
+          {seat === 'worker' && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={Boolean(draft.autoApply)}
+                onChange={(e) => setDraft({ ...draft, autoApply: e.target.checked })}
+              />
+              Auto-apply when a role matches
+            </label>
+          )}
+          <button className={btn} disabled={busy} onClick={() => saveProfile()}>
+            Save settings
+          </button>
           <button className={ghost} onClick={() => setView('prefs')}>Preferences</button>
           <button className={ghost} onClick={() => setView('edit')}>Edit profile</button>
+          <button className={ghost} onClick={() => setView('help')}>Help</button>
+        </section>
+      )}
+
+      {view === 'help' && (
+        <section className="rounded-3xl border border-white/10 p-6 space-y-3 text-sm opacity-80">
+          <h3 className="font-semibold text-base opacity-100">How TAPMATCH works</h3>
+          <p>Fast Connect is short-term shifts. Long-term is ongoing roles.</p>
+          <p>Match uses your skills, city, and Fast / long-term prefs. Open Match to apply or Tap to Connect.</p>
+          <p>Employers post a role, see applicants, accept a match. After a shift, leave a review.</p>
+          <button className={ghost} onClick={() => setView('home')}>Back</button>
         </section>
       )}
     </div>

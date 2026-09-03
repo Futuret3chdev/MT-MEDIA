@@ -430,6 +430,35 @@ function parseCats(raw: unknown): Record<string, boolean> {
   return {};
 }
 
+function asObj(raw: unknown): Record<string, unknown> {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  if (typeof raw === 'string') {
+    try {
+      const v = JSON.parse(raw);
+      if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, unknown>;
+    } catch {
+      /* */
+    }
+  }
+  return {};
+}
+
+function parseProfileExtra(raw: unknown) {
+  const extra = asObj(raw);
+  const nested = extra.availability;
+  const availability =
+    nested && typeof nested === 'object' && !Array.isArray(nested)
+      ? (nested as Record<string, boolean>)
+      : Object.keys(extra).some((k) => /^\d{4}-\d{2}-\d{2}$/.test(k))
+        ? (extra as Record<string, boolean>)
+        : {};
+  return {
+    availability,
+    notifications: extra.notifications !== false,
+    autoApply: Boolean(extra.autoApply),
+  };
+}
+
 function mapProfile(r: Record<string, unknown> | null, actor: { email: string; username: string }) {
   if (!r) {
     return {
@@ -462,6 +491,7 @@ function mapProfile(r: Record<string, unknown> | null, actor: { email: string; u
     notes: r.notes || '',
     business_name: r.business_name || '',
     status: r.status || 'available',
+    ...parseProfileExtra(r.payload),
     setup: true,
   };
 }
@@ -611,12 +641,13 @@ export async function handleTapV1(opts: {
       const dropoff = String(body.to || body.dropoff || '').trim().slice(0, 200);
       if (pickup.length < 2 || dropoff.length < 2) return v1err('from and to are required', 400, 400);
       const km = Math.max(0.2, Math.min(400, num(body.km, 5)));
+      const when = String(body.when || '').trim().slice(0, 32);
       const quote = await tapQuote({ lane, km, size: String(body.size || 'm') });
       const id = newId(`tap_${lane.slice(0, 3)}`);
       const saved = await withDb(async (conn) => {
         await conn.execute(
           'INSERT INTO mt_tap_jobs (id, lane, status, email, username, pickup, dropoff, km, quote_usd, quote_mt, payload) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-          [id, lane, 'open', user.email, user.username, pickup, dropoff, km, quote.usd, quote.mt, JSON.stringify({ size: quote.size })]
+          [id, lane, 'open', user.email, user.username, pickup, dropoff, km, quote.usd, quote.mt, JSON.stringify({ size: quote.size, when })]
         );
         return true;
       });
@@ -778,16 +809,25 @@ export async function handleTapV1(opts: {
       const notes = String(body.notes || '').trim().slice(0, 400);
       const business_name = String(body.business_name || body.businessName || '').trim().slice(0, 160);
       const status = String(body.status || 'available').trim().slice(0, 24);
+      const availability =
+        body.availability && typeof body.availability === 'object' && !Array.isArray(body.availability)
+          ? body.availability
+          : {};
+      const extra = JSON.stringify({
+        availability,
+        notifications: body.notifications !== false,
+        autoApply: Boolean(body.autoApply),
+      });
       const saved = await withDb(async (conn) => {
         await conn.execute(
           `INSERT INTO mt_tapmatch_profiles
-            (email, username, seat, first_name, last_name, phone, bio, location, rate, skills, connect_types, categories, notes, business_name, status)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            (email, username, seat, first_name, last_name, phone, bio, location, rate, skills, connect_types, categories, notes, business_name, status, payload)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
            ON DUPLICATE KEY UPDATE
             username=VALUES(username), seat=VALUES(seat), first_name=VALUES(first_name), last_name=VALUES(last_name),
             phone=VALUES(phone), bio=VALUES(bio), location=VALUES(location), rate=VALUES(rate), skills=VALUES(skills),
             connect_types=VALUES(connect_types), categories=VALUES(categories), notes=VALUES(notes),
-            business_name=VALUES(business_name), status=VALUES(status)`,
+            business_name=VALUES(business_name), status=VALUES(status), payload=VALUES(payload)`,
           [
             actor.email,
             actor.username,
@@ -804,6 +844,7 @@ export async function handleTapV1(opts: {
             notes,
             business_name,
             status,
+            extra,
           ]
         );
         return true;
@@ -841,6 +882,33 @@ export async function handleTapV1(opts: {
       })) || { apps: [], posted: [], incoming: 0 };
       const count = (rows: { status: string; n: number }[], key: string) =>
         Number(rows.find((r) => String(r.status).toLowerCase() === key)?.n || 0);
+      let matched = 0;
+      if (profile.setup && profile.seat !== 'business') {
+        const open = (await withDb(async (conn) => {
+          const [rows] = await conn.execute(
+            "SELECT connect_type, role, blurb, location, skills, payload FROM mt_tapmatch_jobs WHERE status = 'open' LIMIT 80"
+          );
+          return (rows as Record<string, unknown>[]).map((r) => mapMatchJob(r, false));
+        })) || [];
+        matched = [...open, ...DEMO_WORK].filter((job) => {
+          const m = scoreJobMatch(
+            {
+              connect: String(job.connect || ''),
+              role: String(job.role || ''),
+              blurb: job.blurb == null ? null : String(job.blurb),
+              location: job.location == null ? null : String(job.location),
+              skills: Array.isArray(job.skills) ? job.skills.map(String) : [],
+            },
+            {
+              skills: profile.skills,
+              location: String(profile.location || ''),
+              connectTypes: profile.connectTypes,
+              categories: profile.categories,
+            }
+          );
+          return !m.hidden && m.matchPct >= 40;
+        }).length;
+      }
       return v1ok({
         profile,
         badge: tapMatchBadge(count(stats.apps, 'completed')),
@@ -848,6 +916,7 @@ export async function handleTapV1(opts: {
           pending: count(stats.apps, 'pending'),
           accepted: count(stats.apps, 'accepted'),
           completed: count(stats.apps, 'completed'),
+          matched,
         },
         business: {
           open: count(stats.posted, 'open'),
@@ -1008,6 +1077,44 @@ export async function handleTapV1(opts: {
         return true;
       });
       if (!saved) return v1err('Could not store TAPMATCH job', 502, 502);
+      let matched = 0;
+      let auto = 0;
+      try {
+        const workers = (await withDb(async (conn) => {
+          const [rows] = await conn.execute(
+            "SELECT email, username, skills, location, connect_types, categories, payload FROM mt_tapmatch_profiles WHERE seat = 'worker'"
+          );
+          return rows as Record<string, unknown>[];
+        })) || [];
+        for (const w of workers) {
+          const extra = parseProfileExtra(w.payload);
+          const m = scoreJobMatch(
+            { connect, role, blurb, location, skills },
+            {
+              skills: parseSkills(w.skills),
+              location: String(w.location || ''),
+              connectTypes: String(w.connect_types || 'fast,longterm').split(',').map((s) => s.trim()),
+              categories: parseCats(w.categories),
+            }
+          );
+          if (m.hidden || m.matchPct < 40) continue;
+          matched += 1;
+          if (!extra.autoApply) continue;
+          const email = String(w.email || '');
+          const username = String(w.username || '');
+          if (!email) continue;
+          await withDb(async (conn) => {
+            await conn.execute(
+              'INSERT INTO mt_tapmatch_apps (job_id, email, username, note, status) VALUES (?,?,?,?,?)',
+              [id, email, username, 'Auto-apply', 'pending']
+            );
+            return true;
+          });
+          auto += 1;
+        }
+      } catch (e) {
+        console.error('tapmatch match', e);
+      }
       return v1ok({
         id,
         product: 'tapmatch',
@@ -1023,6 +1130,8 @@ export async function handleTapV1(opts: {
         shifts,
         status: 'open',
         username: actor.username,
+        matched,
+        auto_applied: auto,
       });
     }
 
