@@ -2,6 +2,13 @@ import { v1err, v1ok } from '@/lib/mt-v1';
 import { fetchMtMarket } from '@/lib/mt-market';
 import { getUserDb } from '@/lib/rewards-db';
 import { readSessionToken, userBySession } from '@/lib/portal-auth';
+import {
+  TAPMATCH_STAFF_PIN,
+  isTapMatchStaff,
+  tapMatchPasswordOk,
+  tapMatchPinOk,
+  tapMatchStaffSetCookieHeaders,
+} from '@/lib/tap-staff';
 
 export const TAP_LANES = [
   {
@@ -106,6 +113,21 @@ const DEMO_WORK = [
     connect: 'fast',
     role: 'Evening floor cover',
     blurb: 'Hospitality shift tonight. Fast Connect.',
+    location: 'Melbourne',
+    pay: '$32/hr',
+    skills: ['Waitstaff', 'Front of House'],
+    status: 'open',
+    demo: true,
+  },
+  {
+    id: 'match_demo_fast_2',
+    product: 'tapmatch',
+    connect: 'fast',
+    role: 'Barista — morning cover',
+    blurb: 'Cafe open 6am. Need someone who can start today.',
+    location: 'Sydney',
+    pay: '$30/hr',
+    skills: ['Barista'],
     status: 'open',
     demo: true,
   },
@@ -115,6 +137,23 @@ const DEMO_WORK = [
     connect: 'longterm',
     role: 'Part-time courier',
     blurb: 'Ongoing TAP packages lane. Weekend mornings.',
+    location: 'Sydney',
+    pay: '$28/hr',
+    skills: ['Delivery Driver'],
+    commitment: 'part-time',
+    status: 'open',
+    demo: true,
+  },
+  {
+    id: 'match_demo_long_2',
+    product: 'tapmatch',
+    connect: 'longterm',
+    role: 'Kitchen hand',
+    blurb: 'Ongoing evenings. Training on the pass.',
+    location: 'Brisbane',
+    pay: '$27/hr',
+    skills: ['Kitchen Hand', 'Back of House'],
+    commitment: 'part-time',
     status: 'open',
     demo: true,
   },
@@ -228,10 +267,26 @@ async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
       email VARCHAR(190) NULL,
       username VARCHAR(120) NULL,
       status VARCHAR(24) NOT NULL DEFAULT 'open',
+      location VARCHAR(160) NULL,
+      pay VARCHAR(80) NULL,
+      skills VARCHAR(400) NULL,
+      payload MEDIUMTEXT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       KEY connect_status (connect_type, status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  for (const sql of [
+    'ALTER TABLE mt_tapmatch_jobs ADD COLUMN location VARCHAR(160) NULL',
+    'ALTER TABLE mt_tapmatch_jobs ADD COLUMN pay VARCHAR(80) NULL',
+    'ALTER TABLE mt_tapmatch_jobs ADD COLUMN skills VARCHAR(400) NULL',
+    'ALTER TABLE mt_tapmatch_jobs ADD COLUMN payload MEDIUMTEXT NULL',
+  ]) {
+    try {
+      await conn.execute(sql);
+    } catch {
+      /* exists */
+    }
+  }
   await conn.execute(`
     CREATE TABLE IF NOT EXISTS mt_tapmatch_apps (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -247,6 +302,55 @@ async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
 
 async function sessionUser() {
   return userBySession(await readSessionToken());
+}
+
+function parseSkills(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map((s) => String(s).trim()).filter(Boolean).slice(0, 12);
+  return String(raw || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
+function mapMatchJob(r: Record<string, unknown>, demo = false) {
+  let extra: Record<string, unknown> = {};
+  const payload = r.payload;
+  if (payload && typeof payload === 'object' && !Array.isArray(payload)) extra = payload as Record<string, unknown>;
+  else if (typeof payload === 'string') {
+    try {
+      extra = JSON.parse(payload) as Record<string, unknown>;
+    } catch {
+      extra = {};
+    }
+  }
+  return {
+    id: r.id,
+    product: 'tapmatch' as const,
+    connect: r.connect_type || r.connect,
+    role: r.role,
+    blurb: r.blurb,
+    location: r.location || extra.location || null,
+    pay: r.pay || extra.pay || null,
+    skills: parseSkills(r.skills || extra.skills),
+    commitment: extra.commitment || null,
+    hours: extra.hours || null,
+    status: r.status || 'open',
+    username: r.username || null,
+    created_at: r.created_at || null,
+    demo,
+  };
+}
+
+async function tapMatchActor() {
+  const user = await sessionUser();
+  const staff = await isTapMatchStaff(user);
+  return {
+    user,
+    staff,
+    username: user?.username || TAPMATCH_STAFF_PIN,
+    email: user?.email || 'staff@tapmatch.local',
+  };
 }
 
 function overview() {
@@ -465,11 +569,48 @@ export async function handleTapV1(opts: {
       return v1ok({ id, product: 'tapshop', title, blurb, price_mt, status: 'open', username: user.username });
     }
 
+    if (root === 'tapmatch' && rest[0] === 'staff' && method === 'GET') {
+      const user = await sessionUser();
+      const staff = await isTapMatchStaff(user);
+      const res = v1ok({
+        staff,
+        preview: true,
+        desk: '/portal/tapmatch',
+        notice: 'TAPMATCH desk is staff preview. Closed to the public.',
+      });
+      res.headers.set('Cache-Control', 'private, no-store');
+      return res;
+    }
+
+    if (root === 'tapmatch' && rest[0] === 'staff' && method === 'POST') {
+      let body: Record<string, unknown> = {};
+      try {
+        body = await opts.request.json();
+      } catch {
+        body = {};
+      }
+      if (String(body.action || 'login') === 'logout') {
+        const res = v1ok({ staff: false });
+        res.headers.append('Set-Cookie', 'mt_tapmatch_staff=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+        return res;
+      }
+      const pin = String(body.pin || body.user || body.username || '');
+      const password = String(body.password || '');
+      if (!tapMatchPinOk(pin) || !(await tapMatchPasswordOk(password))) {
+        return v1err('Wrong admin user or password', 401, 401);
+      }
+      const res = v1ok({ staff: true, preview: true });
+      for (const c of tapMatchStaffSetCookieHeaders()) res.headers.append('Set-Cookie', c);
+      res.headers.set('Cache-Control', 'private, no-store');
+      return res;
+    }
+
     if (root === 'tapmatch' && rest.length === 0 && method === 'GET') {
       return v1ok({
         product: 'tapmatch',
         desk: '/portal/tapmatch',
         tag: 'Work',
+        preview: 'staff',
         connect: [
           { id: 'fast', name: 'Fast Connect', desc: 'Short-term shifts and cover.' },
           { id: 'longterm', name: 'Long-term', desc: 'Part-time, full-time, or contract.' },
@@ -481,31 +622,31 @@ export async function handleTapV1(opts: {
     if (root === 'tapmatch' && rest[0] === 'jobs' && method === 'GET') {
       const connect = connectOf(q.get('connect') || q.get('type'));
       const live = (await withDb(async (conn) => {
-        const [rows] = await conn.execute(
-          connect
-            ? 'SELECT id, connect_type, role, blurb, status, username, created_at FROM mt_tapmatch_jobs WHERE status = ? AND connect_type = ? ORDER BY created_at DESC LIMIT 40'
-            : 'SELECT id, connect_type, role, blurb, status, username, created_at FROM mt_tapmatch_jobs WHERE status = ? ORDER BY created_at DESC LIMIT 40',
-          connect ? ['open', connect] : ['open']
-        );
-        return (rows as Record<string, unknown>[]).map((r) => ({
-          id: r.id,
-          product: 'tapmatch',
-          connect: r.connect_type,
-          role: r.role,
-          blurb: r.blurb,
-          status: r.status,
-          username: r.username,
-          created_at: r.created_at,
-          demo: false,
-        }));
+        const params = connect ? ['open', connect] : ['open'];
+        const where = connect
+          ? 'WHERE status = ? AND connect_type = ?'
+          : 'WHERE status = ?';
+        try {
+          const [rows] = await conn.execute(
+            `SELECT id, connect_type, role, blurb, status, username, location, pay, skills, payload, created_at FROM mt_tapmatch_jobs ${where} ORDER BY created_at DESC LIMIT 40`,
+            params
+          );
+          return (rows as Record<string, unknown>[]).map((r) => mapMatchJob(r, false));
+        } catch {
+          const [rows] = await conn.execute(
+            `SELECT id, connect_type, role, blurb, status, username, created_at FROM mt_tapmatch_jobs ${where} ORDER BY created_at DESC LIMIT 40`,
+            params
+          );
+          return (rows as Record<string, unknown>[]).map((r) => mapMatchJob(r, false));
+        }
       })) || [];
       const demo = DEMO_WORK.filter((j) => !connect || j.connect === connect);
       return v1ok({ jobs: [...live, ...demo] });
     }
 
     if (root === 'tapmatch' && rest[0] === 'jobs' && method === 'POST') {
-      const user = await sessionUser();
-      if (!user) return v1err('Sign in to the MT Portal to post TAPMATCH work.', 401, 401);
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAPMATCH is staff preview. Sign in with the admin staff account.', 401, 401);
       let body: Record<string, unknown> = {};
       try {
         body = await opts.request.json();
@@ -515,22 +656,57 @@ export async function handleTapV1(opts: {
       const connect = connectOf(String(body.connect || body.type || 'fast')) || 'fast';
       const role = String(body.role || body.title || '').trim().slice(0, 120);
       const blurb = String(body.blurb || '').trim().slice(0, 400);
+      const location = String(body.location || '').trim().slice(0, 160);
+      const pay = String(body.pay || body.payRate || '').trim().slice(0, 80);
+      const skills = parseSkills(body.skills);
+      const commitment = String(body.commitment || '').trim().slice(0, 40);
+      const hours = String(body.hours || body.hoursPerWeek || '').trim().slice(0, 40);
       if (role.length < 2) return v1err('role is required', 400, 400);
       const id = newId('match');
+      const payload = JSON.stringify({ commitment, hours, skills });
       const saved = await withDb(async (conn) => {
         await conn.execute(
-          'INSERT INTO mt_tapmatch_jobs (id, connect_type, role, blurb, email, username, status) VALUES (?,?,?,?,?,?,?)',
-          [id, connect, role, blurb, user.email, user.username, 'open']
+          'INSERT INTO mt_tapmatch_jobs (id, connect_type, role, blurb, email, username, status, location, pay, skills, payload) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+          [id, connect, role, blurb, actor.email, actor.username, 'open', location || null, pay || null, skills.join(',') || null, payload]
         );
         return true;
       });
       if (!saved) return v1err('Could not store TAPMATCH job', 502, 502);
-      return v1ok({ id, product: 'tapmatch', connect, role, blurb, status: 'open', username: user.username });
+      return v1ok({
+        id,
+        product: 'tapmatch',
+        connect,
+        role,
+        blurb,
+        location: location || null,
+        pay: pay || null,
+        skills,
+        commitment: commitment || null,
+        hours: hours || null,
+        status: 'open',
+        username: actor.username,
+      });
+    }
+
+    if (root === 'tapmatch' && rest[0] === 'apps' && method === 'GET') {
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAPMATCH is staff preview.', 401, 401);
+      const jobId = q.get('job_id') || '';
+      const rows = (await withDb(async (conn) => {
+        const [list] = await conn.execute(
+          jobId
+            ? 'SELECT id, job_id, username, note, created_at FROM mt_tapmatch_apps WHERE job_id = ? ORDER BY created_at DESC LIMIT 80'
+            : 'SELECT id, job_id, username, note, created_at FROM mt_tapmatch_apps ORDER BY created_at DESC LIMIT 80',
+          jobId ? [jobId] : []
+        );
+        return list as Record<string, unknown>[];
+      })) || [];
+      return v1ok({ applications: rows });
     }
 
     if (root === 'tapmatch' && rest[0] === 'apply' && method === 'POST') {
-      const user = await sessionUser();
-      if (!user) return v1err('Sign in to the MT Portal to apply.', 401, 401);
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAPMATCH is staff preview. Sign in with the admin staff account.', 401, 401);
       let body: Record<string, unknown> = {};
       try {
         body = await opts.request.json();
@@ -543,12 +719,12 @@ export async function handleTapV1(opts: {
       const saved = await withDb(async (conn) => {
         await conn.execute(
           'INSERT INTO mt_tapmatch_apps (job_id, email, username, note) VALUES (?,?,?,?)',
-          [job_id, user.email, user.username, note || null]
+          [job_id, actor.email, actor.username, note || null]
         );
         return true;
       });
       if (!saved) return v1err('Could not store application', 502, 502);
-      return v1ok({ ok: true, job_id, username: user.username, note: note || null });
+      return v1ok({ ok: true, job_id, username: actor.username, note: note || null });
     }
 
     if (method === 'POST') {

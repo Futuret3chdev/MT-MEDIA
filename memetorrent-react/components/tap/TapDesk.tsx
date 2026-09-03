@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { TAP_APPS, type TapAppId } from '@/lib/tap-apps';
+import TapMatchDesk from '@/components/tap/TapMatchDesk';
 
-type User = { username: string; email: string; avatar_url: string | null };
+type User = { username: string; email: string; avatar_url: string | null; is_admin?: boolean };
 
 export default function TapDesk({ app }: { app: TapAppId }) {
   const [user, setUser] = useState<User | null>(null);
@@ -19,11 +20,11 @@ export default function TapDesk({ app }: { app: TapAppId }) {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
+  if (loading && app !== 'tapmatch') {
     return <div className="max-w-6xl mx-auto px-4 py-20 opacity-60">Opening TAP desk…</div>;
   }
 
-  if (!user) {
+  if (!user && app !== 'tapmatch') {
     return (
       <div className="max-w-xl mx-auto px-4 py-20">
         <div className="uppercase text-xs tracking-[3px] text-sky-400 mb-2">TAP desk</div>
@@ -47,7 +48,7 @@ export default function TapDesk({ app }: { app: TapAppId }) {
             <div className="uppercase text-[10px] tracking-[4px] text-sky-400 mb-2">TAP desk</div>
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">{current.name}</h1>
             <p className="text-sm opacity-60 mt-1">
-              @{user.username} · TAP account included with your portal login
+              {user ? `@${user.username} · TAP account included with your portal login` : 'Staff preview'}
             </p>
           </div>
           <div className="flex flex-wrap gap-4 text-sm">
@@ -117,27 +118,7 @@ export default function TapDesk({ app }: { app: TapAppId }) {
           </section>
         )}
 
-        {app === 'tapmatch' && (
-          <section className="rounded-3xl border border-sky-400/30 bg-sky-400/5 p-6 sm:p-8">
-            <h2 className="text-xl font-semibold mb-2">Work</h2>
-            <p className="text-sm opacity-70 max-w-xl mb-6">
-              TAPMATCH is your work account — employees and employers. Fast Connect for short-term, or
-              long-term roles. Same portal identity, separate desk.
-            </p>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="rounded-2xl border border-white/10 p-4">
-                <div className="text-[10px] tracking-[2px] text-sky-400 mb-1">FAST CONNECT</div>
-                <div className="font-semibold">Short-term</div>
-                <p className="text-sm opacity-60 mt-1">Shifts and cover. Match people who can start quickly.</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 p-4">
-                <div className="text-[10px] tracking-[2px] text-sky-400 mb-1">LONG-TERM</div>
-                <div className="font-semibold">Ongoing roles</div>
-                <p className="text-sm opacity-60 mt-1">Part-time, full-time, or contract.</p>
-              </div>
-            </div>
-          </section>
-        )}
+        {app === 'tapmatch' && <TapMatchDesk user={user} />}
       </div>
     </div>
   );

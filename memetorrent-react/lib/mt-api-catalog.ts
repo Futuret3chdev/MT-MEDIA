@@ -55,9 +55,11 @@ export const API_CATS: ApiCat[] = [
       { method: 'GET', path: '/api/v1/tapshop/listings', summary: 'Open listings ($MT / Rockets)' },
       { method: 'POST', path: '/api/v1/tapshop/listings', summary: 'List an item', auth: 'session' },
       { method: 'GET', path: '/api/v1/tapmatch', summary: 'TAPMATCH work desk — Fast Connect or long-term' },
+      { method: 'GET', path: '/api/v1/tapmatch/staff', summary: 'Staff preview status', auth: 'session' },
+      { method: 'POST', path: '/api/v1/tapmatch/staff', summary: 'Staff login — TAPMATCH desk is closed to the public', auth: 'staff' },
       { method: 'GET', path: '/api/v1/tapmatch/jobs', summary: 'Open roles' },
-      { method: 'POST', path: '/api/v1/tapmatch/jobs', summary: 'Post a role', auth: 'session' },
-      { method: 'POST', path: '/api/v1/tapmatch/apply', summary: 'Apply to a role', auth: 'session' },
+      { method: 'POST', path: '/api/v1/tapmatch/jobs', summary: 'Post a role (staff preview)', auth: 'staff' },
+      { method: 'POST', path: '/api/v1/tapmatch/apply', summary: 'Apply / Tap to Connect (staff preview)', auth: 'staff' },
     ],
   },
   {
