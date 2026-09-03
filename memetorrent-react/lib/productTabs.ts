@@ -17,7 +17,7 @@ export const PRODUCT_TABS: ProductTab[] = [
     id: 'developers',
     label: 'Developers',
     href: '/developers',
-    blurb: 'MT-Connect, social login, wallets. The site API — not replaced.',
+    blurb: 'Market, TAP (trips, packages, food), TAPSHOP, TAPMATCH. The site API — not replaced.',
   },
   {
     id: 'stats',

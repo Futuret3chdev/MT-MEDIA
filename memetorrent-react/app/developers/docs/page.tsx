@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { API_CATS } from '@/lib/mt-api-catalog';
 
 const ORIGIN = 'https://memetorrent.futuret3ch.com.au';
@@ -66,6 +66,11 @@ function Try({ path }: { path: string }) {
 export default function DocsPage() {
   const [cat, setCat] = useState(API_CATS[0].id);
   const current = useMemo(() => API_CATS.find((c) => c.id === cat) || API_CATS[0], [cat]);
+
+  useEffect(() => {
+    const h = window.location.hash.replace('#', '');
+    if (h && API_CATS.some((c) => c.id === h)) setCat(h);
+  }, []);
   const curlQuotes = `curl "${ORIGIN}/api/v1/cryptocurrency/quotes/latest?symbol=MT"`;
 
   return (
@@ -90,7 +95,10 @@ export default function DocsPage() {
             <button
               key={c.id}
               type="button"
-              onClick={() => setCat(c.id)}
+              onClick={() => {
+                setCat(c.id);
+                window.history.replaceState(null, '', `#${c.id}`);
+              }}
               className={`block w-full text-left px-3 py-2 rounded-lg ${cat === c.id ? 'bg-white/10 text-emerald-400' : 'opacity-70 hover:opacity-100'}`}
             >
               {c.title}
@@ -117,6 +125,19 @@ export default function DocsPage() {
             <div className="mb-8 rounded-2xl border border-white/10 p-4 text-sm">
               <p className="opacity-70 mb-2">Default mint <code className="text-emerald-400 break-all">{MINT}</code></p>
               <Try path={`/api/v1/token/${MINT}/chart?range=24h`} />
+            </div>
+          )}
+
+          {cat === 'tap' && (
+            <div className="mb-8 rounded-2xl border border-white/10 p-4 text-sm">
+              <p className="opacity-70 mb-3">
+                TAP is rides, parcels, and food — not MT Tap the game. Writes need the portal session.
+              </p>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <code className="text-xs break-all">{`curl "${ORIGIN}/api/v1/tap/quote?lane=trips&km=6"`}</code>
+                <Copy text={`curl "${ORIGIN}/api/v1/tap/quote?lane=trips&km=6"`} />
+              </div>
+              <Try path="/api/v1/tap" />
             </div>
           )}
 

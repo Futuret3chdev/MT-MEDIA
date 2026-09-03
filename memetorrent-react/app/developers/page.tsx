@@ -82,11 +82,11 @@ export default function DevelopersPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
-        <p className="text-xs uppercase tracking-[3px] text-emerald-400 mb-2">Market data · Token tracker · Play · Wallet-ready</p>
+        <p className="text-xs uppercase tracking-[3px] text-emerald-400 mb-2">Market data · TAP · Token tracker · Play · Wallet-ready</p>
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-4">Build on $MT.</h1>
         <p className="opacity-70 max-w-2xl text-lg mb-8">
-          Keyless market API today (quotes, holders, candles). Same paths for Infinite Wallet and MT-Chain when they launch.
-          Play SDK for catalog games. CLI for scripts.
+          Keyless market API today (quotes, holders, candles). TAP API for trips, packages, and food — plus TAPSHOP and TAPMATCH.
+          Same paths for Infinite Wallet and MT-Chain when they launch. Play SDK for catalog games. CLI for scripts.
         </p>
         <div className="flex flex-wrap gap-3 mb-12">
           <Link href="/developers/docs" className="rounded-full bg-emerald-400 text-black font-bold px-5 py-2">
@@ -117,9 +117,10 @@ export default function DevelopersPage() {
         <section className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
           {[
             { href: '/developers/docs', t: 'Market data', d: 'CMC-style quotes, listings, OHLCV. Envelope with status + data.' },
+            { href: '/developers/docs#tap', t: 'TAP', d: 'Trips, packages, food. TAPSHOP listings. TAPMATCH Fast Connect / long-term. Not games.' },
             { href: '/developers/docs', t: 'Token tracker', d: 'Mint, pool, holders, chart — Solana Tracker-shaped paths.' },
             { href: '/sdk/mt-play.js', t: 'Play SDK', d: 'Wallets, portal login, scores inside the catalog play bar.' },
-            { href: '/cli/mt.js', t: 'CLI', d: 'node mt.js quotes · holders · chart · scores' },
+            { href: '/cli/mt.js', t: 'CLI', d: 'node mt.js quotes · tap · holders · chart · scores' },
             { href: '/studio', t: 'Studio', d: '$MT shop, editor, titles API.' },
             { href: '/developers/docs', t: 'Wallet & MT-Chain', d: 'Preview routes. Same host when Infinite Wallet and MT-Chain go live.' },
           ].map((c) => (
@@ -161,7 +162,7 @@ export default function DevelopersPage() {
         <section className="mb-14">
           <h2 className="text-2xl font-semibold mb-3">Auth</h2>
           <p className="text-sm opacity-80 max-w-2xl">
-            Market and tracker routes are keyless. Portal, studio, chat, and claims use the site session cookie.
+            Market, tracker, and TAP reads are keyless. TAP writes, portal, studio, chat, and claims use the site session cookie.
             Staff routes need the nights pin. Header <code>X-MT-API-KEY</code> is reserved for paid / chain launch — send it later, ignore it today.
           </p>
         </section>

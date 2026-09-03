@@ -5,6 +5,7 @@
  *   node mt.js holders
  *   node mt.js chart
  *   node mt.js status
+ *   node mt.js tap
  */
 const ORIGIN = process.env.MT_API || 'https://memetorrent.futuret3ch.com.au';
 const cmd = (process.argv[2] || 'help').toLowerCase();
@@ -41,6 +42,11 @@ async function main() {
   pool
   status
   chain
+  tap
+  tap-quote --lane trips|packages|food [--km 5]
+  tap-jobs [--lane trips]
+  tapshop
+  tapmatch [--connect fast|longterm]
   scores --game tap [--limit 10]
   license --key MT-FREE-…     Verify game software license
 
@@ -82,6 +88,30 @@ macOS / Linux (needs Node):
   }
   if (cmd === 'chain') {
     print(await get('/api/v1/chain/info'));
+    return;
+  }
+  if (cmd === 'tap') {
+    print(await get('/api/v1/tap'));
+    return;
+  }
+  if (cmd === 'tap-quote' || cmd === 'tapquote') {
+    const lane = flag('lane', 'trips');
+    const km = flag('km', '5');
+    print(await get('/api/v1/tap/quote?lane=' + encodeURIComponent(lane) + '&km=' + encodeURIComponent(km)));
+    return;
+  }
+  if (cmd === 'tap-jobs' || cmd === 'tapjobs') {
+    const lane = flag('lane', '');
+    print(await get('/api/v1/tap/jobs' + (lane ? '?lane=' + encodeURIComponent(lane) : '')));
+    return;
+  }
+  if (cmd === 'tapshop') {
+    print(await get('/api/v1/tapshop/listings'));
+    return;
+  }
+  if (cmd === 'tapmatch') {
+    const connect = flag('connect', '');
+    print(await get('/api/v1/tapmatch/jobs' + (connect ? '?connect=' + encodeURIComponent(connect) : '')));
     return;
   }
   if (cmd === 'license' || cmd === 'games-license') {

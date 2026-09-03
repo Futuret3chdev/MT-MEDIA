@@ -1,5 +1,6 @@
 import { CORS, quotePayload, resolveMint, v1err, v1ok } from '@/lib/mt-v1';
 import { MT_MINT, MT_POOL, fetchMtMarket } from '@/lib/mt-market';
+import { handleTapV1 } from '@/lib/tap-api';
 
 export const revalidate = 30;
 
@@ -17,13 +18,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
     if (p === 'status' || p === '') {
       return v1ok({
         api: 'mt-v1',
-        version: '1.0.0',
+        version: '1.1.0',
         keyless: true,
-        products: ['market-data', 'token-tracker', 'play-sdk', 'studio', 'solana-rpc'],
+        products: ['market-data', 'token-tracker', 'tap', 'tapshop', 'tapmatch', 'play-sdk', 'studio', 'solana-rpc'],
         upcoming: ['infinite-wallet', 'mt-chain-rpc'],
         docs: 'https://memetorrent.futuret3ch.com.au/developers/docs',
       });
     }
+
+    const tap = await handleTapV1({ method: 'GET', path: p, url, request });
+    if (tap) return tap;
 
     if (p === 'cryptocurrency/quotes/latest' || p === 'quotes/latest') {
       const mint = resolveMint(q.get('symbol') || q.get('mint') || q.get('id'));
@@ -121,4 +125,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
     console.error('v1', p, e);
     return v1err('Upstream unavailable', 502, 502);
   }
+}
+
+export async function POST(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params;
+  const p = (path || []).join('/');
+  const url = new URL(request.url);
+  const tap = await handleTapV1({ method: 'POST', path: p, url, request });
+  if (tap) return tap;
+  return v1err(`POST not supported on /api/v1/${p}`, 405, 405);
 }

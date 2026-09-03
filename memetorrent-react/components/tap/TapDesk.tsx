@@ -50,9 +50,14 @@ export default function TapDesk({ app }: { app: TapAppId }) {
               @{user.username} · TAP account included with your portal login
             </p>
           </div>
-          <Link href="/portal" className="text-sm opacity-60 hover:opacity-100">
-            ← Community portal
-          </Link>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <Link href="/developers/docs#tap" className="text-sky-400 hover:opacity-80">
+              TAP API
+            </Link>
+            <Link href="/portal" className="opacity-60 hover:opacity-100">
+              ← Community portal
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-10">

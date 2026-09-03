@@ -15,6 +15,20 @@ GET /api/v1/token/{mint}/chart?range=24h
 GET /api/v1/pool/{address}
 GET /api/v1/chain/info
 
+## TAP (trips, packages, food — not games)
+GET /api/v1/tap
+GET /api/v1/tap/lanes
+GET /api/v1/tap/quote?lane=trips&from=&to=&km=5
+GET /api/v1/tap/jobs
+GET /api/v1/tapshop
+GET /api/v1/tapshop/listings
+GET /api/v1/tapmatch
+GET /api/v1/tapmatch/jobs?connect=fast
+POST /api/v1/tap/jobs          (portal session)
+POST /api/v1/tapshop/listings  (portal session)
+POST /api/v1/tapmatch/jobs     (portal session)
+POST /api/v1/tapmatch/apply    (portal session)
+
 Envelope: { status: { timestamp, error_code }, data }
 
 $MT mint: ELywDcVX2WumHm4xEfqF8NdEKaeGCAaq9JmwtjE8pump

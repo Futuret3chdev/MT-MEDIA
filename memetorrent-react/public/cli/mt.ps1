@@ -7,7 +7,10 @@ param(
   [string]$Range = "24h",
   [string]$Game = "tap",
   [string]$Limit = "10",
-  [string]$Key = ""
+  [string]$Key = "",
+  [string]$Lane = "",
+  [string]$Km = "5",
+  [string]$Connect = ""
 )
 
 $Origin = if ($env:MT_API) { $env:MT_API.TrimEnd("/") } else { "https://memetorrent.futuret3ch.com.au" }
@@ -31,6 +34,11 @@ MT CLI  ($Origin)
   pool
   status
   chain
+  tap
+  tap-quote [-Lane trips] [-Km 5]
+  tap-jobs [-Lane trips]
+  tapshop
+  tapmatch [-Connect fast]
   scores [-Game tap] [-Limit 10]
   license [-Key MT-FREE-…]
 
@@ -66,6 +74,31 @@ Windows:
   }
   "chain" {
     Get-Mt "/api/v1/chain/info" | ConvertTo-Json -Depth 8
+    break
+  }
+  "tap" {
+    Get-Mt "/api/v1/tap" | ConvertTo-Json -Depth 12
+    break
+  }
+  { $_ -in @("tap-quote", "tapquote") } {
+    $l = if ($Lane) { $Lane } else { "trips" }
+    Get-Mt "/api/v1/tap/quote?lane=$([uri]::EscapeDataString($l))&km=$([uri]::EscapeDataString($Km))" | ConvertTo-Json -Depth 8
+    break
+  }
+  { $_ -in @("tap-jobs", "tapjobs") } {
+    $path = "/api/v1/tap/jobs"
+    if ($Lane) { $path = "$path`?lane=$([uri]::EscapeDataString($Lane))" }
+    Get-Mt $path | ConvertTo-Json -Depth 8
+    break
+  }
+  "tapshop" {
+    Get-Mt "/api/v1/tapshop/listings" | ConvertTo-Json -Depth 8
+    break
+  }
+  "tapmatch" {
+    $path = "/api/v1/tapmatch/jobs"
+    if ($Connect) { $path = "$path`?connect=$([uri]::EscapeDataString($Connect))" }
+    Get-Mt $path | ConvertTo-Json -Depth 8
     break
   }
   { $_ -in @("license", "games-license") } {
