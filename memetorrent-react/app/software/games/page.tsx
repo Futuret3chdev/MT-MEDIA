@@ -30,11 +30,11 @@ export default function SoftwareGamesPage() {
       </div>
       <div className="uppercase text-xs tracking-[3px] text-emerald-400 mt-4 mb-2">Software · Games</div>
       <h1 className="text-4xl sm:text-5xl font-semibold tracking-[-1.6px] mb-4">
-        MT Android Studio
+        MT Studio Suite
       </h1>
       <p className="opacity-70 max-w-2xl mb-10 text-sm sm:text-base">
-        Our own Android IDE. Paint a game, ▶ Run it, hit Build APK. The APK is compiled and signed here —
-        you do not need Google’s Android Studio. SDK:{' '}
+        Windows / Mac / Android downloads are the full suite: Android compiler, Device Lab, Publisher, Play Console,
+        iOS, Photo-to-game, World 3D, Music, Video, Shield, Bot. SDK:{' '}
         <Link href="/software/games/sdk" className="text-emerald-400">
           /software/games/sdk
         </Link>
@@ -53,15 +53,18 @@ export default function SoftwareGamesPage() {
           Google Android Studio is not part of this path. MT Android Studio is the compiler.
         </p>
         <div className="flex flex-wrap gap-3">
-          <a href="/maker/" className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm">
-            Open MT Android Studio
+          <a href="/studios/" className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm">
+            Open suite
           </a>
-          <a href="/maker/?mode=lab" className="inline-block px-4 py-2 rounded-full border border-white/20 text-sm">
+          <a href="/maker/" className="inline-block px-4 py-2 rounded-full border border-white/20 text-sm">
+            Android Studio
+          </a>
+          <a href="/studios/lab.html" className="inline-block px-4 py-2 rounded-full border border-white/20 text-sm">
             Device lab
           </a>
-          <Link href="/software/studios" className="inline-block px-4 py-2 rounded-full border border-white/20 text-sm">
-            All studios
-          </Link>
+          <a href="/studios/photo.html" className="inline-block px-4 py-2 rounded-full border border-white/20 text-sm">
+            Photography
+          </a>
         </div>
       </div>
 

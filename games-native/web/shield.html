@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT Shield Policy Studio</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>body{background:#1c0a0a;color:#fecaca} .ok{color:#86efac}</style>
+</head><body>
+<div class="top" style="background:#3f0d0d">
+  <strong style="color:#f87171">Shield Policy Studio</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#b91c1c;color:#fff;margin-left:auto" id="panic">Panic lock</button>
+  <button class="btn" id="export">Export policy.json</button>
+  <button class="btn" id="imp">Import</button>
+  <input id="file" type="file" accept="application/json" hidden>
+</div>
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card">
+    <h3 style="margin-top:0">Allowlist domains</h3>
+    <input id="dom" placeholder="futuret3ch.com.au" style="width:70%">
+    <button class="btn" id="addd">Add</button>
+    <ul id="dlist"></ul>
+    <h3>Clipboard</h3>
+    <label class="row">Block seed phrases <input id="seed" type="checkbox" checked></label>
+    <label class="row">Warn on address swap <input id="swap" type="checkbox" checked></label>
+    <h3>Network</h3>
+    <label class="row">Default deny unknown <input id="deny" type="checkbox"></label>
+    <label class="row">Lock on VPN drop <input id="vpn" type="checkbox"></label>
+  </div>
+  <div class="card">
+    <h3>Live test</h3>
+    <label class="row">URL <input id="test" value="https://evil-airdrop.example/claim"></label>
+    <button class="btn" id="scan">Scan URL</button>
+    <p class="log" id="log">Policy applies to Shield clients. Export JSON and drop it on the device.</p>
+    <pre id="json" class="log"></pre>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('shield');
+let pol=MT.get('mt-shield-policy',{version:1, allow:['futuret3ch.com.au','memetorrent.futuret3ch.com.au'], clipboard:{seed:true,swap:true}, net:{deny:false,vpn:false}, panic:false});
+function save(){ MT.set('mt-shield-policy', pol); document.getElementById('json').textContent=JSON.stringify(pol,null,2); }
+function render(){
+  document.getElementById('dlist').innerHTML=pol.allow.map((d,i)=>`<li>${d} <button data-i="${i}">×</button></li>`).join('');
+  document.getElementById('seed').checked=pol.clipboard.seed;
+  document.getElementById('swap').checked=pol.clipboard.swap;
+  document.getElementById('deny').checked=pol.net.deny;
+  document.getElementById('vpn').checked=pol.net.vpn;
+  save();
+}
+document.getElementById('addd').onclick=()=>{ const v=document.getElementById('dom').value.trim(); if(!v) return; pol.allow.push(v); render(); };
+document.getElementById('dlist').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; pol.allow.splice(+b.dataset.i,1); render(); };
+['seed','swap'].forEach(id=>document.getElementById(id).onchange=e=>{ pol.clipboard[id]=e.target.checked; save(); });
+document.getElementById('deny').onchange=e=>{ pol.net.deny=e.target.checked; save(); };
+document.getElementById('vpn').onchange=e=>{ pol.net.vpn=e.target.checked; save(); };
+document.getElementById('panic').onclick=()=>{ pol.panic=!pol.panic; save(); document.getElementById('log').textContent=pol.panic?'PANIC LOCK ON — Shield clients must freeze UI and cut network.':'Panic off'; };
+document.getElementById('export').onclick=()=>MT.download('shield-policy.json', JSON.stringify(pol,null,2), 'application/json');
+document.getElementById('imp').onclick=()=>document.getElementById('file').click();
+document.getElementById('file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(t=>{ pol=JSON.parse(t); render(); document.getElementById('log').textContent='Imported '+f.name; });
+};
+document.getElementById('scan').onclick=()=>{
+  try{
+    const u=new URL(document.getElementById('test').value);
+    const host=u.hostname.replace(/^www\./,'');
+    const ok=pol.allow.some(a=>host===a || host.endsWith('.'+a));
+    document.getElementById('log').textContent = ok? host+' ALLOW' : host+' BLOCK'+(pol.net.deny?' (default deny)':' (not on allowlist)');
+  }catch{ document.getElementById('log').textContent='Bad URL'; }
+};
+render();
+</script>
+</body></html>

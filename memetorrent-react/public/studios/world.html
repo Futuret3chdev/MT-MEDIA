@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT World / 3D</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>body{background:#120816;color:#f5d0fe} #view{width:100%;background:#0b0610;border:1px solid #6b21a8}</style>
+</head><body>
+<div class="top" style="background:#2e1065">
+  <strong style="color:#e879f9">MT World / 3D</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#a21caf;color:#fff;margin-left:auto" id="play">Walk</button>
+  <button class="btn" id="house">Place photo house</button>
+  <button class="btn" id="exp">Export JSON</button>
+</div>
+<div class="grid" style="grid-template-columns:1fr 240px">
+  <canvas id="view" width="900" height="520"></canvas>
+  <aside class="card">
+    <p>Click to add a voxel. Photo house uses the facade from Photography Studio — textured, not a blank box.</p>
+    <p class="log" id="log">Drag to orbit. Scroll to zoom.</p>
+  </aside>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('world');
+const cv=document.getElementById('view'), ctx=cv.getContext('2d');
+const N=12; const grid=new Uint8Array(N*N*N);
+for(let x=0;x<N;x++) for(let z=0;z<N;z++) grid[x+0*N+z*N*N]=1;
+let yaw=0.7, pitch=0.4, zoom=22, walk=false, px=2, pz=2, house=null, himg=null;
+function gi(x,y,z){ if(x<0||y<0||z<0||x>=N||y>=N||z>=N) return 0; return grid[x+y*N+z*N*N]; }
+function setg(x,y,z,v){ if(x<0||y<0||z<0||x>=N||y>=N||z>=N) return; grid[x+y*N+z*N*N]=v; }
+function project(x,y,z){
+  const cx=x-N/2, cy=y, cz=z-N/2;
+  const c=Math.cos(yaw), s=Math.sin(yaw);
+  const x1=cx*c - cz*s, z1=cx*s + cz*c;
+  const c2=Math.cos(pitch), s2=Math.sin(pitch);
+  const y1=cy*c2 - z1*s2, z2=cy*s2 + z1*c2;
+  const sc=zoom*8/(8+z2);
+  return {x:cv.width/2 + x1*sc, y:cv.height*0.7 - y1*sc, z:z2, sc};
+}
+function drawBox(x,y,z,col){
+  const p=[project(x,y,z),project(x+1,y,z),project(x+1,y,z+1),project(x,y,z+1),
+           project(x,y+1,z),project(x+1,y+1,z),project(x+1,y+1,z+1),project(x,y+1,z+1)];
+  ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(p[4].x,p[4].y); ctx.lineTo(p[5].x,p[5].y); ctx.lineTo(p[6].x,p[6].y); ctx.lineTo(p[7].x,p[7].y); ctx.fill();
+  ctx.fillStyle='#0003'; ctx.beginPath(); ctx.moveTo(p[1].x,p[1].y); ctx.lineTo(p[2].x,p[2].y); ctx.lineTo(p[6].x,p[6].y); ctx.lineTo(p[5].x,p[5].y); ctx.fill();
+  ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(p[0].x,p[0].y); ctx.lineTo(p[1].x,p[1].y); ctx.lineTo(p[5].x,p[5].y); ctx.lineTo(p[4].x,p[4].y); ctx.fill();
+}
+function drawHouse(){
+  if(!house||!himg||!himg.complete) return;
+  const x=6,z=6,w=3,d=2,h=3;
+  const p0=project(x,0,z), p1=project(x+w,0,z), p2=project(x+w,0,z+d), p3=project(x,0,z+d);
+  const q0=project(x,h,z), q1=project(x+w,h,z), q2=project(x+w,h,z+d), q3=project(x,h,z+d);
+  ctx.fillStyle='#4a2c1a';
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.lineTo(q2.x,q2.y); ctx.lineTo(q1.x,q1.y); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.lineTo(q1.x,q1.y); ctx.lineTo(q0.x,q0.y); ctx.closePath(); ctx.clip();
+  const minx=Math.min(p0.x,p1.x,q0.x,q1.x), miny=Math.min(p0.y,p1.y,q0.y,q1.y);
+  const maxx=Math.max(p0.x,p1.x,q0.x,q1.x), maxy=Math.max(p0.y,p1.y,q0.y,q1.y);
+  ctx.drawImage(himg, minx, miny, Math.max(8,maxx-minx), Math.max(8,maxy-miny));
+  ctx.restore();
+  ctx.fillStyle='#7f1d1d';
+  const ridge=project(x+w/2,h+1.2,z+d/2);
+  ctx.beginPath(); ctx.moveTo(q0.x,q0.y); ctx.lineTo(q1.x,q1.y); ctx.lineTo(ridge.x,ridge.y); ctx.fill();
+}
+function render(){
+  ctx.fillStyle='#120816'; ctx.fillRect(0,0,cv.width,cv.height);
+  const order=[];
+  for(let x=0;x<N;x++) for(let y=0;y<N;y++) for(let z=0;z<N;z++) if(gi(x,y,z)) order.push([x,y,z]);
+  order.sort((a,b)=>project(a[0],a[1],a[2]).z - project(b[0],b[1],b[2]).z);
+  order.forEach(([x,y,z])=>drawBox(x,y,z, y? '#a78bfa':'#4c1d95'));
+  drawHouse();
+  if(walk){ const p=project(px,1,pz); ctx.fillStyle='#19d37e'; ctx.fillRect(p.x-4,p.y-12,8,12); }
+}
+let drag=null;
+cv.onpointerdown=e=>{ drag={x:e.clientX,y:e.clientY,yaw,pitch}; };
+cv.onpointermove=e=>{ if(!drag) return; yaw=drag.yaw-(e.clientX-drag.x)*0.01; pitch=Math.max(0.1,Math.min(1.2, drag.pitch+(e.clientY-drag.y)*0.01)); render(); };
+cv.onpointerup=()=>drag=null;
+cv.onwheel=e=>{ zoom=Math.max(10,Math.min(40, zoom-e.deltaY*0.02)); render(); e.preventDefault(); };
+cv.onclick=e=>{
+  if(walk) return;
+  const r=cv.getBoundingClientRect();
+  const gx=Math.floor((e.clientX-r.left)/r.width*N), gz=Math.floor((e.clientY-r.top)/r.height*N);
+  setg(Math.max(0,Math.min(N-1,gx)), 1, Math.max(0,Math.min(N-1,gz)), 1);
+  render();
+};
+document.getElementById('play').onclick=()=>{ walk=!walk; document.getElementById('play').textContent=walk?'Orbit':'Walk'; };
+addEventListener('keydown',e=>{
+  if(!walk) return;
+  if(e.code==='KeyA'||e.code==='ArrowLeft') px=Math.max(0,px-0.2);
+  if(e.code==='KeyD'||e.code==='ArrowRight') px=Math.min(N-1,px+0.2);
+  if(e.code==='KeyW'||e.code==='ArrowUp') pz=Math.max(0,pz-0.2);
+  if(e.code==='KeyS'||e.code==='ArrowDown') pz=Math.min(N-1,pz+0.2);
+  render();
+});
+document.getElementById('house').onclick=()=>{
+  house=MT.get('mt-photo-house', null);
+  if(!house){ document.getElementById('log').textContent='No house. Open Photography, restore a photo, Build 3D, Send to World.'; return; }
+  himg=new Image(); himg.onload=render; himg.src=house.facade;
+  document.getElementById('log').textContent='Placed photo house with your facade texture.';
+};
+document.getElementById('exp').onclick=()=>MT.download('world.json', JSON.stringify({grid:Array.from(grid), house:MT.get('mt-photo-house',null)}), 'application/json');
+const existing=MT.get('mt-photo-house', null);
+if(existing){ house=existing; himg=new Image(); himg.onload=render; himg.src=existing.facade; document.getElementById('log').textContent='Loaded house from Photography Studio.'; }
+render();
+</script>
+</body></html>

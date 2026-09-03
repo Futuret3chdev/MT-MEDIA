@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT Bot Studio</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>
+  body{background:#0e1621;color:#e8f1ff}
+  .tg{max-width:420px;margin:16px auto;background:#17212b;border-radius:16px;min-height:70vh;display:flex;flex-direction:column;border:1px solid #2b5278}
+  .head{padding:10px 14px;background:#242f3d;border-radius:16px 16px 0 0;font-weight:700}
+  .msgs{flex:1;overflow:auto;padding:12px}
+  .bubble{background:#2b5278;padding:8px 10px;border-radius:10px;margin:6px 0;max-width:90%;white-space:pre-wrap}
+  .me{background:#3e6d94;margin-left:auto}
+  .cmds{display:flex;flex-wrap:wrap;gap:6px;padding:8px}
+  .bar{display:flex;gap:6px;padding:8px}
+  .bar input{flex:1;background:#242f3d;border:1px solid #2b5278;color:#fff;border-radius:8px;padding:8px}
+</style>
+</head><body>
+<div class="top" style="background:#17212b">
+  <strong style="color:#6ab3f3">MT Bot Studio</strong>
+  <nav id="nav"></nav>
+</div>
+<div class="tg">
+  <div class="head">MT Bot · live /ca /token /holders</div>
+  <div class="cmds">
+    <button class="btn" data-c="/ca">/ca</button>
+    <button class="btn" data-c="/token">/token</button>
+    <button class="btn" data-c="/holders">/holders</button>
+    <button class="btn" data-c="/help">/help</button>
+  </div>
+  <div class="msgs" id="msgs"></div>
+  <div class="bar"><input id="in" placeholder="/ca"/><button class="btn p" style="background:#5288c1;color:#fff" id="send">Send</button></div>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('bot');
+const msgs=document.getElementById('msgs');
+function bubble(text, me){ const d=document.createElement('div'); d.className='bubble'+(me?' me':''); d.textContent=text; msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight; }
+async function run(cmd){
+  bubble(cmd, true);
+  const c=cmd.trim().split(/\s+/)[0].toLowerCase();
+  try{
+    if(c==='/ca' || c==='/token'){
+      const s=await fetch('/api/mt-stats').then(r=>r.json());
+      if(!s.ok){ bubble('Stats unavailable'); return; }
+      bubble('$'+s.symbol+'  price '+s.price+'\nmcap '+s.market_cap+'\nliq '+s.liquidity+'\nvol 24h '+s.total_buy_volume+'\n24h '+(s.change24h??'—')+'%');
+    } else if(c==='/holders'){
+      const h=await fetch('/api/holders').then(r=>r.json()).catch(()=>({}));
+      bubble(JSON.stringify(h,null,2).slice(0,1500));
+    } else if(c==='/help'){
+      bubble('Commands that hit live MT APIs:\n/ca  token card\n/token  same stats\n/holders  holder payload\nThis is Bot Studio, not a fake chat.');
+    } else bubble('Unknown. Try /ca /token /holders /help');
+  }catch(e){ bubble('Request failed: '+e.message); }
+}
+document.getElementById('send').onclick=()=>{ const v=document.getElementById('in').value||'/ca'; document.getElementById('in').value=''; run(v); };
+document.getElementById('in').onkeydown=e=>{ if(e.key==='Enter') document.getElementById('send').click(); };
+document.querySelector('.cmds').onclick=e=>{ const b=e.target.closest('button'); if(b) run(b.dataset.c); };
+bubble('MT Bot Studio ready. Buttons run real endpoints.');
+</script>
+</body></html>

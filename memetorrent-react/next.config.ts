@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
         destination: '/api/oauth/discord/callback',
       },
       { source: '/studio.js', destination: '/maker/studio.js' },
+      { source: '/studios', destination: '/studios/index.html' },
+      { source: '/studios/', destination: '/studios/index.html' },
     ];
   },
   async redirects() {

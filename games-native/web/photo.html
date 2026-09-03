@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT Photography Studio</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>
+  body{background:#16120c;color:#f5e6c8}
+  .stage{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+  canvas{max-width:100%;background:#0b0906;border:1px solid #3f2e1f}
+  .hint{font-size:12px;opacity:.7}
+</style>
+</head><body>
+<div class="top" style="background:#2a2118">
+  <strong style="color:#e7c07b">MT Photography</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#b45309;color:#fff;margin-left:auto" id="restore">Restore photo</button>
+  <button class="btn" id="warp">Warp facade</button>
+  <button class="btn" id="build">Build 3D house</button>
+  <button class="btn" id="game">Play in game</button>
+  <button class="btn" id="sendw">Send to World 3D</button>
+</div>
+<div class="stage">
+  <div class="card">
+    <h3 style="margin-top:0">1. Old photo</h3>
+    <input id="file" type="file" accept="image/*">
+    <p class="hint">Click four corners of the house: top-left, top-right, bottom-right, bottom-left.</p>
+    <canvas id="src" width="640" height="420"></canvas>
+    <p id="pts">Corners: 0/4</p>
+  </div>
+  <div class="card">
+    <h3>2. Restored · facade · game render</h3>
+    <canvas id="rest" width="320" height="210"></canvas>
+    <canvas id="facade" width="256" height="256"></canvas>
+    <canvas id="iso" width="420" height="320"></canvas>
+    <label class="row">Width <input id="bw" type="range" min="40" max="160" value="90"></label>
+    <label class="row">Height <input id="bh" type="range" min="40" max="160" value="80"></label>
+    <label class="row">Depth <input id="bd" type="range" min="20" max="120" value="55"></label>
+    <p class="log" id="log">Load a house photo. Restore, click the facade, Build 3D, then Play in game. The building is textured with your photo — not a stock cube.</p>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('photo');
+const src=document.getElementById('src'), sctx=src.getContext('2d');
+const rest=document.getElementById('rest'), rctx=rest.getContext('2d');
+const fac=document.getElementById('facade'), fctx=fac.getContext('2d');
+const iso=document.getElementById('iso'), ictx=iso.getContext('2d');
+let img=null, corners=[], restored=null;
+function log(s){ const el=document.getElementById('log'); el.textContent=s+'\n'+el.textContent; }
+function drawSrc(){
+  sctx.fillStyle='#0b0906'; sctx.fillRect(0,0,src.width,src.height);
+  if(!img) return;
+  const sc=Math.min(src.width/img.width, src.height/img.height);
+  const w=img.width*sc, h=img.height*sc, x=(src.width-w)/2, y=(src.height-h)/2;
+  sctx.drawImage(img,x,y,w,h);
+  src._map={x,y,w,h,sc};
+  sctx.strokeStyle='#e7c07b'; sctx.fillStyle='#e7c07b';
+  corners.forEach((p,i)=>{ sctx.beginPath(); sctx.arc(p.x,p.y,5,0,6.28); sctx.fill(); sctx.fillText(i+1, p.x+8, p.y-8); });
+  if(corners.length===4){ sctx.beginPath(); corners.forEach((p,i)=>{ i?sctx.lineTo(p.x,p.y):sctx.moveTo(p.x,p.y); }); sctx.closePath(); sctx.stroke(); }
+}
+document.getElementById('file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const im=new Image(); im.onload=()=>{ img=im; corners=[]; drawSrc(); log('Loaded '+f.name+' '+im.width+'×'+im.height); }; im.src=URL.createObjectURL(f);
+};
+src.onclick=e=>{
+  if(!img) return;
+  const r=src.getBoundingClientRect();
+  corners.push({x:(e.clientX-r.left)*src.width/r.width, y:(e.clientY-r.top)*src.height/r.height});
+  if(corners.length>4) corners=corners.slice(-4);
+  document.getElementById('pts').textContent='Corners: '+corners.length+'/4';
+  drawSrc();
+};
+function restore(){
+  if(!img){ log('Load a photo first'); return; }
+  const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+  const g=c.getContext('2d'); g.drawImage(img,0,0);
+  const im=g.getImageData(0,0,c.width,c.height); const d=im.data;
+  let min=255,max=0, sat=0;
+  for(let i=0;i<d.length;i+=4){
+    const y=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    min=Math.min(min,y); max=Math.max(max,y);
+    sat+=Math.abs(d[i]-d[i+1])+Math.abs(d[i+1]-d[i+2]);
+  }
+  const gray=sat/d.length<8;
+  const span=Math.max(1,max-min);
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i],gv=d[i+1],b=d[i+2];
+    r=(r-min)*255/span; gv=(gv-min)*255/span; b=(b-min)*255/span;
+    if(gray){ const y=0.299*r+0.587*gv+0.114*b; r=y*1.15+18; gv=y*0.95+8; b=y*0.7; }
+    d[i]=Math.max(0,Math.min(255,r*1.08)); d[i+1]=Math.max(0,Math.min(255,gv*1.04)); d[i+2]=Math.max(0,Math.min(255,b*0.98));
+  }
+  g.putImageData(im,0,0);
+  restored=c;
+  rctx.fillStyle='#0b0906'; rctx.fillRect(0,0,rest.width,rest.height);
+  const sc=Math.min(rest.width/c.width, rest.height/c.height);
+  rctx.drawImage(c,0,0,c.width*sc,c.height*sc);
+  log(gray?'Restored + colorized (photo was near greyscale).':'Restored contrast and warmth.');
+}
+function sample(imgd, x, y){
+  x=Math.max(0,Math.min(imgd.width-1,x)); y=Math.max(0,Math.min(imgd.height-1,y));
+  const i=(Math.floor(y)*imgd.width+Math.floor(x))*4; const d=imgd.data; return [d[i],d[i+1],d[i+2],d[i+3]];
+}
+function warp(){
+  const pic=restored||img; if(!pic || corners.length<4){ log('Restore, then click 4 facade corners.'); return; }
+  const map=src._map; const toImg=p=>({x:(p.x-map.x)/map.sc, y:(p.y-map.y)/map.sc});
+  const q=corners.map(toImg);
+  const c=document.createElement('canvas'); c.width=pic.width; c.height=pic.height;
+  const g=c.getContext('2d'); g.drawImage(pic,0,0);
+  const srcd=g.getImageData(0,0,c.width,c.height);
+  const W=256,H=256, out=fctx.createImageData(W,H);
+  const [tl,tr,br,bl]=q;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const u=x/(W-1), v=y/(H-1);
+    const sx=(1-u)*(1-v)*tl.x + u*(1-v)*tr.x + u*v*br.x + (1-u)*v*bl.x;
+    const sy=(1-u)*(1-v)*tl.y + u*(1-v)*tr.y + u*v*br.y + (1-u)*v*bl.y;
+    const [r,gv,b,a]=sample(srcd,sx,sy);
+    const o=(y*W+x)*4; out.data[o]=r; out.data[o+1]=gv; out.data[o+2]=b; out.data[o+3]=a||255;
+  }
+  fctx.putImageData(out,0,0);
+  log('Facade rectified to 256×256. Build 3D next.');
+}
+function houseGeom(){
+  return { w:+document.getElementById('bw').value, h:+document.getElementById('bh').value, d:+document.getElementById('bd').value };
+}
+function drawHouse(ctx, tex, yaw){
+  const {w,h,d}=houseGeom();
+  ctx.fillStyle='#1a140c'; ctx.fillRect(0,0,iso.width,iso.height);
+  const ox=210, oy=230;
+  const ang=yaw||0.55;
+  const cos=Math.cos(ang), sin=Math.sin(ang);
+  function P(x,y,z){ return {x:ox + x*cos - z*sin, y:oy - y + (x*sin + z*cos)*0.35}; }
+  const pts=[[-w,0,0],[w,0,0],[w,0,d],[-w,0,d],[-w,h,0],[w,h,0],[w,h,d],[-w,h,d]];
+  const pr=pts.map(p=>P(p[0],p[1],p[2]));
+  function poly(idx, fill, texMap){
+    ctx.beginPath(); idx.forEach((i,k)=>{ k?ctx.lineTo(pr[i].x,pr[i].y):ctx.moveTo(pr[i].x,pr[i].y); }); ctx.closePath();
+    ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle='#0008'; ctx.stroke();
+  }
+  poly([1,2,6,5],'#5c4030');
+  poly([2,3,7,6],'#3f2a1e');
+  if(tex){
+    const a=pr[0], b=pr[1], c=pr[5], d=pr[4];
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.lineTo(c.x,c.y); ctx.lineTo(d.x,d.y); ctx.closePath(); ctx.clip();
+    const minx=Math.min(a.x,b.x,c.x,d.x), miny=Math.min(a.y,b.y,c.y,d.y);
+    const maxx=Math.max(a.x,b.x,c.x,d.x), maxy=Math.max(a.y,b.y,c.y,d.y);
+    ctx.drawImage(tex, minx, miny, maxx-minx, maxy-miny);
+    ctx.restore();
+    ctx.strokeStyle='#0006'; ctx.stroke();
+  } else poly([0,1,5,4],'#8b5a2b');
+  ctx.fillStyle='#6b2a1f';
+  ctx.beginPath();
+  const ridge=P(0,h+h*0.35,d/2);
+  ctx.moveTo(pr[4].x,pr[4].y); ctx.lineTo(pr[5].x,pr[5].y); ctx.lineTo(ridge.x,ridge.y); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(pr[5].x,pr[5].y); ctx.lineTo(pr[6].x,pr[6].y); ctx.lineTo(ridge.x,ridge.y); ctx.closePath(); ctx.fillStyle='#4a1c14'; ctx.fill();
+}
+function build(){
+  drawHouse(ictx, fac, 0.6);
+  const payload={
+    name:'Photo house',
+    facade: fac.toDataURL('image/png'),
+    iso: iso.toDataURL('image/png'),
+    restored: rest.toDataURL('image/png'),
+    geom: houseGeom(),
+    at: Date.now()
+  };
+  MT.set('mt-photo-house', payload);
+  log('3D house stored. Send to World 3D or Play in game — the facade is your photo.');
+}
+function playGame(){
+  const house=MT.get('mt-photo-house', null);
+  if(!house){ log('Build 3D house first'); return; }
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Photo house</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;background:#0b1020;color:#fff;font-family:system-ui}canvas{display:block;margin:0 auto}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+const img=new Image(); img.src="${house.iso}";
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+cv.width=innerWidth; cv.height=innerHeight;
+let x=80,y=0,vx=0,vy=0,keys={};
+addEventListener('keydown',e=>keys[e.code]=true); addEventListener('keyup',e=>keys[e.code]=false);
+function loop(){
+  if(keys.ArrowLeft||keys.KeyA) vx-=.5; if(keys.ArrowRight||keys.KeyD) vx+=.5;
+  vx*=.8; vy+=.5; x+=vx; y+=vy; if(y>cv.height-90){ y=cv.height-90; vy=0; if(keys.ArrowUp||keys.KeyW||keys.Space) vy=-11; }
+  ctx.fillStyle='#0b1020'; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#1e293b'; ctx.fillRect(0,cv.height-70,cv.width,70);
+  if(img.complete) ctx.drawImage(img, cv.width/2-180, cv.height-70-240, 360, 260);
+  ctx.fillStyle='#19d37e'; ctx.fillRect(x, y-20, 16, 20);
+  ctx.fillStyle='#e7c07b'; ctx.fillText('Your restored house · arrows to walk', 12, 20);
+  requestAnimationFrame(loop);
+}
+img.onload=loop; if(img.complete) loop();
+<\/script></body></html>`;
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  window.open(url,'_blank');
+  log('Opened playable game with the rendered house.');
+}
+document.getElementById('restore').onclick=restore;
+document.getElementById('warp').onclick=warp;
+document.getElementById('build').onclick=build;
+['bw','bh','bd'].forEach(id=>document.getElementById(id).oninput=()=>{ if(MT.get('mt-photo-house')) drawHouse(ictx, fac, 0.6); });
+document.getElementById('game').onclick=playGame;
+document.getElementById('sendw').onclick=()=>{ build(); location.href='world.html'; };
+</script>
+</body></html>

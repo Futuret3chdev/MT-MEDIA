@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT Asset Studio</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>
+  body{background:#1a1208;color:#ffedd5}
+  #px{cursor:crosshair;background:#111;border:2px solid #9a3412}
+  #strip canvas{border:1px solid #7c2d12;margin-right:4px}
+</style>
+</head><body>
+<div class="top" style="background:#2a1508">
+  <strong style="color:#fb923c">MT Asset Studio</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#ea580c;color:#fff;margin-left:auto" id="png">Export PNG</button>
+  <button class="btn" id="sheet">Export sheet</button>
+  <button class="btn" id="json">Export JSON</button>
+</div>
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card">
+    <h3 style="margin-top:0">Pixel · 32×32</h3>
+    <div id="colors"></div>
+    <canvas id="px" width="32" height="32" style="width:256px;height:256px"></canvas>
+    <p>Click to paint. Frame <span id="fi">1</span>/8</p>
+    <button class="btn" id="prev">◀</button>
+    <button class="btn" id="next">▶</button>
+    <button class="btn" id="copy">Copy to next</button>
+    <button class="btn" id="play">Play anim</button>
+  </div>
+  <div class="card">
+    <h3>Animation strip</h3>
+    <div id="strip"></div>
+    <h3>Particles</h3>
+    <canvas id="part" width="320" height="180"></canvas>
+    <label class="row">Count <input id="pc" type="range" min="4" max="80" value="24"></label>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('assets');
+const PAL=['#00000000','#111','#fb923c','#f97316','#fdba74','#fff','#22c55e','#38bdf8','#ef4444','#a78bfa'];
+let color='#fb923c', frame=0, playing=false;
+const frames=Array.from({length:8},()=>new Uint32Array(32*32));
+const px=document.getElementById('px'), ctx=px.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+const pal=document.getElementById('colors');
+PAL.forEach(c=>{ const b=document.createElement('button'); b.className='btn'; b.style.background=c||'#222'; b.style.width='22px'; b.style.height='22px'; b.onclick=()=>color=c; pal.appendChild(b); });
+function draw(){
+  const img=ctx.createImageData(32,32);
+  const src=frames[frame];
+  for(let i=0;i<1024;i++){ const v=src[i]; img.data[i*4]=(v>>16)&255; img.data[i*4+1]=(v>>8)&255; img.data[i*4+2]=v&255; img.data[i*4+3]=v?255:0; }
+  ctx.putImageData(img,0,0);
+  document.getElementById('fi').textContent=frame+1;
+  drawStrip();
+}
+function hexToInt(h){ if(!h || h.length<7) return 0; return (parseInt(h.slice(1,3),16)<<16)|(parseInt(h.slice(3,5),16)<<8)|parseInt(h.slice(5,7),16); }
+px.onpointerdown=px.onpointermove=e=>{
+  if(!e.buttons && e.type==='pointermove') return;
+  const r=px.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/r.width*32), y=Math.floor((e.clientY-r.top)/r.height*32);
+  if(x<0||y<0||x>31||y>31) return;
+  frames[frame][y*32+x]= color==='#00000000'?0:hexToInt(color);
+  draw();
+};
+function drawStrip(){
+  const strip=document.getElementById('strip'); strip.innerHTML='';
+  frames.forEach((fr,i)=>{
+    const c=document.createElement('canvas'); c.width=32; c.height=32; c.style.width='48px'; c.style.height='48px';
+    const ic=c.getContext('2d'); const img=ic.createImageData(32,32);
+    for(let k=0;k<1024;k++){ const v=fr[k]; img.data[k*4]=(v>>16)&255; img.data[k*4+1]=(v>>8)&255; img.data[k*4+2]=v&255; img.data[k*4+3]=v?255:0; }
+    ic.putImageData(img,0,0); if(i===frame) c.style.outline='2px solid #fb923c';
+    c.onclick=()=>{ frame=i; draw(); };
+    strip.appendChild(c);
+  });
+}
+document.getElementById('prev').onclick=()=>{ frame=(frame+7)%8; draw(); };
+document.getElementById('next').onclick=()=>{ frame=(frame+1)%8; draw(); };
+document.getElementById('copy').onclick=()=>{ frames[(frame+1)%8]=frames[frame].slice(); draw(); };
+document.getElementById('play').onclick=()=>{ playing=!playing; };
+setInterval(()=>{ if(playing){ frame=(frame+1)%8; draw(); } }, 120);
+document.getElementById('png').onclick=()=>{ const c=document.createElement('canvas'); c.width=32; c.height=32; c.getContext('2d').drawImage(px,0,0); c.toBlob(b=>MT.download('sprite.png',b,'image/png')); };
+document.getElementById('sheet').onclick=()=>{
+  const c=document.createElement('canvas'); c.width=256; c.height=32; const g=c.getContext('2d');
+  frames.forEach((fr,i)=>{ for(let y=0;y<32;y++) for(let x=0;x<32;x++){ const v=fr[y*32+x]; if(!v) continue; g.fillStyle=`rgb(${(v>>16)&255},${(v>>8)&255},${v&255})`; g.fillRect(i*32+x,y,1,1);} });
+  c.toBlob(b=>MT.download('sheet.png',b,'image/png'));
+};
+document.getElementById('json').onclick=()=>MT.download('frames.json', JSON.stringify(frames.map(f=>Array.from(f))), 'application/json');
+const pc=document.getElementById('part'), pctx=pc.getContext('2d');
+let parts=[];
+function spawn(){ const n=+document.getElementById('pc').value; parts=[]; for(let i=0;i<n;i++) parts.push({x:160,y:140,vx:(Math.random()-0.5)*3,vy:-Math.random()*4-1,life:40+Math.random()*20}); }
+spawn();
+function ploop(){
+  pctx.fillStyle='#1a1208'; pctx.fillRect(0,0,320,180);
+  parts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.12; p.life--; pctx.globalAlpha=Math.max(0,p.life/60); pctx.fillStyle='#fb923c'; pctx.fillRect(p.x,p.y,3,3); });
+  pctx.globalAlpha=1; parts=parts.filter(p=>p.life>0); if(parts.length<8) spawn();
+  requestAnimationFrame(ploop);
+}
+ploop(); draw();
+</script>
+</body></html>

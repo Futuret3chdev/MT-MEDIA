@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT Video Cut</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>body{background:#0f1720;color:#fef3c7} video{max-width:100%;background:#000;border-radius:8px}</style>
+</head><body>
+<div class="top" style="background:#1c1917">
+  <strong style="color:#fbbf24">MT Video Cut</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#d97706;color:#fff;margin-left:auto" id="exp">Export WebM</button>
+</div>
+<div class="grid" style="grid-template-columns:2fr 1fr">
+  <div class="card">
+    <input id="file" type="file" accept="video/*">
+    <video id="v" controls></video>
+    <canvas id="c" width="640" height="360" hidden></canvas>
+  </div>
+  <div class="card">
+    <label class="row">In (s) <input id="tin" type="number" step="0.05" value="0"></label>
+    <label class="row">Out (s) <input id="tout" type="number" step="0.05" value="3"></label>
+    <button class="btn" id="markin">Mark in</button>
+    <button class="btn" id="markout">Mark out</button>
+    <button class="btn" id="playcut">Play cut</button>
+    <p class="log" id="log">Load a clip. Set in/out. Export records the cut to WebM — a real file, not a preview fake.</p>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('video');
+const v=document.getElementById('v');
+document.getElementById('file').onchange=e=>{ const f=e.target.files[0]; if(!f) return; v.src=URL.createObjectURL(f); v.onloadedmetadata=()=>{ document.getElementById('tout').value=Math.min(3,v.duration).toFixed(2); }; };
+document.getElementById('markin').onclick=()=>document.getElementById('tin').value=v.currentTime.toFixed(2);
+document.getElementById('markout').onclick=()=>document.getElementById('tout').value=v.currentTime.toFixed(2);
+document.getElementById('playcut').onclick=()=>{ const a=+document.getElementById('tin').value, b=+document.getElementById('tout').value; v.currentTime=a; v.play(); const id=setInterval(()=>{ if(v.currentTime>=b){ v.pause(); clearInterval(id);} }, 30); };
+document.getElementById('exp').onclick=async ()=>{
+  if(!v.src){ document.getElementById('log').textContent='Load a video first.'; return; }
+  const a=+document.getElementById('tin').value, b=+document.getElementById('tout').value;
+  const c=document.getElementById('c'); const ctx=c.getContext('2d');
+  c.width=v.videoWidth||640; c.height=v.videoHeight||360;
+  const stream=c.captureStream(30);
+  const rec=new MediaRecorder(stream, {mimeType:'video/webm'}); const chunks=[];
+  rec.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  rec.onstop=()=>MT.download('cut.webm', new Blob(chunks,{type:'video/webm'}),'video/webm');
+  rec.start();
+  v.currentTime=a; await v.play();
+  const draw=()=>{ if(v.paused||v.currentTime>=b){ rec.stop(); v.pause(); document.getElementById('log').textContent='Exported cut.webm '+a+'–'+b+'s'; return; } ctx.drawImage(v,0,0,c.width,c.height); requestAnimationFrame(draw); };
+  draw();
+};
+</script>
+</body></html>

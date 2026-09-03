@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT Publisher</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>body{background:#062026;color:#ecfeff}.store{max-width:980px;margin:0 auto;padding:16px}.hero{width:100%;height:180px;border-radius:12px;background:#083344}</style>
+</head><body>
+<div class="top" style="background:#083344">
+  <strong style="color:#22d3ee">MT Publisher</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#0891b2;color:#fff;margin-left:auto" id="pub">Publish title</button>
+  <button class="btn" id="iap">Save $MT IAP</button>
+</div>
+<div class="store">
+  <canvas id="feat" class="hero" width="1024" height="500"></canvas>
+  <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:12px">
+    <div class="card">
+      <label class="row">Title <input id="name" value="Night Run"></label>
+      <label class="row">Short <input id="short" value="A night platformer from MT Studio." style="width:70%"></label>
+      <label class="row">Category <select id="kind"><option>arcade</option><option>action</option><option>p2e</option></select></label>
+      <textarea id="long" style="width:100%;min-height:90px;background:#0004;color:inherit;border:1px solid #fff2;border-radius:8px;padding:8px">Sideload in seconds. Built in MT Android Studio.</textarea>
+      <p class="log" id="log">Listing lives here. Play Console is rollouts/testers/crashes — a different studio.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">$MT in-app items</h3>
+      <label class="row">SKU <input id="sku" value="EXTRA_LIFE"></label>
+      <label class="row">Name <input id="iname" value="Extra life"></label>
+      <label class="row">Price MT <input id="price" type="number" value="5"></label>
+      <button class="btn" id="add">Add item</button>
+      <table><thead><tr><th>SKU</th><th>Name</th><th>MT</th></tr></thead><tbody id="items"></tbody></table>
+    </div>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('publisher');
+const items = MT.get('mt-iap', [{sku:'EXTRA_LIFE',name:'Extra life',price:5}]);
+const feat=document.getElementById('feat'), ctx=feat.getContext('2d');
+function drawFeat(){
+  const g=ctx.createLinearGradient(0,0,1024,500); g.addColorStop(0,'#083344'); g.addColorStop(1,'#164e63');
+  ctx.fillStyle=g; ctx.fillRect(0,0,1024,500);
+  ctx.fillStyle='#22d3ee'; ctx.font='bold 64px system-ui'; ctx.fillText(document.getElementById('name').value, 48, 200);
+  ctx.fillStyle='#a5f3fc'; ctx.font='28px system-ui'; ctx.fillText(document.getElementById('short').value, 48, 250);
+  ctx.fillStyle='#67e8f9'; ctx.fillRect(48, 320, 220, 64); ctx.fillStyle='#083344'; ctx.font='bold 24px system-ui'; ctx.fillText('Install', 100, 360);
+}
+function renderItems(){
+  document.getElementById('items').innerHTML=items.map(i=>`<tr><td>${i.sku}</td><td>${i.name}</td><td>${i.price}</td></tr>`).join('');
+  MT.set('mt-iap', items);
+}
+document.getElementById('name').oninput=drawFeat;
+document.getElementById('short').oninput=drawFeat;
+document.getElementById('add').onclick=()=>{ items.push({sku:document.getElementById('sku').value,name:document.getElementById('iname').value,price:+document.getElementById('price').value||0}); renderItems(); };
+document.getElementById('iap').onclick=async ()=>{
+  const body={action:'project', name:document.getElementById('name').value};
+  let r=await MT.api('/api/studio/commerce',{method:'POST',body:JSON.stringify(body)});
+  if(!r.ok){ log(r.error||'Sign in to save IAP on the server. Items kept locally.'); return; }
+  for(const i of items){
+    await MT.api('/api/studio/commerce',{method:'POST',body:JSON.stringify({action:'item', sku:i.sku, name:i.name, price_mt:i.price, kind:'item'})});
+  }
+  log('IAP saved to commerce catalog');
+};
+document.getElementById('pub').onclick=async ()=>{
+  feat.toBlob(async b=>{
+    const listing={name:document.getElementById('name').value, blurb:document.getElementById('short').value, kind:document.getElementById('kind').value, long:document.getElementById('long').value, iap:items};
+    MT.set('mt-listing', listing);
+    const r=await MT.api('/api/studio/titles',{method:'POST',body:JSON.stringify({name:listing.name, blurb:listing.blurb, kind:listing.kind, config:{listing, iap:items}})});
+    if(r.ok) log('Published '+r.play_url+'  (id '+r.id+')');
+    else log(r.error||'Sign in on the portal to publish. Listing saved locally.');
+  });
+};
+function log(s){ const el=document.getElementById('log'); el.textContent=s+'\n'+el.textContent; }
+drawFeat(); renderItems();
+</script>
+</body></html>

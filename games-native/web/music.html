@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT Music / SFX</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>
+  body{background:#10081c;color:#ede9fe}
+  .step{width:22px;height:28px;border:1px solid #4c1d95;background:#1e1b4b;margin:1px}
+  .step.on{background:#8b5cf6}
+  .row{display:flex;align-items:center;gap:6px;margin:4px 0}
+</style>
+</head><body>
+<div class="top" style="background:#1e1140">
+  <strong style="color:#c4b5fd">MT Music / SFX</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#7c3aed;color:#fff;margin-left:auto" id="play">Play</button>
+  <button class="btn" id="wav">Export WAV</button>
+</div>
+<div class="grid">
+  <div class="card">
+    <label class="row">BPM <input id="bpm" type="number" value="120"></label>
+    <div id="grid"></div>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('music');
+const NAMES=['Kick','Snare','Hat','Tone'];
+const steps=NAMES.map(()=>Array(16).fill(false));
+const grid=document.getElementById('grid');
+NAMES.forEach((n,ti)=>{
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML=`<span style="width:56px">${n}</span>`;
+  for(let s=0;s<16;s++){
+    const b=document.createElement('button'); b.className='step'; b.onclick=()=>{ steps[ti][s]=!steps[ti][s]; b.classList.toggle('on', steps[ti][s]); };
+    row.appendChild(b);
+  }
+  grid.appendChild(row);
+});
+let ctx, playing=false, timer=null, i=0;
+function beep(kind, t){
+  const o=ctx.createOscillator(), g=ctx.createGain();
+  const types={0: {f:80,type:'sine',d:.12}, 1:{f:180,type:'triangle',d:.1}, 2:{f:6000,type:'square',d:.04}, 3:{f:220,type:'sawtooth',d:.18}};
+  const k=types[kind]; o.type=k.type; o.frequency.value=k.f; g.gain.value=.15;
+  g.gain.exponentialRampToValueAtTime(.001, t+k.d);
+  o.connect(g).connect(ctx.destination); o.start(t); o.stop(t+k.d);
+}
+function tick(){
+  const bpm=+document.getElementById('bpm').value||120;
+  const dt=60/bpm/4;
+  const t=ctx.currentTime;
+  steps.forEach((row,ti)=>{ if(row[i]) beep(ti, t); });
+  i=(i+1)%16;
+  timer=setTimeout(tick, dt*1000);
+}
+document.getElementById('play').onclick=()=>{
+  ctx=ctx||new AudioContext();
+  playing=!playing; document.getElementById('play').textContent=playing?'Stop':'Play';
+  if(playing){ i=0; tick(); } else clearTimeout(timer);
+};
+document.getElementById('wav').onclick=async ()=>{
+  const bpm=+document.getElementById('bpm').value||120;
+  const sr=44100, beat=60/bpm/4, len=Math.ceil(16*beat*sr);
+  const ac=new OfflineAudioContext(1,len,sr);
+  function tone(kind, at){
+    const o=ac.createOscillator(), g=ac.createGain();
+    const k=[{f:80,type:'sine',d:.12},{f:180,type:'triangle',d:.1},{f:6000,type:'square',d:.04},{f:220,type:'sawtooth',d:.18}][kind];
+    o.type=k.type; o.frequency.value=k.f; g.gain.value=.2; g.gain.exponentialRampToValueAtTime(.001, at+k.d);
+    o.connect(g).connect(ac.destination); o.start(at); o.stop(at+k.d);
+  }
+  for(let s=0;s<16;s++) steps.forEach((row,ti)=>{ if(row[s]) tone(ti, s*beat); });
+  const buf=await ac.startRendering();
+  const pcm=buf.getChannelData(0);
+  const out=new ArrayBuffer(44+pcm.length*2); const v=new DataView(out);
+  const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+pcm.length*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,pcm.length*2,true);
+  let o=44; for(let i=0;i<pcm.length;i++){ let s=Math.max(-1,Math.min(1,pcm[i])); v.setInt16(o,s<0?s*0x8000:s*0x7fff,true); o+=2; }
+  MT.download('pattern.wav', new Blob([out],{type:'audio/wav'}),'audio/wav');
+};
+</script>
+</body></html>

@@ -1,0 +1,19 @@
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font:13px/1.45 "Segoe UI",system-ui,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+.top{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #0006;flex-wrap:wrap}
+.top strong{letter-spacing:.2px}
+.top nav a{opacity:.75;text-decoration:none;padding:4px 8px;border-radius:6px}
+.top nav a:hover,.top nav a.on{opacity:1;background:#fff1}
+.btn{border:1px solid #fff3;background:#fff1;color:inherit;border-radius:6px;padding:6px 10px}
+.btn.p{font-weight:700;border:0}
+.grid{display:grid;gap:12px;padding:12px}
+.card{border:1px solid #fff2;border-radius:12px;padding:12px;background:#fff1}
+label.row{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:6px 0}
+label.row input,label.row select,label.row textarea{background:#0004;color:inherit;border:1px solid #fff2;padding:4px 8px;border-radius:6px}
+.log{font:12px/1.4 ui-monospace,Consolas,monospace;white-space:pre-wrap;max-height:220px;overflow:auto;padding:8px;border-radius:8px;background:#0005}
+canvas{image-rendering:pixelated;background:#000}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #fff1;font-size:12px}

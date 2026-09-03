@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT iOS Studio</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>
+  body{background:#120818;color:#ede9fe}
+  .phones{display:flex;flex-wrap:wrap;gap:18px;padding:16px}
+  .phone{width:230px}
+  .shell{background:#0b0610;border-radius:32px;padding:10px 8px 14px;border:3px solid #3b0764;box-shadow:0 12px 40px #0008}
+  .island{width:78px;height:18px;background:#000;border-radius:12px;margin:4px auto 8px}
+  .home{width:70px;height:4px;background:#fff4;border-radius:4px;margin:8px auto 0}
+  canvas{width:100%;display:block;border-radius:8px}
+  .ipad .shell{border-radius:18px;width:320px}
+</style>
+</head><body>
+<div class="top" style="background:#1e1033">
+  <strong style="color:#c4b5fd">MT iOS Studio</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#7c3aed;color:#fff;margin-left:auto" id="run">▶ Run</button>
+  <button class="btn" id="xcode">Export Xcode project</button>
+</div>
+<div class="grid" style="grid-template-columns:1fr 300px">
+  <div class="phones" id="phones"></div>
+  <aside class="card">
+    <h3 style="margin-top:0">Signing</h3>
+    <label class="row">Bundle ID <input id="bid" value="au.com.futuret3ch.made"></label>
+    <label class="row">Display name <input id="dname" value="Night Run"></label>
+    <label class="row">Team <input id="team" placeholder="ABCDE12345"></label>
+    <label class="row">iOS min <input id="min" value="15.0"></label>
+    <p class="log" id="log">Xcode still archives for the App Store. This studio writes the project and runs iPhone/iPad skins.</p>
+  </aside>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('ios');
+const skins=[{id:'pro',label:'iPhone 15 Pro',w:393,h:852},{id:'se',label:'iPhone SE',w:320,h:568},{id:'pad',label:'iPad',w:820,h:1180,ipad:1}];
+const phones=document.getElementById('phones');
+const cvs=[];
+skins.forEach(s=>{
+  const el=document.createElement('div'); el.className='phone'+(s.ipad?' ipad':'');
+  el.innerHTML=`<div style="font-size:11px;opacity:.7;margin-bottom:6px">${s.label}</div>
+    <div class="shell"><div class="island"></div><canvas width="${s.w}" height="${s.h}"></canvas><div class="home"></div></div>`;
+  phones.appendChild(el);
+  cvs.push({s,c:el.querySelector('canvas')});
+});
+let t=0,run=false;
+function frame(){
+  t++;
+  cvs.forEach(({s,c})=>{
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#0f0320'; ctx.fillRect(0,0,c.width,c.height);
+    const px=c.width/2+Math.sin(t/20)*40, py=c.height*0.62+Math.sin(t/14)*20;
+    ctx.fillStyle='#c4b5fd'; ctx.beginPath(); ctx.arc(px,py,16,0,6.28); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='20px -apple-system,sans-serif';
+    ctx.fillText(document.getElementById('dname').value, 24, 64);
+    ctx.fillStyle='#a78bfa'; ctx.font='12px sans-serif';
+    ctx.fillText(s.label+' · iOS '+document.getElementById('min').value, 24, 84);
+  });
+  if(run) requestAnimationFrame(frame);
+}
+document.getElementById('run').onclick=()=>{ run=!run; document.getElementById('run').textContent=run?'■ Stop':'▶ Run'; if(run) frame(); };
+document.getElementById('xcode').onclick=async ()=>{
+  const name=(document.getElementById('dname').value||'Game').replace(/\s+/g,'-');
+  const html=`<!DOCTYPE html><html><body style="background:#0f0320;color:#c4b5fd;font-family:-apple-system;padding:2rem"><h1>${document.getElementById('dname').value}</h1><p>Built in MT iOS Studio</p></body></html>`;
+  try{
+    const res=await fetch('/export/ios',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,html})});
+    if(res.ok){ const b=await res.blob(); MT.download(name+'-ios.zip',b,'application/zip'); log('Xcode zip from desktop studio'); return; }
+  }catch(e){}
+  const bid=document.getElementById('bid').value;
+  const files=[
+    {name:name+'/README.txt', data:'Open '+name+'/MTMadeGame.xcodeproj in Xcode.\nSigning → Team '+ (document.getElementById('team').value||'(your Apple Team)') +'\nBundle '+bid+'\nProduct → Archive for App Store.\n'},
+    {name:name+'/MTMadeGame/Info.plist', data:`<?xml version="1.0"?><plist><dict><key>CFBundleDisplayName</key><string>${document.getElementById('dname').value}</string><key>CFBundleIdentifier</key><string>${bid}</string><key>LSRequiresIPhoneOS</key><true/></dict></plist>`},
+    {name:name+'/MTMadeGame/game.html', data:html},
+    {name:name+'/MTMadeGame/AppDelegate.swift', data:'import UIKit\n@main class AppDelegate: UIResponder, UIApplicationDelegate {\n  var window: UIWindow?\n  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool { window = UIWindow(frame: UIScreen.main.bounds); window?.rootViewController = ViewController(); window?.makeKeyAndVisible(); return true }\n}\n'},
+    {name:name+'/MTMadeGame/ViewController.swift', data:'import UIKit\nimport WebKit\nclass ViewController: UIViewController {\n  override func viewDidLoad() {\n    super.viewDidLoad()\n    let w = WKWebView(frame: view.bounds)\n    w.autoresizingMask = [.flexibleWidth,.flexibleHeight]\n    view.addSubview(w)\n    if let u = Bundle.main.url(forResource: "game", withExtension: "html") { w.loadFileURL(u, allowingReadAccessTo: u.deletingLastPathComponent()) }\n  }\n}\n'}
+  ];
+  MT.download(name+'-ios.zip', new Blob([MT.zip(files)],{type:'application/zip'}),'application/zip');
+  log('Wrote Xcode project zip (WKWebView + Info.plist). Open on a Mac to Archive.');
+};
+function log(s){ const el=document.getElementById('log'); el.textContent=s+'\n'+el.textContent; }
+frame();
+</script>
+</body></html>

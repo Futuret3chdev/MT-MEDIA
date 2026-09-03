@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MT Play Console</title>
+<link rel="stylesheet" href="kit.css"/>
+<style>body{background:#052e16;color:#dcfce7} .pct{accent-color:#22c55e}</style>
+</head><body>
+<div class="top" style="background:#14532d">
+  <strong style="color:#86efac">MT Play Console</strong>
+  <nav id="nav"></nav>
+  <button class="btn p" style="background:#16a34a;color:#fff;margin-left:auto" id="save">Save rollout</button>
+  <button class="btn" id="refresh">Load titles</button>
+</div>
+<div class="grid" style="grid-template-columns:1.2fr 1fr 1fr">
+  <div class="card">
+    <h3 style="margin-top:0">Apps</h3>
+    <select id="apps" size="8" style="width:100%;background:#052e16;color:#dcfce7;border:1px solid #166534"></select>
+    <p id="appmeta" class="log">Select a title. Tracks, testers, and crashes attach to it.</p>
+  </div>
+  <div class="card">
+    <h3>Tracks</h3>
+    <label class="row">Internal <input id="tInt" type="range" class="pct" min="0" max="100" value="100"></label>
+    <label class="row">Closed <input id="tClo" type="range" class="pct" min="0" max="100" value="20"></label>
+    <label class="row">Production <input id="tPro" type="range" class="pct" min="0" max="100" value="5"></label>
+    <p id="tpct"></p>
+    <h3>Testers</h3>
+    <input id="temail" placeholder="tester@email" style="width:70%">
+    <button class="btn" id="addt">Add</button>
+    <ul id="tlist"></ul>
+  </div>
+  <div class="card">
+    <h3>Crash inbox</h3>
+    <button class="btn" id="pull">Pull from Device Lab</button>
+    <div id="crashes" class="log"></div>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+document.getElementById('nav').innerHTML = MT.nav('console');
+let titles=[], selected=null, testers=MT.get('mt-testers',[]), tracks=MT.get('mt-tracks',{internal:100,closed:20,prod:5});
+function pct(){ document.getElementById('tpct').textContent=`internal ${tracks.internal}% · closed ${tracks.closed}% · prod ${tracks.prod}%`; document.getElementById('tInt').value=tracks.internal; document.getElementById('tClo').value=tracks.closed; document.getElementById('tPro').value=tracks.prod; }
+['tInt','tClo','tPro'].forEach((id,i)=>{ document.getElementById(id).oninput=e=>{ tracks[['internal','closed','prod'][i]]=+e.target.value; pct(); }; });
+function renderTesters(){ document.getElementById('tlist').innerHTML=testers.map((t,i)=>`<li>${t} <button data-i="${i}">×</button></li>`).join(''); }
+document.getElementById('addt').onclick=()=>{ const v=document.getElementById('temail').value.trim(); if(!v) return; testers.push(v); MT.set('mt-testers',testers); renderTesters(); };
+document.getElementById('tlist').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; testers.splice(+b.dataset.i,1); MT.set('mt-testers',testers); renderTesters(); };
+function renderCrashes(){
+  const list=MT.get('mt-crashes',[]);
+  document.getElementById('crashes').textContent = list.length? list.map(c=>new Date(c.at).toISOString().slice(11,19)+'  '+c.device+'\n'+c.message+'\n'+c.stack).join('\n\n') : 'Empty. Run Device Lab → Inject crash.';
+}
+async function load(){
+  const r=await MT.api('/api/studio/titles');
+  titles = r.titles||[];
+  if(!titles.length){ const local=MT.get('mt-listing',null); if(local) titles=[{id:'local', name:local.name, blurb:local.blurb, play_url:'(local)'}]; }
+  const sel=document.getElementById('apps');
+  sel.innerHTML=titles.map(t=>`<option value="${t.id}">${t.name} · ${t.play_url||''}</option>`).join('')||'<option>(none — publish in Publisher)</option>';
+  document.getElementById('appmeta').textContent = r.error? r.error+' — using local listing if any.' : titles.length+' title(s)';
+}
+document.getElementById('apps').onchange=e=>{ selected=titles.find(t=>String(t.id)===e.target.value); document.getElementById('appmeta').textContent=selected? (selected.blurb||selected.name)+'  '+ (selected.play_url||'') : ''; };
+document.getElementById('save').onclick=async ()=>{
+  MT.set('mt-tracks', tracks);
+  if(selected && selected.id && selected.id!=='local'){
+    const r=await MT.api('/api/studio/titles/'+selected.id,{method:'PUT',body:JSON.stringify({name:selected.name, blurb:selected.blurb||selected.name, config:{tracks, testers, crashes:MT.get('mt-crashes',[])}})});
+    document.getElementById('appmeta').textContent = r.ok? 'Rollout saved on '+selected.name : (r.error||'saved locally');
+  } else document.getElementById('appmeta').textContent='Tracks saved locally';
+};
+document.getElementById('refresh').onclick=load;
+document.getElementById('pull').onclick=renderCrashes;
+pct(); renderTesters(); renderCrashes(); load();
+</script>
+</body></html>
