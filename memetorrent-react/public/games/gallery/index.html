@@ -103,6 +103,11 @@
     .sheet.open { display: block; }
     .sku { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 13px; }
     .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; }
+    .cast-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 14px; }
+    .cast-card { border: 2px solid rgba(255,255,255,.12); border-radius: 12px; overflow: hidden; cursor: pointer; background: #0b1a12; padding: 0; }
+    .cast-card.on { border-color: #19d37e; box-shadow: 0 0 0 2px rgba(25,211,126,.35); }
+    .cast-card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; background: #111; }
+    .cast-card span { display: block; text-align: center; font-size: 11px; padding: 5px 4px 7px; font-weight: 800; }
     #online { opacity: .8; font-size: 12px; }
     #rps { display: none; position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.7); align-items: center; justify-content: center; }
     #rps.open { display: flex; }
@@ -229,9 +234,10 @@
         <div id="jobStatus" style="margin-top:8px;opacity:.8"></div>
       </div>
       <div id="sheetDress" class="sheet">
-        <b>Dress your avatar</b>
-        <p style="opacity:.7;font-size:12px">Others see this on you in the world.</p>
-        <div>Skin</div>
+        <b>Choose your character</b>
+        <p style="opacity:.7;font-size:12px">CGI cast — pick who you walk as. Others see this in the plaza.</p>
+        <div class="cast-grid" id="castGrid"></div>
+        <div>Skin tint</div>
         <div class="row" id="skinRow"></div>
         <div>Shirt</div>
         <div class="row" id="shirtRow"></div>
@@ -614,6 +620,7 @@ function loadInv() {
       pet: 'cub', petHunger: 80,
       pets: { cub: true },
       body: 'e8c39e', shirt: '1a3d2a', hat: false, acc: 'none',
+      cast: 'nova',
       wallet: '', name: 'Guest'
     }, JSON.parse(localStorage.getItem(INV_KEY) || '{}'));
   } catch { return { wood: 0, fish: 0, coins: 12, pet: 'cub', petHunger: 80, pets: { cub: true }, body: 'e8c39e', shirt: '1a3d2a', tool: '' }; }
@@ -853,62 +860,88 @@ function buildPet() {
 }
 buildPet();
 
+const CAST = [
+  { id: 'nova', name: 'Nova', img: '/games/world/cast/nova.jpg' },
+  { id: 'rex', name: 'Rex', img: '/games/world/cast/rex.jpg' },
+  { id: 'mira', name: 'Mira', img: '/games/world/cast/mira.jpg' },
+  { id: 'kai', name: 'Kai', img: '/games/world/cast/kai.jpg' },
+  { id: 'sol', name: 'Sol', img: '/games/world/cast/sol.jpg' },
+  { id: 'jade', name: 'Jade', img: '/games/world/cast/jade.jpg' },
+  { id: 'omar', name: 'Omar', img: '/games/world/cast/omar.jpg' },
+  { id: 'vex', name: 'Vex', img: '/games/world/cast/vex.jpg' }
+];
 const others = new Map();
+const texCache = new Map();
+function keyedTexture(url, cb) {
+  if (texCache.has(url)) { cb(texCache.get(url)); return; }
+  const im = new Image();
+  im.crossOrigin = 'anonymous';
+  im.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = im.width; c.height = im.height;
+    const g = c.getContext('2d');
+    g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height);
+    for (let i = 0; i < d.data.length; i += 4) {
+      const r = d.data[i], gv = d.data[i + 1], b = d.data[i + 2];
+      const max = Math.max(r, gv, b), min = Math.min(r, gv, b);
+      if (max < 36) d.data[i + 3] = 0;
+      else if (max < 52 && (max - min) < 18) d.data[i + 3] = Math.min(d.data[i + 3], 40);
+    }
+    g.putImageData(d, 0, 0);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    texCache.set(url, tex);
+    cb(tex);
+  };
+  im.src = url;
+}
 function avatarMesh(p) {
   const g = new THREE.Group();
-  const skin = parseInt(p.body || 'e8c39e', 16);
+  const spec = CAST.find((c) => c.id === (p.cast || p.body)) || CAST.find((c) => c.id === (p.cast)) || CAST[0];
+  const token = p.body === '19d37e' && !p.cast;
+  const skin = parseInt(p.body && /^[0-9a-f]{6}$/i.test(p.body) ? p.body : 'c4a574', 16);
   const cloth = parseInt(p.shirt || '19d37e', 16);
-  const pants = 0x0f172a;
-  const mat = (c) => new THREE.MeshLambertMaterial({ color: c });
-  const hip = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.3), mat(pants));
-  hip.position.y = 0.58;
-  const ll = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.42, 4, 6), mat(pants));
-  ll.position.set(-0.13, 0.54, 0);
-  ll.geometry.translate(0, -0.22, 0);
-  const rl = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.42, 4, 6), mat(pants));
-  rl.position.set(0.13, 0.54, 0);
-  rl.geometry.translate(0, -0.22, 0);
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.68, 0.34), mat(cloth));
-  torso.position.y = 1.08;
-  const la = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.42, 4, 6), mat(skin));
-  la.position.set(-0.38, 1.28, 0);
-  la.geometry.translate(0, -0.22, 0);
-  const ra = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.42, 4, 6), mat(skin));
-  ra.position.set(0.38, 1.28, 0);
-  ra.geometry.translate(0, -0.22, 0);
-  const token = p.body === '19d37e' || p.acc === 'token';
-  const head = token
-    ? new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.16, 6), mat(0x19d37e))
-    : new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), mat(skin));
-  head.position.y = 1.64;
-  if (token) head.rotation.y = Math.PI / 6;
-  g.add(hip, ll, rl, torso, la, ra, head);
-  let cape = null;
+  const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0.08 });
+  const dummy = () => { const o = new THREE.Object3D(); g.add(o); return o; };
+  const ll = dummy(), rl = dummy(), la = dummy(), ra = dummy();
+  const hip = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.12, 4, 8), mat(0x1e293b));
+  hip.position.y = 0.55;
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.42, 6, 10), mat(cloth));
+  torso.position.y = 1.12;
+  g.add(hip, torso);
+  const sprite = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.05, 2.05),
+    new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide })
+  );
+  sprite.position.y = 1.05;
+  g.add(sprite);
+  keyedTexture(spec.img, (tex) => {
+    sprite.material.map = tex;
+    sprite.material.needsUpdate = true;
+  });
   if (token) {
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.035, 6, 6), mat(0xfbbf24));
-    rim.position.y = 1.64; rim.rotation.x = Math.PI / 2; rim.rotation.z = Math.PI / 6;
-    g.add(rim);
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.16, 6), mat(0x19d37e));
+    head.position.y = 1.92;
+    g.add(head);
   }
+  let cape = null;
   if (p.hat) {
     const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.16, 8), mat(0xfbbf24));
-    hat.position.y = 1.9;
+    hat.position.y = 2.08;
     g.add(hat);
   }
-  if (p.acc === 'heart') {
-    const goggles = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 10), mat(0xfb7185));
-    goggles.position.set(-0.09, 1.66, 0.2);
-    g.add(goggles);
-  }
   if (p.acc === 'cape') {
-    cape = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), mat(0xfbbf24));
-    cape.position.set(0, 1.05, -0.22); cape.rotation.x = 0.2;
+    cape = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.8), mat(0xfbbf24));
+    cape.position.set(0, 1.1, -0.18); cape.rotation.x = 0.25;
     g.add(cape);
   }
   const tag = document.createElement('div');
-  tag.textContent = p.username || 'Guest';
+  tag.textContent = (p.username || 'Guest') + ' · ' + spec.name;
   tag.style.cssText = 'position:absolute;transform:translate(-50%,-100%);color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:999px;font:800 13px system-ui;pointer-events:none;white-space:nowrap';
   document.body.appendChild(tag);
-  g.userData = { tag, ll, rl, la, ra, torso, hip, head, cape, phase: Math.random() * 10 };
+  g.userData = { tag, ll, rl, la, ra, torso, hip, sprite, cape, phase: Math.random() * 10, cast: spec.id };
   scene.add(g);
   return g;
 }
@@ -931,6 +964,10 @@ function animateAvatar(g, moving, grounded, dt, speed) {
   if (u.head) u.head.rotation.z = swing * 0.04;
   const bob = moving ? Math.abs(Math.sin(u.phase * 2)) * 0.07 : 0;
   g.position.y = (grounded === false ? 0.18 : 0) + bob;
+  if (u.sprite) {
+    u.sprite.rotation.z = moving ? Math.sin(u.phase) * 0.06 : 0;
+    u.sprite.position.y = 1.05 + bob * 0.4;
+  }
   if (u.cape) u.cape.rotation.x = 0.15 + (moving ? 0.35 + Math.sin(u.phase) * 0.12 : 0.08);
 }
 
@@ -942,7 +979,7 @@ function rebuildMe() {
     if (meMesh.userData.tag) meMesh.userData.tag.remove();
   }
   meMesh = avatarMesh({
-    body: inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc, username: inv.name || 'You'
+    body: inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc, cast: inv.cast || 'nova', username: inv.name || 'You'
   });
 }
 rebuildMe();
@@ -1378,6 +1415,14 @@ function openSheet(id) {
   if (id === 'sheetDress') paintDress();
 }
 function paintDress() {
+  const grid = document.getElementById('castGrid');
+  if (grid) {
+    grid.innerHTML = CAST.map((c) =>
+      `<button type="button" class="cast-card ${inv.cast === c.id ? 'on' : ''}" onclick="window.mtwCast('${c.id}')">
+        <img src="${c.img}" alt="${c.name}" /><span>${c.name}</span>
+      </button>`
+    ).join('');
+  }
   const skins = ['e8c39e', '8d5524', 'c68642', 'f1c27d', 'ffdbac', '19d37e', '38bdf8', 'fb7185'];
   const shirts = ['19d37e', '1a3d2a', '1d4ed8', 'b91c1c', '111827', 'f59e0b', '7c3aed'];
   const sk = document.getElementById('skinRow');
@@ -1389,6 +1434,14 @@ function paintDress() {
   if (hat) hat.checked = !!inv.hat;
   if (acc) acc.checked = inv.acc === 'heart';
 }
+window.mtwCast = (id) => {
+  inv.cast = id;
+  saveInv();
+  rebuildMe();
+  paintDress();
+  const n = CAST.find((c) => c.id === id);
+  toast('You are ' + (n ? n.name : id));
+};
 window.mtwSkin = (c) => { inv.body = c; saveInv(); rebuildMe(); paintDress(); toast('Skin on you now'); };
 window.mtwShirt = (c) => { inv.shirt = c; saveInv(); rebuildMe(); paintDress(); toast('Shirt on you now'); };
 function paintSocial() {
@@ -1424,7 +1477,7 @@ function syncWorld() {
     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       action: 'here', sid: SID, name: inv.name, x: player.x, z: player.z, yaw: player.yaw,
-      body: inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc
+      body: inv.cast || inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc, cast: inv.cast || 'nova'
     })
   }).catch(() => {});
   fetch('/api/games/world?me=' + encodeURIComponent(inv.name), { credentials: 'include' })
@@ -1435,7 +1488,14 @@ function syncWorld() {
         if (p.sid === SID) return;
         seen.add(p.sid);
         let o = others.get(p.sid);
-        if (!o) { o = { ...p, mesh: avatarMesh(p), x: p.x, z: p.z, tx: p.x, tz: p.z }; others.set(p.sid, o); }
+        const look = p.cast || p.body;
+        if (!o) { o = { ...p, mesh: avatarMesh({ ...p, cast: look }), x: p.x, z: p.z, tx: p.x, tz: p.z }; others.set(p.sid, o); }
+        if (o.look !== look && o.mesh) {
+          scene.remove(o.mesh);
+          if (o.mesh.userData.tag) o.mesh.userData.tag.remove();
+          o.mesh = avatarMesh({ ...p, cast: look });
+        }
+        o.look = look;
         o.tx = p.x; o.tz = p.z; o.tyaw = p.yaw || 0; o.username = p.username;
       });
       others.forEach((o, id) => {

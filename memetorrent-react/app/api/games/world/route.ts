@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
           Number(body.x) || 0,
           Number(body.z) || 0,
           Number(body.yaw) || 0,
-          String(body.body || '19d37e').replace(/[^0-9a-f]/gi, '').slice(0, 16) || '19d37e',
+          String(body.cast || body.body || 'nova').replace(/[^0-9a-z]/gi, '').slice(0, 16) || 'nova',
           String(body.shirt || '1a3d2a').replace(/[^0-9a-f]/gi, '').slice(0, 16) || '1a3d2a',
           body.hat ? 1 : 0,
           String(body.acc || 'none').slice(0, 16),
