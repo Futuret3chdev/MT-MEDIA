@@ -27,8 +27,8 @@
     <input id="file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.bmp" hidden>
   </label>
   <button class="btn p" style="background:#b45309;color:#fff" id="go">Restore + 3D house</button>
-  <button class="btn" id="game">Play in game</button>
-  <button class="btn" id="sendw">To World 3D</button>
+  <button class="btn" id="game">Play in MT World</button>
+  <button class="btn" id="sendw">Insert into MT World</button>
 </div>
 <div id="status">Choose a photo. The studio will restore it and build the house — you do not need extra clicks.</div>
 <div class="wrap">
@@ -232,7 +232,7 @@ function runPipeline(){
     drawHouse();
     saveHouse();
     show('iso');
-    status('Done. 3D house is built from your photo. Play in game or send to World 3D.');
+    status('Done. House is ready — Play in MT World to walk through the front door.');
   }catch(err){ status('Failed: '+(err.message||err)); console.error(err); }
 }
 $('file').addEventListener('change', e=>{ const f=e.target.files&&e.target.files[0]; if(f) loadFile(f); });
@@ -254,32 +254,17 @@ stage.addEventListener('dragover', e=>{ e.preventDefault(); });
 stage.addEventListener('drop', e=>{ e.preventDefault(); const f=e.dataTransfer.files[0]; if(f) loadFile(f); });
 addEventListener('paste', e=>{ const f=[...e.clipboardData.files][0]; if(f) loadFile(f); });
 $('game').onclick=()=>{
+  if(img) runPipeline();
   const house=(window.MT&&MT.get('mt-photo-house',null));
   if(!house){ status('Load a photo first.'); return; }
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>House</title>
-<style>html,body{margin:0;height:100%;background:#0b1020;overflow:hidden}canvas{display:block}</style></head><body><canvas id="c"></canvas>
-<script>
-const iso=new Image(); iso.src="${house.iso}";
-const cv=document.getElementById('c'),ctx=cv.getContext('2d');
-function sz(){ cv.width=innerWidth; cv.height=innerHeight; } sz(); addEventListener('resize',sz);
-let x=120,y=0,vx=0,vy=0,keys={};
-addEventListener('keydown',e=>keys[e.code]=true); addEventListener('keyup',e=>keys[e.code]=false);
-function loop(){
-  if(keys.ArrowLeft||keys.KeyA) vx-=.55; if(keys.ArrowRight||keys.KeyD) vx+=.55;
-  vx*=.82; vy+=.55; x+=vx; y+=vy;
-  const ground=cv.height-80; if(y>ground-22){ y=ground-22; vy=0; if(keys.ArrowUp||keys.KeyW||keys.Space) vy=-12; }
-  const g=ctx.createLinearGradient(0,0,0,cv.height); g.addColorStop(0,'#7dd3fc'); g.addColorStop(1,'#e0f2fe');
-  ctx.fillStyle=g; ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.fillStyle='#365314'; ctx.fillRect(0,ground,cv.width,cv.height);
-  if(iso.complete) ctx.drawImage(iso, cv.width/2-220, ground-300, 440, 320);
-  ctx.fillStyle='#14532d'; ctx.fillRect(x, y, 18, 22);
-  requestAnimationFrame(loop);
-}
-iso.onload=loop; if(iso.complete) loop();
-<\/script></body></html>`;
-  window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})));
+  location.href='/games/gallery/?house=1';
 };
-$('sendw').onclick=()=>{ if(img) runPipeline(); location.href='world.html'; };
+$('sendw').onclick=()=>{
+  if(img) runPipeline();
+  const house=(window.MT&&MT.get('mt-photo-house',null));
+  if(!house){ status('Load a photo first.'); return; }
+  location.href='/games/gallery/?house=1';
+};
 $('pngf').onclick=()=>fac.toBlob(b=>MT.download('facade.png',b,'image/png'));
 $('pngi').onclick=()=>iso.toBlob(b=>MT.download('house3d.png',b,'image/png'));
 status('Choose a photo (JPG/PNG). Restore and 3D house run automatically.');
