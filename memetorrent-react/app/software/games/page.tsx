@@ -52,9 +52,32 @@ export default function SoftwareGamesPage() {
         <p className="text-sm opacity-60 mb-4">
           Google Android Studio is not part of this path. MT Android Studio is the compiler.
         </p>
-        <a href="/maker/" className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm">
-          Open MT Android Studio in this browser
-        </a>
+        <div className="flex flex-wrap gap-3">
+          <a href="/maker/" className="inline-block font-semibold text-black bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full text-sm">
+            Open MT Android Studio
+          </a>
+          <a href="/maker/?mode=lab" className="inline-block px-4 py-2 rounded-full border border-white/20 text-sm">
+            Device lab
+          </a>
+          <Link href="/software/studios" className="inline-block px-4 py-2 rounded-full border border-white/20 text-sm">
+            All studios
+          </Link>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 p-6 mb-8" style={{ background: 'var(--card)' }}>
+        <div className="text-emerald-400 text-xs tracking-[2px] mb-2">Beyond Google Android Studio</div>
+        <h2 className="font-semibold text-xl mb-3">Emulators and tools theirs does not ship</h2>
+        <ul className="text-sm opacity-80 space-y-2 list-disc pl-5">
+          <li>Device lab: Pixel, Fold, Tablet, Watch, TV, Auto at once — no 2GB AVD images.</li>
+          <li>Two-player emulators (arrows vs WASD) in one project.</li>
+          <li>Hot reload into running skins, replay buffer, death heatmap, time freeze.</li>
+          <li>Profiler, Logcat, fake ADB, airplane / GPS / battery / shake without extended controls.</li>
+          <li>$MT shop designer and Play listing screenshots from the emulator.</li>
+          <li>Colorblind / large HUD / RTL live on the game, not a layout XML lint.</li>
+          <li>Web play + Gradle-less signed APK from the same button row.</li>
+          <li>Screen record the emulator with MediaRecorder (no scrcpy).</li>
+        </ul>
       </div>
 
       <div className="rounded-2xl border border-emerald-400/30 p-6 mb-8" style={{ background: 'var(--card)' }}>

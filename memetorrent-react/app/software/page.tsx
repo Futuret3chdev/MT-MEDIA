@@ -2,9 +2,14 @@ import Link from 'next/link';
 
 const sections = [
   {
+    href: '/software/studios',
+    title: 'Studios',
+    desc: 'MT Android Studio, Device Lab, Publisher, iOS, assets, bots — our IDEs, not Google’s.',
+  },
+  {
     href: '/software/games',
     title: 'Games',
-    desc: 'Skin lab, score book, pads, cover stamp, party codes — plus the Android client.',
+    desc: 'MT Android Studio downloads, SDK, skin lab, score book, party codes.',
   },
   {
     href: '/studio',

@@ -6,63 +6,93 @@
   <title>MT Android Studio</title>
   <style>
     :root {
-      --bg:#2b2b2b; --panel:#3c3f41; --edge:#515658; --text:#bbb;
-      --a:#6a8759; --accent:#499c54; --tab:#4b4f51; --on:#4e5254;
+      --bg:#1e1f22; --p:#2b2d30; --p2:#3c3f41; --edge:#1e1e1e; --t:#c0c4cc;
+      --dim:#8b8f97; --a:#6a8759; --run:#3574f0; --bad:#d1675a; --gold:#d7ba7d;
     }
     * { box-sizing:border-box; }
-    html,body { margin:0; height:100%; background:#2b2b2b; color:#bbb; font:13px/1.4 "Segoe UI",system-ui,sans-serif; }
-    #ide { display:grid; height:100%; grid-template-rows:36px 32px 1fr 120px; }
-    #titlebar {
-      background:#3c3f41; display:flex; align-items:center; gap:10px;
-      padding:0 10px; border-bottom:1px solid #1e1e1e; user-select:none;
-    }
-    #titlebar strong { color:#a5c261; letter-spacing:.3px; }
-    #titlebar .win { margin-left:auto; opacity:.5; font-size:11px; }
-    #toolbar {
-      background:#3c3f41; display:flex; align-items:center; gap:6px; flex-wrap:wrap;
-      padding:4px 8px; border-bottom:1px solid #1e1e1e;
-    }
-    #toolbar input, #toolbar select, #toolbar button {
-      font:inherit; background:#45494a; color:#ccc; border:1px solid #646464;
-      border-radius:3px; padding:3px 8px;
+    html,body { margin:0; height:100%; background:var(--bg); color:var(--t); font:12.5px/1.4 "Segoe UI",system-ui,sans-serif; }
+    button,input,select,textarea { font:inherit; }
+    #ide { display:grid; height:100%; grid-template-rows:34px 34px minmax(0,1fr) 168px; }
+    #titlebar,#toolbar { background:var(--p2); display:flex; align-items:center; gap:8px; padding:0 8px; border-bottom:1px solid #111; }
+    #titlebar strong { color:#a5c261; }
+    #titlebar .win { margin-left:auto; color:var(--dim); font-size:11px; }
+    #toolbar { flex-wrap:wrap; gap:5px; padding:4px 8px; }
+    #toolbar input,#toolbar select,#toolbar button {
+      background:#45494a; color:#ddd; border:1px solid #5a5a5a; border-radius:3px; padding:3px 8px;
     }
     #toolbar button.primary { background:#499c54; color:#fff; border-color:#3d7a45; font-weight:700; }
-    #toolbar button.run { background:#3574f0; color:#fff; border-color:#2b5fc4; font-weight:700; }
-    #main { display:grid; grid-template-columns:200px 1fr; min-height:0; }
-    #tree { background:#3c3f41; border-right:1px solid #1e1e1e; overflow:auto; padding:8px 0; }
-    #tree h4 { margin:0 10px 6px; font-size:10px; letter-spacing:1px; color:#808080; }
-    #tree button {
-      display:block; width:100%; text-align:left; background:transparent; color:#bbb;
-      border:0; padding:4px 12px; font:inherit; cursor:pointer;
-    }
-    #tree button:hover, #tree button.on { background:#4b6eaf; color:#fff; }
+    #toolbar button.run { background:var(--run); color:#fff; border-color:#2b5fc4; font-weight:700; }
+    #main { display:grid; grid-template-columns:188px minmax(0,1fr) 312px; min-height:0; }
+    #tree { background:var(--p2); border-right:1px solid #111; overflow:auto; padding:8px 0; }
+    #tree h4 { margin:10px 10px 4px; font-size:10px; letter-spacing:1px; color:#7a7a7a; }
+    #tree button { display:block; width:100%; text-align:left; background:0; color:var(--t); border:0; padding:4px 12px; cursor:pointer; }
+    #tree button.on,#tree button:hover { background:#4b6eaf; color:#fff; }
     #work { display:flex; flex-direction:column; min-width:0; min-height:0; }
-    #tabs { display:flex; background:#3c3f41; border-bottom:1px solid #1e1e1e; }
-    #tabs button { background:#3c3f41; color:#888; border:0; border-right:1px solid #1e1e1e; padding:6px 14px; font:inherit; }
+    #tabs { display:flex; flex-wrap:wrap; background:var(--p2); border-bottom:1px solid #111; }
+    #tabs button { background:transparent; color:#888; border:0; border-right:1px solid #111; padding:7px 12px; }
     #tabs button.on { background:#4e5254; color:#fff; }
-    #stage { flex:1; overflow:auto; background:#2b2b2b; padding:10px; }
-    canvas { background:#0b1020; image-rendering:pixelated; cursor:crosshair; border:1px solid #1e1e1e; max-width:100%; }
+    #stage { flex:1; overflow:auto; background:var(--bg); padding:10px; }
+    canvas.edit { background:#0b1020; image-rendering:pixelated; cursor:crosshair; border:1px solid #111; max-width:100%; }
     #brushes { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
-    #brushes button { border:1px solid #646464; background:#45494a; color:#ccc; border-radius:3px; padding:4px 8px; font-size:12px; }
-    #brushes button.on { background:#499c54; color:#fff; border-color:#3d7a45; }
-    pre.code {
-      margin:0; padding:12px; background:#2b2b2b; color:#a9b7c6; font:12px/1.45 ui-monospace,Consolas,monospace;
-      white-space:pre-wrap; border:1px solid #1e1e1e;
+    #brushes button { border:1px solid #5a5a5a; background:#45494a; color:#ccc; border-radius:3px; padding:4px 8px; }
+    #brushes button.on { background:#499c54; color:#fff; }
+    pre.code, textarea.code {
+      margin:0; width:100%; min-height:280px; padding:12px; background:#1e1f22; color:#a9b7c6;
+      font:12px/1.45 ui-monospace,Consolas,monospace; border:1px solid #111; white-space:pre-wrap;
     }
-    #log {
-      background:#2b2b2b; border-top:1px solid #1e1e1e; color:#a9b7c6;
-      font:12px/1.4 ui-monospace,Consolas,monospace; padding:8px 10px; overflow:auto; white-space:pre-wrap;
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    label.row { display:flex; justify-content:space-between; gap:8px; align-items:center; margin:6px 0; }
+    label.row input, label.row select { width:120px; background:#45494a; color:#ddd; border:1px solid #5a5a5a; padding:3px 6px; }
+    #emuwrap { background:#1a1b1e; border-left:1px solid #111; display:flex; flex-direction:column; min-height:0; }
+    #emuhead { padding:6px 8px; display:flex; gap:4px; flex-wrap:wrap; align-items:center; border-bottom:1px solid #111; }
+    #emuhead select, #emuhead button { background:#45494a; color:#ddd; border:1px solid #5a5a5a; border-radius:3px; padding:3px 6px; }
+    #emustage { flex:1; overflow:auto; display:flex; flex-wrap:wrap; gap:12px; padding:10px; justify-content:center; align-content:flex-start; }
+    .device { position:relative; background:#111; color:#fff; box-shadow:0 10px 30px #000a; flex:0 0 auto; }
+    .device .bezel { background:#0a0a0c; padding:10px 8px 14px; }
+    .device.watch .bezel { border-radius:50%; padding:14px; }
+    .device.phone .bezel { border-radius:28px; }
+    .device.fold .bezel, .device.tablet .bezel { border-radius:16px; }
+    .device.tv .bezel { border-radius:6px; padding:8px 8px 22px; }
+    .device.car .bezel { border-radius:10px; }
+    .device .notch { height:8px; width:72px; margin:0 auto 6px; background:#000; border-radius:8px; }
+    .device.watch .notch, .device.tv .notch, .device.car .notch { display:none; }
+    .device canvas { display:block; image-rendering:pixelated; background:#000; width:100%; height:auto; }
+    .device .nav { display:flex; justify-content:space-around; color:#666; font-size:11px; margin-top:6px; }
+    .device.watch .nav, .device.tv .nav { display:none; }
+    .device .tag { position:absolute; left:8px; top:4px; font-size:10px; color:#9aa; }
+    .device.offline canvas { filter:grayscale(1) brightness(.5); }
+    .device.colorblind canvas { filter:url(#cb); }
+    .pad { display:grid; grid-template-columns:repeat(3,28px); gap:3px; justify-content:center; margin-top:6px; }
+    .pad button { width:28px; height:22px; background:#333; color:#eee; border:1px solid #555; border-radius:4px; padding:0; }
+    #bottom { background:#1e1f22; border-top:1px solid #111; display:flex; flex-direction:column; min-height:0; }
+    #btabs { display:flex; background:var(--p2); }
+    #btabs button { background:0; color:#888; border:0; border-right:1px solid #111; padding:6px 12px; }
+    #btabs button.on { background:#4e5254; color:#fff; }
+    #blog { flex:1; overflow:auto; padding:8px 10px; font:12px/1.4 ui-monospace,Consolas,monospace; color:#a9b7c6; white-space:pre-wrap; }
+    #blog .ok { color:#6a8759; } #blog .bad { color:#d1675a; } #blog .gold { color:var(--gold); }
+    .meter { height:8px; background:#333; border-radius:4px; overflow:hidden; }
+    .meter > i { display:block; height:100%; background:#499c54; width:0; }
+    .chip { display:inline-block; padding:1px 6px; border:1px solid #555; border-radius:99px; margin-right:4px; font-size:11px; }
+    @media (max-width:900px){
+      #main { grid-template-columns:1fr; grid-template-rows:auto 1fr auto; }
+      #emuwrap { border-left:0; border-top:1px solid #111; min-height:280px; }
+      #tree { max-height:120px; }
     }
-    #log .ok { color:#6a8759; }
-    #log .bad { color:#d1675a; }
   </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="cb">
+    <feColorMatrix values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/>
+  </filter>
+</svg>
 <div id="ide">
   <div id="titlebar">
     <strong>MT Android Studio</strong>
     <span id="proj">app · Night Run</span>
-    <span class="win">FutureT3ch · our Android IDE — not Google’s</span>
+    <span class="chip" id="fpschip">0 fps</span>
+    <span class="chip" id="emuchip">0 emu</span>
+    <span class="win">FutureT3ch device lab · no AVD images · not Google’s IDE</span>
   </div>
   <div id="toolbar">
     <input id="name" value="Night Run" />
@@ -72,276 +102,123 @@
       <option value="city">City</option>
       <option value="space">Space</option>
     </select>
-    <button type="button" class="run" id="play">▶ Run</button>
+    <button type="button" class="run" id="play">▶ Run emulators</button>
     <button type="button" id="stop" hidden>■ Stop</button>
     <button type="button" class="primary" id="buildApk">Build APK</button>
-    <button type="button" id="exportHtml">Save game.html</button>
-    <button type="button" id="exportJson">Save JSON</button>
+    <button type="button" id="hot">Hot reload</button>
+    <button type="button" id="lab">Device lab</button>
+    <button type="button" id="twin">+ 2nd player</button>
+    <button type="button" id="shot">Screenshot</button>
+    <button type="button" id="rec">Record</button>
+    <button type="button" id="webplay">Web play</button>
   </div>
   <div id="main">
     <aside id="tree">
       <h4>PROJECT</h4>
-      <button type="button" class="on" data-tab="design">app/src/main/game (Design)</button>
-      <button type="button" data-tab="html">app/src/main/assets/index.html</button>
+      <button type="button" class="on" data-tab="design">game/level.tmx</button>
+      <button type="button" data-tab="anim">animation/timeline</button>
+      <button type="button" data-tab="shop">res/shop_mt.json</button>
+      <button type="button" data-tab="store">play/listing</button>
+      <button type="button" data-tab="a11y">tools/accessibility</button>
+      <button type="button" data-tab="html">assets/index.html</button>
       <button type="button" data-tab="manifest">AndroidManifest.xml</button>
-      <button type="button" data-tab="activity">MainActivity.java</button>
+      <button type="button" data-tab="gradle">build.gradle</button>
+      <h4>DEVICES</h4>
+      <button type="button" data-dev="pixel">Pixel 8</button>
+      <button type="button" data-dev="compact">Compact</button>
+      <button type="button" data-dev="fold">Fold</button>
+      <button type="button" data-dev="tablet">Tablet</button>
+      <button type="button" data-dev="watch">Watch</button>
+      <button type="button" data-dev="tv">Android TV</button>
+      <button type="button" data-dev="car">Android Auto</button>
     </aside>
     <div id="work">
       <div id="tabs">
         <button type="button" class="on" data-tab="design">Design</button>
-        <button type="button" data-tab="html">index.html</button>
+        <button type="button" data-tab="anim">Timeline</button>
+        <button type="button" data-tab="shop">$MT Shop</button>
+        <button type="button" data-tab="store">Store listing</button>
+        <button type="button" data-tab="a11y">Access</button>
+        <button type="button" data-tab="html">HTML</button>
         <button type="button" data-tab="manifest">Manifest</button>
-        <button type="button" data-tab="activity">MainActivity</button>
+        <button type="button" data-tab="gradle">Gradle</button>
       </div>
       <div id="stage">
         <div id="pane-design">
           <div id="brushes"></div>
-          <canvas id="c"></canvas>
+          <canvas class="edit" id="c"></canvas>
+          <div class="grid2" style="margin-top:10px">
+            <div>
+              <label class="row">Gravity <input id="grav" type="number" step="0.05" value="0.45"></label>
+              <label class="row">Jump <input id="jump" type="number" step="0.1" value="-8.2"></label>
+              <label class="row">Lives <input id="lives" type="number" value="3"></label>
+            </div>
+            <div>
+              <label class="row">Package <input id="pkg" value="au.com.futuret3ch.made"></label>
+              <label class="row">Version <input id="ver" value="1.0.0"></label>
+              <label class="row">Seed <input id="seed" value="night-run"></label>
+            </div>
+          </div>
+        </div>
+        <div id="pane-anim" hidden>
+          <p class="dim">Animation timeline — coin spin, spring squash, enemy patrol. Scrub while emulators run (Android Studio has no game timeline).</p>
+          <label class="row">Coin spin speed <input id="spin" type="range" min="0" max="20" value="8"></label>
+          <label class="row">Enemy speed <input id="espd" type="range" min="0" max="20" value="6"></label>
+          <label class="row">Particle amount <input id="part" type="range" min="0" max="40" value="12"></label>
+          <label class="row">Freeze time <input id="freeze" type="checkbox"></label>
+        </div>
+        <div id="pane-shop" hidden>
+          <p>In-game $MT shop. Google Android Studio has no commerce designer.</p>
+          <label class="row">Extra life <input id="priceLife" type="number" value="5"> MT</label>
+          <label class="row">Spring shoes <input id="priceJump" type="number" value="12"> MT</label>
+          <label class="row">Coin magnet <input id="priceMag" type="number" value="8"> MT</label>
+          <label class="row">Wallet test <select id="wallet"><option>disconnected</option><option>Phantom mock</option><option>Infinite Wallet</option></select></label>
+        </div>
+        <div id="pane-store" hidden>
+          <label class="row">Short desc <input id="sdesc" value="A night run you built in MT Android Studio." style="width:220px"></label>
+          <textarea id="ldesc" class="code" style="min-height:120px">Sideload in seconds. No Gradle. Built and signed inside MT Android Studio.</textarea>
+          <p id="shots"></p>
+        </div>
+        <div id="pane-a11y" hidden>
+          <label class="row">Colorblind <select id="cbmode"><option value="">Off</option><option value="deutan">Deuteranopia</option><option value="protan">Protanopia</option></select></label>
+          <label class="row">Large HUD <input id="bigui" type="checkbox"></label>
+          <label class="row">Reduce motion <input id="nomove" type="checkbox"></label>
+          <label class="row">RTL <input id="rtl" type="checkbox"></label>
+          <p>Android Studio’s layout validator does not simulate colorblind play or RTL HUDs on a live game.</p>
         </div>
         <pre class="code" id="pane-html" hidden></pre>
         <pre class="code" id="pane-manifest" hidden></pre>
-        <pre class="code" id="pane-activity" hidden></pre>
+        <pre class="code" id="pane-gradle" hidden></pre>
       </div>
     </div>
+    <aside id="emuwrap">
+      <div id="emuhead">
+        <select id="devsel"></select>
+        <button type="button" id="rotate">Rotate</button>
+        <button type="button" id="shake">Shake</button>
+        <button type="button" id="air">Airplane</button>
+        <span id="sens" class="chip">wifi · 100% · GPS</span>
+      </div>
+      <div id="emustage"></div>
+      <div style="padding:8px;border-top:1px solid #111">
+        <label class="row">Battery <input id="batt" type="range" min="1" max="100" value="100"></label>
+        <label class="row">Net <select id="net"><option value="wifi">Wi‑Fi</option><option value="3g">3G 120ms</option><option value="off">Offline</option></select></label>
+        <label class="row">GPS <input id="gps" value="-33.87,151.21" style="width:140px"></label>
+      </div>
+    </aside>
   </div>
-  <div id="log">MT Android Studio ready. Paint a level, ▶ Run it here, then Build APK. This IDE compiles the Android package — you do not need Google Android Studio.</div>
+  <div id="bottom">
+    <div id="btabs">
+      <button type="button" class="on" data-b="log">Logcat</button>
+      <button type="button" data-b="prof">Profiler</button>
+      <button type="button" data-b="net">Network</button>
+      <button type="button" data-b="heat">Death heatmap</button>
+      <button type="button" data-b="adb">ADB</button>
+      <button type="button" data-b="apk">APK analyzer</button>
+    </div>
+    <div id="blog"></div>
+  </div>
 </div>
-<script>
-const TILE = { empty:0, ground:1, hazard:2, coin:3, spawn:4, exit:5, enemy:6, spring:7 };
-const BRUSHES = [
-  [0,'Erase'],[1,'Ground'],[2,'Spike'],[3,'Coin'],[4,'Start'],[5,'Exit'],[6,'Enemy'],[7,'Spring']
-];
-const THEMES = {
-  night: { bg:'#0b1020', ground:'#2a3348', accent:'#00ff99', hazard:'#ff4d6a', coin:'#ffd166' },
-  forest: { bg:'#0d1a12', ground:'#2d5a3d', accent:'#9ef01a', hazard:'#e85d04', coin:'#ffe66d' },
-  city: { bg:'#140c18', ground:'#3d2b56', accent:'#ff4dff', hazard:'#ff006e', coin:'#00f5d4' },
-  space: { bg:'#070712', ground:'#1b2744', accent:'#48cae4', hazard:'#c77dff', coin:'#f4d35e' }
-};
-const COLS=32, ROWS=16, CELL=22;
-const tiles = new Array(COLS*ROWS).fill(0);
-for (let x=0;x<COLS;x++) tiles[(ROWS-1)*COLS+x]=1;
-tiles[(ROWS-2)*COLS+2]=4;
-tiles[(ROWS-5)*COLS+10]=1; tiles[(ROWS-5)*COLS+11]=1; tiles[(ROWS-5)*COLS+12]=1;
-tiles[(ROWS-6)*COLS+11]=3;
-tiles[(ROWS-2)*COLS+20]=2;
-tiles[(ROWS-8)*COLS+22]=1; tiles[(ROWS-8)*COLS+23]=1; tiles[(ROWS-8)*COLS+24]=1;
-tiles[(ROWS-9)*COLS+24]=5;
-tiles[(ROWS-2)*COLS+14]=6;
-let brush=1, playing=false, keys={}, raf=0;
-const cv=document.getElementById('c');
-const ctx=cv.getContext('2d');
-cv.width=COLS*CELL; cv.height=ROWS*CELL;
-
-const bar=document.getElementById('brushes');
-BRUSHES.forEach(([id,label])=>{
-  const b=document.createElement('button');
-  b.textContent=(id+1)+' '+label;
-  b.onclick=()=>{ brush=id; [...bar.children].forEach(x=>x.classList.toggle('on', x===b)); };
-  if(id===1) b.classList.add('on');
-  bar.appendChild(b);
-});
-
-function logLine(text, cls){
-  const el=document.getElementById('log');
-  const span=document.createElement('div');
-  if(cls) span.className=cls;
-  span.textContent=text;
-  el.appendChild(span);
-  el.scrollTop=el.scrollHeight;
-}
-function th(){ return THEMES[document.getElementById('theme').value]; }
-function color(t){
-  const T=th();
-  return [null,T.ground,T.hazard,T.coin,'#fff',T.accent,'#ff8fab','#90e0ef'][t];
-}
-function draw(){
-  const T=th();
-  ctx.fillStyle=T.bg; ctx.fillRect(0,0,cv.width,cv.height);
-  for(let i=0;i<tiles.length;i++){
-    const t=tiles[i]; if(!t) continue;
-    const x=(i%COLS)*CELL, y=Math.floor(i/COLS)*CELL;
-    ctx.fillStyle=color(t);
-    if(t===2){ ctx.beginPath(); ctx.moveTo(x,y+CELL); ctx.lineTo(x+CELL/2,y); ctx.lineTo(x+CELL,y+CELL); ctx.fill(); }
-    else if(t===3){ ctx.beginPath(); ctx.arc(x+CELL/2,y+CELL/2,CELL*0.28,0,6.28); ctx.fill(); }
-    else ctx.fillRect(x+1,y+1,CELL-2,CELL-2);
-  }
-  if(playing){
-    ctx.fillStyle='#19d37e';
-    ctx.fillRect(player.x, player.y, 14, 16);
-  }
-}
-function paintAt(e){
-  const r=cv.getBoundingClientRect();
-  const x=Math.floor((e.clientX-r.left)/CELL*(cv.width/r.width));
-  const y=Math.floor((e.clientY-r.top)/CELL*(cv.height/r.height));
-  if(x<0||y<0||x>=COLS||y>=ROWS||playing) return;
-  const i=y*COLS+x;
-  if(brush===4){ for(let k=0;k<tiles.length;k++) if(tiles[k]===4) tiles[k]=0; }
-  tiles[i]=brush;
-  draw();
-}
-cv.onpointerdown=e=>{ cv.setPointerCapture(e.pointerId); paintAt(e); };
-cv.onpointermove=e=>{ if(e.buttons) paintAt(e); };
-
-let player={x:20,y:20,vx:0,vy:0};
-function spawn(){
-  const i=tiles.indexOf(4);
-  const x=i<0?20:(i%COLS)*CELL+4;
-  const y=i<0?20:Math.floor(i/COLS)*CELL-16;
-  player={x,y,vx:0,vy:0};
-}
-function solid(px,py){
-  const cx=Math.floor((px+7)/CELL), cy=Math.floor((py+15)/CELL);
-  if(cx<0||cy<0||cx>=COLS||cy>=ROWS) return 1;
-  const t=tiles[cy*COLS+cx];
-  return t===1||t===7?t:0;
-}
-function cellAt(px,py){
-  const cx=Math.floor((px+7)/CELL), cy=Math.floor((py+8)/CELL);
-  if(cx<0||cy<0||cx>=COLS||cy>=ROWS) return 0;
-  return tiles[cy*COLS+cx];
-}
-function tick(){
-  if(!playing) return;
-  if(keys['ArrowLeft']||keys['KeyA']) player.vx-=0.4;
-  if(keys['ArrowRight']||keys['KeyD']) player.vx+=0.4;
-  player.vx*=0.8;
-  player.vy+=0.45;
-  player.x+=player.vx;
-  if(solid(player.x, player.y)) { player.x-=player.vx; player.vx=0; }
-  player.y+=player.vy;
-  if(solid(player.x, player.y)) {
-    player.y-=player.vy; player.vy=0;
-    if(keys['ArrowUp']||keys['KeyW']||keys['Space']) player.vy=-8.2;
-  }
-  const hit=cellAt(player.x, player.y);
-  if(hit===2||hit===6) spawn();
-  if(hit===3){ const i=Math.floor((player.y+8)/CELL)*COLS+Math.floor((player.x+7)/CELL); tiles[i]=0; }
-  if(hit===5){ logLine('Run: reached exit.','ok'); stopPlay(); }
-  if(player.y>ROWS*CELL) spawn();
-  draw();
-  raf=requestAnimationFrame(tick);
-}
-function stopPlay(){ playing=false; cancelAnimationFrame(raf); document.getElementById('play').hidden=false; document.getElementById('stop').hidden=true; draw(); }
-document.getElementById('play').onclick=()=>{ playing=true; spawn(); document.getElementById('play').hidden=true; document.getElementById('stop').hidden=false; logLine('Run: emulator preview (this window).'); tick(); };
-document.getElementById('stop').onclick=stopPlay;
-addEventListener('keydown',e=>{ keys[e.code]=true; if(['Space','ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault(); });
-addEventListener('keyup',e=>{ keys[e.code]=false; });
-
-function spec(){
-  return { type:'platformer', name:document.getElementById('name').value, theme:document.getElementById('theme').value, cols:COLS, rows:ROWS, tiles:tiles.slice() };
-}
-function gameHTML(){
-  const s=spec();
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${s.name}</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>html,body{margin:0;background:#000;color:#fff;font-family:system-ui}canvas{display:block;margin:10px auto;background:#111}</style></head>
-<body><p style="text-align:center">${s.name} · arrows / WASD</p><canvas id="c"></canvas>
-<script>
-const COLS=${COLS},ROWS=${ROWS},CELL=24,tiles=${JSON.stringify(s.tiles)};
-const cv=document.getElementById('c'),ctx=cv.getContext('2d');
-cv.width=COLS*CELL;cv.height=ROWS*CELL;
-let p={x:20,y:20,vx:0,vy:0},keys={};
-const i=tiles.indexOf(4); if(i>=0){p.x=(i%COLS)*CELL+4;p.y=Math.floor(i/COLS)*CELL-16;}
-function solid(x,y){const cx=Math.floor((x+7)/CELL),cy=Math.floor((y+15)/CELL);if(cx<0||cy>=ROWS)return 1;const t=tiles[cy*COLS+cx];return t===1||t===7;}
-function cell(x,y){const cx=Math.floor((x+7)/CELL),cy=Math.floor((y+8)/CELL);if(cx<0||cy>=ROWS)return 0;return tiles[cy*COLS+cx];}
-addEventListener('keydown',e=>keys[e.code]=true); addEventListener('keyup',e=>keys[e.code]=false);
-function loop(){
-  if(keys.ArrowLeft||keys.KeyA)p.vx-=.4; if(keys.ArrowRight||keys.KeyD)p.vx+=.4;
-  p.vx*=.8; p.vy+=.45; p.x+=p.vx; if(solid(p.x,p.y)){p.x-=p.vx;p.vx=0;} p.y+=p.vy;
-  if(solid(p.x,p.y)){p.y-=p.vy;p.vy=0; if(keys.ArrowUp||keys.KeyW||keys.Space)p.vy=-8.2;}
-  const h=cell(p.x,p.y); if(h===2||h===6){const i=tiles.indexOf(4);p.x=(i%COLS)*CELL+4;p.y=Math.floor(i/COLS)*CELL-16;p.vx=p.vy=0;}
-  if(h===3){tiles[Math.floor((p.y+8)/CELL)*COLS+Math.floor((p.x+7)/CELL)]=0;}
-  ctx.fillStyle='#0b1020';ctx.fillRect(0,0,cv.width,cv.height);
-  for(let i=0;i<tiles.length;i++){const t=tiles[i]; if(!t)continue; const x=(i%COLS)*CELL,y=(i/COLS|0)*CELL;
-    ctx.fillStyle=['','#2a3348','#ff4d6a','#ffd166','#fff','#19d37e','#ff8fab','#90e0ef'][t]; ctx.fillRect(x+1,y+1,CELL-2,CELL-2);}
-  ctx.fillStyle='#19d37e'; ctx.fillRect(p.x,p.y,14,16);
-  requestAnimationFrame(loop);
-}
-loop();
-<\/script></body></html>`;
-}
-function download(name, text, type){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([text],{type}));
-  a.download=name; a.click();
-}
-function downloadBytes(name, buf, type){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([buf],{type}));
-  a.download=name; a.click();
-}
-function slug(s){ return String(s||'game').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'')||'game'; }
-
-const MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
-<manifest package="au.com.futuret3ch.made">
-    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
-    <application android:label="MT Game" android:icon="@drawable/ic_launcher">
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>`;
-const ACTIVITY = `package au.com.futuret3ch.made;
-
-import android.os.Bundle;
-import android.webkit.WebView;
-import androidx.appcompat.app.AppCompatActivity;
-
-public class MainActivity extends AppCompatActivity {
-    @Override protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        WebView web = new WebView(this);
-        web.getSettings().setJavaScriptEnabled(true);
-        web.loadUrl("file:///android_asset/index.html");
-        setContentView(web);
-    }
-}`;
-
-function showTab(id){
-  document.querySelectorAll('#tabs button, #tree button').forEach(b=>b.classList.toggle('on', b.dataset.tab===id));
-  document.getElementById('pane-design').hidden = id!=='design';
-  document.getElementById('pane-html').hidden = id!=='html';
-  document.getElementById('pane-manifest').hidden = id!=='manifest';
-  document.getElementById('pane-activity').hidden = id!=='activity';
-  if(id==='html') document.getElementById('pane-html').textContent = gameHTML();
-  if(id==='manifest') document.getElementById('pane-manifest').textContent = MANIFEST;
-  if(id==='activity') document.getElementById('pane-activity').textContent = ACTIVITY;
-}
-document.querySelectorAll('#tabs button, #tree button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-document.getElementById('name').oninput=()=>{
-  document.getElementById('proj').textContent='app · '+document.getElementById('name').value;
-};
-
-document.getElementById('exportJson').onclick=()=>download((spec().name||'level')+'.json', JSON.stringify(spec()), 'application/json');
-document.getElementById('exportHtml').onclick=()=>{
-  const html=gameHTML();
-  download(slug(spec().name)+'.html', html, 'text/html');
-  logLine('Saved '+slug(spec().name)+'.html','ok');
-};
-
-document.getElementById('buildApk').onclick=async ()=>{
-  const html=gameHTML();
-  const name=slug(spec().name);
-  logLine('Build APK: packaging '+name+' …');
-  try {
-    const res=await fetch('/build/apk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:spec().name,html})});
-    if(!res.ok){
-      const t=await res.text();
-      throw new Error(t||('HTTP '+res.status));
-    }
-    const buf=await res.arrayBuffer();
-    downloadBytes(name+'.apk', buf, 'application/vnd.android.package-archive');
-    logLine('BUILD SUCCESSFUL — '+name+'.apk ('+buf.byteLength+' bytes). Sideload on a phone. This IDE signed it; Google Android Studio was not used.','ok');
-  } catch(e){
-    logLine('Build APK needs the MT Android Studio app (Windows / Mac / Android download). This browser preview cannot compile packages. '+e.message,'bad');
-  }
-};
-
-draw();
-</script>
+<script src="studio.js"></script>
 </body>
 </html>
