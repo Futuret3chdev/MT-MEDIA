@@ -320,8 +320,6 @@ export default function TapMatchApp({
   if (!profile?.setup) {
     return (
       <section className="rounded-3xl border border-sky-400/30 bg-sky-400/5 p-6 sm:p-8 space-y-4 max-w-xl">
-        <div className="text-[10px] tracking-[3px] text-sky-400">PROFILE SETUP</div>
-        <h2 className="text-xl font-semibold">Who are you on TAPMATCH?</h2>
         <p className="text-sm opacity-70">Same as the original app — employee or employer first, then your profile.</p>
         <div className="flex gap-2">
           {(['worker', 'business'] as Seat[]).map((s) => (
