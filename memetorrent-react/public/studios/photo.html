@@ -211,10 +211,10 @@ function drawHouse(){
   const pts=[[-w,0,0],[w,0,0],[w,0,d],[-w,0,d],[-w,h,0],[w,h,0],[w,h,d],[-w,h,d]].map(p=>P(p[0],p[1],p[2]));
   function poly(idx, fill){ ictx.beginPath(); idx.forEach((i,k)=>k?ictx.lineTo(pts[i].x,pts[i].y):ictx.moveTo(pts[i].x,pts[i].y)); ictx.closePath(); ictx.fillStyle=fill; ictx.fill(); }
   poly([1,2,6,5],'#6b4423'); poly([2,3,7,6],'#3f2a1a');
-  const a=pts[0],b=pts[1],c=pts[5],d=pts[4];
-  ictx.save(); ictx.beginPath(); ictx.moveTo(a.x,a.y); ictx.lineTo(b.x,b.y); ictx.lineTo(c.x,c.y); ictx.lineTo(d.x,d.y); ictx.closePath(); ictx.clip();
-  const minx=Math.min(a.x,b.x,c.x,d.x), miny=Math.min(a.y,b.y,c.y,d.y);
-  ictx.drawImage(fac, minx, miny, Math.max(8,Math.max(a.x,b.x,c.x,d.x)-minx), Math.max(8,Math.max(a.y,b.y,c.y,d.y)-miny));
+  const a=pts[0],b=pts[1],c=pts[5],p4=pts[4];
+  ictx.save(); ictx.beginPath(); ictx.moveTo(a.x,a.y); ictx.lineTo(b.x,b.y); ictx.lineTo(c.x,c.y); ictx.lineTo(p4.x,p4.y); ictx.closePath(); ictx.clip();
+  const minx=Math.min(a.x,b.x,c.x,p4.x), miny=Math.min(a.y,b.y,c.y,p4.y);
+  ictx.drawImage(fac, minx, miny, Math.max(8,Math.max(a.x,b.x,c.x,p4.x)-minx), Math.max(8,Math.max(a.y,b.y,c.y,p4.y)-miny));
   ictx.restore();
   const ridge=P(0,h+h*0.38,d/2);
   ictx.beginPath(); ictx.moveTo(pts[4].x,pts[4].y); ictx.lineTo(pts[5].x,pts[5].y); ictx.lineTo(ridge.x,ridge.y); ictx.fillStyle='#7f1d1d'; ictx.fill();
