@@ -66,6 +66,8 @@ export const API_CATS: ApiCat[] = [
       { method: 'GET', path: '/api/v1/tapmatch/apps', summary: 'Applications — mine or posted', auth: 'staff' },
       { method: 'POST', path: '/api/v1/tapmatch/apply', summary: 'Apply / Tap to Connect (staff preview)', auth: 'staff' },
       { method: 'POST', path: '/api/v1/tapmatch/status', summary: 'Accept, decline, start, complete a match', auth: 'staff' },
+      { method: 'GET', path: '/api/v1/tapmatch/reviews', summary: 'Reviews for a worker or business', auth: 'staff' },
+      { method: 'POST', path: '/api/v1/tapmatch/reviews', summary: 'Leave a review after a completed job', auth: 'staff' },
     ],
   },
   {

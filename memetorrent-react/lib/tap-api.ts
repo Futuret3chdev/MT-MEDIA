@@ -335,6 +335,20 @@ async function ensure(conn: Awaited<ReturnType<typeof getUserDb>>) {
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  await conn.execute(`
+    CREATE TABLE IF NOT EXISTS mt_tapmatch_reviews (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      job_id VARCHAR(48) NULL,
+      from_email VARCHAR(190) NOT NULL,
+      from_username VARCHAR(120) NULL,
+      to_username VARCHAR(120) NOT NULL,
+      rating INT NOT NULL DEFAULT 5,
+      text VARCHAR(400) NULL,
+      endorsement VARCHAR(120) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      KEY to_user (to_username, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 }
 
 async function sessionUser() {
@@ -348,6 +362,17 @@ function parseSkills(raw: unknown): string[] {
     .map((s) => s.trim())
     .filter(Boolean)
     .slice(0, 12);
+}
+
+function parseShifts(raw: unknown): { start: string; end: string }[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((s) => {
+      const row = s as { start?: unknown; end?: unknown };
+      return { start: String(row?.start || ''), end: String(row?.end || '') };
+    })
+    .filter((s) => s.start && s.end)
+    .slice(0, 14);
 }
 
 function mapMatchJob(r: Record<string, unknown>, demo = false) {
@@ -370,10 +395,12 @@ function mapMatchJob(r: Record<string, unknown>, demo = false) {
     location: r.location || extra.location || null,
     pay: r.pay || extra.pay || null,
     skills: parseSkills(r.skills || extra.skills),
-    commitment: extra.commitment || null,
-    hours: extra.hours || null,
-    status: r.status || 'open',
-    username: r.username || null,
+    commitment: extra.commitment ? String(extra.commitment) : null,
+    hours: extra.hours ? String(extra.hours) : null,
+    schedule_notes: extra.schedule_notes ? String(extra.schedule_notes) : null,
+    shifts: parseShifts(extra.shifts),
+    status: r.status ? String(r.status) : 'open',
+    username: r.username ? String(r.username) : null,
     created_at: r.created_at || null,
     demo,
   };
@@ -701,9 +728,28 @@ export async function handleTapV1(opts: {
     if (root === 'tapmatch' && rest[0] === 'profile' && method === 'GET') {
       const actor = await tapMatchActor();
       if (!actor.staff) return v1err('TAPMATCH is staff preview.', 401, 401);
-      const row = await loadProfileRow(actor.email);
-      const profile = mapProfile(row, actor);
-      const reviews = 0;
+      const look = String(q.get('username') || '').trim();
+      let row = await loadProfileRow(actor.email);
+      if (look) {
+        row = await withDb(async (conn) => {
+          const [rows] = await conn.execute(
+            'SELECT * FROM mt_tapmatch_profiles WHERE username = ? LIMIT 1',
+            [look]
+          );
+          return ((rows as Record<string, unknown>[])[0] || null) as Record<string, unknown> | null;
+        });
+      }
+      const profile = mapProfile(row, look ? { email: String(row?.email || ''), username: look } : actor);
+      const reviews = Number(
+        (await withDb(async (conn) => {
+          const who = String(profile.username || look || actor.username);
+          const [rows] = await conn.execute(
+            'SELECT COUNT(*) AS n FROM mt_tapmatch_reviews WHERE to_username = ?',
+            [who]
+          );
+          return Number((rows as { n: number }[])[0]?.n || 0);
+        })) || 0
+      );
       return v1ok({ profile, badge: tapMatchBadge(reviews) });
     }
 
@@ -867,13 +913,41 @@ export async function handleTapV1(opts: {
       });
     }
 
+    if (root === 'tapmatch' && rest[0] === 'jobs' && rest[1] && method === 'GET') {
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAPMATCH is staff preview.', 401, 401);
+      const id = rest[1];
+      const demo = DEMO_WORK.find((j) => j.id === id);
+      const row = await withDb(async (conn) => {
+        const [rows] = await conn.execute(
+          'SELECT id, connect_type, role, blurb, status, username, location, pay, skills, payload, created_at FROM mt_tapmatch_jobs WHERE id = ? LIMIT 1',
+          [id]
+        );
+        return (rows as Record<string, unknown>[])[0] || null;
+      });
+      if (!row && !demo) return v1err('Job not found', 404, 404);
+      return v1ok(row ? mapMatchJob(row, false) : demo);
+    }
+
     if (root === 'tapmatch' && rest[0] === 'jobs' && method === 'GET') {
       const connect = connectOf(q.get('connect') || q.get('type'));
+      const mine = q.get('mine') === '1';
+      const actor = mine ? await tapMatchActor() : null;
+      if (mine && actor && !actor.staff) return v1err('TAPMATCH is staff preview.', 401, 401);
       const live = (await withDb(async (conn) => {
-        const params = connect ? ['open', connect] : ['open'];
-        const where = connect
-          ? 'WHERE status = ? AND connect_type = ?'
-          : 'WHERE status = ?';
+        const params: string[] = [];
+        let where = 'WHERE 1=1';
+        if (mine && actor) {
+          where += ' AND email = ?';
+          params.push(actor.email);
+        } else {
+          where += ' AND status = ?';
+          params.push('open');
+        }
+        if (connect) {
+          where += ' AND connect_type = ?';
+          params.push(connect);
+        }
         try {
           const [rows] = await conn.execute(
             `SELECT id, connect_type, role, blurb, status, username, location, pay, skills, payload, created_at FROM mt_tapmatch_jobs ${where} ORDER BY created_at DESC LIMIT 40`,
@@ -888,7 +962,7 @@ export async function handleTapV1(opts: {
           return (rows as Record<string, unknown>[]).map((r) => mapMatchJob(r, false));
         }
       })) || [];
-      const demo = DEMO_WORK.filter((j) => !connect || j.connect === connect);
+      const demo = mine ? [] : DEMO_WORK.filter((j) => !connect || j.connect === connect);
       return v1ok({ jobs: [...live, ...demo] });
     }
 
@@ -909,9 +983,23 @@ export async function handleTapV1(opts: {
       const skills = parseSkills(body.skills);
       const commitment = String(body.commitment || '').trim().slice(0, 40);
       const hours = String(body.hours || body.hoursPerWeek || '').trim().slice(0, 40);
+      const schedule_notes = String(body.schedule_notes || body.scheduleNotes || '').trim().slice(0, 400);
+      const shifts = parseShifts(body.shifts);
       if (role.length < 2) return v1err('role is required', 400, 400);
+      const payload = JSON.stringify({ commitment, hours, skills, schedule_notes, shifts });
+      const existingId = String(body.id || '').trim();
+      if (existingId) {
+        const saved = await withDb(async (conn) => {
+          await conn.execute(
+            'UPDATE mt_tapmatch_jobs SET connect_type=?, role=?, blurb=?, location=?, pay=?, skills=?, payload=? WHERE id=? AND email=?',
+            [connect, role, blurb, location || null, pay || null, skills.join(',') || null, payload, existingId, actor.email]
+          );
+          return true;
+        });
+        if (!saved) return v1err('Could not update TAPMATCH job', 502, 502);
+        return v1ok({ id: existingId, product: 'tapmatch', connect, role, blurb, location: location || null, pay: pay || null, skills, commitment, hours, schedule_notes, shifts, status: 'open', username: actor.username });
+      }
       const id = newId('match');
-      const payload = JSON.stringify({ commitment, hours, skills });
       const saved = await withDb(async (conn) => {
         await conn.execute(
           'INSERT INTO mt_tapmatch_jobs (id, connect_type, role, blurb, email, username, status, location, pay, skills, payload) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
@@ -931,6 +1019,8 @@ export async function handleTapV1(opts: {
         skills,
         commitment: commitment || null,
         hours: hours || null,
+        schedule_notes: schedule_notes || null,
+        shifts,
         status: 'open',
         username: actor.username,
       });
@@ -997,10 +1087,55 @@ export async function handleTapV1(opts: {
       if (!id || !allowed.includes(status)) return v1err('id and status required', 400, 400);
       const saved = await withDb(async (conn) => {
         await conn.execute('UPDATE mt_tapmatch_apps SET status = ? WHERE id = ?', [status, id]);
+        if (status === 'accepted') {
+          const [rows] = await conn.execute('SELECT job_id FROM mt_tapmatch_apps WHERE id = ? LIMIT 1', [id]);
+          const jobId = String((rows as { job_id?: string }[])[0]?.job_id || '');
+          if (jobId) await conn.execute('UPDATE mt_tapmatch_jobs SET status = ? WHERE id = ?', ['filled', jobId]);
+        }
         return true;
       });
       if (!saved) return v1err('Could not update application', 502, 502);
       return v1ok({ id, status });
+    }
+
+    if (root === 'tapmatch' && rest[0] === 'reviews' && method === 'GET') {
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAPMATCH is staff preview.', 401, 401);
+      const who = String(q.get('username') || actor.username);
+      const rows = (await withDb(async (conn) => {
+        const [list] = await conn.execute(
+          'SELECT id, job_id, from_username, to_username, rating, text, endorsement, created_at FROM mt_tapmatch_reviews WHERE to_username = ? ORDER BY created_at DESC LIMIT 40',
+          [who]
+        );
+        return list as Record<string, unknown>[];
+      })) || [];
+      return v1ok({ reviews: rows });
+    }
+
+    if (root === 'tapmatch' && rest[0] === 'reviews' && method === 'POST') {
+      const actor = await tapMatchActor();
+      if (!actor.staff) return v1err('TAPMATCH is staff preview.', 401, 401);
+      let body: Record<string, unknown> = {};
+      try {
+        body = await opts.request.json();
+      } catch {
+        body = {};
+      }
+      const to_username = String(body.to_username || body.username || '').trim().slice(0, 120);
+      const job_id = String(body.job_id || '').trim().slice(0, 48);
+      const rating = Math.max(1, Math.min(5, Number(body.rating) || 5));
+      const text = String(body.text || '').trim().slice(0, 400);
+      const endorsement = String(body.endorsement || '').trim().slice(0, 120);
+      if (to_username.length < 2) return v1err('to_username is required', 400, 400);
+      const saved = await withDb(async (conn) => {
+        await conn.execute(
+          'INSERT INTO mt_tapmatch_reviews (job_id, from_email, from_username, to_username, rating, text, endorsement) VALUES (?,?,?,?,?,?,?)',
+          [job_id || null, actor.email, actor.username, to_username, rating, text || null, endorsement || null]
+        );
+        return true;
+      });
+      if (!saved) return v1err('Could not store review', 502, 502);
+      return v1ok({ ok: true, to_username, rating });
     }
 
     if (root === 'tapmatch' && rest[0] === 'apply' && method === 'POST') {

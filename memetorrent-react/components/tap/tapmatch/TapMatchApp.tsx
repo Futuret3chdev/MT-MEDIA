@@ -19,7 +19,9 @@ type View =
   | 'settings'
   | 'post'
   | 'applicants'
-  | 'job';
+  | 'job'
+  | 'job-edit'
+  | 'person';
 
 type Profile = {
   setup?: boolean;
@@ -39,6 +41,8 @@ type Profile = {
   username?: string;
 };
 
+type Shift = { start: string; end: string };
+
 type Job = {
   id: string;
   connect: string;
@@ -48,6 +52,10 @@ type Job = {
   pay?: string | null;
   skills?: string[];
   commitment?: string | null;
+  hours?: string | null;
+  schedule_notes?: string | null;
+  shifts?: Shift[];
+  status?: string;
   username?: string | null;
   demo?: boolean;
   match?: { matchPct: number; reasons: string[]; hidden?: boolean };
@@ -70,6 +78,29 @@ type AppRow = {
 const input = 'w-full rounded-xl bg-white/5 border border-white/15 px-3 py-2 text-sm';
 const btn = 'rounded-full bg-sky-400 text-black font-bold text-sm px-4 py-2 disabled:opacity-50';
 const ghost = 'rounded-2xl border border-white/15 px-3 py-2 text-sm';
+
+function payNumber(pay?: string | null) {
+  const n = Number(String(pay || '').replace(/[^0-9.]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function hoursPay(job: { shifts?: Shift[]; pay?: string | null }) {
+  const shifts = (job.shifts || []).filter((s) => s.start && s.end);
+  const rate = payNumber(job.pay);
+  if (!shifts.length || !rate) return { hours: '0.0', pay: job.pay || 'Pay on request' };
+  const ms = shifts.reduce((sum, s) => sum + (new Date(s.end).getTime() - new Date(s.start).getTime()), 0);
+  const hours = Math.max(0, ms / 3600000);
+  const amount = hours * rate;
+  return { hours: hours.toFixed(1), pay: `$${amount.toFixed(2)} (${hours.toFixed(1)}h)` };
+}
+
+function formatShift(s: Shift) {
+  if (!s.start || !s.end) return '';
+  const a = new Date(s.start);
+  const b = new Date(s.end);
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return `${s.start} → ${s.end}`;
+  return `${a.toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} → ${b.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`;
+}
 
 function Chip({
   on,
@@ -113,7 +144,10 @@ export default function TapMatchApp({
   const [posted, setPosted] = useState<Job[]>([]);
   const [connect, setConnect] = useState<'all' | 'fast' | 'longterm' | 'foryou'>('foryou');
   const [city, setCity] = useState('Any');
+  const [roleFilter, setRoleFilter] = useState('Any');
   const [picked, setPicked] = useState<Job | null>(null);
+  const [person, setPerson] = useState<Profile | null>(null);
+  const [review, setReview] = useState({ rating: 5, text: '', to: '', job_id: '' });
   const [draft, setDraft] = useState<Profile>({
     seat: 'worker',
     first_name: '',
@@ -131,13 +165,17 @@ export default function TapMatchApp({
   });
 
   const [post, setPost] = useState({
+    id: '',
     role: '',
     blurb: '',
     location: 'Melbourne',
     pay: '',
     connect: 'fast' as 'fast' | 'longterm',
     commitment: 'part-time',
+    hours: '',
+    schedule_notes: '',
     skills: [] as string[],
+    shifts: [{ start: '', end: '' }] as Shift[],
   });
 
   const seat: Seat = profile?.seat === 'business' ? 'business' : 'worker';
@@ -180,13 +218,13 @@ export default function TapMatchApp({
 
   const loadPosted = useCallback(async () => {
     const [jobsRes, appsRes] = await Promise.all([
-      fetch('/api/v1/tapmatch/jobs', { credentials: 'include', cache: 'no-store' }),
+      fetch('/api/v1/tapmatch/jobs?mine=1', { credentials: 'include', cache: 'no-store' }),
       fetch('/api/v1/tapmatch/apps?posted=1', { credentials: 'include', cache: 'no-store' }),
     ]);
     const jd = await jobsRes.json();
     const ad = await appsRes.json();
     const list: Job[] = Array.isArray(jd?.data?.jobs) ? jd.data.jobs : [];
-    setPosted(list.filter((j) => !j.demo));
+    setPosted(list);
     setApps(Array.isArray(ad?.data?.applications) ? ad.data.applications : []);
   }, []);
 
@@ -213,9 +251,13 @@ export default function TapMatchApp({
   }, [view, profile?.setup, seat, loadMatches, loadMine, loadPosted, loadHome]);
 
   const shownJobs = useMemo(() => {
-    if (connect === 'foryou') return jobs.filter((j) => !j.match?.hidden).sort((a, b) => (b.match?.matchPct || 0) - (a.match?.matchPct || 0));
-    return jobs;
-  }, [jobs, connect]);
+    let list = jobs;
+    if (connect === 'foryou') list = list.filter((j) => !j.match?.hidden).sort((a, b) => (b.match?.matchPct || 0) - (a.match?.matchPct || 0));
+    if (roleFilter !== 'Any') {
+      list = list.filter((j) => (j.skills || []).some((s) => s.toLowerCase() === roleFilter.toLowerCase()) || j.role.toLowerCase().includes(roleFilter.toLowerCase()));
+    }
+    return list;
+  }, [jobs, connect, roleFilter]);
 
   async function saveProfile(extra?: Partial<Profile>) {
     setBusy(true);
@@ -298,15 +340,30 @@ export default function TapMatchApp({
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(post),
+        body: JSON.stringify({
+          ...post,
+          shifts: post.connect === 'fast' ? post.shifts.filter((s) => s.start && s.end) : [],
+        }),
       });
       const d = await r.json();
       if (d?.status?.error_code) {
         setMsg(d.status.error_message || 'Could not post');
         return;
       }
-      setMsg(`Posted ${post.role}`);
-      setPost({ ...post, role: '', blurb: '', pay: '', skills: [] });
+      setMsg(post.id ? `Updated ${post.role}` : `Posted ${post.role}`);
+      setPost({
+        id: '',
+        role: '',
+        blurb: '',
+        location: post.location,
+        pay: '',
+        connect: post.connect,
+        commitment: 'part-time',
+        hours: '',
+        schedule_notes: '',
+        skills: [],
+        shifts: [{ start: '', end: '' }],
+      });
       setView('manager');
     } catch {
       setMsg('Network error');
@@ -487,6 +544,12 @@ export default function TapMatchApp({
                 <option key={c}>{c}</option>
               ))}
             </select>
+            <select className={input + ' !w-auto'} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+              <option>Any</option>
+              {TAPMATCH_SKILLS.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
           </div>
           {shownJobs.map((job) => (
             <JobCard
@@ -508,6 +571,16 @@ export default function TapMatchApp({
         <section className="rounded-3xl border border-white/10 p-6 space-y-3">
           <button className="text-sm opacity-60" onClick={() => setView('match')}>← Match</button>
           <JobCard job={picked} onApply={() => apply(picked)} busy={busy} />
+          {!!picked.shifts?.length && (
+            <div className="text-sm space-y-1">
+              {picked.shifts.map((s, i) => (
+                <div key={i} className="opacity-70">{formatShift(s)}</div>
+              ))}
+              <div className="text-sky-300">{hoursPay(picked).pay}</div>
+            </div>
+          )}
+          {picked.hours && <p className="text-sm opacity-70">{picked.hours} hrs / week · {picked.commitment}</p>}
+          {picked.schedule_notes && <p className="text-sm opacity-60">{picked.schedule_notes}</p>}
         </section>
       )}
 
@@ -516,29 +589,60 @@ export default function TapMatchApp({
           apps={apps}
           tabs={['pending', 'accepted', 'inprogress', 'completed', 'cancelled']}
           onStatus={setAppStatus}
+          onReview={(a) => setReview({ rating: 5, text: '', to: a.employer || '', job_id: a.job_id })}
         />
+      )}
+      {review.to && (
+        <form
+          className="rounded-2xl border border-white/10 p-4 space-y-2"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await fetch('/api/v1/tapmatch/reviews', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ to_username: review.to, job_id: review.job_id, rating: review.rating, text: review.text }),
+            });
+            setReview({ rating: 5, text: '', to: '', job_id: '' });
+            setMsg('Review saved');
+          }}
+        >
+          <div className="text-sm font-semibold">Review @{review.to}</div>
+          <select className={input} value={review.rating} onChange={(e) => setReview({ ...review, rating: Number(e.target.value) })}>
+            {[5, 4, 3, 2, 1].map((n) => (
+              <option key={n} value={n}>{n} star{n === 1 ? '' : 's'}</option>
+            ))}
+          </select>
+          <textarea className={input} rows={2} placeholder="How did it go" value={review.text} onChange={(e) => setReview({ ...review, text: e.target.value })} />
+          <button className={btn} type="submit">Save review</button>
+        </form>
       )}
 
       {view === 'manager' && seat === 'business' && (
-        <section className="space-y-3">
-          <p className="text-sm opacity-70">Open roles you posted. Open applicants to accept a match.</p>
-          {posted.map((job) => (
-            <article key={job.id} className="rounded-2xl border border-white/10 p-5">
-              <div className="font-semibold">{job.role}</div>
-              <p className="text-sm opacity-60">{job.location} · {job.pay || 'Pay on request'}</p>
-              <button
-                className={btn + ' mt-3'}
-                onClick={() => {
-                  setPicked(job);
-                  setView('applicants');
-                }}
-              >
-                Applicants
-              </button>
-            </article>
-          ))}
-          {!posted.length && <p className="text-sm opacity-60">No posted roles yet.</p>}
-        </section>
+        <BusinessManager
+          jobs={posted}
+          onApplicants={(job) => {
+            setPicked(job);
+            setView('applicants');
+          }}
+          onEdit={(job) => {
+            setPicked(job);
+            setPost({
+              id: job.id,
+              role: job.role,
+              blurb: job.blurb || '',
+              location: job.location || 'Melbourne',
+              pay: job.pay || '',
+              connect: job.connect === 'longterm' ? 'longterm' : 'fast',
+              commitment: job.commitment || 'part-time',
+              hours: job.hours || '',
+              schedule_notes: job.schedule_notes || '',
+              skills: job.skills || [],
+              shifts: job.shifts?.length ? job.shifts : [{ start: '', end: '' }],
+            });
+            setView('post');
+          }}
+        />
       )}
 
       {view === 'applicants' && picked && (
@@ -553,6 +657,20 @@ export default function TapMatchApp({
                 <p className="text-sm opacity-70">{a.note || 'No note'}</p>
                 <p className="text-xs opacity-50 mt-1 capitalize">{a.status}</p>
                 <div className="flex gap-2 mt-3">
+                  <button
+                    className={ghost}
+                    onClick={async () => {
+                      const r = await fetch(`/api/v1/tapmatch/profile?username=${encodeURIComponent(a.username || '')}`, {
+                        credentials: 'include',
+                        cache: 'no-store',
+                      });
+                      const d = await r.json();
+                      setPerson(d?.data?.profile || { username: a.username, setup: true });
+                      setView('person');
+                    }}
+                  >
+                    Profile
+                  </button>
                   <button className={btn} disabled={busy} onClick={() => setAppStatus(a.id, 'accepted')}>
                     Accept match
                   </button>
@@ -565,6 +683,22 @@ export default function TapMatchApp({
           {!apps.filter((a) => a.job_id === picked.id).length && (
             <p className="text-sm opacity-60">No applicants yet.</p>
           )}
+        </section>
+      )}
+
+      {view === 'person' && person && (
+        <section className="rounded-3xl border border-sky-400/30 bg-sky-400/5 p-6 space-y-3">
+          <button className="text-sm opacity-60" onClick={() => setView('applicants')}>← Applicants</button>
+          <h2 className="text-xl font-semibold">
+            {[person.first_name, person.last_name].filter(Boolean).join(' ') || `@${person.username}`}
+          </h2>
+          <p className="text-sm opacity-70">{person.bio || 'No bio yet.'}</p>
+          <p className="text-sm opacity-60">{person.location} {person.rate ? `· AUD ${person.rate}/hr` : ''}</p>
+          <div className="flex flex-wrap gap-2">
+            {(person.skills || []).map((s) => (
+              <span key={s} className="text-[11px] rounded-full border border-white/15 px-2 py-0.5 opacity-80">{s}</span>
+            ))}
+          </div>
         </section>
       )}
 
@@ -591,11 +725,50 @@ export default function TapMatchApp({
             ))}
           </div>
           {post.connect === 'longterm' && (
-            <select className={input + ' sm:col-span-2'} value={post.commitment} onChange={(e) => setPost({ ...post, commitment: e.target.value })}>
-              <option value="part-time">Part-time</option>
-              <option value="full-time">Full-time</option>
-              <option value="contract">Contract</option>
-            </select>
+            <>
+              <select className={input} value={post.commitment} onChange={(e) => setPost({ ...post, commitment: e.target.value })}>
+                <option value="part-time">Part-time</option>
+                <option value="full-time">Full-time</option>
+                <option value="contract">Contract</option>
+              </select>
+              <input className={input} placeholder="Hours / week" value={post.hours} onChange={(e) => setPost({ ...post, hours: e.target.value })} />
+              <input className={input + ' sm:col-span-2'} placeholder="Schedule notes" value={post.schedule_notes} onChange={(e) => setPost({ ...post, schedule_notes: e.target.value })} />
+            </>
+          )}
+          {post.connect === 'fast' && (
+            <div className="sm:col-span-2 space-y-2">
+              {post.shifts.map((s, i) => (
+                <div key={i} className="grid sm:grid-cols-2 gap-2">
+                  <input
+                    type="datetime-local"
+                    className={input}
+                    value={s.start}
+                    onChange={(e) => {
+                      const shifts = post.shifts.slice();
+                      shifts[i] = { ...shifts[i], start: e.target.value };
+                      setPost({ ...post, shifts });
+                    }}
+                  />
+                  <input
+                    type="datetime-local"
+                    className={input}
+                    value={s.end}
+                    onChange={(e) => {
+                      const shifts = post.shifts.slice();
+                      shifts[i] = { ...shifts[i], end: e.target.value };
+                      setPost({ ...post, shifts });
+                    }}
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                className={ghost}
+                onClick={() => setPost({ ...post, shifts: [...post.shifts, { start: '', end: '' }] })}
+              >
+                Add shift
+              </button>
+            </div>
           )}
           <textarea required rows={2} className={input + ' sm:col-span-2'} placeholder="What you need" value={post.blurb} onChange={(e) => setPost({ ...post, blurb: e.target.value })} />
           <div className="sm:col-span-2 flex flex-wrap gap-2">
@@ -615,7 +788,7 @@ export default function TapMatchApp({
             ))}
           </div>
           <button type="submit" disabled={busy} className={btn + ' sm:col-span-2'}>
-            {busy ? 'Posting…' : 'Post role'}
+            {busy ? 'Saving…' : post.id ? 'Save role' : 'Post role'}
           </button>
         </form>
       )}
@@ -832,14 +1005,51 @@ function JobCard({
   );
 }
 
+function BusinessManager({
+  jobs,
+  onApplicants,
+  onEdit,
+}: {
+  jobs: Job[];
+  onApplicants: (job: Job) => void;
+  onEdit: (job: Job) => void;
+}) {
+  const [tab, setTab] = useState('open');
+  const list = jobs.filter((j) => String(j.status || 'open').toLowerCase() === tab);
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {['open', 'filled', 'completed'].map((t) => (
+          <Chip key={t} on={tab === t} onClick={() => setTab(t)}>
+            {t}
+          </Chip>
+        ))}
+      </div>
+      {list.map((job) => (
+        <article key={job.id} className="rounded-2xl border border-white/10 p-5">
+          <div className="font-semibold">{job.role}</div>
+          <p className="text-sm opacity-60">{job.location} · {job.pay || 'Pay on request'}</p>
+          <div className="flex gap-2 mt-3">
+            <button className={btn} onClick={() => onApplicants(job)}>Applicants</button>
+            <button className={ghost} onClick={() => onEdit(job)}>Edit</button>
+          </div>
+        </article>
+      ))}
+      {!list.length && <p className="text-sm opacity-60">Nothing in {tab}.</p>}
+    </section>
+  );
+}
+
 function ManagerList({
   apps,
   tabs,
   onStatus,
+  onReview,
 }: {
   apps: AppRow[];
   tabs: string[];
   onStatus: (id: number, status: string) => void;
+  onReview?: (a: AppRow) => void;
 }) {
   const [tab, setTab] = useState(tabs[0]);
   const list = apps.filter((a) => String(a.status || 'pending').toLowerCase() === tab);
@@ -870,6 +1080,11 @@ function ManagerList({
             {tab === 'inprogress' && (
               <button className={btn} onClick={() => onStatus(a.id, 'completed')}>
                 Complete
+              </button>
+            )}
+            {tab === 'completed' && onReview && a.employer && (
+              <button className={ghost} onClick={() => onReview(a)}>
+                Review
               </button>
             )}
           </div>
