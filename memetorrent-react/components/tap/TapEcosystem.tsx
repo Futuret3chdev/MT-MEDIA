@@ -14,25 +14,22 @@ export default function TapEcosystem() {
     <section id="tap" className="py-12 sm:py-20 border-t border-white/10 bg-black scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-xs tracking-[3px] text-emerald-400 mb-3">TAP ECO SYSTEM</div>
-        <div className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-[-1.5px] max-w-3xl mb-3 sm:mb-4">
+        <div className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-[-1.5px] max-w-3xl mb-8 sm:mb-10">
           TAP. TAPSHOP. TAPMATCH.
         </div>
-        <p className="max-w-2xl opacity-70 mb-8 sm:mb-10 text-sm sm:text-base">
-          Three TAP apps. One MT portal login — coming soon. Play, trade, and work. Then the library below.
-        </p>
 
         <div className="grid sm:grid-cols-3 gap-4 sm:gap-6 mb-10 sm:mb-16">
           {TAP_APPS.map((app) => (
-            <article
+            <a
               key={app.id}
+              href={app.href}
               id={app.id === 'tap' ? 'tap-play' : app.id}
-              className="rounded-3xl border border-sky-400/40 p-7 bg-white/[0.015] scroll-mt-28"
+              className="rounded-3xl border border-sky-400/40 p-7 bg-white/[0.015] scroll-mt-28 hover:bg-sky-400/10 block"
             >
               <div className="text-[10px] tracking-[2px] text-emerald-400 mb-2">{app.tag}</div>
               <div className="font-semibold text-2xl mb-2 tracking-tight">{app.name}</div>
-              <div className="text-[10px] tracking-[2px] text-yellow-400 mb-3">LOGIN COMING SOON</div>
               <p className="text-sm opacity-70 leading-relaxed">{app.desc}</p>
-            </article>
+            </a>
           ))}
         </div>
 

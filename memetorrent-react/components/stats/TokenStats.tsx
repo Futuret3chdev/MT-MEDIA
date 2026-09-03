@@ -330,7 +330,7 @@ export default function TokenStats() {
                 })}
               </div>
             </div>
-            <div className="text-[10px] mt-2 opacity-50 text-center">TAP • TAPSHOP • TAPMATCH — three TAP apps, one portal</div>
+            <div className="text-[10px] mt-2 opacity-50 text-center">TAP • TAPSHOP • TAPMATCH</div>
           </div>
         </div>
       </motion.div>

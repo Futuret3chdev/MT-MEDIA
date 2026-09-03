@@ -29,19 +29,7 @@ export const PRODUCT_TABS: ProductTab[] = [
     id: 'tap',
     label: 'TAP',
     href: '/#tap',
-    blurb: 'Play layer. Games and Rockets. Login coming soon.',
-  },
-  {
-    id: 'tapshop',
-    label: 'TAPSHOP',
-    href: '/#tapshop',
-    blurb: 'Trade items with $MT and Rockets. Login coming soon.',
-  },
-  {
-    id: 'tapmatch',
-    label: 'TAPMATCH',
-    href: '/#tapmatch',
-    blurb: 'Employees and employers. Fast Connect or long-term. Login coming soon.',
+    blurb: 'TAP, TAPSHOP, TAPMATCH. Play, trade, work — TAP desk is in the portal.',
   },
   {
     id: 'bot',
@@ -85,6 +73,7 @@ export function tabFromPath(pathname: string): string {
   if (pathname.startsWith('/shield')) return 'shield';
   if (pathname.startsWith('/developers')) return 'developers';
   if (pathname.startsWith('/status')) return 'stats';
+  if (pathname.startsWith('/portal/tap') || pathname.startsWith('/portal/tapshop') || pathname.startsWith('/portal/tapmatch')) return 'tap';
   if (pathname.startsWith('/tap') || pathname.startsWith('/catalog')) return pathname.startsWith('/tap') ? 'tap' : 'games';
   if (pathname.startsWith('/bot')) return 'bot';
   if (pathname.startsWith('/studio')) return 'studio';

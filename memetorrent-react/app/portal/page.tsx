@@ -209,6 +209,32 @@ export default function PortalPage() {
         </button>
       </div>
 
+      <section className="mb-8">
+        <div className="uppercase text-[10px] tracking-[3px] opacity-50 mb-3">Apps</div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">
+          {[
+            { href: 'https://mt.futuret3ch.com.au/', label: 'Wallet', icon: '👛', external: true },
+            { href: '/catalog', label: 'Games', icon: '🎮' },
+            { href: '/portal/tap', label: 'TAP', icon: '▶' },
+            { href: '/portal/tapshop', label: 'TAPSHOP', icon: '🛒' },
+            { href: '/portal/tapmatch', label: 'TAPMATCH', icon: '🤝' },
+            { href: '/chat', label: 'Chat', icon: '💬' },
+            { href: '/shield', label: 'Shield', icon: '🛡' },
+          ].map((app) => (
+            <Link
+              key={app.label}
+              href={app.href}
+              target={app.external ? '_blank' : undefined}
+              rel={app.external ? 'noopener' : undefined}
+              className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-2 py-4 hover:border-emerald-400/50 hover:bg-white/[0.06]"
+            >
+              <span className="text-2xl leading-none">{app.icon}</span>
+              <span className="text-[11px] font-semibold tracking-wide text-center">{app.label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <div className="flex flex-wrap gap-2 mb-8 p-1 rounded-full border border-white/10 w-fit">
         {(['users', 'developers', 'businesses'] as Mode[]).map((m) => (
           <button

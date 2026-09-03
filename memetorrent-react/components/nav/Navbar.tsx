@@ -8,7 +8,6 @@ import NoticeBell from '@/components/nav/NoticeBell';
 import LiveScoreIcon from '@/components/nav/LiveScoreIcon';
 import ProductTabBar from '@/components/nav/ProductTabBar';
 import { LINKS } from '@/lib/constants';
-import { TAP_APPS, type AuthDestination } from '@/lib/tap-apps';
 import { Connection, PublicKey, VersionedTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import servicesData from '@/app/status/services.json';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -16,7 +15,6 @@ import { useWallet } from '@solana/wallet-adapter-react';
 export default function Navbar() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [authDestination, setAuthDestination] = useState<AuthDestination>('mt');
 
   const [formData, setFormData] = useState({
     username: '',
@@ -38,7 +36,6 @@ export default function Navbar() {
 
   const openAuth = (mode: 'login' | 'register') => {
     setAuthMode(mode);
-    setAuthDestination('mt');
     setFormData({ username: '', email: '', password: '' });
     setAuthError('');
     setAuthOpen(true);
@@ -58,11 +55,6 @@ export default function Navbar() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (authDestination !== 'mt') {
-      const app = TAP_APPS.find((a) => a.id === authDestination);
-      setAuthError(`${app?.name || 'TAP'} login is coming soon. Same MT portal — not open yet.`);
-      return;
-    }
     setAuthBusy(true);
     setAuthError('');
     try {
@@ -269,8 +261,8 @@ export default function Navbar() {
             <a href="/#tokenomics" className="opacity-70 hover:opacity-100">TOKENOMICS</a>
             <a href="/#utilities" className="opacity-70 hover:opacity-100">UTILITIES</a>
             <a href="/#tap" className="opacity-70 hover:opacity-100">TAP</a>
-            <a href="/#tapshop" className="opacity-70 hover:opacity-100">TAPSHOP</a>
-            <a href="/#tapmatch" className="opacity-70 hover:opacity-100">TAPMATCH</a>
+            <a href="/portal/tapshop" className="opacity-70 hover:opacity-100">TAPSHOP</a>
+            <a href="/portal/tapmatch" className="opacity-70 hover:opacity-100">TAPMATCH</a>
             <a href="/catalog" className="opacity-70 hover:opacity-100">GAMES</a>
             <a href="/developers" className="opacity-70 hover:opacity-100">API</a>
             <a
@@ -314,8 +306,8 @@ export default function Navbar() {
           <a href="/#tokenomics" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TOKENOMICS</a>
           <a href="/#utilities" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">UTILITIES</a>
           <a href="/#tap" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAP</a>
-          <a href="/#tapshop" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAPSHOP</a>
-          <a href="/#tapmatch" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAPMATCH</a>
+          <a href="/portal/tapshop" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAPSHOP</a>
+          <a href="/portal/tapmatch" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">TAPMATCH</a>
           <a href="/catalog" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">GAMES</a>
           <a href="/developers" onClick={() => setMobileMenuOpen(false)} className="py-1 opacity-70 hover:opacity-100">API</a>
           <a
@@ -553,46 +545,9 @@ export default function Navbar() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-6">
-                <div className="text-xl font-semibold tracking-tight">Enter the MT Eco System</div>
+                <div className="text-xl font-semibold tracking-tight">MT Portal</div>
                 <button onClick={closeAuth} className="opacity-60 hover:opacity-100 text-xl leading-none">×</button>
               </div>
-
-              <div className="mb-2 text-[10px] tracking-[2px] opacity-50">SIGN IN TO</div>
-              <button
-                type="button"
-                onClick={() => setAuthDestination('mt')}
-                className={`w-full rounded-2xl border px-3 py-3 text-left mb-2 ${authDestination === 'mt' ? 'border-emerald-400 bg-emerald-400/10' : 'border-white/10 bg-white/[0.03]'}`}
-              >
-                <div className="text-sm font-semibold">MT Portal</div>
-                <div className="text-[10px] opacity-60 mt-1">INFINITE WALLET · $MT · catalog</div>
-              </button>
-
-              <div className="mb-2 mt-3 text-[10px] tracking-[2px] opacity-50">THE THREE TAPS — LOGIN COMING SOON</div>
-              <div className="grid grid-cols-3 gap-2 mb-6">
-                {TAP_APPS.map((app) => (
-                  <button
-                    key={app.id}
-                    type="button"
-                    onClick={() => setAuthDestination(app.id)}
-                    className={`rounded-2xl border px-2 py-3 text-center ${authDestination === app.id ? 'border-sky-400 bg-sky-400/10' : 'border-white/10 bg-white/[0.03]'}`}
-                  >
-                    <div className="text-sm font-semibold">{app.name}</div>
-                    <div className="text-[10px] opacity-60 mt-1">{app.tag}</div>
-                    <div className="text-[9px] text-yellow-400 mt-1 tracking-wider">SOON</div>
-                  </button>
-                ))}
-              </div>
-
-              {authDestination !== 'mt' && (
-                <div className="mb-5 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-4 text-center">
-                  <div className="text-yellow-400 text-xs font-semibold tracking-[2px] mb-1">
-                    {TAP_APPS.find((a) => a.id === authDestination)?.name} — COMING SOON
-                  </div>
-                  <p className="text-sm opacity-80 leading-relaxed">
-                    {TAP_APPS.find((a) => a.id === authDestination)?.desc} Not open yet. Same MT portal login.
-                  </p>
-                </div>
-              )}
 
               {/* Tabs */}
               <div className="flex border-b border-white/10 mb-6">
@@ -655,16 +610,12 @@ export default function Navbar() {
                   disabled={authBusy}
                   className="mt-2 w-full py-3.5 rounded-2xl bg-white text-black font-semibold tracking-wider text-sm active:opacity-90 disabled:opacity-50"
                 >
-                  {authDestination !== 'mt'
-                    ? `${TAP_APPS.find((a) => a.id === authDestination)?.name} COMING SOON`
-                    : authBusy ? 'PLEASE WAIT' : authMode === 'login' ? 'ENTER PORTAL' : 'CREATE ACCOUNT'}
+                  {authBusy ? 'PLEASE WAIT' : authMode === 'login' ? 'ENTER PORTAL' : 'CREATE ACCOUNT'}
                 </button>
               </form>
 
               <div className="text-center text-[10px] mt-4 opacity-50">
-                {authDestination !== 'mt'
-                  ? 'TAP, TAPSHOP, and TAPMATCH logins open inside this MT portal.'
-                  : 'Same account on every Futuret3ch site. Your developer license stays on this profile.'}
+                Same account on every Futuret3ch site. Your developer license stays on this profile.
               </div>
             </motion.div>
           </div>
