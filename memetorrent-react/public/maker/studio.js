@@ -40,21 +40,25 @@ let playing=false, raf=0, keys={}, fps=0, frames=0, lastFps=performance.now();
 let replay=[], replaying=false, ri=0;
 
 const cv=document.getElementById('c');
-const ctx=cv.getContext('2d');
-cv.width=COLS*CELL; cv.height=ROWS*CELL;
+const ctx=cv?cv.getContext('2d'):null;
+if(cv){ cv.width=COLS*CELL; cv.height=ROWS*CELL; }
 const bar=document.getElementById('brushes');
 let brush=1;
-BRUSHES.forEach(([id,label])=>{
-  const b=document.createElement('button');
-  b.textContent=(id+1)+' '+label;
-  b.onclick=()=>{ brush=id; [...bar.children].forEach(x=>x.classList.toggle('on',x===b)); };
-  if(id===1) b.classList.add('on');
-  bar.appendChild(b);
-});
+if(bar){
+  BRUSHES.forEach(([id,label])=>{
+    const b=document.createElement('button');
+    b.type='button';
+    b.textContent=(id+1)+' '+label;
+    b.onclick=()=>{ brush=id; [...bar.children].forEach(x=>x.classList.toggle('on',x===b)); };
+    if(id===1) b.classList.add('on');
+    bar.appendChild(b);
+  });
+}
 const sel=document.getElementById('devsel');
-Object.values(DEVICES).forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.label; sel.appendChild(o); });
+if(sel) Object.values(DEVICES).forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.label; sel.appendChild(o); });
 
 function $(id){ return document.getElementById(id); }
+function on(id, ev, fn){ const el=$(id); if(el) el[ev]=fn; }
 function log(msg, cls, tag){
   const line=`${new Date().toISOString().slice(11,23)} ${tag||'MTStudio'}: ${msg}`;
   const el=document.createElement('div');
@@ -124,6 +128,7 @@ function color(t,T){
 }
 
 function drawEditor(){
+  if(!ctx||!cv) return;
   const T=th();
   ctx.fillStyle=T.bg; ctx.fillRect(0,0,cv.width,cv.height);
   for(let i=0;i<tiles.length;i++){
@@ -137,6 +142,7 @@ function drawEditor(){
   }
 }
 function paintAt(e){
+  if(!cv) return;
   const r=cv.getBoundingClientRect();
   const x=Math.floor((e.clientX-r.left)/CELL*(cv.width/r.width));
   const y=Math.floor((e.clientY-r.top)/CELL*(cv.height/r.height));
@@ -146,8 +152,10 @@ function paintAt(e){
   tiles[i]=brush;
   drawEditor();
 }
-cv.onpointerdown=e=>{ cv.setPointerCapture(e.pointerId); paintAt(e); };
-cv.onpointermove=e=>{ if(e.buttons) paintAt(e); };
+if(cv){
+  cv.onpointerdown=e=>{ cv.setPointerCapture(e.pointerId); paintAt(e); };
+  cv.onpointermove=e=>{ if(e.buttons) paintAt(e); };
+}
 
 function hashSeed(s){ let h=2166136261; for(let i=0;i<s.length;i++) h^=s.charCodeAt(i), h=Math.imul(h,16777619); return h>>>0; }
 
@@ -445,21 +453,21 @@ document.querySelectorAll('#btabs button').forEach(b=>b.onclick=()=>{
   blogTab=b.dataset.b; renderBlog();
 });
 
-$('name').oninput=()=>{ $('proj').textContent='app · '+$('name').value; };
-$('play').onclick=()=>startRun(false);
-$('stop').onclick=stopRun;
-$('lab').onclick=()=>startRun(true);
-$('twin').onclick=()=>{
+on('name','oninput',()=>{ const p=$('proj'); if(p) p.textContent='app · '+$('name').value; });
+on('play','onclick',()=>startRun(false));
+on('stop','onclick',stopRun);
+on('lab','onclick',()=>startRun(true));
+on('twin','onclick',()=>{
   mountEmu($('devsel').value, 2);
   if(!playing) startRun(false);
   log('2nd player emulator — WASD vs arrows. Android Studio has no split-screen two-player game emu.','gold');
-};
-$('hot').onclick=()=>{
+});
+on('hot','onclick',()=>{
   const s=spec();
   emus.forEach(e=>{ const p=e.world.p; e.world=makeWorld(s); e.world.p=p; });
   log('hot reload applied to '+emus.length+' emulator(s) without restart','ok','InstantRun');
-};
-$('rotate').onclick=()=>{
+});
+on('rotate','onclick',()=>{
   emus.forEach(e=>{
     e.rot=!e.rot;
     const t=e.canvas.width; e.canvas.width=e.canvas.height; e.canvas.height=t;
@@ -467,27 +475,27 @@ $('rotate').onclick=()=>{
     e.canvas.style.width=size.w+'px'; e.canvas.style.height=size.h+'px';
   });
   log('configChanges orientation');
-};
-$('shake').onclick=()=>{
+});
+on('shake','onclick',()=>{
   emus.forEach(e=>{ e.box.style.transform='rotate(2deg)'; setTimeout(()=>e.box.style.transform='',200); if(e.world) e.world.p.vy=-6; });
   log('Sensor: accelerometer shake','ok','Sensors');
-};
-$('air').onclick=()=>{
+});
+on('air','onclick',()=>{
   $('net').value = $('net').value==='off'?'wifi':'off';
   log('Airplane mode '+$('net').value);
-};
-$('batt').oninput=()=>{$('sens').textContent=`${$('net').value} · ${$('batt').value}% · GPS`;};
-$('net').onchange=()=>{$('sens').textContent=`${$('net').value} · ${$('batt').value}% · GPS`; netLog.unshift('Connectivity: '+$('net').value);};
+});
+on('batt','oninput',()=>{$('sens').textContent=`${$('net').value} · ${$('batt').value}% · GPS`;});
+on('net','onchange',()=>{$('sens').textContent=`${$('net').value} · ${$('batt').value}% · GPS`; netLog.unshift('Connectivity: '+$('net').value);});
 
-$('shot').onclick=()=>{
+on('shot','onclick',()=>{
   const e=emus[0]; if(!e){ log('no emulator','bad'); return; }
   e.canvas.toBlob(b=>{
     download(slug(spec().name)+'-'+e.d.id+'.png', b, 'image/png');
-    $('shots').textContent=($('shots').textContent||'')+' screenshot saved';
+    const sh=$('shots'); if(sh) sh.textContent=(sh.textContent||'')+' screenshot saved';
     log('screencap '+e.d.label,'ok','ddms');
   });
-};
-$('rec').onclick=async ()=>{
+});
+on('rec','onclick',async ()=>{
   const e=emus[0]; if(!e) return;
   if(rec){ rec.stop(); rec=null; $('rec').textContent='Record'; return; }
   const stream=e.canvas.captureStream(30);
@@ -498,14 +506,14 @@ $('rec').onclick=async ()=>{
   rec.start();
   $('rec').textContent='Stop rec';
   log('recording emulator (MediaRecorder) — Android Studio needs scrcpy or a real AVD.','gold');
-};
-$('webplay').onclick=()=>{
+});
+on('webplay','onclick',()=>{
   const url=URL.createObjectURL(new Blob([gameHTML()],{type:'text/html'}));
   window.open(url,'_blank');
   log('web play link opened — same build as the APK, no store wait. Android Studio cannot publish a playable web build from the Android module.','gold');
-};
+});
 
-$('buildApk').onclick=async ()=>{
+on('buildApk','onclick',async ()=>{
   const html=gameHTML(); const name=slug(spec().name);
   log('Gradle-less packager: injecting assets/index.html + v2/v3 sign');
   try{
@@ -537,7 +545,8 @@ function adb(cmd){
 
 addEventListener('keydown',e=>{
   keys[e.code]=true;
-  if(['Space','ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault();
+  const tag=(e.target&&e.target.tagName)||'';
+  if(['Space','ArrowUp','ArrowDown'].includes(e.code) && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(tag)) e.preventDefault();
 });
 addEventListener('keyup',e=>{ keys[e.code]=false; });
 

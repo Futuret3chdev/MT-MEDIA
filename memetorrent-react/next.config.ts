@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
         source: '/games/api/discord-callback.php',
         destination: '/api/oauth/discord/callback',
       },
+      { source: '/studio.js', destination: '/maker/studio.js' },
     ];
   },
   async redirects() {

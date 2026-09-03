@@ -12,8 +12,9 @@
     * { box-sizing:border-box; }
     html,body { margin:0; height:100%; background:var(--bg); color:var(--t); font:12.5px/1.4 "Segoe UI",system-ui,sans-serif; }
     button,input,select,textarea { font:inherit; }
-    #ide { display:grid; height:100%; grid-template-rows:34px 34px minmax(0,1fr) 168px; }
-    #titlebar,#toolbar { background:var(--p2); display:flex; align-items:center; gap:8px; padding:0 8px; border-bottom:1px solid #111; }
+    #ide { display:grid; height:100%; grid-template-rows:auto auto minmax(0,1fr) minmax(120px,22vh); }
+    #titlebar,#toolbar { background:var(--p2); display:flex; align-items:center; gap:8px; padding:0 8px; border-bottom:1px solid #111; position:relative; z-index:6; }
+    button { cursor:pointer; }
     #titlebar strong { color:#a5c261; }
     #titlebar .win { margin-left:auto; color:var(--dim); font-size:11px; }
     #toolbar { flex-wrap:wrap; gap:5px; padding:4px 8px; }
@@ -81,7 +82,7 @@
   </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute">
+<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none">
   <filter id="cb">
     <feColorMatrix values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/>
   </filter>
@@ -219,6 +220,18 @@
     <div id="blog"></div>
   </div>
 </div>
-<script src="studio.js"></script>
+<script>
+(function(){
+  var s=document.createElement('script');
+  var onMaker = location.pathname.indexOf('/maker') === 0;
+  s.src = onMaker ? '/maker/studio.js' : './studio.js';
+  s.onerror=function(){
+    var t=document.createElement('script');
+    t.src = onMaker ? './studio.js' : '/maker/studio.js';
+    document.body.appendChild(t);
+  };
+  document.body.appendChild(s);
+})();
+</script>
 </body>
 </html>
