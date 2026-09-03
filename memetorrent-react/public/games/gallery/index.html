@@ -301,17 +301,10 @@
     </div>
   </div>
   <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"
-      }
-    }
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js" } }
   </script>
   <script type="module">
 import * as THREE from 'three';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js';
-import { clone as cloneSkinned } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/utils/SkeletonUtils.js';
 if (window.self !== window.top) document.documentElement.classList.add('in-play-shell');
 
 const coarse = matchMedia('(pointer: coarse)').matches || matchMedia('(hover: none)').matches;
@@ -639,8 +632,8 @@ function loadInv() {
       tool: '',
       pet: 'cub', petHunger: 80,
       pets: { cub: true },
-      body: 'e8c39e', shirt: '1a3d2a', hat: false, acc: 'none',
-      cast: 'vanguard',
+      body: 'c68642', shirt: '19d37e', hat: false, acc: 'none',
+      look: null,
       wallet: '', name: 'Guest'
     }, JSON.parse(localStorage.getItem(INV_KEY) || '{}'));
   } catch { return { wood: 0, fish: 0, coins: 12, pet: 'cub', petHunger: 80, pets: { cub: true }, body: 'e8c39e', shirt: '1a3d2a', tool: '' }; }
@@ -880,132 +873,144 @@ function buildPet() {
 }
 buildPet();
 
-const CAST = [
-  { id: 'vanguard', name: 'Vanguard', model: 'soldier', img: '/games/world/cast/rex.jpg' },
-  { id: 'goldguard', name: 'Gold Guard', model: 'soldier', tint: 0xc9a227, img: '/games/world/cast/omar.jpg' },
-  { id: 'xbot', name: 'X Bot', model: 'xbot', img: '/games/world/cast/kai.jpg' },
-  { id: 'tealbot', name: 'Teal Bot', model: 'xbot', tint: 0x14b8a6, img: '/games/world/cast/sol.jpg' },
-  { id: 'michelle', name: 'Michelle', model: 'michelle', img: '/games/world/cast/mira.jpg' },
-  { id: 'violet', name: 'Violet', model: 'michelle', tint: 0x7c3aed, img: '/games/world/cast/nova.jpg' },
-  { id: 'jadebot', name: 'Jade', model: 'xbot', tint: 0x16a34a, img: '/games/world/cast/jade.jpg' },
-  { id: 'crimson', name: 'Crimson', model: 'soldier', tint: 0xb91c1c, img: '/games/world/cast/vex.jpg' }
+const SKINS = ['ffe7cc', 'f1c27d', 'e0ac69', 'c68642', '8d5524', '4b2e1a', 'd8a07a', 'f5d0c5'];
+const HAIR_C = ['1a1a1a', '3f2a14', 'c9a227', 'f5f5f4', '7c2d12', '1e3a5f', 'e11d48', 'a78bfa'];
+const HAIR_N = ['Short', 'Bun', 'Long', 'Mohawk', 'Afro', 'Tail'];
+const EYES = ['2b2118', '3b82f6', '16a34a', '7c3aed', '111827', 'b45309'];
+const SHIRTS = ['19d37e', '1d4ed8', 'b91c1c', '111827', 'f59e0b', '7c3aed', '14b8a6', 'ec4899'];
+const PANTS = ['1e293b', '0f172a', '1d4ed8', '7c2d12', '365314', '4c1d95', '334155', '9a3412'];
+const PRESETS = [
+  { id: 'nova', name: 'Nova', look: { skin: 0, hair: 0, hairC: 3, weight: 3, height: 5, shirt: 0, pants: 0, eyes: 4 } },
+  { id: 'rex', name: 'Rex', look: { skin: 5, hair: 0, hairC: 0, weight: 7, height: 7, shirt: 2, pants: 1, eyes: 4 } },
+  { id: 'mira', name: 'Mira', look: { skin: 2, hair: 2, hairC: 0, weight: 4, height: 4, shirt: 5, pants: 0, eyes: 3 } },
+  { id: 'kai', name: 'Kai', look: { skin: 1, hair: 0, hairC: 0, weight: 4, height: 5, shirt: 6, pants: 2, eyes: 1 } },
+  { id: 'sol', name: 'Sol', look: { skin: 7, hair: 3, hairC: 3, weight: 3, height: 6, shirt: 3, pants: 0, eyes: 1 } },
+  { id: 'jade', name: 'Jade', look: { skin: 3, hair: 5, hairC: 4, weight: 4, height: 5, shirt: 4, pants: 1, eyes: 2 } },
+  { id: 'omar', name: 'Omar', look: { skin: 4, hair: 0, hairC: 1, weight: 6, height: 6, shirt: 4, pants: 3, eyes: 0 } },
+  { id: 'vex', name: 'Vex', look: { skin: 5, hair: 2, hairC: 0, weight: 3, height: 5, shirt: 6, pants: 0, eyes: 1 } }
 ];
-const others = new Map();
-const MODEL_LIB = {};
-let sharedClips = [];
-function clipNamed(clips, names) {
-  const lower = names.map((n) => n.toLowerCase());
-  return clips.find((c) => lower.includes((c.name || '').toLowerCase()))
-    || clips.find((c) => lower.some((n) => (c.name || '').toLowerCase().includes(n)))
-    || null;
+function defaultLook() { return { ...PRESETS[0].look }; }
+function encodeLook(L) {
+  const x = (n) => Math.max(0, Math.min(9, n | 0)).toString(36);
+  return 'c' + x(L.skin) + x(L.hair) + x(L.hairC) + x(L.weight) + x(L.height) + x(L.shirt) + x(L.pants) + x(L.eyes);
 }
-function fitModel(root) {
-  root.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(root);
-  const size = box.getSize(new THREE.Vector3());
-  let h = size.y;
-  if (!Number.isFinite(h) || h < 0.05) h = 1.7;
-  if (h > 10) h /= 100;
-  if (h >= 0.5) root.scale.multiplyScalar(1.68 / h);
-  root.updateMatrixWorld(true);
-  box.setFromObject(root);
-  root.position.y -= box.min.y;
-  root.updateMatrixWorld(true);
-  box.setFromObject(root);
-  const h2 = box.getSize(new THREE.Vector3()).y;
-  if (h2 > 1.85) {
-    root.scale.multiplyScalar(1.68 / h2);
-    root.updateMatrixWorld(true);
-    box.setFromObject(root);
-    root.position.y -= box.min.y;
-  }
+function decodeLook(code) {
+  if (!code || code[0] !== 'c' || code.length < 9) return defaultLook();
+  const d = (i) => parseInt(code[i], 36) || 0;
+  return { skin: d(1), hair: d(2), hairC: d(3), weight: d(4), height: d(5), shirt: d(6), pants: d(7), eyes: d(8) };
 }
-function attachGltf(g, spec) {
-  const gltf = MODEL_LIB[spec.model];
-  if (!gltf) { g.userData.pending = spec; return; }
-  if (g.userData.root) return;
-  let root;
-  try {
-    root = cloneSkinned(gltf.scene);
-  } catch (err) {
-    console.warn('clone', err);
-    root = gltf.scene.clone(true);
-  }
-  root.traverse((o) => {
-    if (!o.isMesh) return;
-    o.castShadow = true;
-    o.frustumCulled = false;
-    if (spec.tint && o.material) {
-      const mats = Array.isArray(o.material) ? o.material : [o.material];
-      const next = mats.map((m) => {
-        const c = m.clone();
-        if (c.color) c.color.lerp(new THREE.Color(spec.tint), 0.45);
-        return c;
-      });
-      o.material = Array.isArray(o.material) ? next : next[0];
-    }
-  });
-  fitModel(root);
-  g.add(root);
-  const clips = (gltf.animations || []).concat(sharedClips);
-  const mixer = new THREE.AnimationMixer(root);
-  const idleClip = clipNamed(clips, ['idle']) || clips[0];
-  const walkClip = clipNamed(clips, ['walk']);
-  const runClip = clipNamed(clips, ['run']);
-  const actions = {};
-  if (idleClip) actions.idle = mixer.clipAction(idleClip);
-  if (walkClip) actions.walk = mixer.clipAction(walkClip);
-  if (runClip) actions.run = mixer.clipAction(runClip);
-  Object.values(actions).forEach((a) => { a.enabled = true; a.setEffectiveWeight(1); });
-  g.userData.mixer = mixer;
-  g.userData.actions = actions;
-  g.userData.root = root;
-  g.userData.current = '';
-  if (actions.idle) { actions.idle.play(); g.userData.current = 'idle'; }
+function col(hex) { return new THREE.Color('#' + hex); }
+function mat(hex) { return new THREE.MeshLambertMaterial({ color: col(hex) }); }
+function addPivoted(parent, mesh, x, y, z, drop) {
+  mesh.geometry.translate(0, drop, 0);
+  mesh.position.set(x, y, z);
+  parent.add(mesh);
+  return mesh;
 }
-function avatarMesh(p) {
+function makePerson(L) {
+  L = { ...defaultLook(), ...(L || {}) };
   const g = new THREE.Group();
-  const spec = CAST.find((c) => c.id === (p.cast || p.body)) || CAST[0];
-  const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.38, 16),
-    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false })
-  );
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = 0.02;
-  g.add(shadow);
-  attachGltf(g, spec);
-  const dummy = new THREE.Object3D();
+  const skin = mat(SKINS[L.skin % SKINS.length]);
+  const shirt = mat(SHIRTS[L.shirt % SHIRTS.length]);
+  const pants = mat(PANTS[L.pants % PANTS.length]);
+  const hairM = mat(HAIR_C[L.hairC % HAIR_C.length]);
+  const eyeM = mat(EYES[L.eyes % EYES.length]);
+  const w = 0.72 + L.weight * 0.045;
+  const hMul = 0.9 + L.height * 0.025;
+  const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.32 + L.weight * 0.012, 14), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false }));
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.02; g.add(shadow);
+  const hip = new THREE.Mesh(new THREE.SphereGeometry(0.16 * w, 12, 10), pants);
+  hip.position.y = 0.92; hip.scale.set(1.15, 0.7, 1); g.add(hip);
+  const torso = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 12), shirt);
+  torso.position.y = 1.22; torso.scale.set(w, 1.15, 0.7); g.add(torso);
+  if (L.weight >= 6) {
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.16 + (L.weight - 5) * 0.03, 12, 10), shirt);
+    belly.position.set(0, 1.08, 0.08); g.add(belly);
+  }
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.12, 10), skin);
+  neck.position.y = 1.48; g.add(neck);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 14), skin);
+  head.position.y = 1.64; g.add(head);
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.07, 6), skin);
+  nose.rotation.x = Math.PI / 2; nose.position.set(0, 1.62, 0.14); g.add(nose);
+  [[-0.05, 1.67, 0.12], [0.05, 1.67, 0.12]].forEach((p) => {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), eyeM);
+    e.position.set(p[0], p[1], p[2]); g.add(e);
+  });
+  [[-0.05, 1.71, 0.12], [0.05, 1.71, 0.12]].forEach((p) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.02), hairM);
+    b.position.set(p[0], p[1], p[2]); g.add(b);
+  });
+  const hs = L.hair % 6;
+  if (hs === 0) {
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.155, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.7), hairM);
+    cap.position.y = 1.68; g.add(cap);
+  } else if (hs === 1) {
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.8), hairM);
+    cap.position.y = 1.68; g.add(cap);
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), hairM);
+    bun.position.set(0, 1.8, -0.04); g.add(bun);
+  } else if (hs === 2) {
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.6), hairM);
+    cap.position.y = 1.67; g.add(cap);
+    const longh = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.45, 4, 8), hairM);
+    longh.position.set(0, 1.38, -0.1); g.add(longh);
+  } else if (hs === 3) {
+    for (let i = 0; i < 5; i++) {
+      const spike = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.08), hairM);
+      spike.position.set((i - 2) * 0.035, 1.78, 0); g.add(spike);
+    }
+  } else if (hs === 4) {
+    const afro = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), hairM);
+    afro.position.y = 1.74; g.add(afro);
+  } else {
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10, 0, Math.PI * 2, 0, Math.PI / 1.7), hairM);
+    cap.position.y = 1.68; g.add(cap);
+    const tail = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.28, 4, 8), hairM);
+    tail.position.set(0, 1.5, -0.12); g.add(tail);
+  }
+  const ll = new THREE.Mesh(new THREE.CapsuleGeometry(0.07 * w, 0.38, 4, 8), pants);
+  const rl = new THREE.Mesh(new THREE.CapsuleGeometry(0.07 * w, 0.38, 4, 8), pants);
+  addPivoted(g, ll, -0.1 * w, 0.92, 0, -0.22);
+  addPivoted(g, rl, 0.1 * w, 0.92, 0, -0.22);
+  const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.16), mat('111827'));
+  const shoeR = shoeL.clone();
+  shoeL.position.set(-0.1 * w, 0.06, 0.03); shoeR.position.set(0.1 * w, 0.06, 0.03); g.add(shoeL, shoeR);
+  const la = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.34, 4, 8), skin);
+  const ra = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.34, 4, 8), skin);
+  addPivoted(g, la, -0.26 * w, 1.32, 0, -0.2);
+  addPivoted(g, ra, 0.26 * w, 1.32, 0, -0.2);
+  g.scale.set(1, hMul, 1);
+  return { g, ll, rl, la, ra, torso, head };
+}
+if (!inv.look) inv.look = defaultLook();
+const others = new Map();
+function avatarMesh(p) {
+  const L = p.look || decodeLook(p.body) || defaultLook();
+  const built = makePerson(L);
+  const wrap = new THREE.Group();
+  wrap.add(built.g);
   const tag = document.createElement('div');
-  tag.textContent = (p.username || 'Guest') + ' · ' + spec.name;
+  tag.textContent = p.username || 'Guest';
   tag.style.cssText = 'position:absolute;transform:translate(-50%,-100%);color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:999px;font:800 13px system-ui;pointer-events:none;white-space:nowrap';
   document.body.appendChild(tag);
-  g.userData.tag = tag;
-  g.userData.ll = dummy;
-  g.userData.rl = dummy;
-  g.userData.la = dummy;
-  g.userData.ra = dummy;
-  g.userData.cast = spec.id;
-  g.userData.phase = 0;
-  scene.add(g);
-  return g;
+  wrap.userData = { tag, ll: built.ll, rl: built.rl, la: built.la, ra: built.ra, torso: built.torso, head: built.head, phase: Math.random() * 8, look: L };
+  scene.add(wrap);
+  return wrap;
 }
 function animateAvatar(g, moving, grounded, dt, speed) {
   const u = g.userData;
-  if (!u) return;
-  if (u.mixer) u.mixer.update(dt);
-  const want = !grounded ? 'idle' : (moving ? ((speed || 1) > 1.35 ? 'run' : 'walk') : 'idle');
-  const act = u.actions || {};
-  const next = act[want] || act.walk || act.idle;
-  if (next && u.current !== want) {
-    next.reset().fadeIn(0.12).play();
-    if (u.current && act[u.current]) act[u.current].fadeOut(0.12);
-    u.current = want;
-  }
-  if (!act.walk && moving && u.root) {
-    u.phase = (u.phase || 0) + dt * 10;
-    u.root.rotation.z = Math.sin(u.phase) * 0.04;
-    g.position.y = Math.abs(Math.sin(u.phase * 2)) * 0.04;
-  }
+  if (!u || !u.ll) return;
+  const sp = moving ? 10 * Math.min(1.7, speed || 1) : 2;
+  u.phase = (u.phase || 0) + dt * sp;
+  const amp = moving ? 0.7 : 0.05;
+  const swing = Math.sin(u.phase) * amp;
+  u.ll.rotation.x = swing;
+  u.rl.rotation.x = -swing;
+  u.la.rotation.x = -swing * 0.85;
+  u.ra.rotation.x = swing * 0.85;
+  if (u.torso) u.torso.rotation.z = swing * 0.06;
+  g.position.y = (grounded === false ? 0.12 : 0) + (moving ? Math.abs(Math.sin(u.phase * 2)) * 0.05 : 0);
 }
 
 let chaseCam = true;
@@ -1016,44 +1021,12 @@ function rebuildMe() {
     if (meMesh.userData.tag) meMesh.userData.tag.remove();
   }
   meMesh = avatarMesh({
-    body: inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc, cast: inv.cast || 'vanguard', username: inv.name || 'You'
+    look: inv.look || defaultLook(),
+    body: encodeLook(inv.look || defaultLook()),
+    username: inv.name || 'You'
   });
 }
-function flushPending() {
-  if (meMesh && meMesh.userData.pending) {
-    const spec = meMesh.userData.pending;
-    meMesh.userData.pending = null;
-    attachGltf(meMesh, spec);
-  }
-  others.forEach((o) => {
-    if (o.mesh && o.mesh.userData.pending) {
-      const spec = o.mesh.userData.pending;
-      o.mesh.userData.pending = null;
-      attachGltf(o.mesh, spec);
-    }
-  });
-}
-function loadModels() {
-  const loader = new GLTFLoader();
-  rebuildMe();
-  ['soldier', 'xbot', 'michelle'].forEach((id) => {
-    loader.load(
-      '/games/world/models/' + id + '.glb',
-      (gltf) => {
-        MODEL_LIB[id] = gltf;
-        if (id === 'soldier') sharedClips = gltf.animations.slice();
-        flushPending();
-        if (meMesh && meMesh.userData.cast) {
-          const spec = CAST.find((c) => c.id === meMesh.userData.cast);
-          if (spec && spec.model === id && !meMesh.userData.root) attachGltf(meMesh, spec);
-        }
-      },
-      undefined,
-      (err) => console.warn('GLB failed', id, err)
-    );
-  });
-}
-loadModels();
+rebuildMe();
 
 const CS = 32;
 const chunks = new Map();
@@ -1671,36 +1644,46 @@ function openSheet(id) {
   if (id === 'sheetSocial') paintSocial();
   if (id === 'sheetDress') paintDress();
 }
+function chips(el, colors, key, names) {
+  if (!el) return;
+  const cur = (inv.look || defaultLook())[key];
+  el.innerHTML = colors.map((c, i) =>
+    `<button type="button" class="${cur === i ? 'on' : ''}" style="background:#${c}" title="${names ? names[i] : ''}" onclick="window.mtwLook('${key}',${i})"></button>`
+  ).join('');
+}
 function paintDress() {
+  if (!inv.look) inv.look = defaultLook();
+  const L = inv.look;
   const grid = document.getElementById('castGrid');
   if (grid) {
-    grid.innerHTML = CAST.map((c) =>
-      `<button type="button" class="cast-card ${inv.cast === c.id ? 'on' : ''}" onclick="window.mtwCast('${c.id}')">
-        <img src="${c.img}" alt="${c.name}" /><span>${c.name}</span>
-      </button>`
+    grid.innerHTML = PRESETS.map((c) =>
+      `<button type="button" class="cast-card" onclick="window.mtwPreset('${c.id}')">${c.name}</button>`
     ).join('');
   }
-  const skins = ['e8c39e', '8d5524', 'c68642', 'f1c27d', 'ffdbac', '19d37e', '38bdf8', 'fb7185'];
-  const shirts = ['19d37e', '1a3d2a', '1d4ed8', 'b91c1c', '111827', 'f59e0b', '7c3aed'];
-  const sk = document.getElementById('skinRow');
-  const sh = document.getElementById('shirtRow');
-  if (sk) sk.innerHTML = skins.map((c) => `<div class="swatch" style="background:#${c};outline:${inv.body===c?'3px solid #19d37e':'none'}" onclick="window.mtwSkin('${c}')"></div>`).join('');
-  if (sh) sh.innerHTML = shirts.map((c) => `<div class="swatch" style="background:#${c};outline:${inv.shirt===c?'3px solid #19d37e':'none'}" onclick="window.mtwShirt('${c}')"></div>`).join('');
-  const hat = document.getElementById('hatOn');
-  const acc = document.getElementById('accHeart');
-  if (hat) hat.checked = !!inv.hat;
-  if (acc) acc.checked = inv.acc === 'heart';
+  const w = document.getElementById('lkWeight');
+  const h = document.getElementById('lkHeight');
+  if (w) w.value = L.weight;
+  if (h) h.value = L.height;
+  chips(document.getElementById('lkSkin'), SKINS, 'skin');
+  chips(document.getElementById('lkHair'), ['334155', '334155', '334155', '334155', '334155', '334155'], 'hair', HAIR_N);
+  const hairBtns = document.getElementById('lkHair');
+  if (hairBtns) [...hairBtns.children].forEach((b, i) => { b.textContent = HAIR_N[i]; b.style.background = '#' + HAIR_C[L.hairC % HAIR_C.length]; b.style.color = '#fff'; b.style.fontSize = '11px'; b.style.minWidth = '56px'; });
+  chips(document.getElementById('lkHairCol'), HAIR_C, 'hairC');
+  chips(document.getElementById('lkEyes'), EYES, 'eyes');
+  chips(document.getElementById('lkShirt'), SHIRTS, 'shirt');
+  chips(document.getElementById('lkPants'), PANTS, 'pants');
 }
-window.mtwCast = (id) => {
-  inv.cast = id;
-  saveInv();
-  rebuildMe();
-  paintDress();
-  const n = CAST.find((c) => c.id === id);
-  toast('You are ' + (n ? n.name : id));
+window.mtwPreset = (id) => {
+  const p = PRESETS.find((x) => x.id === id);
+  if (!p) return;
+  inv.look = { ...p.look };
+  saveInv(); rebuildMe(); paintDress(); toast('Preset ' + p.name + ' — now tweak sliders');
 };
-window.mtwSkin = (c) => { inv.body = c; saveInv(); rebuildMe(); paintDress(); toast('Skin on you now'); };
-window.mtwShirt = (c) => { inv.shirt = c; saveInv(); rebuildMe(); paintDress(); toast('Shirt on you now'); };
+window.mtwLook = (key, i) => {
+  if (!inv.look) inv.look = defaultLook();
+  inv.look[key] = i;
+  saveInv(); rebuildMe(); paintDress();
+};
 function paintSocial() {
   const near = nearestPlayer();
   const el = document.getElementById('nearList');
@@ -1734,7 +1717,7 @@ function syncWorld() {
     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       action: 'here', sid: SID, name: inv.name, x: player.x, z: player.z, yaw: player.yaw,
-      body: inv.cast || inv.body, shirt: inv.shirt, hat: inv.hat, acc: inv.acc, cast: inv.cast || 'nova'
+      body: encodeLook(inv.look || defaultLook()), shirt: inv.shirt, hat: inv.hat, acc: inv.acc
     })
   }).catch(() => {});
   fetch('/api/games/world?me=' + encodeURIComponent(inv.name), { credentials: 'include' })
@@ -1745,14 +1728,14 @@ function syncWorld() {
         if (p.sid === SID) return;
         seen.add(p.sid);
         let o = others.get(p.sid);
-        const look = p.cast || p.body;
-        if (!o) { o = { ...p, mesh: avatarMesh({ ...p, cast: look }), x: p.x, z: p.z, tx: p.x, tz: p.z }; others.set(p.sid, o); }
-        if (o.look !== look && o.mesh) {
+        const lookCode = p.body || '';
+        if (!o) { o = { ...p, mesh: avatarMesh({ ...p, look: decodeLook(lookCode) }), x: p.x, z: p.z, tx: p.x, tz: p.z }; others.set(p.sid, o); }
+        if (o.lookCode !== lookCode && o.mesh) {
           scene.remove(o.mesh);
           if (o.mesh.userData.tag) o.mesh.userData.tag.remove();
-          o.mesh = avatarMesh({ ...p, cast: look });
+          o.mesh = avatarMesh({ ...p, look: decodeLook(lookCode) });
         }
-        o.look = look;
+        o.lookCode = lookCode;
         o.tx = p.x; o.tz = p.z; o.tyaw = p.yaw || 0; o.username = p.username;
       });
       others.forEach((o, id) => {
@@ -1783,8 +1766,18 @@ document.getElementById('craftMeal').onclick = () => {
   if (inv.fish < 2 || inv.wood < 1) { toast('Need 2 fish and 1 wood'); return; }
   inv.fish -= 2; inv.wood -= 1; inv.food = (inv.food || 0) + 1; saveInv(); paintBag(); toast('Grilled a fish');
 };
-document.getElementById('hatOn').onchange = (e) => { inv.hat = e.target.checked; saveInv(); rebuildMe(); };
-document.getElementById('accHeart').onchange = (e) => { inv.acc = e.target.checked ? 'heart' : 'none'; saveInv(); rebuildMe(); };
+['lkWeight', 'lkHeight'].forEach((id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.oninput = () => {
+    if (!inv.look) inv.look = defaultLook();
+    inv.look[id === 'lkWeight' ? 'weight' : 'height'] = +el.value;
+    saveInv();
+    rebuildMe();
+  };
+});
+const wear = document.getElementById('lkApply');
+if (wear) wear.onclick = () => { saveInv(); rebuildMe(); toast('Worn'); };
 document.getElementById('btnCam').onclick = () => {
   chaseCam = !chaseCam;
   document.querySelector('#btnCam span').textContent = chaseCam ? 'Chase' : 'Eyes';
