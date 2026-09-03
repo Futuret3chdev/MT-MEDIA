@@ -23,7 +23,7 @@ export default function TapEcosystem() {
             <a
               key={app.id}
               href={app.href}
-              id={app.id === 'tap' ? 'tap-play' : app.id}
+              id={app.id === 'tap' ? 'tap-go' : app.id}
               className="rounded-3xl border border-sky-400/40 p-7 bg-white/[0.015] scroll-mt-28 hover:bg-sky-400/10 block"
             >
               <div className="text-[10px] tracking-[2px] text-emerald-400 mb-2">{app.tag}</div>
@@ -34,7 +34,7 @@ export default function TapEcosystem() {
         </div>
 
         <div id="games" className="scroll-mt-24">
-          <div className="uppercase text-xs tracking-[3px] opacity-60 mb-4">Featured</div>
+          <div className="uppercase text-xs tracking-[3px] opacity-60 mb-4">Games — not TAP</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
             {featured.map((g) => g && <GameCard key={g.id} game={g} />)}
           </div>

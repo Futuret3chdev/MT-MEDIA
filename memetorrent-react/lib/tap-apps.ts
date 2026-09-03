@@ -2,9 +2,9 @@ export const TAP_APPS = [
   {
     id: "tap",
     name: "TAP",
-    tag: "Play",
+    tag: "Go",
     href: "/portal/tap",
-    desc: "Games, Rockets, and the TAP play layer.",
+    desc: "Trips, packages, and food deliveries — rides, drop-offs, and Dasher-style runs.",
   },
   {
     id: "tapshop",

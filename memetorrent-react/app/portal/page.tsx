@@ -215,7 +215,7 @@ export default function PortalPage() {
           {[
             { href: 'https://mt.futuret3ch.com.au/', label: 'Wallet', icon: '👛', external: true },
             { href: '/catalog', label: 'Games', icon: '🎮' },
-            { href: '/portal/tap', label: 'TAP', icon: '▶' },
+            { href: '/portal/tap', label: 'TAP', icon: '🚗' },
             { href: '/portal/tapshop', label: 'TAPSHOP', icon: '🛒' },
             { href: '/portal/tapmatch', label: 'TAPMATCH', icon: '🤝' },
             { href: '/chat', label: 'Chat', icon: '💬' },

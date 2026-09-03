@@ -77,17 +77,27 @@ export default function TapDesk({ app }: { app: TapAppId }) {
 
         {app === 'tap' && (
           <section className="rounded-3xl border border-sky-400/30 bg-sky-400/5 p-6 sm:p-8">
-            <h2 className="text-xl font-semibold mb-2">Play</h2>
+            <h2 className="text-xl font-semibold mb-2">Go</h2>
             <p className="text-sm opacity-70 max-w-xl mb-6">
-              TAP is your play account — games, Rockets, and progression. Same person as the portal.
+              TAP is trips, packages, and food — the same kind of network as Uber, Dasher, and Panda.
+              Not games. Same portal identity, this desk is for moving people and goods.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/catalog" className="px-4 py-2 rounded-xl bg-white text-black text-sm font-semibold">
-                Open games
-              </Link>
-              <Link href="/play/tap" className="px-4 py-2 rounded-xl border border-white/20 text-sm">
-                MT Tap
-              </Link>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-white/10 p-4">
+                <div className="text-[10px] tracking-[2px] text-sky-400 mb-1">TRIPS</div>
+                <div className="font-semibold">Rides</div>
+                <p className="text-sm opacity-60 mt-1">Pick up and drop off. Live trips, like a ride network.</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 p-4">
+                <div className="text-[10px] tracking-[2px] text-sky-400 mb-1">PACKAGES</div>
+                <div className="font-semibold">Drop-offs</div>
+                <p className="text-sm opacity-60 mt-1">Send and receive parcels. Local and last-mile.</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 p-4">
+                <div className="text-[10px] tracking-[2px] text-sky-400 mb-1">FOOD</div>
+                <div className="font-semibold">Deliveries</div>
+                <p className="text-sm opacity-60 mt-1">Restaurant and grocery runs. Dasher-style food delivery.</p>
+              </div>
             </div>
           </section>
         )}
