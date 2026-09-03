@@ -7,6 +7,7 @@ import {
   TAPMATCH_SKILLS,
   WORKER_CATEGORIES,
 } from '@/lib/tapmatch-catalog';
+import ShiftPicker from '@/components/tap/tapmatch/ShiftPicker';
 
 type Seat = 'worker' | 'business';
 type View =
@@ -736,29 +737,44 @@ export default function TapMatchApp({
             </>
           )}
           {post.connect === 'fast' && (
-            <div className="sm:col-span-2 space-y-2">
+            <div className="sm:col-span-2 space-y-3">
               {post.shifts.map((s, i) => (
-                <div key={i} className="grid sm:grid-cols-2 gap-2">
-                  <input
-                    type="datetime-local"
-                    className={input}
+                <div key={i} className="rounded-2xl border border-white/10 p-3 grid sm:grid-cols-2 gap-3">
+                  <ShiftPicker
+                    label="Start"
                     value={s.start}
-                    onChange={(e) => {
+                    onChange={(start) => {
                       const shifts = post.shifts.slice();
-                      shifts[i] = { ...shifts[i], start: e.target.value };
+                      let end = shifts[i].end;
+                      if (!end && start) {
+                        const t = new Date(start);
+                        if (!Number.isNaN(t.getTime())) {
+                          t.setHours(t.getHours() + 8);
+                          end = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}T${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+                        }
+                      }
+                      shifts[i] = { start, end };
                       setPost({ ...post, shifts });
                     }}
                   />
-                  <input
-                    type="datetime-local"
-                    className={input}
+                  <ShiftPicker
+                    label="End"
                     value={s.end}
-                    onChange={(e) => {
+                    onChange={(end) => {
                       const shifts = post.shifts.slice();
-                      shifts[i] = { ...shifts[i], end: e.target.value };
+                      shifts[i] = { ...shifts[i], end };
                       setPost({ ...post, shifts });
                     }}
                   />
+                  {post.shifts.length > 1 && (
+                    <button
+                      type="button"
+                      className="sm:col-span-2 text-xs opacity-60 text-left"
+                      onClick={() => setPost({ ...post, shifts: post.shifts.filter((_, n) => n !== i) })}
+                    >
+                      Remove this shift
+                    </button>
+                  )}
                 </div>
               ))}
               <button

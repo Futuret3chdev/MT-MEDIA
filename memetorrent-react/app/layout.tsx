@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-build="2026-09-03-tapmatch-wire">
+    <html lang="en" data-build="2026-09-03-tapmatch-picker">
       <head>
         {/* Font Awesome for social icons in original brand colors */}
         <link 
