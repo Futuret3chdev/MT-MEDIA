@@ -527,7 +527,7 @@ on('buildApk','onclick',async ()=>{
   }catch(e){
     log('Build APK needs the Windows/Mac MT Android Studio app. '+e.message,'bad');
   }
-};
+});
 
 function adb(cmd){
   const c=cmd.trim().toLowerCase();
