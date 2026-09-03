@@ -2,9 +2,9 @@ export const TAP_APPS = [
   {
     id: "tap",
     name: "TAP",
-    tag: "Go",
+    tag: "Trips · Packages · Food",
     href: "/portal/tap",
-    desc: "Trips, packages, and food deliveries — rides, drop-offs, and Dasher-style runs.",
+    desc: "Rides, parcels, and food deliveries. Uber / Dasher / Panda style — not games.",
   },
   {
     id: "tapshop",

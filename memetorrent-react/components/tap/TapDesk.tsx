@@ -77,10 +77,9 @@ export default function TapDesk({ app }: { app: TapAppId }) {
 
         {app === 'tap' && (
           <section className="rounded-3xl border border-sky-400/30 bg-sky-400/5 p-6 sm:p-8">
-            <h2 className="text-xl font-semibold mb-2">Go</h2>
+            <h2 className="text-xl font-semibold mb-2">Trips · Packages · Food</h2>
             <p className="text-sm opacity-70 max-w-xl mb-6">
-              TAP is trips, packages, and food — the same kind of network as Uber, Dasher, and Panda.
-              Not games. Same portal identity, this desk is for moving people and goods.
+              TAP is rides, parcels, and food deliveries — Uber, Dasher, and Panda style. Not games.
             </p>
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="rounded-2xl border border-white/10 p-4">
