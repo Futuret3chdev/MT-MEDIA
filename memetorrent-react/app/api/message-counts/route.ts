@@ -275,6 +275,22 @@ export async function GET(request: NextRequest) {
 
     const tg = await queryTelegram(tgConn, startDate, endDate, useRange);
     response.telegram = tg;
+    try {
+      const [lastDaily] = await tgConn.execute(
+        `SELECT MAX(date) AS last_date FROM daily_message_counts`
+      );
+      const [lastMsg] = await tgConn.execute(
+        `SELECT MAX(created_at) AS last_at FROM messages`
+      );
+      response.meta.telegram_last_daily = lastDaily?.[0]?.last_date
+        ? String(lastDaily[0].last_date).slice(0, 10)
+        : null;
+      response.meta.telegram_last_message = lastMsg?.[0]?.last_at
+        ? String(lastMsg[0].last_at)
+        : null;
+    } catch {
+      /* optional diagnostics */
+    }
 
     // Discord may live in separate DB or same host different name.
     // Try the message_tracking first for discord tables; fall back to 'tcvkxete_discord_members'

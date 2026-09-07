@@ -288,8 +288,19 @@
             if (platform === 'discord') {
                 return '<div class="state-box state-empty"><strong>No Discord messages for this period</strong><br>Either nobody chatted, or Discord tracking is not feeding this dashboard yet. Telegram stats are unaffected.</div>';
             }
+            if (platform === 'telegram') {
+                const last = store.lastPayload?.meta?.telegram_last_daily || store.lastPayload?.meta?.telegram_last_message || '';
+                const lastBit = last ? `<br>Last stored Telegram tally day: <b>${last}</b>. Tracking was down after 24 Aug 2026; new messages start counting again now.` : '';
+                if (period === 'custom') {
+                    return `<div class="state-box state-empty"><strong>No Telegram messages in that date range</strong><br>24h / 2-day windows are empty because ingest stopped on 24 Aug 2026 — not because the range is too narrow.${lastBit}<br>Use a range that includes 1–24 Aug 2026 for historical talkers, or wait for live chat to refill today.</div>`;
+                }
+                if (period === 'monthly') {
+                    return `<div class="state-box state-empty"><strong>No monthly Telegram totals for this month yet</strong>${lastBit}</div>`;
+                }
+                return `<div class="state-box state-empty"><strong>No Telegram messages recorded for today yet</strong>${lastBit}<br>Live ingest is on again — send a message in the Telegram group and refresh.</div>`;
+            }
             if (period === 'custom') {
-                return '<div class="state-box state-empty"><strong>No Telegram messages in that date range</strong><br>Try widening the range or pick different dates (Melbourne time).</div>';
+                return '<div class="state-box state-empty"><strong>No messages in that date range</strong><br>Try different dates (Melbourne time).</div>';
             }
             if (period === 'monthly') {
                 return '<div class="state-box state-empty"><strong>No monthly totals yet</strong><br>The month may have just started, or monthly aggregation has not run.</div>';
