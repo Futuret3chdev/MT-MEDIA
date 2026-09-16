@@ -16,7 +16,7 @@ export default function UpdatesPage() {
         <div className="uppercase text-xs tracking-[3px] text-emerald-400 mb-2">ECOSYSTEM</div>
         <h1 className="text-4xl font-semibold tracking-[-1.5px] mb-3">Updates &amp; Changelog</h1>
         <p className="text-sm text-[#97a7c6] mb-10">
-          Latest: 17 September 2026 — Driver Panda is live off this site at{' '}
+          Latest: 17 September 2026 — T3x Shift is live off this site at{' '}
           <a href="https://driver-panda.vercel.app" className="text-emerald-400 hover:underline">
             driver-panda.vercel.app
           </a>{' '}
@@ -27,10 +27,10 @@ export default function UpdatesPage() {
         <div className="space-y-12 text-sm">
           <section>
             <div className="text-[#19d37e] text-xs mb-1">17 SEPTEMBER 2026</div>
-            <div className="font-medium text-lg">Driver Panda — Uber, Dasher, Hello Panda</div>
+            <div className="font-medium text-lg">T3x Shift — Uber, Dasher, Hello Panda</div>
             <ul className="mt-3 space-y-1 text-[#97a7c6]">
               <li>
-                • <span className="text-white/80">Driver Panda</span> launched as a standalone iPhone web app (Add to
+                • <span className="text-white/80">T3x Shift</span> launched as a standalone iPhone web app (Add to
                 Home Screen in Safari). One home screen for Uber Driver, DoorDash Dasher, and Hello Panda (HungryPanda /
                 DeliveryPanda courier).
               </li>
