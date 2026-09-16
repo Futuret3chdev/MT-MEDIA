@@ -30,6 +30,8 @@ const nextConfig: NextConfig = {
       '/games/gallery',
     ];
     return [
+      { source: '/devs', destination: 'https://driver-panda.vercel.app', permanent: false },
+      { source: '/devs/', destination: 'https://driver-panda.vercel.app/', permanent: false },
       { source: '/claims.html', destination: '/claims', permanent: true },
       { source: '/casino-floor', destination: '/casino-floor/index.html', permanent: false },
       { source: '/casino-floor/', destination: '/casino-floor/index.html', permanent: false },
